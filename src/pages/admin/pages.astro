@@ -80,11 +80,25 @@ const selectedPage = selectedSlug ? pages.find((page) => page.slug === selectedS
 					<div class="grid">
 						<label><span>Title</span><input name="title" required value={selectedPage?.title ?? ""} disabled={Boolean(loadError)} /></label>
 						<label><span>Slug</span><input name="slug" required pattern="[a-z0-9-]+" value={selectedPage?.slug ?? ""} placeholder="services" disabled={Boolean(loadError)} /></label>
-						<label><span>Description</span><input name="description" required value={selectedPage?.description ?? ""} placeholder="Page summary" disabled={Boolean(loadError)} /></label>
+					<label><span>Description</span><input name="description" required value={selectedPage?.description ?? ""} placeholder="Page summary" disabled={Boolean(loadError)} /></label>
 						<label><span>Status</span><select name="status" disabled={Boolean(loadError)}><option value="published" selected={selectedPage?.status !== "draft"}>Published</option><option value="draft" selected={selectedPage?.status === "draft"}>Draft</option></select></label>
 					</div>
 					<label><span>Page content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError)}>{selectedPage?.contentMarkdown ?? "# New page"}</textarea></label>
-					<label><span><input type="checkbox" name="showPostsSection" checked={selectedPage?.showPostsSection} disabled={Boolean(loadError)} /> Show latest posts section under the page content</span></label>
+					<div>
+						<span>Page sections</span>
+						<div style="display:grid; gap:0.65rem; margin-top:0.75rem;">
+							<label>
+								<span><input type="checkbox" name="pageSections" value="blog_feed" checked={selectedPage?.pageSections.includes("blog_feed")} disabled={Boolean(loadError)} /> Blog feed grid</span>
+							</label>
+							<label>
+								<span><input type="checkbox" name="pageSections" value="nav_grid" checked={selectedPage?.pageSections.includes("nav_grid")} disabled={Boolean(loadError)} /> Navigation card grid</span>
+							</label>
+							<label>
+								<span><input type="checkbox" name="pageSections" value="page_grid" checked={selectedPage?.pageSections.includes("page_grid")} disabled={Boolean(loadError)} /> Other pages grid</span>
+							</label>
+						</div>
+						<p class="muted">Tick as many sections as you want. They render below the main page content.</p>
+					</div>
 					<button class="primary" type="submit" disabled={Boolean(loadError)}>{selectedPage ? "Save page" : "Create page"}</button>
 				</form>
 				{selectedPage && (

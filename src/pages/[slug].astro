@@ -2,19 +2,35 @@
 export const prerender = false;
 
 import BlogPost from "../layouts/BlogPost.astro";
-import { getDb, getPublishedPageBySlug, listPublishedPosts } from "../lib/blog";
+import {
+	getDb,
+	getPublishedPageBySlug,
+	getSiteConfig,
+	listPublishedPages,
+	listPublishedPosts,
+} from "../lib/blog";
 
 const reservedSlugs = new Set(["blog", "admin", "about"]);
 const slug = Astro.params.slug ?? "";
 
 let page = null;
 let posts = [];
+let navItems = [];
+let otherPages = [];
 
 if (!reservedSlugs.has(slug)) {
 	try {
-		page = await getPublishedPageBySlug(getDb(Astro.locals), slug);
-		if (page?.showPostsSection) {
-			posts = await listPublishedPosts(getDb(Astro.locals));
+		const db = getDb(Astro.locals);
+		page = await getPublishedPageBySlug(db, slug);
+		if (page?.pageSections.includes("blog_feed")) {
+			posts = await listPublishedPosts(db);
+		}
+		if (page?.pageSections.includes("nav_grid")) {
+			const config = await getSiteConfig(db);
+			navItems = config.navItems.filter((item) => item.href !== `/${slug}` && !item.href.startsWith("/admin"));
+		}
+		if (page?.pageSections.includes("page_grid")) {
+			otherPages = (await listPublishedPages(db)).filter((entry) => entry.slug !== slug);
 		}
 	} catch {
 		page = null;
@@ -36,19 +52,96 @@ if (!page) {
 			showDate={false}
 		>
 			{
-				page.showPostsSection && posts.length > 0 && (
-					<section>
+				page.pageSections.includes("blog_feed") && posts.length > 0 && (
+					<section class="page-section">
 						<h2>Latest Posts</h2>
-						<ul>
+						<div class="card-grid">
 							{
 								posts.slice(0, 6).map((post) => (
-									<li><a href={`/blog/${post.slug}/`}>{post.title}</a></li>
+									<a class="mini-card" href={`/blog/${post.slug}/`}>
+										<img src={post.heroImage || "/blog-placeholder-1.jpg"} alt="" width={520} height={292} />
+										<h3>{post.title}</h3>
+										<p>{post.description}</p>
+									</a>
 								))
 							}
-						</ul>
+						</div>
 					</section>
 				)
 			}
+			{
+				page.pageSections.includes("nav_grid") && navItems.length > 0 && (
+					<section class="page-section">
+						<h2>Explore More</h2>
+						<div class="card-grid">
+							{
+								navItems.map((item) => (
+									<a class="mini-card" href={item.href}>
+										<h3>{item.label}</h3>
+										<p>{item.href}</p>
+									</a>
+								))
+							}
+						</div>
+					</section>
+				)
+			}
+			{
+				page.pageSections.includes("page_grid") && otherPages.length > 0 && (
+					<section class="page-section">
+						<h2>More Pages</h2>
+						<div class="card-grid">
+							{
+								otherPages.slice(0, 6).map((entry) => (
+									<a class="mini-card" href={`/${entry.slug}/`}>
+										<h3>{entry.title}</h3>
+										<p>{entry.description}</p>
+									</a>
+								))
+							}
+						</div>
+					</section>
+				)
+			}
+			<style>
+				.page-section {
+					margin-top: 3rem;
+				}
+				.card-grid {
+					display: grid;
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+					gap: 1rem;
+				}
+				.mini-card {
+					display: block;
+					padding: 1rem;
+					border-radius: 18px;
+					background: white;
+					box-shadow: var(--box-shadow);
+					text-decoration: none;
+					color: inherit;
+				}
+				.mini-card img {
+					width: 100%;
+					aspect-ratio: 16 / 9;
+					object-fit: cover;
+					margin-bottom: 0.8rem;
+					border-radius: 14px;
+				}
+				.mini-card h3 {
+					margin: 0 0 0.45rem 0;
+					font-size: 1.15rem;
+				}
+				.mini-card p {
+					margin: 0;
+					color: rgb(var(--gray));
+				}
+				@media (max-width: 720px) {
+					.card-grid {
+						grid-template-columns: 1fr;
+					}
+				}
+			</style>
 		</BlogPost>
 	) : (
 		<BlogPost

@@ -59,6 +59,7 @@ export interface SitePageRecord {
 	description: string;
 	content_markdown: string;
 	show_posts_section: number;
+	page_sections?: string | null;
 	status: string;
 	updated_at: string;
 }
@@ -70,7 +71,7 @@ export interface SitePage {
 	description: string;
 	contentMarkdown: string;
 	contentHtml: string;
-	showPostsSection: boolean;
+	pageSections: string[];
 	status: string;
 	updatedAt: Date;
 }
@@ -80,7 +81,7 @@ export interface SitePageInput {
 	slug: string;
 	description: string;
 	contentMarkdown: string;
-	showPostsSection: boolean;
+	pageSections: string[];
 	status: string;
 }
 
@@ -255,6 +256,21 @@ export async function listAllPages(db: D1Database): Promise<SitePage[]> {
 	return (result.results ?? []).map(toSitePage);
 }
 
+export async function listPublishedPages(db: D1Database): Promise<SitePage[]> {
+	await ensureSiteTables(db);
+
+	const result = await db
+		.prepare(
+			`SELECT id, title, slug, description, content_markdown, show_posts_section, page_sections, status, updated_at
+			FROM site_pages
+			WHERE status = 'published'
+			ORDER BY datetime(updated_at) DESC, id DESC`,
+		)
+		.all<SitePageRecord>();
+
+	return (result.results ?? []).map(toSitePage);
+}
+
 export async function getPublishedPageBySlug(
 	db: D1Database,
 	slug: string,
@@ -264,6 +280,7 @@ export async function getPublishedPageBySlug(
 	const result = await db
 		.prepare(
 			`SELECT id, title, slug, description, content_markdown, show_posts_section, status, updated_at
+			, page_sections
 			FROM site_pages
 			WHERE slug = ?1 AND status = 'published'
 			LIMIT 1`,
@@ -280,15 +297,17 @@ export async function createPage(db: D1Database, input: SitePageInput): Promise<
 	await db
 		.prepare(
 			`INSERT INTO site_pages (title, slug, description, content_markdown, show_posts_section, status, updated_at)
-			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP)`,
+			, page_sections
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP, ?7)`,
 		)
 		.bind(
 			input.title,
 			input.slug,
 			input.description,
 			input.contentMarkdown,
-			input.showPostsSection ? 1 : 0,
+			input.pageSections.includes("blog_feed") ? 1 : 0,
 			input.status,
+			JSON.stringify(input.pageSections),
 		)
 		.run();
 }
@@ -309,16 +328,18 @@ export async function updatePage(
 				content_markdown = ?4,
 				show_posts_section = ?5,
 				status = ?6,
-				updated_at = CURRENT_TIMESTAMP
-			WHERE id = ?7`,
+				updated_at = CURRENT_TIMESTAMP,
+				page_sections = ?7
+			WHERE id = ?8`,
 		)
 		.bind(
 			input.title,
 			input.slug,
 			input.description,
 			input.contentMarkdown,
-			input.showPostsSection ? 1 : 0,
+			input.pageSections.includes("blog_feed") ? 1 : 0,
 			input.status,
+			JSON.stringify(input.pageSections),
 			id,
 		)
 		.run();
@@ -500,12 +521,18 @@ export function parseSiteForm(formData: FormData): {
 }
 
 export function parsePageForm(formData: FormData): SitePageInput {
+	const rawSections = formData
+		.getAll("pageSections")
+		.filter((value): value is string => typeof value === "string")
+		.map((value) => value.trim())
+		.filter((value) => ["blog_feed", "nav_grid", "page_grid"].includes(value));
+
 	return {
 		title: requiredString(formData, "title"),
 		slug: slugify(requiredString(formData, "slug")),
 		description: requiredString(formData, "description"),
 		contentMarkdown: requiredString(formData, "contentMarkdown"),
-		showPostsSection: optionalString(formData, "showPostsSection") === "on",
+		pageSections: [...new Set(rawSections)],
 		status: normalizeStatus(requiredString(formData, "status")),
 	};
 }
@@ -581,6 +608,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				description TEXT NOT NULL,
 				content_markdown TEXT NOT NULL,
 				show_posts_section INTEGER NOT NULL DEFAULT 0,
+				page_sections TEXT NOT NULL DEFAULT '[]',
 				status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
 				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 			)`,
@@ -615,9 +643,27 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			WHERE NOT EXISTS (SELECT 1 FROM navigation_items WHERE href = '/blog')`,
 		),
 	]);
+
+	const pageColumns = await db.prepare(`PRAGMA table_info(site_pages)`).all<{ name: string }>();
+	const columnNames = new Set((pageColumns.results ?? []).map((column) => column.name));
+
+	if (!columnNames.has("page_sections")) {
+		await db.prepare(`ALTER TABLE site_pages ADD COLUMN page_sections TEXT NOT NULL DEFAULT '[]'`).run();
+		await db
+			.prepare(
+				`UPDATE site_pages
+				SET page_sections = CASE
+					WHEN show_posts_section = 1 THEN '["blog_feed"]'
+					ELSE '[]'
+				END`,
+			)
+			.run();
+	}
 }
 
 function toSitePage(row: SitePageRecord): SitePage {
+	const pageSections = parsePageSections(row.page_sections, row.show_posts_section);
+
 	return {
 		id: row.id,
 		title: row.title,
@@ -625,10 +671,27 @@ function toSitePage(row: SitePageRecord): SitePage {
 		description: row.description,
 		contentMarkdown: row.content_markdown,
 		contentHtml: renderMarkdown(row.content_markdown),
-		showPostsSection: Boolean(row.show_posts_section),
+		pageSections,
 		status: row.status,
 		updatedAt: new Date(row.updated_at),
 	};
+}
+
+function parsePageSections(value?: string | null, legacyShowPosts?: number): string[] {
+	if (value) {
+		try {
+			const parsed = JSON.parse(value);
+			if (Array.isArray(parsed)) {
+				return parsed.filter((item): item is string =>
+					typeof item === "string" && ["blog_feed", "nav_grid", "page_grid"].includes(item),
+				);
+			}
+		} catch {
+			// Ignore malformed historical content and fall back to legacy field.
+		}
+	}
+
+	return legacyShowPosts ? ["blog_feed"] : [];
 }
 
 function sanitizeHexColor(value: string, fallback: string): string {
