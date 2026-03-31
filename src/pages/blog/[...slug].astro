@@ -1,21 +1,33 @@
 ---
-import { type CollectionEntry, getCollection } from 'astro:content';
+export const prerender = false;
+
 import BlogPost from '../../layouts/BlogPost.astro';
-import { render } from 'astro:content';
+import { getDb, getPublishedPostBySlug } from '../../lib/blog';
 
-export async function getStaticPaths() {
-	const posts = await getCollection('blog');
-	return posts.map((post) => ({
-		params: { slug: post.id },
-		props: post,
-	}));
+const slug = Astro.params.slug ?? '';
+const post = await getPublishedPostBySlug(getDb(Astro.locals), slug);
+
+if (!post) {
+	Astro.response.status = 404;
 }
-type Props = CollectionEntry<'blog'>;
-
-const post = Astro.props;
-const { Content } = await render(post);
 ---
 
-<BlogPost {...post.data}>
-	<Content />
-</BlogPost>
+{
+	post ? (
+		<BlogPost
+			title={post.title}
+			description={post.description}
+			pubDate={post.pubDate}
+			updatedDate={post.updatedDate}
+			heroImage={post.heroImage}
+			contentHtml={post.contentHtml}
+		/>
+	) : (
+		<BlogPost
+			title="Post not found"
+			description="The requested post does not exist."
+			pubDate={new Date()}
+			contentHtml="<p>This post does not exist or is not published.</p>"
+		/>
+	)
+}

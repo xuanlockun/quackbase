@@ -1,64 +1,94 @@
-# Astro Starter Kit: Blog
+# Edge CMS with Astro + D1
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/astro-blog-starter-template)
+This project started from the Astro blog starter and has been converted into a runtime CMS.
 
-![Astro Template Preview](https://github.com/withastro/astro/assets/2244813/ff10799f-a816-4703-b967-c78997e8323d)
+Published posts are now stored in Cloudflare D1 and rendered on request, so content changes can go live immediately without waiting for a rebuild or redeploy.
 
-<!-- dash-content-start -->
+## What changed
 
-Create a blog with Astro and deploy it on Cloudflare Workers as a [static website](https://developers.cloudflare.com/workers/static-assets/).
+- `/blog` loads published posts from D1
+- `/blog/[slug]` renders Markdown from D1 with `micromark`
+- `/admin` is a basic CMS dashboard for creating, editing, publishing, and deleting posts
+- `/api/admin/*` contains the form handlers for login and post management
+- `src/content/blog/` is still in the repo as sample starter content, but it is no longer the live source of truth
 
-Features:
+## Required setup
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
-- ✅ Built-in Observability logging
-
-<!-- dash-content-end -->
-
-## Getting Started
-
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
+### 1. Create a D1 database
 
 ```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/astro-blog-starter-template
+npx wrangler d1 create edge-cms
 ```
 
-A live public deployment of this template is available at [https://astro-blog-starter-template.templates.workers.dev](https://astro-blog-starter-template.templates.workers.dev)
+Take the returned `database_id` and add a `d1_databases` binding named `DB` to `wrangler.json`.
 
-## 🚀 Project Structure
+Example shape:
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+```json
+{
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "edge-cms",
+      "database_id": "REPLACE_ME"
+    }
+  ]
+}
+```
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+### 2. Apply the schema
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+```bash
+npx wrangler d1 execute edge-cms --local --file=./migrations/0001_create_posts.sql
+npx wrangler d1 execute edge-cms --remote --file=./migrations/0001_create_posts.sql
+```
 
-Any static assets, like images, can be placed in the `public/` directory.
+### 3. Set the admin token
 
-## 🧞 Commands
+For local dev:
 
-All commands are run from the root of the project, from a terminal:
+```bash
+$env:CMS_ADMIN_TOKEN="change-me"
+```
 
-| Command                           | Action                                           |
-| :-------------------------------- | :----------------------------------------------- |
-| `npm install`                     | Installs dependencies                            |
-| `npm run dev`                     | Starts local dev server at `localhost:4321`      |
-| `npm run build`                   | Build your production site to `./dist/`          |
-| `npm run preview`                 | Preview your build locally, before deploying     |
-| `npm run astro ...`               | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help`         | Get help using the Astro CLI                     |
-| `npm run build && npm run deploy` | Deploy your production site to Cloudflare        |
-| `npm wrangler tail`               | View real-time logs for all Workers              |
+For deployed environments:
 
-## 👀 Want to learn more?
+```bash
+npx wrangler secret put CMS_ADMIN_TOKEN
+```
 
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+If `CMS_ADMIN_TOKEN` is not set, the admin UI is left open. Set it for any real deployment.
 
-## Credit
+## Main routes
 
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+- `/` landing page
+- `/blog` public post index
+- `/blog/:slug` public post page
+- `/admin` CMS dashboard
+- `/admin/login` admin login page
+
+## Commands
+
+| Command | Action |
+| :-- | :-- |
+| `npm install` | Install dependencies |
+| `npm run dev` | Start Astro locally |
+| `npm run build` | Build the project |
+| `npm run preview` | Build and preview with Wrangler |
+| `npm run deploy` | Deploy to Cloudflare |
+
+## Important files
+
+- `src/lib/blog.ts` D1 queries, Markdown rendering, auth helpers
+- `src/pages/admin/index.astro` CMS dashboard
+- `src/pages/api/admin/posts.ts` create/update handler
+- `src/pages/api/admin/posts/delete.ts` delete handler
+- `src/pages/blog/index.astro` public blog listing
+- `src/pages/blog/[...slug].astro` runtime post rendering
+- `migrations/0001_create_posts.sql` initial posts schema
+
+## Notes
+
+- The CMS stores the post body as Markdown in D1 and renders it to HTML at request time.
+- The starter Markdown content in `src/content/blog/` is still available if you want to reference or migrate it manually.
+- `npm run build` succeeds, but actual CRUD usage requires the `DB` binding to exist at runtime.
