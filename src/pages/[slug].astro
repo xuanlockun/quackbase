@@ -1,0 +1,50 @@
+---
+export const prerender = false;
+
+import BlogPost from "../layouts/BlogPost.astro";
+import { getDb, getPublishedPageBySlug, listPublishedPosts } from "../lib/blog";
+
+const reservedSlugs = new Set(["blog", "admin", "about"]);
+const slug = Astro.params.slug ?? "";
+
+let page = null;
+let posts = [];
+
+if (!reservedSlugs.has(slug)) {
+	try {
+		page = await getPublishedPageBySlug(getDb(Astro.locals), slug);
+		if (page?.showPostsSection) {
+			posts = await listPublishedPosts(getDb(Astro.locals));
+		}
+	} catch {
+		page = null;
+	}
+}
+
+if (!page) {
+	Astro.response.status = 404;
+}
+---
+
+{
+	page ? (
+		<BlogPost title={page.title} description={page.description} pubDate={page.updatedAt} contentHtml={page.contentHtml}>
+			{
+				page.showPostsSection && posts.length > 0 && (
+					<section>
+						<h2>Latest Posts</h2>
+						<ul>
+							{
+								posts.slice(0, 6).map((post) => (
+									<li><a href={`/blog/${post.slug}/`}>{post.title}</a></li>
+								))
+							}
+						</ul>
+					</section>
+				)
+			}
+		</BlogPost>
+	) : (
+		<BlogPost title="Page not found" description="The requested page does not exist." pubDate={new Date()} contentHtml="<p>This page does not exist.</p>" />
+	)
+}

@@ -1,0 +1,119 @@
+---
+export const prerender = false;
+
+import BaseHead from "../../components/BaseHead.astro";
+import Footer from "../../components/Footer.astro";
+import Header from "../../components/Header.astro";
+import FormattedDate from "../../components/FormattedDate.astro";
+import AdminNav from "../../components/AdminNav.astro";
+import { SITE_TITLE } from "../../consts";
+import { getAdminToken, getDb, isAdminAuthenticated, listAllPosts } from "../../lib/blog";
+
+if (getAdminToken(Astro.locals) && !isAdminAuthenticated(Astro.request, Astro.locals)) {
+	return Astro.redirect("/admin/login");
+}
+
+let posts = [];
+let loadError = "";
+
+try {
+	posts = await listAllPosts(getDb(Astro.locals));
+} catch (error) {
+	loadError = error instanceof Error ? error.message : "Failed to load CMS data.";
+}
+
+const selectedSlug = Astro.url.searchParams.get("slug");
+const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedSlug) ?? null : null;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Posts | ${SITE_TITLE}`} description="Manage blog posts." />
+		<style>
+			.cms-shell { width: min(1200px, calc(100% - 2rem)); max-width: none; display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 1.5rem; }
+			.panel { background: white; border-radius: 18px; box-shadow: var(--box-shadow); padding: 1.25rem; }
+			.sidebar-list { display: grid; gap: 0.75rem; margin-top: 1rem; }
+			.sidebar-link { display: block; padding: 0.9rem 1rem; border-radius: 12px; text-decoration: none; color: rgb(var(--gray-dark)); background: rgb(var(--gray-light)); }
+			.sidebar-link.active { background: rgba(35, 55, 255, 0.12); color: var(--accent-dark); }
+			.muted { color: rgb(var(--gray)); }
+			.toolbar, .row-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+			form.editor { display: grid; gap: 1rem; }
+			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+			label { display: grid; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; }
+			input, select, textarea, button { font: inherit; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid rgb(var(--gray-light)); box-sizing: border-box; }
+			textarea { min-height: 360px; resize: vertical; }
+			button { cursor: pointer; }
+			.primary { background: var(--accent); color: white; border: none; }
+			.secondary { background: white; }
+			.danger { background: #a61b29; color: white; border: none; }
+			.notice { padding: 0.9rem 1rem; border-radius: 12px; background: rgba(35, 55, 255, 0.08); color: var(--accent-dark); }
+			@media (max-width: 960px) { .cms-shell, .grid { grid-template-columns: 1fr; } }
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main class="cms-shell">
+			<aside class="panel">
+				<AdminNav />
+				<div class="toolbar">
+					<h1>Posts</h1>
+					<a href="/blog">View blog</a>
+				</div>
+				<div class="sidebar-list">
+					<a class:list={["sidebar-link", !selectedPost && "active"]} href="/admin/posts">New post</a>
+					{
+						posts.map((post) => (
+							<a class:list={["sidebar-link", selectedPost?.id === post.id && "active"]} href={`/admin/posts?slug=${post.slug}`}>
+								<strong>{post.title}</strong>
+								<br />
+								<span class="muted">{post.status} | <FormattedDate date={post.updatedDate ?? post.pubDate} /></span>
+							</a>
+						))
+					}
+				</div>
+			</aside>
+
+			<section class="panel">
+				<div class="toolbar">
+					<h2>{selectedPost ? "Edit Post" : "Create Post"}</h2>
+					{getAdminToken(Astro.locals) && (
+						<form method="post" action="/api/admin/logout">
+							<button class="secondary" type="submit">Log out</button>
+						</form>
+					)}
+				</div>
+
+				{Astro.url.searchParams.get("saved") && <p class="notice">Post saved.</p>}
+				{Astro.url.searchParams.get("deleted") && <p class="notice">Post deleted.</p>}
+				{Astro.url.searchParams.get("error") && <p class="notice">The request failed.</p>}
+				{loadError && <p class="notice">{loadError}</p>}
+
+				<form class="editor" method="post" action="/api/admin/posts">
+					{selectedPost && <input type="hidden" name="id" value={selectedPost.id} />}
+					<div class="grid">
+						<label><span>Title</span><input name="title" required value={selectedPost?.title ?? ""} disabled={Boolean(loadError)} /></label>
+						<label><span>Slug</span><input name="slug" required pattern="[a-z0-9-]+" value={selectedPost?.slug ?? ""} placeholder="my-post-slug" disabled={Boolean(loadError)} /></label>
+						<label><span>Description</span><input name="description" required value={selectedPost?.description ?? ""} placeholder="Short summary" disabled={Boolean(loadError)} /></label>
+						<label><span>Hero image URL</span><input name="heroImage" value={selectedPost?.heroImage ?? ""} placeholder="/blog-placeholder-1.jpg" disabled={Boolean(loadError)} /></label>
+						<label><span>Status</span><select name="status" disabled={Boolean(loadError)}><option value="published" selected={selectedPost?.status !== "draft"}>Published</option><option value="draft" selected={selectedPost?.status === "draft"}>Draft</option></select></label>
+						<label><span>Publish date</span><input type="datetime-local" name="pubDate" value={selectedPost ? selectedPost.pubDate.toISOString().slice(0, 16) : ""} disabled={Boolean(loadError)} /></label>
+					</div>
+					<label><span>Markdown content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError)}>{selectedPost?.contentMarkdown ?? "# New post"}</textarea></label>
+					<div class="row-actions">
+						<button class="primary" type="submit" disabled={Boolean(loadError)}>{selectedPost ? "Save changes" : "Create post"}</button>
+						{selectedPost && <a href={`/blog/${selectedPost.slug}/`}>Open post</a>}
+					</div>
+				</form>
+
+				{selectedPost && (
+					<form method="post" action="/api/admin/posts/delete">
+						<input type="hidden" name="id" value={selectedPost.id} />
+						<button class="danger" type="submit">Delete post</button>
+					</form>
+				)}
+			</section>
+		</main>
+		<Footer />
+	</body>
+</html>

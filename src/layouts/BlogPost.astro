@@ -82,7 +82,8 @@ const { title, description, pubDate, updatedDate, heroImage, contentHtml } = Ast
 						<h1>{title}</h1>
 						<hr />
 					</div>
-					{contentHtml ? <div class="post-content" set:html={contentHtml} /> : <slot />}
+					{contentHtml && <div class="post-content" set:html={contentHtml} />}
+					<slot />
 				</div>
 			</article>
 		</main>

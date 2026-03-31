@@ -49,6 +49,38 @@ export interface SiteConfig {
 	navItems: SiteNavItem[];
 }
 
+export interface SitePageRecord {
+	id: number;
+	title: string;
+	slug: string;
+	description: string;
+	content_markdown: string;
+	show_posts_section: number;
+	status: string;
+	updated_at: string;
+}
+
+export interface SitePage {
+	id: number;
+	title: string;
+	slug: string;
+	description: string;
+	contentMarkdown: string;
+	contentHtml: string;
+	showPostsSection: boolean;
+	status: string;
+	updatedAt: Date;
+}
+
+export interface SitePageInput {
+	title: string;
+	slug: string;
+	description: string;
+	contentMarkdown: string;
+	showPostsSection: boolean;
+	status: string;
+}
+
 export function getDb(locals: App.Locals): D1Database {
 	const db = locals.runtime.env.DB;
 	if (!db) {
@@ -171,6 +203,94 @@ export async function saveSiteConfig(
 	];
 
 	await db.batch(statements);
+}
+
+export async function listAllPages(db: D1Database): Promise<SitePage[]> {
+	await ensureSiteTables(db);
+
+	const result = await db
+		.prepare(
+			`SELECT id, title, slug, description, content_markdown, show_posts_section, status, updated_at
+			FROM site_pages
+			ORDER BY datetime(updated_at) DESC, id DESC`,
+		)
+		.all<SitePageRecord>();
+
+	return (result.results ?? []).map(toSitePage);
+}
+
+export async function getPublishedPageBySlug(
+	db: D1Database,
+	slug: string,
+): Promise<SitePage | null> {
+	await ensureSiteTables(db);
+
+	const result = await db
+		.prepare(
+			`SELECT id, title, slug, description, content_markdown, show_posts_section, status, updated_at
+			FROM site_pages
+			WHERE slug = ?1 AND status = 'published'
+			LIMIT 1`,
+		)
+		.bind(slug)
+		.first<SitePageRecord>();
+
+	return result ? toSitePage(result) : null;
+}
+
+export async function createPage(db: D1Database, input: SitePageInput): Promise<void> {
+	await ensureSiteTables(db);
+
+	await db
+		.prepare(
+			`INSERT INTO site_pages (title, slug, description, content_markdown, show_posts_section, status, updated_at)
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP)`,
+		)
+		.bind(
+			input.title,
+			input.slug,
+			input.description,
+			input.contentMarkdown,
+			input.showPostsSection ? 1 : 0,
+			input.status,
+		)
+		.run();
+}
+
+export async function updatePage(
+	db: D1Database,
+	id: number,
+	input: SitePageInput,
+): Promise<void> {
+	await ensureSiteTables(db);
+
+	await db
+		.prepare(
+			`UPDATE site_pages
+			SET title = ?1,
+				slug = ?2,
+				description = ?3,
+				content_markdown = ?4,
+				show_posts_section = ?5,
+				status = ?6,
+				updated_at = CURRENT_TIMESTAMP
+			WHERE id = ?7`,
+		)
+		.bind(
+			input.title,
+			input.slug,
+			input.description,
+			input.contentMarkdown,
+			input.showPostsSection ? 1 : 0,
+			input.status,
+			id,
+		)
+		.run();
+}
+
+export async function deletePage(db: D1Database, id: number): Promise<void> {
+	await ensureSiteTables(db);
+	await db.prepare("DELETE FROM site_pages WHERE id = ?1").bind(id).run();
 }
 
 export async function listAllPosts(db: D1Database): Promise<BlogPost[]> {
@@ -333,6 +453,17 @@ export function parseSiteForm(formData: FormData): {
 	};
 }
 
+export function parsePageForm(formData: FormData): SitePageInput {
+	return {
+		title: requiredString(formData, "title"),
+		slug: slugify(requiredString(formData, "slug")),
+		description: requiredString(formData, "description"),
+		contentMarkdown: requiredString(formData, "contentMarkdown"),
+		showPostsSection: optionalString(formData, "showPostsSection") === "on",
+		status: normalizeStatus(requiredString(formData, "status")),
+	};
+}
+
 export function requiredString(formData: FormData, key: string): string {
 	const value = formData.get(key);
 	if (typeof value !== "string" || value.trim() === "") {
@@ -397,6 +528,18 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			)`,
 		),
 		db.prepare(
+			`CREATE TABLE IF NOT EXISTS site_pages (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				title TEXT NOT NULL,
+				slug TEXT NOT NULL UNIQUE,
+				description TEXT NOT NULL,
+				content_markdown TEXT NOT NULL,
+				show_posts_section INTEGER NOT NULL DEFAULT 0,
+				status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+		),
+		db.prepare(
 			`INSERT INTO site_settings (id, site_title, header_background, header_text_color, header_accent_color)
 			VALUES (1, 'Edge CMS', '#ffffff', '#0f1219', '#2337ff')
 			ON CONFLICT(id) DO NOTHING`,
@@ -417,6 +560,20 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			WHERE NOT EXISTS (SELECT 1 FROM navigation_items WHERE href = '/about')`,
 		),
 	]);
+}
+
+function toSitePage(row: SitePageRecord): SitePage {
+	return {
+		id: row.id,
+		title: row.title,
+		slug: row.slug,
+		description: row.description,
+		contentMarkdown: row.content_markdown,
+		contentHtml: renderMarkdown(row.content_markdown),
+		showPostsSection: Boolean(row.show_posts_section),
+		status: row.status,
+		updatedAt: new Date(row.updated_at),
+	};
 }
 
 function sanitizeHexColor(value: string, fallback: string): string {

@@ -1,0 +1,80 @@
+---
+export const prerender = false;
+
+import BaseHead from "../../components/BaseHead.astro";
+import Footer from "../../components/Footer.astro";
+import Header from "../../components/Header.astro";
+import AdminNav from "../../components/AdminNav.astro";
+import { SITE_TITLE } from "../../consts";
+import { getAdminToken, getDb, getSiteConfig, isAdminAuthenticated } from "../../lib/blog";
+
+if (getAdminToken(Astro.locals) && !isAdminAuthenticated(Astro.request, Astro.locals)) {
+	return Astro.redirect("/admin/login");
+}
+
+let loadError = "";
+let siteConfig = {
+	siteTitle: SITE_TITLE,
+	headerBackground: "#ffffff",
+	headerTextColor: "#0f1219",
+	headerAccentColor: "#2337ff",
+	navItems: [
+		{ label: "Home", href: "/", sortOrder: 0 },
+		{ label: "Blog", href: "/blog", sortOrder: 1 },
+		{ label: "About", href: "/about", sortOrder: 2 },
+	],
+};
+
+try {
+	siteConfig = await getSiteConfig(getDb(Astro.locals));
+} catch (error) {
+	loadError = error instanceof Error ? error.message : "Failed to load site settings.";
+}
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Header | ${SITE_TITLE}`} description="Manage header settings." />
+		<style>
+			.wrap { width: min(1100px, calc(100% - 2rem)); max-width: none; }
+			.panel { background: white; border-radius: 18px; box-shadow: var(--box-shadow); padding: 1.25rem; }
+			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+			label { display: grid; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; }
+			input, textarea, button { font: inherit; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid rgb(var(--gray-light)); box-sizing: border-box; }
+			textarea { min-height: 220px; resize: vertical; }
+			.notice { padding: 0.9rem 1rem; border-radius: 12px; background: rgba(35, 55, 255, 0.08); color: var(--accent-dark); }
+			.primary { background: var(--accent); color: white; border: none; cursor: pointer; }
+			.muted { color: rgb(var(--gray)); }
+			@media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main class="wrap">
+			<section class="panel">
+				<AdminNav />
+				<h1>Header</h1>
+				<p class="muted">Manage the brand title, colors, and navigation links.</p>
+				{Astro.url.searchParams.get("siteSaved") && <p class="notice">Header settings saved.</p>}
+				{Astro.url.searchParams.get("siteError") && <p class="notice">Header settings could not be saved.</p>}
+				{loadError && <p class="notice">{loadError}</p>}
+				<form method="post" action="/api/admin/site" class="grid">
+					<label><span>Site title</span><input name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
+					<label><span>Header background</span><input name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
+					<label><span>Header text color</span><input name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
+					<label><span>Header accent color</span><input name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
+					<label style="grid-column: 1 / -1;">
+						<span>Navigation items</span>
+						<textarea name="navItems" disabled={Boolean(loadError)}>{siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join('\n')}</textarea>
+					</label>
+					<div style="grid-column: 1 / -1;">
+						<p class="muted">One item per line: `Label|/path` or `Label|https://example.com`.</p>
+						<button class="primary" type="submit" disabled={Boolean(loadError)}>Save header</button>
+					</div>
+				</form>
+			</section>
+		</main>
+		<Footer />
+	</body>
+</html>

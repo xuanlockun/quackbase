@@ -1,0 +1,100 @@
+---
+export const prerender = false;
+
+import BaseHead from "../../components/BaseHead.astro";
+import Footer from "../../components/Footer.astro";
+import Header from "../../components/Header.astro";
+import FormattedDate from "../../components/FormattedDate.astro";
+import AdminNav from "../../components/AdminNav.astro";
+import { SITE_TITLE } from "../../consts";
+import { getAdminToken, getDb, isAdminAuthenticated, listAllPages } from "../../lib/blog";
+
+if (getAdminToken(Astro.locals) && !isAdminAuthenticated(Astro.request, Astro.locals)) {
+	return Astro.redirect("/admin/login");
+}
+
+let pages = [];
+let loadError = "";
+
+try {
+	pages = await listAllPages(getDb(Astro.locals));
+} catch (error) {
+	loadError = error instanceof Error ? error.message : "Failed to load pages.";
+}
+
+const selectedSlug = Astro.url.searchParams.get("slug");
+const selectedPage = selectedSlug ? pages.find((page) => page.slug === selectedSlug) ?? null : null;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Pages | ${SITE_TITLE}`} description="Manage custom pages." />
+		<style>
+			.cms-shell { width: min(1200px, calc(100% - 2rem)); max-width: none; display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 1.5rem; }
+			.panel { background: white; border-radius: 18px; box-shadow: var(--box-shadow); padding: 1.25rem; }
+			.sidebar-list { display: grid; gap: 0.75rem; margin-top: 1rem; }
+			.sidebar-link { display: block; padding: 0.9rem 1rem; border-radius: 12px; text-decoration: none; color: rgb(var(--gray-dark)); background: rgb(var(--gray-light)); }
+			.sidebar-link.active { background: rgba(35, 55, 255, 0.12); color: var(--accent-dark); }
+			.muted { color: rgb(var(--gray)); }
+			form.editor { display: grid; gap: 1rem; }
+			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+			label { display: grid; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; }
+			input, select, textarea, button { font: inherit; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid rgb(var(--gray-light)); box-sizing: border-box; }
+			textarea { min-height: 320px; resize: vertical; }
+			.primary { background: var(--accent); color: white; border: none; cursor: pointer; }
+			.danger { background: #a61b29; color: white; border: none; cursor: pointer; }
+			.notice { padding: 0.9rem 1rem; border-radius: 12px; background: rgba(35, 55, 255, 0.08); color: var(--accent-dark); }
+			@media (max-width: 960px) { .cms-shell, .grid { grid-template-columns: 1fr; } }
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main class="cms-shell">
+			<aside class="panel">
+				<AdminNav />
+				<h1>Pages</h1>
+				<p class="muted">Create content pages for new nav items instead of linking to empty routes.</p>
+				<div class="sidebar-list">
+					<a class:list={["sidebar-link", !selectedPage && "active"]} href="/admin/pages">New page</a>
+					{
+						pages.map((page) => (
+							<a class:list={["sidebar-link", selectedPage?.id === page.id && "active"]} href={`/admin/pages?slug=${page.slug}`}>
+								<strong>{page.title}</strong>
+								<br />
+								<span class="muted">{page.status} | <FormattedDate date={page.updatedAt} /></span>
+							</a>
+						))
+					}
+				</div>
+			</aside>
+
+			<section class="panel">
+				<h2>{selectedPage ? "Edit Page" : "Create Page"}</h2>
+				{Astro.url.searchParams.get("pageSaved") && <p class="notice">Page saved.</p>}
+				{Astro.url.searchParams.get("pageDeleted") && <p class="notice">Page deleted.</p>}
+				{Astro.url.searchParams.get("pageError") && <p class="notice">The page request failed.</p>}
+				{loadError && <p class="notice">{loadError}</p>}
+				<form class="editor" method="post" action="/api/admin/pages">
+					{selectedPage && <input type="hidden" name="id" value={selectedPage.id} />}
+					<div class="grid">
+						<label><span>Title</span><input name="title" required value={selectedPage?.title ?? ""} disabled={Boolean(loadError)} /></label>
+						<label><span>Slug</span><input name="slug" required pattern="[a-z0-9-]+" value={selectedPage?.slug ?? ""} placeholder="services" disabled={Boolean(loadError)} /></label>
+						<label><span>Description</span><input name="description" required value={selectedPage?.description ?? ""} placeholder="Page summary" disabled={Boolean(loadError)} /></label>
+						<label><span>Status</span><select name="status" disabled={Boolean(loadError)}><option value="published" selected={selectedPage?.status !== "draft"}>Published</option><option value="draft" selected={selectedPage?.status === "draft"}>Draft</option></select></label>
+					</div>
+					<label><span>Page content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError)}>{selectedPage?.contentMarkdown ?? "# New page"}</textarea></label>
+					<label><span><input type="checkbox" name="showPostsSection" checked={selectedPage?.showPostsSection} disabled={Boolean(loadError)} /> Show latest posts section under the page content</span></label>
+					<button class="primary" type="submit" disabled={Boolean(loadError)}>{selectedPage ? "Save page" : "Create page"}</button>
+				</form>
+				{selectedPage && (
+					<form method="post" action="/api/admin/pages/delete">
+						<input type="hidden" name="id" value={selectedPage.id} />
+						<button class="danger" type="submit">Delete page</button>
+					</form>
+				)}
+			</section>
+		</main>
+		<Footer />
+	</body>
+</html>
