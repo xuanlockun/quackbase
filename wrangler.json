@@ -2,6 +2,13 @@
 	"name": "astro-blog-starter-template",
 	"compatibility_date": "2025-10-08",
 	"compatibility_flags": ["nodejs_compat"],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "my-d1",
+			"database_id": "d0365841-9c7f-4cad-b9f0-6ee5c1bf6810"
+		}
+	],
 	"main": "./dist/_worker.js/index.js",
 	"assets": {
 		"directory": "./dist",
