@@ -67,7 +67,10 @@ try {
 				{loadError && <p class="notice">{loadError}</p>}
 				<form method="post" action="/api/admin/site" class="grid">
 					<label><span>Site title</span><input name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
-					<label><span>Home page slug</span><input name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
+					<label>
+						<span>Home page slug</span>
+						<input name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} />
+					</label>
 					<label><span>Header background</span><input name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
 					<label><span>Header text color</span><input name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
 					<label><span>Header accent color</span><input name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
@@ -82,6 +85,7 @@ try {
 						<textarea name="navItems" disabled={Boolean(loadError)}>{siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join('\n')}</textarea>
 					</label>
 					<div style="grid-column: 1 / -1;">
+						<p class="muted">For the homepage use a page slug like `home` or `/home`. Empty or `/` also falls back to `home`.</p>
 						<p class="muted">One item per line: `Label|/path` or `Label|https://example.com`.</p>
 						<button class="primary" type="submit" disabled={Boolean(loadError)}>Save header</button>
 					</div>

@@ -214,7 +214,7 @@ export async function saveSiteConfig(
 			)
 			.bind(
 				input.siteTitle.trim(),
-				slugify(input.homePageSlug) || "home",
+				normalizeHomePageSlug(input.homePageSlug),
 				sanitizeHexColor(input.headerBackground, "#ffffff"),
 				sanitizeHexColor(input.headerTextColor, "#0f1219"),
 				sanitizeHexColor(input.headerAccentColor, "#2337ff"),
@@ -718,4 +718,14 @@ function normalizeHref(value: string): string {
 		return trimmed;
 	}
 	return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+}
+
+function normalizeHomePageSlug(value: string): string {
+	const trimmed = value.trim();
+	if (trimmed === "" || trimmed === "/") {
+		return "home";
+	}
+
+	const withoutSlashes = trimmed.replace(/^\/+|\/+$/g, "");
+	return slugify(withoutSlashes) || "home";
 }
