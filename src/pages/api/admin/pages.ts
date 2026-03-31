@@ -26,7 +26,8 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 
 		await createPage(getDb(locals), input);
 		return redirect(`/admin/pages?slug=${input.slug}&pageSaved=1`);
-	} catch {
-		return redirect("/admin/pages?pageError=1");
+	} catch (error) {
+		const message = error instanceof Error ? encodeURIComponent(error.message) : "unknown";
+		return redirect(`/admin/pages?pageError=${message}`);
 	}
 };

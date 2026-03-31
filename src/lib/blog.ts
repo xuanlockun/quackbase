@@ -302,8 +302,7 @@ export async function createPage(db: D1Database, input: SitePageInput): Promise<
 
 	await db
 		.prepare(
-			`INSERT INTO site_pages (title, slug, description, content_markdown, show_posts_section, status, updated_at)
-			, page_sections
+			`INSERT INTO site_pages (title, slug, description, content_markdown, show_posts_section, status, updated_at, page_sections)
 			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP, ?7)`,
 		)
 		.bind(
@@ -671,11 +670,6 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			`INSERT INTO navigation_items (label, href, sort_order, is_visible)
 			SELECT 'Home', '/', 0, 1
 			WHERE NOT EXISTS (SELECT 1 FROM navigation_items)`,
-		),
-		db.prepare(
-			`INSERT INTO navigation_items (label, href, sort_order, is_visible)
-			SELECT 'Blog', '/blog', 1, 1
-			WHERE NOT EXISTS (SELECT 1 FROM navigation_items WHERE href = '/blog')`,
 		),
 	]);
 }

@@ -225,7 +225,9 @@ const selectedPage = selectedSlug ? pages.find((page) => page.slug === selectedS
 
 					{Astro.url.searchParams.get("pageSaved") && <p class="notice">Page saved.</p>}
 					{Astro.url.searchParams.get("pageDeleted") && <p class="notice">Page deleted.</p>}
-					{Astro.url.searchParams.get("pageError") && <p class="notice">The page request failed.</p>}
+					{Astro.url.searchParams.get("pageError") && (
+						<p class="notice">The page request failed: {Astro.url.searchParams.get("pageError")}</p>
+					)}
 					{loadError && <p class="notice">{loadError}</p>}
 
 					<div class="table-wrap">
