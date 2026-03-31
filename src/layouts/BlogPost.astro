@@ -12,9 +12,19 @@ interface Props {
 	heroImage?: string;
 	contentHtml?: string;
 	showDate?: boolean;
+	wideContent?: boolean;
 }
 
-const { title, description, pubDate, updatedDate, heroImage, contentHtml, showDate = true } = Astro.props;
+const {
+	title,
+	description,
+	pubDate,
+	updatedDate,
+	heroImage,
+	contentHtml,
+	showDate = true,
+	wideContent = false,
+} = Astro.props;
 ---
 
 <html lang="en">
@@ -42,6 +52,9 @@ const { title, description, pubDate, updatedDate, heroImage, contentHtml, showDa
 				padding: 1em;
 				color: rgb(var(--gray-dark));
 			}
+			.prose.prose-wide {
+				width: 1120px;
+			}
 			.title {
 				margin-bottom: 1em;
 				padding: 1em 0;
@@ -68,7 +81,7 @@ const { title, description, pubDate, updatedDate, heroImage, contentHtml, showDa
 				<div class="hero-image">
 					{heroImage && <img width={1020} height={510} src={heroImage} alt="" />}
 				</div>
-				<div class="prose">
+				<div class:list={["prose", wideContent && "prose-wide"]}>
 					<div class="title">
 						{
 							showDate && (

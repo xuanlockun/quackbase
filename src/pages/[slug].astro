@@ -50,6 +50,7 @@ if (!page) {
 			pubDate={page.updatedAt}
 			contentHtml={page.contentHtml}
 			showDate={false}
+			wideContent={true}
 		>
 			{
 				page.pageSections.includes("blog_feed") && posts.length > 0 && (
@@ -158,6 +159,7 @@ if (!page) {
 			pubDate={new Date()}
 			contentHtml="<p>This page does not exist.</p>"
 			showDate={false}
+			wideContent={true}
 		/>
 	)
 }
