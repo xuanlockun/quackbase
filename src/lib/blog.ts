@@ -1,4 +1,5 @@
 import { micromark } from "micromark";
+import { gfm, gfmHtml } from "micromark-extension-gfm";
 
 export interface BlogPostRecord {
 	id: number;
@@ -97,6 +98,8 @@ export function getDb(locals: App.Locals): D1Database {
 export function renderMarkdown(markdown: string): string {
 	return micromark(markdown, {
 		allowDangerousHtml: false,
+		extensions: [gfm()],
+		htmlExtensions: [gfmHtml()],
 	});
 }
 
