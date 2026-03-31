@@ -15,6 +15,7 @@ if (getAdminToken(Astro.locals) && !isAdminAuthenticated(Astro.request, Astro.lo
 let loadError = "";
 let siteConfig = {
 	siteTitle: SITE_TITLE,
+	homePageSlug: "home",
 	headerBackground: "#ffffff",
 	headerTextColor: "#0f1219",
 	headerAccentColor: "#2337ff",
@@ -68,6 +69,7 @@ try {
 				{loadError && <p class="notice">{loadError}</p>}
 				<form method="post" action="/api/admin/site" class="grid">
 					<label><span>Site title</span><input name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
+					<label><span>Home page slug</span><input name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
 					<label><span>Header background</span><input name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
 					<label><span>Header text color</span><input name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
 					<label><span>Header accent color</span><input name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>

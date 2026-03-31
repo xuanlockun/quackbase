@@ -43,6 +43,7 @@ export interface SiteNavItem {
 
 export interface SiteConfig {
 	siteTitle: string;
+	homePageSlug: string;
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
@@ -132,12 +133,13 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const settings = await db
 		.prepare(
-			`SELECT site_title, header_background, header_text_color, header_accent_color
+			`SELECT site_title, home_page_slug, header_background, header_text_color, header_accent_color
 			FROM site_settings
 			WHERE id = 1`,
 		)
 		.first<{
 			site_title: string;
+			home_page_slug: string;
 			header_background: string;
 			header_text_color: string;
 			header_accent_color: string;
@@ -166,6 +168,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	return {
 		siteTitle: settings?.site_title ?? "Edge CMS",
+		homePageSlug: settings?.home_page_slug ?? "home",
 		headerBackground: settings?.header_background ?? "#ffffff",
 		headerTextColor: settings?.header_text_color ?? "#0f1219",
 		headerAccentColor: settings?.header_accent_color ?? "#2337ff",
@@ -184,6 +187,7 @@ export async function saveSiteConfig(
 	db: D1Database,
 	input: {
 		siteTitle: string;
+		homePageSlug: string;
 		headerBackground: string;
 		headerTextColor: string;
 		headerAccentColor: string;
@@ -198,10 +202,11 @@ export async function saveSiteConfig(
 	const statements = [
 		db
 			.prepare(
-				`INSERT INTO site_settings (id, site_title, header_background, header_text_color, header_accent_color, updated_at)
-				VALUES (1, ?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)
+				`INSERT INTO site_settings (id, site_title, home_page_slug, header_background, header_text_color, header_accent_color, updated_at)
+				VALUES (1, ?1, ?2, ?3, ?4, ?5, CURRENT_TIMESTAMP)
 				ON CONFLICT(id) DO UPDATE SET
 					site_title = excluded.site_title,
+					home_page_slug = excluded.home_page_slug,
 					header_background = excluded.header_background,
 					header_text_color = excluded.header_text_color,
 					header_accent_color = excluded.header_accent_color,
@@ -209,6 +214,7 @@ export async function saveSiteConfig(
 			)
 			.bind(
 				input.siteTitle.trim(),
+				slugify(input.homePageSlug) || "home",
 				sanitizeHexColor(input.headerBackground, "#ffffff"),
 				sanitizeHexColor(input.headerTextColor, "#0f1219"),
 				sanitizeHexColor(input.headerAccentColor, "#2337ff"),
@@ -472,6 +478,7 @@ export function parsePostForm(formData: FormData): BlogPostInput {
 
 export function parseSiteForm(formData: FormData): {
 	siteTitle: string;
+	homePageSlug: string;
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
@@ -481,6 +488,7 @@ export function parseSiteForm(formData: FormData): {
 	navItems: SiteNavItem[];
 } {
 	const siteTitle = requiredString(formData, "siteTitle");
+	const homePageSlug = requiredString(formData, "homePageSlug");
 	const headerBackground = optionalString(formData, "headerBackground") || "#ffffff";
 	const headerTextColor = optionalString(formData, "headerTextColor") || "#0f1219";
 	const headerAccentColor = optionalString(formData, "headerAccentColor") || "#2337ff";
@@ -510,6 +518,7 @@ export function parseSiteForm(formData: FormData): {
 
 	return {
 		siteTitle,
+		homePageSlug,
 		headerBackground,
 		headerTextColor,
 		headerAccentColor,
@@ -585,6 +594,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			`CREATE TABLE IF NOT EXISTS site_settings (
 				id INTEGER PRIMARY KEY CHECK (id = 1),
 				site_title TEXT NOT NULL DEFAULT 'Edge CMS',
+				home_page_slug TEXT NOT NULL DEFAULT 'home',
 				header_background TEXT NOT NULL DEFAULT '#ffffff',
 				header_text_color TEXT NOT NULL DEFAULT '#0f1219',
 				header_accent_color TEXT NOT NULL DEFAULT '#2337ff',
@@ -623,8 +633,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			)`,
 		),
 		db.prepare(
-			`INSERT INTO site_settings (id, site_title, header_background, header_text_color, header_accent_color)
-			VALUES (1, 'Edge CMS', '#ffffff', '#0f1219', '#2337ff')
+			`INSERT INTO site_settings (id, site_title, home_page_slug, header_background, header_text_color, header_accent_color)
+			VALUES (1, 'Edge CMS', 'home', '#ffffff', '#0f1219', '#2337ff')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(
@@ -646,6 +656,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	const pageColumns = await db.prepare(`PRAGMA table_info(site_pages)`).all<{ name: string }>();
 	const columnNames = new Set((pageColumns.results ?? []).map((column) => column.name));
+	const settingsColumns = await db.prepare(`PRAGMA table_info(site_settings)`).all<{ name: string }>();
+	const settingsColumnNames = new Set((settingsColumns.results ?? []).map((column) => column.name));
 
 	if (!columnNames.has("page_sections")) {
 		await db.prepare(`ALTER TABLE site_pages ADD COLUMN page_sections TEXT NOT NULL DEFAULT '[]'`).run();
@@ -658,6 +670,10 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				END`,
 			)
 			.run();
+	}
+
+	if (!settingsColumnNames.has("home_page_slug")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN home_page_slug TEXT NOT NULL DEFAULT 'home'`).run();
 	}
 }
 

@@ -1,40 +1,45 @@
 ---
 export const prerender = false;
 
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import BlogPost from '../layouts/BlogPost.astro';
+import CmsPageSections from '../components/CmsPageSections.astro';
+import { getDb, getPublishedPageBySlug, getSiteConfig } from '../lib/blog';
+
+let page = null;
+
+try {
+	const db = getDb(Astro.locals);
+	const config = await getSiteConfig(db);
+	page = await getPublishedPageBySlug(db, config.homePageSlug);
+} catch {
+	page = null;
+}
+
+if (!page) {
+	Astro.response.status = 404;
+}
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>Live Astro Blog CMS</h1>
-			<p>
-				This project uses <a href="https://astro.build/">Astro</a> for the frontend and Cloudflare
-				D1 as the source of truth for blog content, so post edits can appear immediately without
-				waiting for a rebuild.
-			</p>
-			<p>
-				The public blog pages load from the database at request time, and the admin dashboard lets
-				you create, edit, publish, and delete posts from the browser.
-			</p>
-			<p>Start here:</p>
-			<ul>
-				<li>Run the SQL migration in <code>migrations/0001_create_posts.sql</code></li>
-				<li>Add a D1 binding named <code>DB</code></li>
-				<li>Add a secret named <code>CMS_ADMIN_TOKEN</code></li>
-				<li>Open <a href="/admin">/admin</a> to manage posts</li>
-				<li>Open <a href="/blog">/blog</a> to view the live site</li>
-			</ul>
-			<p>The live blog reads from D1 at runtime, and the old starter Markdown content has been removed.</p>
-		</main>
-		<Footer />
-	</body>
-</html>
+{
+	page ? (
+		<BlogPost
+			title={page.title}
+			description={page.description}
+			pubDate={page.updatedAt}
+			contentHtml={page.contentHtml}
+			showDate={false}
+			wideContent={true}
+		>
+			<CmsPageSections pageSlug={page.slug} pageSections={page.pageSections} />
+		</BlogPost>
+	) : (
+		<BlogPost
+			title="Home page not configured"
+			description="Create a CMS page and set it as the home page slug in admin."
+			pubDate={new Date()}
+			contentHtml="<p>Create a CMS page, publish it, then set its slug as the home page in <code>/admin/header</code>.</p>"
+			showDate={false}
+			wideContent={true}
+		/>
+	)
+}
