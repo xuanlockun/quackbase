@@ -253,7 +253,7 @@ export async function listAllPages(db: D1Database): Promise<SitePage[]> {
 
 	const result = await db
 		.prepare(
-			`SELECT id, title, slug, description, content_markdown, show_posts_section, status, updated_at
+			`SELECT id, title, slug, description, content_markdown, show_posts_section, page_sections, status, updated_at
 			FROM site_pages
 			ORDER BY datetime(updated_at) DESC, id DESC`,
 		)
@@ -632,26 +632,6 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 			)`,
 		),
-		db.prepare(
-			`INSERT INTO site_settings (id, site_title, home_page_slug, header_background, header_text_color, header_accent_color)
-			VALUES (1, 'Edge CMS', 'home', '#ffffff', '#0f1219', '#2337ff')
-			ON CONFLICT(id) DO NOTHING`,
-		),
-		db.prepare(
-			`INSERT INTO footer_settings (id, footer_text, footer_background, footer_text_color)
-			VALUES (1, 'Edge CMS. Content updates go live straight from D1.', '#eef2f7', '#60739f')
-			ON CONFLICT(id) DO NOTHING`,
-		),
-		db.prepare(
-			`INSERT INTO navigation_items (label, href, sort_order, is_visible)
-			SELECT 'Home', '/', 0, 1
-			WHERE NOT EXISTS (SELECT 1 FROM navigation_items)`,
-		),
-		db.prepare(
-			`INSERT INTO navigation_items (label, href, sort_order, is_visible)
-			SELECT 'Blog', '/blog', 1, 1
-			WHERE NOT EXISTS (SELECT 1 FROM navigation_items WHERE href = '/blog')`,
-		),
 	]);
 
 	const pageColumns = await db.prepare(`PRAGMA table_info(site_pages)`).all<{ name: string }>();
@@ -675,6 +655,29 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 	if (!settingsColumnNames.has("home_page_slug")) {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN home_page_slug TEXT NOT NULL DEFAULT 'home'`).run();
 	}
+
+	await db.batch([
+		db.prepare(
+			`INSERT INTO site_settings (id, site_title, home_page_slug, header_background, header_text_color, header_accent_color)
+			VALUES (1, 'Edge CMS', 'home', '#ffffff', '#0f1219', '#2337ff')
+			ON CONFLICT(id) DO NOTHING`,
+		),
+		db.prepare(
+			`INSERT INTO footer_settings (id, footer_text, footer_background, footer_text_color)
+			VALUES (1, 'Edge CMS. Content updates go live straight from D1.', '#eef2f7', '#60739f')
+			ON CONFLICT(id) DO NOTHING`,
+		),
+		db.prepare(
+			`INSERT INTO navigation_items (label, href, sort_order, is_visible)
+			SELECT 'Home', '/', 0, 1
+			WHERE NOT EXISTS (SELECT 1 FROM navigation_items)`,
+		),
+		db.prepare(
+			`INSERT INTO navigation_items (label, href, sort_order, is_visible)
+			SELECT 'Blog', '/blog', 1, 1
+			WHERE NOT EXISTS (SELECT 1 FROM navigation_items WHERE href = '/blog')`,
+		),
+	]);
 }
 
 function toSitePage(row: SitePageRecord): SitePage {
