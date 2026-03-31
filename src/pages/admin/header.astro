@@ -18,6 +18,9 @@ let siteConfig = {
 	headerBackground: "#ffffff",
 	headerTextColor: "#0f1219",
 	headerAccentColor: "#2337ff",
+	footerText: "Edge CMS. Content updates go live straight from D1.",
+	footerBackground: "#eef2f7",
+	footerTextColor: "#60739f",
 	navItems: [
 		{ label: "Home", href: "/", sortOrder: 0 },
 		{ label: "Blog", href: "/blog", sortOrder: 1 },
@@ -54,8 +57,8 @@ try {
 		<main class="wrap">
 			<section class="panel">
 				<AdminNav />
-				<h1>Header</h1>
-				<p class="muted">Manage the brand title, colors, and navigation links.</p>
+				<h1>Header & Footer</h1>
+				<p class="muted">Manage the brand title, navigation links, and the site chrome colors.</p>
 				{Astro.url.searchParams.get("siteSaved") && <p class="notice">Header settings saved.</p>}
 				{Astro.url.searchParams.get("siteError") && <p class="notice">Header settings could not be saved.</p>}
 				{loadError && <p class="notice">{loadError}</p>}
@@ -64,6 +67,12 @@ try {
 					<label><span>Header background</span><input name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
 					<label><span>Header text color</span><input name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
 					<label><span>Header accent color</span><input name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
+					<label><span>Footer background</span><input name="footerBackground" value={siteConfig.footerBackground} placeholder="#eef2f7" disabled={Boolean(loadError)} /></label>
+					<label><span>Footer text color</span><input name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
+					<label style="grid-column: 1 / -1;">
+						<span>Footer text</span>
+						<input name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} />
+					</label>
 					<label style="grid-column: 1 / -1;">
 						<span>Navigation items</span>
 						<textarea name="navItems" disabled={Boolean(loadError)}>{siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join('\n')}</textarea>

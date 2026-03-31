@@ -24,56 +24,116 @@ try {
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 		<style>
 			main {
-				width: 960px;
+				width: min(1120px, calc(100% - 2rem));
+				max-width: none;
 			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
+			.hero {
+				display: grid;
+				gap: 1rem;
+				margin-bottom: 2rem;
+			}
+			.kicker {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				width: fit-content;
+				padding: 0.45rem 0.8rem;
+				border-radius: 999px;
+				background: rgba(35, 55, 255, 0.08);
+				color: var(--accent-dark);
+				font-size: 0.85rem;
+				font-weight: 700;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+			}
+			.hero h1 {
+				max-width: 12ch;
+				margin: 0;
+			}
+			.hero-copy {
+				max-width: 680px;
+				margin: 0;
+				color: rgb(var(--gray));
+			}
+			.posts-grid {
+				display: grid;
+				grid-template-columns: 1.25fr 0.75fr;
+				gap: 1.5rem;
+				align-items: start;
+			}
+			.feature-card,
+			.side-list a {
+				display: block;
+				text-decoration: none;
+				color: inherit;
+			}
+			.feature-card {
+				background: white;
+				border-radius: 24px;
+				padding: 1rem;
+				box-shadow: var(--box-shadow);
+			}
+			.feature-card img {
+				width: 100%;
+				height: auto;
+				aspect-ratio: 16 / 9;
+				object-fit: cover;
+				margin-bottom: 1rem;
+				border-radius: 18px;
+			}
+			.feature-card h2 {
+				margin-bottom: 0.75rem;
+				font-size: clamp(2rem, 4vw, 3.4rem);
+			}
+			.feature-card p {
+				margin: 0;
+			}
+			.feature-summary {
+				color: rgb(var(--gray));
+			}
+			.side-list {
+				display: grid;
+				gap: 1rem;
 				list-style-type: none;
 				margin: 0;
 				padding: 0;
 			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
+			.side-list li {
 				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
 			}
-			.date {
+			.side-list a {
+				padding: 1.1rem 1.15rem;
+				background: rgba(255, 255, 255, 0.82);
+				border: 1px solid rgba(var(--gray-light), 0.7);
+				border-radius: 18px;
+				box-shadow: 0 12px 30px rgba(var(--gray), 0.12);
+				transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+			}
+			.meta {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.75rem;
+				align-items: center;
+				margin-bottom: 0.85rem;
+				font-size: 0.9rem;
+				color: rgb(var(--gray));
+			}
+			.side-list h3 {
+				margin: 0 0 0.45rem 0;
+				font-size: 1.25rem;
+				line-height: 1.2;
+			}
+			.side-list p {
 				margin: 0;
 				color: rgb(var(--gray));
 			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
+			.feature-card:hover,
+			.side-list a:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 18px 34px rgba(var(--gray), 0.18);
 			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
+			.side-list a:hover {
+				border-color: rgba(35, 55, 255, 0.2);
 			}
 			.empty-state {
 				padding: 2rem;
@@ -81,19 +141,14 @@ try {
 				border-radius: 16px;
 				box-shadow: var(--box-shadow);
 			}
+			@media (max-width: 900px) {
+				.posts-grid {
+					grid-template-columns: 1fr;
+				}
+			}
 			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
+				.hero h1 {
+					max-width: none;
 				}
 			}
 		</style>
@@ -101,6 +156,13 @@ try {
 	<body>
 		<Header />
 		<main>
+			<section class="hero">
+				<span class="kicker">Editorial Feed</span>
+				<h1>Ideas, notes, and writing from the CMS.</h1>
+				<p class="hero-copy">
+					This page updates directly from D1, so newly published posts appear here without waiting for a rebuild.
+				</p>
+			</section>
 			<section>
 				{
 					loadError ? (
@@ -108,21 +170,33 @@ try {
 							Blog is not ready yet. Check the D1 binding, database ID, and run the posts migration.
 						</p>
 					) : posts.length ? (
-						<ul>
-							{
-								posts.map((post) => (
-									<li>
-										<a href={`/blog/${post.slug}/`}>
-											{post.heroImage && <img width={720} height={360} src={post.heroImage} alt="" />}
-											<h4 class="title">{post.title}</h4>
-											<p class="date">
-												<FormattedDate date={post.pubDate} />
-											</p>
-										</a>
-									</li>
-								))
-							}
-						</ul>
+						<div class="posts-grid">
+							<a class="feature-card" href={`/blog/${posts[0].slug}/`}>
+								{posts[0].heroImage && <img width={920} height={520} src={posts[0].heroImage} alt="" />}
+								<div class="meta">
+									<span>Lead Story</span>
+									<FormattedDate date={posts[0].pubDate} />
+								</div>
+								<h2>{posts[0].title}</h2>
+								<p class="feature-summary">{posts[0].description}</p>
+							</a>
+							<ul class="side-list">
+								{
+									posts.slice(1).map((post) => (
+										<li>
+											<a href={`/blog/${post.slug}/`}>
+												<div class="meta">
+													<FormattedDate date={post.pubDate} />
+													<span>{post.status}</span>
+												</div>
+												<h3>{post.title}</h3>
+												<p>{post.description}</p>
+											</a>
+										</li>
+									))
+								}
+							</ul>
+						</div>
 					) : (
 						<p class="empty-state">No published posts yet. Create one in the CMS.</p>
 					)

@@ -46,6 +46,9 @@ export interface SiteConfig {
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
+	footerText: string;
+	footerBackground: string;
+	footerTextColor: string;
 	navItems: SiteNavItem[];
 }
 
@@ -139,6 +142,18 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			header_accent_color: string;
 		}>();
 
+	const footerSettings = await db
+		.prepare(
+			`SELECT footer_text, footer_background, footer_text_color
+			FROM footer_settings
+			WHERE id = 1`,
+		)
+		.first<{
+			footer_text: string;
+			footer_background: string;
+			footer_text_color: string;
+		}>();
+
 	const navResult = await db
 		.prepare(
 			`SELECT label, href, sort_order
@@ -153,6 +168,9 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 		headerBackground: settings?.header_background ?? "#ffffff",
 		headerTextColor: settings?.header_text_color ?? "#0f1219",
 		headerAccentColor: settings?.header_accent_color ?? "#2337ff",
+		footerText: footerSettings?.footer_text ?? "Edge CMS. Content updates go live straight from D1.",
+		footerBackground: footerSettings?.footer_background ?? "#eef2f7",
+		footerTextColor: footerSettings?.footer_text_color ?? "#60739f",
 		navItems: (navResult.results ?? []).map((item) => ({
 			label: item.label,
 			href: item.href,
@@ -168,6 +186,9 @@ export async function saveSiteConfig(
 		headerBackground: string;
 		headerTextColor: string;
 		headerAccentColor: string;
+		footerText: string;
+		footerBackground: string;
+		footerTextColor: string;
 		navItems: SiteNavItem[];
 	},
 ): Promise<void> {
@@ -190,6 +211,21 @@ export async function saveSiteConfig(
 				sanitizeHexColor(input.headerBackground, "#ffffff"),
 				sanitizeHexColor(input.headerTextColor, "#0f1219"),
 				sanitizeHexColor(input.headerAccentColor, "#2337ff"),
+			),
+		db
+			.prepare(
+				`INSERT INTO footer_settings (id, footer_text, footer_background, footer_text_color, updated_at)
+				VALUES (1, ?1, ?2, ?3, CURRENT_TIMESTAMP)
+				ON CONFLICT(id) DO UPDATE SET
+					footer_text = excluded.footer_text,
+					footer_background = excluded.footer_background,
+					footer_text_color = excluded.footer_text_color,
+					updated_at = CURRENT_TIMESTAMP`,
+			)
+			.bind(
+				input.footerText.trim() || "Edge CMS. Content updates go live straight from D1.",
+				sanitizeHexColor(input.footerBackground, "#eef2f7"),
+				sanitizeHexColor(input.footerTextColor, "#60739f"),
 			),
 		db.prepare(`DELETE FROM navigation_items`),
 		...input.navItems.map((item, index) =>
@@ -418,12 +454,19 @@ export function parseSiteForm(formData: FormData): {
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
+	footerText: string;
+	footerBackground: string;
+	footerTextColor: string;
 	navItems: SiteNavItem[];
 } {
 	const siteTitle = requiredString(formData, "siteTitle");
 	const headerBackground = optionalString(formData, "headerBackground") || "#ffffff";
 	const headerTextColor = optionalString(formData, "headerTextColor") || "#0f1219";
 	const headerAccentColor = optionalString(formData, "headerAccentColor") || "#2337ff";
+	const footerText =
+		optionalString(formData, "footerText") || "Edge CMS. Content updates go live straight from D1.";
+	const footerBackground = optionalString(formData, "footerBackground") || "#eef2f7";
+	const footerTextColor = optionalString(formData, "footerTextColor") || "#60739f";
 	const navRaw = optionalString(formData, "navItems");
 
 	const navItems = navRaw
@@ -449,6 +492,9 @@ export function parseSiteForm(formData: FormData): {
 		headerBackground,
 		headerTextColor,
 		headerAccentColor,
+		footerText,
+		footerBackground,
+		footerTextColor,
 		navItems,
 	};
 }
@@ -540,8 +586,22 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			)`,
 		),
 		db.prepare(
+			`CREATE TABLE IF NOT EXISTS footer_settings (
+				id INTEGER PRIMARY KEY CHECK (id = 1),
+				footer_text TEXT NOT NULL DEFAULT 'Edge CMS. Content updates go live straight from D1.',
+				footer_background TEXT NOT NULL DEFAULT '#eef2f7',
+				footer_text_color TEXT NOT NULL DEFAULT '#60739f',
+				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+		),
+		db.prepare(
 			`INSERT INTO site_settings (id, site_title, header_background, header_text_color, header_accent_color)
 			VALUES (1, 'Edge CMS', '#ffffff', '#0f1219', '#2337ff')
+			ON CONFLICT(id) DO NOTHING`,
+		),
+		db.prepare(
+			`INSERT INTO footer_settings (id, footer_text, footer_background, footer_text_color)
+			VALUES (1, 'Edge CMS. Content updates go live straight from D1.', '#eef2f7', '#60739f')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(

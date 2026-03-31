@@ -1,9 +1,23 @@
 ---
+import { getDb, getSiteConfig } from "../lib/blog";
+
 const today = new Date();
+let footerText = "Edge CMS. Content updates go live straight from D1.";
+let footerBackground = "#eef2f7";
+let footerTextColor = "#60739f";
+
+try {
+	const config = await getSiteConfig(getDb(Astro.locals));
+	footerText = config.footerText;
+	footerBackground = config.footerBackground;
+	footerTextColor = config.footerTextColor;
+} catch {
+	// Fall back to baked-in footer settings if D1 is unavailable on this route.
+}
 ---
 
-<footer>
-	&copy; {today.getFullYear()} Edge CMS. Content updates go live straight from D1.
+<footer style={`--footer-bg:${footerBackground}; --footer-text:${footerTextColor};`}>
+	&copy; {today.getFullYear()} {footerText}
 	<div class="social-links">
 		<a href="https://m.webtoo.ls/@astro" target="_blank">
 			<span class="sr-only">Follow Astro on Mastodon</span>
@@ -42,8 +56,8 @@ const today = new Date();
 <style>
 	footer {
 		padding: 2em 1em 6em 1em;
-		background: linear-gradient(var(--gray-gradient)) no-repeat;
-		color: rgb(var(--gray));
+		background: linear-gradient(180deg, var(--footer-bg), color-mix(in srgb, var(--footer-bg) 88%, white));
+		color: var(--footer-text);
 		text-align: center;
 	}
 	.social-links {
@@ -54,7 +68,7 @@ const today = new Date();
 	}
 	.social-links a {
 		text-decoration: none;
-		color: rgb(var(--gray));
+		color: var(--footer-text);
 	}
 	.social-links a:hover {
 		color: rgb(var(--gray-dark));
