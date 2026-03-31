@@ -40,7 +40,7 @@ try {
 	<head>
 		<BaseHead title={`Header | ${SITE_TITLE}`} description="Manage header settings." />
 		<style>
-			.wrap { width: min(1100px, calc(100% - 2rem)); max-width: none; }
+			.wrap { width: min(1200px, calc(100% - 2rem)); max-width: none; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 1.5rem; }
 			.panel { background: white; border-radius: 18px; box-shadow: var(--box-shadow); padding: 1.25rem; }
 			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 			label { display: grid; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; }
@@ -49,14 +49,18 @@ try {
 			.notice { padding: 0.9rem 1rem; border-radius: 12px; background: rgba(35, 55, 255, 0.08); color: var(--accent-dark); }
 			.primary { background: var(--accent); color: white; border: none; cursor: pointer; }
 			.muted { color: rgb(var(--gray)); }
-			@media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+			@media (max-width: 960px) { .wrap, .grid { grid-template-columns: 1fr; } }
 		</style>
 	</head>
 	<body>
 		<Header />
 		<main class="wrap">
-			<section class="panel">
+			<aside class="panel">
 				<AdminNav />
+				<h2>Site Chrome</h2>
+				<p class="muted">Navigation, header colors, and footer presentation live here.</p>
+			</aside>
+			<section class="panel">
 				<h1>Header & Footer</h1>
 				<p class="muted">Manage the brand title, navigation links, and the site chrome colors.</p>
 				{Astro.url.searchParams.get("siteSaved") && <p class="notice">Header settings saved.</p>}

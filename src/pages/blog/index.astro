@@ -16,6 +16,8 @@ try {
 } catch (error) {
 	loadError = error instanceof Error ? error.message : "Failed to load posts.";
 }
+
+const featureImage = posts[0]?.heroImage || "/blog-placeholder-1.jpg";
 ---
 
 <!doctype html>
@@ -172,7 +174,7 @@ try {
 					) : posts.length ? (
 						<div class="posts-grid">
 							<a class="feature-card" href={`/blog/${posts[0].slug}/`}>
-								{posts[0].heroImage && <img width={920} height={520} src={posts[0].heroImage} alt="" />}
+								<img width={920} height={520} src={featureImage} alt="" />
 								<div class="meta">
 									<span>Lead Story</span>
 									<FormattedDate date={posts[0].pubDate} />
