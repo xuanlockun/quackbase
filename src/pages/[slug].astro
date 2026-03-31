@@ -28,7 +28,13 @@ if (!page) {
 
 {
 	page ? (
-		<BlogPost title={page.title} description={page.description} pubDate={page.updatedAt} contentHtml={page.contentHtml}>
+		<BlogPost
+			title={page.title}
+			description={page.description}
+			pubDate={page.updatedAt}
+			contentHtml={page.contentHtml}
+			showDate={false}
+		>
 			{
 				page.showPostsSection && posts.length > 0 && (
 					<section>
@@ -45,6 +51,12 @@ if (!page) {
 			}
 		</BlogPost>
 	) : (
-		<BlogPost title="Page not found" description="The requested page does not exist." pubDate={new Date()} contentHtml="<p>This page does not exist.</p>" />
+		<BlogPost
+			title="Page not found"
+			description="The requested page does not exist."
+			pubDate={new Date()}
+			contentHtml="<p>This page does not exist.</p>"
+			showDate={false}
+		/>
 	)
 }

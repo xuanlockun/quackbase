@@ -614,11 +614,6 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			SELECT 'Blog', '/blog', 1, 1
 			WHERE NOT EXISTS (SELECT 1 FROM navigation_items WHERE href = '/blog')`,
 		),
-		db.prepare(
-			`INSERT INTO navigation_items (label, href, sort_order, is_visible)
-			SELECT 'About', '/about', 2, 1
-			WHERE NOT EXISTS (SELECT 1 FROM navigation_items WHERE href = '/about')`,
-		),
 	]);
 }
 
