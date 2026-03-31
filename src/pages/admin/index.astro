@@ -6,7 +6,7 @@ import Footer from "../../components/Footer.astro";
 import Header from "../../components/Header.astro";
 import FormattedDate from "../../components/FormattedDate.astro";
 import { SITE_TITLE } from "../../consts";
-import { getAdminToken, getDb, isAdminAuthenticated, listAllPosts } from "../../lib/blog";
+import { getAdminToken, getDb, getSiteConfig, isAdminAuthenticated, listAllPosts } from "../../lib/blog";
 
 if (getAdminToken(Astro.locals) && !isAdminAuthenticated(Astro.request, Astro.locals)) {
 	return Astro.redirect("/admin/login");
@@ -14,9 +14,22 @@ if (getAdminToken(Astro.locals) && !isAdminAuthenticated(Astro.request, Astro.lo
 
 let posts = [];
 let loadError = "";
+let siteConfig = {
+	siteTitle: SITE_TITLE,
+	headerBackground: "#ffffff",
+	headerTextColor: "#0f1219",
+	headerAccentColor: "#2337ff",
+	navItems: [
+		{ label: "Home", href: "/", sortOrder: 0 },
+		{ label: "Blog", href: "/blog", sortOrder: 1 },
+		{ label: "About", href: "/about", sortOrder: 2 },
+	],
+};
 
 try {
-	posts = await listAllPosts(getDb(Astro.locals));
+	const db = getDb(Astro.locals);
+	posts = await listAllPosts(db);
+	siteConfig = await getSiteConfig(db);
 } catch (error) {
 	loadError = error instanceof Error ? error.message : "Failed to load CMS data.";
 }
@@ -121,6 +134,10 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 				background: rgba(35, 55, 255, 0.08);
 				color: var(--accent-dark);
 			}
+			.stack {
+				display: grid;
+				gap: 1.5rem;
+			}
 			.empty-state {
 				margin-top: 1rem;
 			}
@@ -158,109 +175,149 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 				</div>
 			</aside>
 
-			<section class="panel">
-				<div class="toolbar">
-					<h2>{selectedPost ? "Edit Post" : "Create Post"}</h2>
-					{getAdminToken(Astro.locals) && (
-						<form method="post" action="/api/admin/logout">
-							<button class="secondary" type="submit">Log out</button>
+			<div class="stack">
+				<section class="panel">
+					<div class="toolbar">
+						<h2>{selectedPost ? "Edit Post" : "Create Post"}</h2>
+						{getAdminToken(Astro.locals) && (
+							<form method="post" action="/api/admin/logout">
+								<button class="secondary" type="submit">Log out</button>
+							</form>
+						)}
+					</div>
+
+					{Astro.url.searchParams.get("saved") && <p class="notice">Post saved.</p>}
+					{Astro.url.searchParams.get("deleted") && <p class="notice">Post deleted.</p>}
+					{Astro.url.searchParams.get("error") && (
+						<p class="notice">The request failed. Check your D1 binding and submitted fields.</p>
+					)}
+					{Astro.url.searchParams.get("siteSaved") && <p class="notice">Header settings saved.</p>}
+					{Astro.url.searchParams.get("siteError") && (
+						<p class="notice">Header settings could not be saved. Use the format Label|/path for nav items.</p>
+					)}
+					{loadError && (
+						<p class="notice">
+							CMS is not ready yet. Configure the `DB` D1 binding, replace the placeholder database ID,
+							and run the migration. Details: {loadError}
+						</p>
+					)}
+
+					<form class="editor" method="post" action="/api/admin/posts">
+						{selectedPost && <input type="hidden" name="id" value={selectedPost.id} />}
+						<div class="grid">
+							<label>
+								<span>Title</span>
+								<input name="title" required value={selectedPost?.title ?? ""} disabled={Boolean(loadError)} />
+							</label>
+							<label>
+								<span>Slug</span>
+								<input
+									name="slug"
+									required
+									pattern="[a-z0-9-]+"
+									value={selectedPost?.slug ?? ""}
+									placeholder="my-post-slug"
+									disabled={Boolean(loadError)}
+								/>
+							</label>
+							<label>
+								<span>Description</span>
+								<input
+									name="description"
+									required
+									value={selectedPost?.description ?? ""}
+									placeholder="Short summary for the card and metadata"
+									disabled={Boolean(loadError)}
+								/>
+							</label>
+							<label>
+								<span>Hero image URL</span>
+								<input
+									name="heroImage"
+									value={selectedPost?.heroImage ?? ""}
+									placeholder="/blog-placeholder-1.jpg"
+									disabled={Boolean(loadError)}
+								/>
+							</label>
+							<label>
+								<span>Status</span>
+								<select name="status" disabled={Boolean(loadError)}>
+									<option value="published" selected={selectedPost?.status !== "draft"}>Published</option>
+									<option value="draft" selected={selectedPost?.status === "draft"}>Draft</option>
+								</select>
+							</label>
+							<label>
+								<span>Publish date</span>
+								<input
+									type="datetime-local"
+									name="pubDate"
+									value={selectedPost ? selectedPost.pubDate.toISOString().slice(0, 16) : ""}
+									disabled={Boolean(loadError)}
+								/>
+							</label>
+						</div>
+
+						<label>
+							<span>Markdown content</span>
+							<textarea name="contentMarkdown" required disabled={Boolean(loadError)}>{selectedPost?.contentMarkdown ?? "# New post"}</textarea>
+						</label>
+
+						<div class="row-actions">
+							<button class="primary" type="submit" disabled={Boolean(loadError)}>
+								{selectedPost ? "Save changes" : "Create post"}
+							</button>
+							{selectedPost && <a href={`/blog/${selectedPost.slug}/`}>Open post</a>}
+						</div>
+					</form>
+
+					{selectedPost && (
+						<form method="post" action="/api/admin/posts/delete">
+							<input type="hidden" name="id" value={selectedPost.id} />
+							<button class="danger" type="submit">Delete post</button>
 						</form>
 					)}
-				</div>
 
-				{Astro.url.searchParams.get("saved") && <p class="notice">Post saved.</p>}
-				{Astro.url.searchParams.get("deleted") && <p class="notice">Post deleted.</p>}
-				{Astro.url.searchParams.get("error") && (
-					<p class="notice">The request failed. Check your D1 binding and submitted fields.</p>
-				)}
-				{loadError && (
-					<p class="notice">
-						CMS is not ready yet. Configure the `DB` D1 binding, replace the placeholder database ID,
-						and run the migration. Details: {loadError}
-					</p>
-				)}
+					{!posts.length && (
+						<p class="empty-state muted">
+							No posts yet. Create one here after running the D1 schema migration.
+						</p>
+					)}
+				</section>
 
-				<form class="editor" method="post" action="/api/admin/posts">
-					{selectedPost && <input type="hidden" name="id" value={selectedPost.id} />}
-					<div class="grid">
-						<label>
-							<span>Title</span>
-							<input name="title" required value={selectedPost?.title ?? ""} disabled={Boolean(loadError)} />
-						</label>
-						<label>
-							<span>Slug</span>
-							<input
-								name="slug"
-								required
-								pattern="[a-z0-9-]+"
-								value={selectedPost?.slug ?? ""}
-								placeholder="my-post-slug"
-								disabled={Boolean(loadError)}
-							/>
-						</label>
-						<label>
-							<span>Description</span>
-							<input
-								name="description"
-								required
-								value={selectedPost?.description ?? ""}
-								placeholder="Short summary for the card and metadata"
-								disabled={Boolean(loadError)}
-							/>
-						</label>
-						<label>
-							<span>Hero image URL</span>
-							<input
-								name="heroImage"
-								value={selectedPost?.heroImage ?? ""}
-								placeholder="/blog-placeholder-1.jpg"
-								disabled={Boolean(loadError)}
-							/>
-						</label>
-						<label>
-							<span>Status</span>
-							<select name="status" disabled={Boolean(loadError)}>
-								<option value="published" selected={selectedPost?.status !== "draft"}>Published</option>
-								<option value="draft" selected={selectedPost?.status === "draft"}>Draft</option>
-							</select>
-						</label>
-						<label>
-							<span>Publish date</span>
-							<input
-								type="datetime-local"
-								name="pubDate"
-								value={selectedPost ? selectedPost.pubDate.toISOString().slice(0, 16) : ""}
-								disabled={Boolean(loadError)}
-							/>
-						</label>
+				<section class="panel">
+					<div class="toolbar">
+						<h2>Header Settings</h2>
+						<a href="/">View site</a>
 					</div>
-
-					<label>
-						<span>Markdown content</span>
-						<textarea name="contentMarkdown" required disabled={Boolean(loadError)}>{selectedPost?.contentMarkdown ?? "# New post"}</textarea>
-					</label>
-
-					<div class="row-actions">
-						<button class="primary" type="submit" disabled={Boolean(loadError)}>
-							{selectedPost ? "Save changes" : "Create post"}
-						</button>
-						{selectedPost && <a href={`/blog/${selectedPost.slug}/`}>Open post</a>}
-					</div>
-				</form>
-
-				{selectedPost && (
-					<form method="post" action="/api/admin/posts/delete">
-						<input type="hidden" name="id" value={selectedPost.id} />
-						<button class="danger" type="submit">Delete post</button>
+					<p class="muted">Edit the brand title, navigation links, and basic header colors. Changes go live immediately.</p>
+					<form class="editor" method="post" action="/api/admin/site">
+						<div class="grid">
+							<label>
+								<span>Site title</span>
+								<input name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} />
+							</label>
+							<label>
+								<span>Header background</span>
+								<input name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} />
+							</label>
+							<label>
+								<span>Header text color</span>
+								<input name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} />
+							</label>
+							<label>
+								<span>Header accent color</span>
+								<input name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} />
+							</label>
+						</div>
+						<label>
+							<span>Navigation items</span>
+							<textarea name="navItems" rows="8" disabled={Boolean(loadError)}>{siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join('\n')}</textarea>
+						</label>
+						<p class="muted">One item per line using `Label|/path` or `Label|https://example.com`.</p>
+						<button class="primary" type="submit" disabled={Boolean(loadError)}>Save header</button>
 					</form>
-				)}
-
-				{!posts.length && (
-					<p class="empty-state muted">
-						No posts yet. Create one here after running the D1 schema migration.
-					</p>
-				)}
-			</section>
+				</section>
+			</div>
 		</main>
 		<Footer />
 	</body>

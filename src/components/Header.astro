@@ -1,16 +1,43 @@
 ---
 import HeaderLink from './HeaderLink.astro';
 import { SITE_TITLE } from '../consts';
+import { getDb, getSiteConfig, type SiteNavItem } from '../lib/blog';
+
+let siteTitle = SITE_TITLE;
+let headerBackground = '#ffffff';
+let headerTextColor = '#0f1219';
+let headerAccentColor = '#2337ff';
+let navItems: SiteNavItem[] = [
+	{ label: 'Home', href: '/', sortOrder: 0 },
+	{ label: 'Blog', href: '/blog', sortOrder: 1 },
+	{ label: 'About', href: '/about', sortOrder: 2 },
+];
+
+try {
+	const config = await getSiteConfig(getDb(Astro.locals));
+	siteTitle = config.siteTitle;
+	headerBackground = config.headerBackground;
+	headerTextColor = config.headerTextColor;
+	headerAccentColor = config.headerAccentColor;
+	navItems = config.navItems.length ? config.navItems : navItems;
+} catch {
+	// Fall back to baked-in navigation if D1 is unavailable on this route.
+}
+
+if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.href === '/admin')) {
+	navItems = [...navItems, { label: 'CMS', href: '/admin', sortOrder: 999 }];
+}
 ---
 
-<header>
+<header style={`--header-bg:${headerBackground}; --header-text:${headerTextColor}; --header-accent:${headerAccentColor};`}>
 	<nav>
-		<h2><a href="/">{SITE_TITLE}</a></h2>
+		<h2><a href="/">{siteTitle}</a></h2>
 		<div class="internal-links">
-			<HeaderLink href="/">Home</HeaderLink>
-			<HeaderLink href="/blog">Blog</HeaderLink>
-			<HeaderLink href="/about">About</HeaderLink>
-			<HeaderLink href="/admin">CMS</HeaderLink>
+			{
+				navItems.map((item) => (
+					<HeaderLink href={item.href}>{item.label}</HeaderLink>
+				))
+			}
 		</div>
 		<div class="social-links">
 			<a href="https://m.webtoo.ls/@astro" target="_blank">
@@ -47,7 +74,7 @@ import { SITE_TITLE } from '../consts';
 	header {
 		margin: 0;
 		padding: 0 1em;
-		background: white;
+		background: var(--header-bg);
 		box-shadow: 0 2px 8px rgba(var(--black), 5%);
 	}
 	h2 {
@@ -71,13 +98,13 @@ import { SITE_TITLE } from '../consts';
 	}
 	nav a {
 		padding: 1em 0.5em;
-		color: var(--black);
+		color: var(--header-text);
 		border-bottom: 4px solid transparent;
 		text-decoration: none;
 	}
 	nav a.active {
 		text-decoration: none;
-		border-bottom-color: var(--accent);
+		border-bottom-color: var(--header-accent);
 	}
 	.social-links,
 	.social-links a {
