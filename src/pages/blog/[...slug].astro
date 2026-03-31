@@ -5,10 +5,19 @@ import BlogPost from '../../layouts/BlogPost.astro';
 import { getDb, getPublishedPostBySlug } from '../../lib/blog';
 
 const slug = Astro.params.slug ?? '';
-const post = await getPublishedPostBySlug(getDb(Astro.locals), slug);
+let post = null;
+let loadError = "";
 
-if (!post) {
+try {
+	post = await getPublishedPostBySlug(getDb(Astro.locals), slug);
+} catch (error) {
+	loadError = error instanceof Error ? error.message : "Failed to load post.";
+}
+
+if (!post && !loadError) {
 	Astro.response.status = 404;
+} else if (loadError) {
+	Astro.response.status = 503;
 }
 ---
 
@@ -24,10 +33,14 @@ if (!post) {
 		/>
 	) : (
 		<BlogPost
-			title="Post not found"
-			description="The requested post does not exist."
+			title={loadError ? "Blog is not ready" : "Post not found"}
+			description={loadError ? "The CMS database is not configured yet." : "The requested post does not exist."}
 			pubDate={new Date()}
-			contentHtml="<p>This post does not exist or is not published.</p>"
+			contentHtml={
+				loadError
+					? `<p>Check the D1 binding, database ID, and run the posts migration.</p><p><code>${loadError}</code></p>`
+					: "<p>This post does not exist or is not published.</p>"
+			}
 		/>
 	)
 }

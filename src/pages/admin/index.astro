@@ -12,8 +12,15 @@ if (getAdminToken(Astro.locals) && !isAdminAuthenticated(Astro.request, Astro.lo
 	return Astro.redirect("/admin/login");
 }
 
-const db = getDb(Astro.locals);
-const posts = await listAllPosts(db);
+let posts = [];
+let loadError = "";
+
+try {
+	posts = await listAllPosts(getDb(Astro.locals));
+} catch (error) {
+	loadError = error instanceof Error ? error.message : "Failed to load CMS data.";
+}
+
 const selectedSlug = Astro.url.searchParams.get("slug");
 const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedSlug) ?? null : null;
 ---
@@ -166,13 +173,19 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 				{Astro.url.searchParams.get("error") && (
 					<p class="notice">The request failed. Check your D1 binding and submitted fields.</p>
 				)}
+				{loadError && (
+					<p class="notice">
+						CMS is not ready yet. Configure the `DB` D1 binding, replace the placeholder database ID,
+						and run the migration. Details: {loadError}
+					</p>
+				)}
 
 				<form class="editor" method="post" action="/api/admin/posts">
 					{selectedPost && <input type="hidden" name="id" value={selectedPost.id} />}
 					<div class="grid">
 						<label>
 							<span>Title</span>
-							<input name="title" required value={selectedPost?.title ?? ""} />
+							<input name="title" required value={selectedPost?.title ?? ""} disabled={Boolean(loadError)} />
 						</label>
 						<label>
 							<span>Slug</span>
@@ -182,6 +195,7 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 								pattern="[a-z0-9-]+"
 								value={selectedPost?.slug ?? ""}
 								placeholder="my-post-slug"
+								disabled={Boolean(loadError)}
 							/>
 						</label>
 						<label>
@@ -191,6 +205,7 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 								required
 								value={selectedPost?.description ?? ""}
 								placeholder="Short summary for the card and metadata"
+								disabled={Boolean(loadError)}
 							/>
 						</label>
 						<label>
@@ -199,11 +214,12 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 								name="heroImage"
 								value={selectedPost?.heroImage ?? ""}
 								placeholder="/blog-placeholder-1.jpg"
+								disabled={Boolean(loadError)}
 							/>
 						</label>
 						<label>
 							<span>Status</span>
-							<select name="status">
+							<select name="status" disabled={Boolean(loadError)}>
 								<option value="published" selected={selectedPost?.status !== "draft"}>Published</option>
 								<option value="draft" selected={selectedPost?.status === "draft"}>Draft</option>
 							</select>
@@ -214,17 +230,20 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 								type="datetime-local"
 								name="pubDate"
 								value={selectedPost ? selectedPost.pubDate.toISOString().slice(0, 16) : ""}
+								disabled={Boolean(loadError)}
 							/>
 						</label>
 					</div>
 
 					<label>
 						<span>Markdown content</span>
-						<textarea name="contentMarkdown" required>{selectedPost?.contentMarkdown ?? "# New post"}</textarea>
+						<textarea name="contentMarkdown" required disabled={Boolean(loadError)}>{selectedPost?.contentMarkdown ?? "# New post"}</textarea>
 					</label>
 
 					<div class="row-actions">
-						<button class="primary" type="submit">{selectedPost ? "Save changes" : "Create post"}</button>
+						<button class="primary" type="submit" disabled={Boolean(loadError)}>
+							{selectedPost ? "Save changes" : "Create post"}
+						</button>
 						{selectedPost && <a href={`/blog/${selectedPost.slug}/`}>Open post</a>}
 					</div>
 				</form>

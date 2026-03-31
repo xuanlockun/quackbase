@@ -8,7 +8,14 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 import FormattedDate from '../../components/FormattedDate.astro';
 import { getDb, listPublishedPosts } from '../../lib/blog';
 
-const posts = await listPublishedPosts(getDb(Astro.locals));
+let posts = [];
+let loadError = "";
+
+try {
+	posts = await listPublishedPosts(getDb(Astro.locals));
+} catch (error) {
+	loadError = error instanceof Error ? error.message : "Failed to load posts.";
+}
 ---
 
 <!doctype html>
@@ -96,7 +103,11 @@ const posts = await listPublishedPosts(getDb(Astro.locals));
 		<main>
 			<section>
 				{
-					posts.length ? (
+					loadError ? (
+						<p class="empty-state">
+							Blog is not ready yet. Check the D1 binding, database ID, and run the posts migration.
+						</p>
+					) : posts.length ? (
 						<ul>
 							{
 								posts.map((post) => (
@@ -116,6 +127,7 @@ const posts = await listPublishedPosts(getDb(Astro.locals));
 						<p class="empty-state">No published posts yet. Create one in the CMS.</p>
 					)
 				}
+				{loadError && <p class="date">{loadError}</p>}
 			</section>
 		</main>
 		<Footer />
