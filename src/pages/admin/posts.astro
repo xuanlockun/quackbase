@@ -31,24 +31,133 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 	<head>
 		<BaseHead title={`Posts | ${SITE_TITLE}`} description="Manage blog posts." />
 		<style>
-			.cms-shell { width: min(1200px, calc(100% - 2rem)); max-width: none; display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 1.5rem; }
-			.panel { background: white; border-radius: 18px; box-shadow: var(--box-shadow); padding: 1.25rem; }
-			.sidebar-list { display: grid; gap: 0.75rem; margin-top: 1rem; }
-			.sidebar-link { display: block; padding: 0.9rem 1rem; border-radius: 12px; text-decoration: none; color: rgb(var(--gray-dark)); background: rgb(var(--gray-light)); }
-			.sidebar-link.active { background: rgba(35, 55, 255, 0.12); color: var(--accent-dark); }
-			.muted { color: rgb(var(--gray)); }
-			.toolbar, .row-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
-			form.editor { display: grid; gap: 1rem; }
-			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-			label { display: grid; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; }
-			input, select, textarea, button { font: inherit; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid rgb(var(--gray-light)); box-sizing: border-box; }
-			textarea { min-height: 360px; resize: vertical; }
-			button { cursor: pointer; }
-			.primary { background: var(--accent); color: white; border: none; }
-			.secondary { background: white; }
-			.danger { background: #a61b29; color: white; border: none; }
-			.notice { padding: 0.9rem 1rem; border-radius: 12px; background: rgba(35, 55, 255, 0.08); color: var(--accent-dark); }
-			@media (max-width: 960px) { .cms-shell, .grid { grid-template-columns: 1fr; } }
+			.cms-shell {
+				width: min(1280px, calc(100% - 2rem));
+				max-width: none;
+				display: grid;
+				grid-template-columns: 280px minmax(0, 1fr);
+				gap: 1.5rem;
+			}
+			.panel {
+				background: white;
+				border-radius: 18px;
+				box-shadow: var(--box-shadow);
+				padding: 1.25rem;
+			}
+			.muted {
+				color: rgb(var(--gray));
+			}
+			.toolbar,
+			.row-actions,
+			.row-actions-inline {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.75rem;
+				align-items: center;
+			}
+			.main-stack {
+				display: grid;
+				gap: 1.5rem;
+			}
+			form.editor {
+				display: grid;
+				gap: 1rem;
+			}
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 1rem;
+			}
+			label {
+				display: grid;
+				gap: 0.5rem;
+				font-weight: 700;
+				font-size: 0.95rem;
+			}
+			input,
+			select,
+			textarea,
+			button {
+				font: inherit;
+				padding: 0.85rem 1rem;
+				border-radius: 12px;
+				border: 1px solid rgb(var(--gray-light));
+				box-sizing: border-box;
+			}
+			textarea {
+				min-height: 360px;
+				resize: vertical;
+			}
+			button {
+				cursor: pointer;
+			}
+			.primary {
+				background: var(--accent);
+				color: white;
+				border: none;
+			}
+			.secondary {
+				background: white;
+			}
+			.success {
+				display: inline-flex;
+				align-items: center;
+				background: #15803d;
+				color: white;
+				border: none;
+				text-decoration: none;
+			}
+			.danger {
+				background: #a61b29;
+				color: white;
+				border: none;
+			}
+			.notice {
+				padding: 0.9rem 1rem;
+				border-radius: 12px;
+				background: rgba(35, 55, 255, 0.08);
+				color: var(--accent-dark);
+			}
+			.table-wrap {
+				overflow-x: auto;
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 0.98rem;
+			}
+			th,
+			td {
+				padding: 0.9rem 0.8rem;
+				text-align: left;
+				border-bottom: 1px solid rgb(var(--gray-light));
+				vertical-align: top;
+			}
+			th {
+				font-size: 0.8rem;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: rgb(var(--gray));
+			}
+			.status-pill {
+				display: inline-block;
+				padding: 0.2rem 0.55rem;
+				border-radius: 999px;
+				background: rgba(35, 55, 255, 0.1);
+				color: var(--accent-dark);
+				font-size: 0.8rem;
+				font-weight: 700;
+				text-transform: uppercase;
+			}
+			.inline-form {
+				margin: 0;
+			}
+			@media (max-width: 960px) {
+				.cms-shell,
+				.grid {
+					grid-template-columns: 1fr;
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -56,63 +165,95 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 		<main class="cms-shell">
 			<aside class="panel">
 				<AdminNav />
-				<div class="toolbar">
-					<h1>Posts</h1>
-					<a href="/blog">View blog</a>
-				</div>
-				<div class="sidebar-list">
-					<a class:list={["sidebar-link", !selectedPost && "active"]} href="/admin/posts">New post</a>
-					{
-						posts.map((post) => (
-							<a class:list={["sidebar-link", selectedPost?.id === post.id && "active"]} href={`/admin/posts?slug=${post.slug}`}>
-								<strong>{post.title}</strong>
-								<br />
-								<span class="muted">{post.status} | <FormattedDate date={post.updatedDate ?? post.pubDate} /></span>
-							</a>
-						))
-					}
-				</div>
 			</aside>
 
-			<section class="panel">
-				<div class="toolbar">
-					<h2>{selectedPost ? "Edit Post" : "Create Post"}</h2>
-					{getAdminToken(Astro.locals) && (
-						<form method="post" action="/api/admin/logout">
-							<button class="secondary" type="submit">Log out</button>
-						</form>
-					)}
-				</div>
-
-				{Astro.url.searchParams.get("saved") && <p class="notice">Post saved.</p>}
-				{Astro.url.searchParams.get("deleted") && <p class="notice">Post deleted.</p>}
-				{Astro.url.searchParams.get("error") && <p class="notice">The request failed.</p>}
-				{loadError && <p class="notice">{loadError}</p>}
-
-				<form class="editor" method="post" action="/api/admin/posts">
-					{selectedPost && <input type="hidden" name="id" value={selectedPost.id} />}
-					<div class="grid">
-						<label><span>Title</span><input name="title" required value={selectedPost?.title ?? ""} disabled={Boolean(loadError)} /></label>
-						<label><span>Slug</span><input name="slug" required pattern="[a-z0-9-]+" value={selectedPost?.slug ?? ""} placeholder="my-post-slug" disabled={Boolean(loadError)} /></label>
-						<label><span>Description</span><input name="description" required value={selectedPost?.description ?? ""} placeholder="Short summary" disabled={Boolean(loadError)} /></label>
-						<label><span>Hero image URL</span><input name="heroImage" value={selectedPost?.heroImage ?? ""} placeholder="/blog-placeholder-1.jpg" disabled={Boolean(loadError)} /></label>
-						<label><span>Status</span><select name="status" disabled={Boolean(loadError)}><option value="published" selected={selectedPost?.status !== "draft"}>Published</option><option value="draft" selected={selectedPost?.status === "draft"}>Draft</option></select></label>
-						<label><span>Publish date</span><input type="datetime-local" name="pubDate" value={selectedPost ? selectedPost.pubDate.toISOString().slice(0, 16) : ""} disabled={Boolean(loadError)} /></label>
+			<div class="main-stack">
+				<section class="panel">
+					<div class="toolbar">
+						<div>
+							<h1>Posts</h1>
+							<p class="muted">Manage published articles and drafts from one table.</p>
+						</div>
+						<div class="toolbar">
+							<a class="success" href="/admin/posts">New post</a>
+							<a href="/blog">View blog</a>
+						</div>
 					</div>
-					<label><span>Markdown content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError)}>{selectedPost?.contentMarkdown ?? "# New post"}</textarea></label>
-					<div class="row-actions">
-						<button class="primary" type="submit" disabled={Boolean(loadError)}>{selectedPost ? "Save changes" : "Create post"}</button>
-						{selectedPost && <a href={`/blog/${selectedPost.slug}/`}>Open post</a>}
-					</div>
-				</form>
 
-				{selectedPost && (
-					<form method="post" action="/api/admin/posts/delete">
-						<input type="hidden" name="id" value={selectedPost.id} />
-						<button class="danger" type="submit">Delete post</button>
+					{Astro.url.searchParams.get("saved") && <p class="notice">Post saved.</p>}
+					{Astro.url.searchParams.get("deleted") && <p class="notice">Post deleted.</p>}
+					{Astro.url.searchParams.get("error") && <p class="notice">The request failed.</p>}
+					{loadError && <p class="notice">{loadError}</p>}
+
+					<div class="table-wrap">
+						<table>
+							<thead>
+								<tr>
+									<th>Title</th>
+									<th>Status</th>
+									<th>Updated</th>
+									<th>Slug</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								{
+									posts.map((post) => (
+										<tr>
+											<td>
+												<strong>{post.title}</strong>
+												<br />
+												<span class="muted">{post.description}</span>
+											</td>
+											<td><span class="status-pill">{post.status}</span></td>
+											<td><FormattedDate date={post.updatedDate ?? post.pubDate} /></td>
+											<td><code>{post.slug}</code></td>
+											<td>
+												<div class="row-actions-inline">
+													<a href={`/admin/posts?slug=${post.slug}`}>Edit</a>
+													<a href={`/blog/${post.slug}/`}>View</a>
+													<form class="inline-form" method="post" action="/api/admin/posts/delete">
+														<input type="hidden" name="id" value={post.id} />
+														<button class="danger" type="submit">Delete</button>
+													</form>
+												</div>
+											</td>
+										</tr>
+									))
+								}
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				<section class="panel">
+					<div class="toolbar">
+						<h2>{selectedPost ? "Edit Post" : "Create Post"}</h2>
+						{getAdminToken(Astro.locals) && (
+							<form method="post" action="/api/admin/logout">
+								<button class="secondary" type="submit">Log out</button>
+							</form>
+						)}
+					</div>
+
+					<form class="editor" method="post" action="/api/admin/posts">
+						{selectedPost && <input type="hidden" name="id" value={selectedPost.id} />}
+						<div class="grid">
+							<label><span>Title</span><input name="title" required value={selectedPost?.title ?? ""} disabled={Boolean(loadError)} /></label>
+							<label><span>Slug</span><input name="slug" required pattern="[a-z0-9-]+" value={selectedPost?.slug ?? ""} placeholder="my-post-slug" disabled={Boolean(loadError)} /></label>
+							<label><span>Description</span><input name="description" required value={selectedPost?.description ?? ""} placeholder="Short summary" disabled={Boolean(loadError)} /></label>
+							<label><span>Hero image URL</span><input name="heroImage" value={selectedPost?.heroImage ?? ""} placeholder="/blog-placeholder-1.jpg" disabled={Boolean(loadError)} /></label>
+							<label><span>Status</span><select name="status" disabled={Boolean(loadError)}><option value="published" selected={selectedPost?.status !== "draft"}>Published</option><option value="draft" selected={selectedPost?.status === "draft"}>Draft</option></select></label>
+							<label><span>Publish date</span><input type="datetime-local" name="pubDate" value={selectedPost ? selectedPost.pubDate.toISOString().slice(0, 16) : ""} disabled={Boolean(loadError)} /></label>
+						</div>
+						<label><span>Markdown content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError)}>{selectedPost?.contentMarkdown ?? "# New post"}</textarea></label>
+						<div class="row-actions">
+							<button class="primary" type="submit" disabled={Boolean(loadError)}>{selectedPost ? "Save changes" : "Create post"}</button>
+							{selectedPost && <a href={`/blog/${selectedPost.slug}/`}>Open post</a>}
+						</div>
 					</form>
-				)}
-			</section>
+				</section>
+			</div>
 		</main>
 		<Footer />
 	</body>
