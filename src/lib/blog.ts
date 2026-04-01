@@ -90,9 +90,17 @@ export interface SitePage {
 	description: string;
 	contentMarkdown: string;
 	contentHtml: string;
-	pageSections: string[];
+	pageSections: PageSectionConfig[];
 	status: string;
 	updatedAt: Date;
+}
+
+export type PageSectionType = "page_content" | "blog_feed" | "banner_slider" | "contact_form";
+
+export interface PageSectionConfig {
+	type: PageSectionType;
+	order: number;
+	bannerUrls?: string[];
 }
 
 export interface SitePageInput {
@@ -100,7 +108,7 @@ export interface SitePageInput {
 	slug: string;
 	description: string;
 	contentMarkdown: string;
-	pageSections: string[];
+	pageSections: PageSectionConfig[];
 	status: string;
 }
 
@@ -583,18 +591,14 @@ export function parseSiteForm(formData: FormData): {
 }
 
 export function parsePageForm(formData: FormData): SitePageInput {
-	const rawSections = formData
-		.getAll("pageSections")
-		.filter((value): value is string => typeof value === "string")
-		.map((value) => value.trim())
-		.filter((value) => ["blog_feed", "nav_grid", "page_grid"].includes(value));
+	const pageSections = parsePageSectionsForm(formData);
 
 	return {
 		title: requiredString(formData, "title"),
 		slug: slugify(requiredString(formData, "slug")),
 		description: requiredString(formData, "description"),
 		contentMarkdown: requiredString(formData, "contentMarkdown"),
-		pageSections: [...new Set(rawSections)],
+		pageSections,
 		status: normalizeStatus(requiredString(formData, "status")),
 	};
 }
@@ -744,21 +748,110 @@ function toSitePage(row: SitePageRecord): SitePage {
 	};
 }
 
-function parsePageSections(value?: string | null, legacyShowPosts?: number): string[] {
+function parsePageSections(value?: string | null, legacyShowPosts?: number): PageSectionConfig[] {
 	if (value) {
 		try {
 			const parsed = JSON.parse(value);
 			if (Array.isArray(parsed)) {
-				return parsed.filter((item): item is string =>
-					typeof item === "string" && ["blog_feed", "nav_grid", "page_grid"].includes(item),
-				);
+				const normalized = normalizePageSections(parsed);
+				if (normalized.length > 0) {
+					return normalized;
+				}
 			}
 		} catch {
 			// Ignore malformed historical content and fall back to legacy field.
 		}
 	}
 
-	return legacyShowPosts ? ["blog_feed"] : [];
+	return legacyShowPosts
+		? [
+				{ type: "page_content", order: 1 },
+				{ type: "blog_feed", order: 2 },
+			]
+		: [{ type: "page_content", order: 1 }];
+}
+
+function parsePageSectionsForm(formData: FormData): PageSectionConfig[] {
+	const rawConfig = optionalString(formData, "pageSectionsConfig");
+	if (rawConfig) {
+		try {
+			const parsed = JSON.parse(rawConfig);
+			if (Array.isArray(parsed)) {
+				const normalized = normalizePageSections(parsed);
+				if (normalized.length > 0) {
+					return normalized;
+				}
+			}
+		} catch {
+			throw new Error("Page sections configuration is invalid.");
+		}
+	}
+
+	const legacySections = formData
+		.getAll("pageSections")
+		.filter((value): value is string => typeof value === "string")
+		.map((value) => value.trim())
+		.filter((value) => ["blog_feed"].includes(value));
+
+	return normalizePageSections(["page_content", ...legacySections]);
+}
+
+function normalizePageSections(input: unknown[]): PageSectionConfig[] {
+	const allowedTypes = new Set<PageSectionType>([
+		"page_content",
+		"blog_feed",
+		"banner_slider",
+		"contact_form",
+	]);
+
+	const normalized = input
+		.map((item, index) => {
+			if (typeof item === "string") {
+				if (!allowedTypes.has(item as PageSectionType)) {
+					return null;
+				}
+				return {
+					type: item as PageSectionType,
+					order: index + 1,
+				} satisfies PageSectionConfig;
+			}
+
+			if (!item || typeof item !== "object") {
+				return null;
+			}
+
+			const rawType = "type" in item ? item.type : undefined;
+			if (typeof rawType !== "string" || !allowedTypes.has(rawType as PageSectionType)) {
+				return null;
+			}
+
+			const rawOrder = "order" in item ? Number(item.order) : index + 1;
+			const order = Number.isFinite(rawOrder) ? Math.max(1, Math.floor(rawOrder)) : index + 1;
+			const bannerUrls =
+				rawType === "banner_slider" && Array.isArray(item.bannerUrls)
+					? item.bannerUrls
+							.filter((entry): entry is string => typeof entry === "string")
+							.map((entry) => entry.trim())
+							.filter(Boolean)
+					: undefined;
+
+			return {
+				type: rawType as PageSectionType,
+				order,
+				...(bannerUrls ? { bannerUrls } : {}),
+			} satisfies PageSectionConfig;
+		})
+		.filter((item): item is PageSectionConfig => Boolean(item));
+
+	const deduped = normalized.filter(
+		(section, index, sections) => sections.findIndex((entry) => entry.type === section.type) === index,
+	);
+
+	if (!deduped.some((section) => section.type === "page_content")) {
+		deduped.push({ type: "page_content", order: 1 });
+	}
+
+	return deduped.sort((left, right) => left.order - right.order);
 }
 
 function sanitizeHexColor(value: string, fallback: string): string {

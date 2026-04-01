@@ -1,5 +1,5 @@
 ---
-import type { SitePage } from "../../lib/blog";
+import type { PageSectionConfig, SitePage } from "../../lib/blog";
 
 interface Props {
 	mode: "create" | "edit";
@@ -21,7 +21,17 @@ const {
 
 const submitLabel = mode === "edit" ? "Save page" : "Create page";
 const isDisabled = Boolean(loadError) || !canSubmit;
-const pageSections = new Set(page?.pageSections ?? []);
+const sectionMap = new Map((page?.pageSections ?? []).map((section) => [section.type, section]));
+const pageContentSection = sectionMap.get("page_content") ?? { type: "page_content", order: 1 };
+const bannerSection = sectionMap.get("banner_slider");
+const blogFeedSection = sectionMap.get("blog_feed");
+const contactSection = sectionMap.get("contact_form");
+const initialSections: PageSectionConfig[] = [
+	pageContentSection,
+	...(bannerSection ? [bannerSection] : []),
+	...(blogFeedSection ? [blogFeedSection] : []),
+	...(contactSection ? [contactSection] : []),
+];
 ---
 
 <div class="admin-form-header">
@@ -78,38 +88,102 @@ const pageSections = new Set(page?.pageSections ?? []);
 	</label>
 
 	<div class="admin-form-section">
-		<span>Page sections</span>
-		<div class="admin-check-grid">
-			<label class="admin-check-row">
-				<input
-					type="checkbox"
-					name="pageSections"
-					value="blog_feed"
-					checked={pageSections.has("blog_feed")}
-					disabled={isDisabled}
-				/>
-				Blog feed grid
-			</label>
-			<label class="admin-check-row">
-				<input
-					type="checkbox"
-					name="pageSections"
-					value="nav_grid"
-					checked={pageSections.has("nav_grid")}
-					disabled={isDisabled}
-				/>
-				Navigation card grid
-			</label>
-			<label class="admin-check-row">
-				<input
-					type="checkbox"
-					name="pageSections"
-					value="page_grid"
-					checked={pageSections.has("page_grid")}
-					disabled={isDisabled}
-				/>
-				Other pages grid
-			</label>
+		<div class="page-sections-heading">
+			<div>
+				<span>Page sections</span>
+				<p class="admin-muted">Enable the sections you want and set the order they should appear on the page.</p>
+			</div>
+		</div>
+
+		<input
+			type="hidden"
+			name="pageSectionsConfig"
+			data-page-sections-config
+			value={JSON.stringify(initialSections)}
+			disabled={isDisabled}
+		/>
+
+		<div class="page-sections-stack" data-page-sections-editor>
+			<div class="page-section-card page-section-card-always" data-section="page_content">
+				<div class="page-section-card-top">
+					<div>
+						<strong>Page content</strong>
+						<p class="admin-muted">The markdown content you wrote above.</p>
+					</div>
+					<label class="page-section-order">
+						<span>Order</span>
+						<input type="number" min="1" value={pageContentSection.order} data-section-order disabled={isDisabled} />
+					</label>
+				</div>
+			</div>
+
+			<div class="page-section-card" data-section="banner_slider">
+				<div class="page-section-card-top">
+					<label class="admin-check-row">
+						<input type="checkbox" data-section-enabled checked={Boolean(bannerSection)} disabled={isDisabled} />
+						Banner slider
+					</label>
+					<label class="page-section-order">
+						<span>Order</span>
+						<input
+							type="number"
+							min="1"
+							value={bannerSection?.order ?? 1}
+							data-section-order
+							disabled={isDisabled}
+						/>
+					</label>
+				</div>
+				<label>
+					<span>Banner image URLs</span>
+					<textarea
+						rows="4"
+						placeholder="https://example.com/banner-1.jpg&#10;https://example.com/banner-2.jpg"
+						data-banner-urls
+						disabled={isDisabled}
+					>{bannerSection?.bannerUrls?.join("\n") ?? ""}</textarea>
+				</label>
+			</div>
+
+			<div class="page-section-card" data-section="blog_feed">
+				<div class="page-section-card-top">
+					<label class="admin-check-row">
+						<input type="checkbox" data-section-enabled checked={Boolean(blogFeedSection)} disabled={isDisabled} />
+						Blog feed grid
+					</label>
+					<label class="page-section-order">
+						<span>Order</span>
+						<input
+							type="number"
+							min="1"
+							value={blogFeedSection?.order ?? 2}
+							data-section-order
+							disabled={isDisabled}
+						/>
+					</label>
+				</div>
+				<p class="admin-muted">Shows the latest published posts.</p>
+			</div>
+
+			<div class="page-section-card" data-section="contact_form">
+				<div class="page-section-card-top">
+					<label class="admin-check-row">
+						<input type="checkbox" data-section-enabled checked={Boolean(contactSection)} disabled={isDisabled} />
+						Contact form
+					</label>
+					<label class="page-section-order">
+						<span>Order</span>
+						<input
+							type="number"
+							min="1"
+							value={contactSection?.order ?? 3}
+							data-section-order
+							disabled={isDisabled}
+						/>
+					</label>
+				</div>
+				<p class="admin-muted">Displays a simple contact form section that you can style or connect later.</p>
+			</div>
 		</div>
 	</div>
 
@@ -118,3 +192,113 @@ const pageSections = new Set(page?.pageSections ?? []);
 		{mode === "edit" && page && <a href={`/${page.slug}/`}>Open page</a>}
 	</div>
 </form>
+
+<style>
+	.page-sections-stack {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.page-sections-heading p {
+		margin: 0.35rem 0 0;
+	}
+
+	.page-section-card {
+		display: grid;
+		gap: 0.8rem;
+		padding: 1rem;
+		border-radius: 18px;
+		background: rgba(var(--gray-light), 0.28);
+	}
+
+	.page-section-card-top {
+		display: flex;
+		align-items: start;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.page-section-order {
+		display: grid;
+		gap: 0.35rem;
+		min-width: 96px;
+	}
+
+	.page-section-order input {
+		max-width: 96px;
+	}
+
+	.page-section-card :global(textarea[data-banner-urls]) {
+		min-height: 110px;
+	}
+
+	@media (max-width: 720px) {
+		.page-section-card-top {
+			flex-direction: column;
+			align-items: stretch;
+		}
+	}
+</style>
+
+<script>
+	const editor = document.querySelector("[data-page-sections-editor]");
+	const payload = document.querySelector("[data-page-sections-config]");
+
+	const syncSections = () => {
+		if (!(editor instanceof HTMLElement) || !(payload instanceof HTMLInputElement)) {
+			return;
+		}
+
+		const cards = Array.from(editor.querySelectorAll("[data-section]"));
+		const sections = cards
+			.map((card) => {
+				if (!(card instanceof HTMLElement)) {
+					return null;
+				}
+
+				const type = card.dataset.section;
+				if (!type) {
+					return null;
+				}
+
+				const enabledInput = card.querySelector("[data-section-enabled]");
+				const enabled = enabledInput instanceof HTMLInputElement ? enabledInput.checked : true;
+				if (!enabled && type !== "page_content") {
+					return null;
+				}
+
+				const orderInput = card.querySelector("[data-section-order]");
+				const order =
+					orderInput instanceof HTMLInputElement
+						? Math.max(1, Number.parseInt(orderInput.value || "1", 10) || 1)
+						: 1;
+
+				if (type === "banner_slider") {
+					const urlsInput = card.querySelector("[data-banner-urls]");
+					const bannerUrls =
+						urlsInput instanceof HTMLTextAreaElement
+							? urlsInput.value
+									.split(/\r?\n/)
+									.map((entry) => entry.trim())
+									.filter(Boolean)
+							: [];
+
+					if (enabled && bannerUrls.length === 0) {
+						return null;
+					}
+
+					return { type, order, bannerUrls };
+				}
+
+				return { type, order };
+			})
+			.filter(Boolean)
+			.sort((left, right) => left.order - right.order);
+
+		payload.value = JSON.stringify(sections);
+	};
+
+	editor?.addEventListener("input", syncSections);
+	editor?.addEventListener("change", syncSections);
+	syncSections();
+</script>
