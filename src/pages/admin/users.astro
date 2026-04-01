@@ -21,7 +21,7 @@ const [users, roles] = await Promise.all([listAdminUsers(db), listRoleSummaries(
 	description="Manage admin users and role assignments."
 	session={session}
 	pageTitle="Users"
-	pageDescription="Assign roles to admin users and keep access current on the next protected request."
+	pageDescription="Assign roles to admin users and keep access current."
 >
 	<UserRoleTable users={users} roles={roles} />
 </AdminLayout>

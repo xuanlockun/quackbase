@@ -34,9 +34,10 @@ const { posts, canUpdate, canDelete } = Astro.props;
 						posts.map((post) => (
 							<tr>
 								<td>
-									<strong>{post.title}</strong>
-									<br />
-									<span class="admin-muted">{post.description}</span>
+									<div class="admin-meta-block">
+										<strong>{post.title}</strong>
+										<span class="admin-muted">{post.description}</span>
+									</div>
 								</td>
 								<td>
 									<span class="admin-status-pill">{post.status}</span>

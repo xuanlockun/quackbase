@@ -21,7 +21,7 @@ const [roles, permissions] = await Promise.all([listRolesWithPermissions(db), li
 	description="Manage RBAC roles and permission bundles."
 	session={session}
 	pageTitle="Roles"
-	pageDescription="Create reusable role bundles and tune their permission sets without redeploying the app."
+	pageDescription="Create reusable role bundles and tune permission sets."
 >
 	<RoleEditor roles={roles} permissions={permissions} />
 </AdminLayout>

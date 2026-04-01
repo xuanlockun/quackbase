@@ -4,6 +4,7 @@ export const prerender = false;
 import type { AdminPostDetail } from "../../../../lib/blog";
 import PostForm from "../../../../components/admin/PostForm.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import { getDb, getPostById, toAdminPostDetail } from "../../../../lib/blog";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -18,20 +19,12 @@ let loadError = "";
 let notFound = false;
 
 try {
-	const response = await fetch(new URL(`/api/admin/posts/${id}`, Astro.url), {
-		headers: {
-			cookie: Astro.request.headers.get("cookie") ?? "",
-			accept: "application/json",
-		},
-	});
-
-	if (response.status === 404) {
+	const postId = Number(id);
+	if (!Number.isInteger(postId) || postId <= 0) {
 		notFound = true;
-	} else if (!response.ok) {
-		throw new Error("Failed to load the requested post.");
 	} else {
-		const data = await response.json();
-		post = data.post ?? null;
+		const record = await getPostById(getDb(Astro.locals), postId);
+		post = record ? toAdminPostDetail(record) : null;
 		notFound = !post;
 	}
 } catch (error) {

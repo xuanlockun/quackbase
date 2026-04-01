@@ -53,7 +53,12 @@ const canSubmit = selectedPage ? canUpdate : canCreate;
 						{
 							pages.map((page) => (
 								<tr>
-									<td><strong>{page.title}</strong><br /><span class="admin-muted">{page.description}</span></td>
+									<td>
+										<div class="admin-meta-block">
+											<strong>{page.title}</strong>
+											<span class="admin-muted">{page.description}</span>
+										</div>
+									</td>
 									<td><span class="admin-status-pill">{page.status}</span></td>
 									<td><FormattedDate date={page.updatedAt} /></td>
 									<td><code>{page.slug}</code></td>
@@ -90,12 +95,12 @@ const canSubmit = selectedPage ? canUpdate : canCreate;
 					<label><span>Status</span><select name="status" disabled={Boolean(loadError) || !canSubmit}><option value="published" selected={selectedPage?.status !== "draft"}>Published</option><option value="draft" selected={selectedPage?.status === "draft"}>Draft</option></select></label>
 				</div>
 				<label><span>Page content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError) || !canSubmit}>{selectedPage?.contentMarkdown ?? "# New page"}</textarea></label>
-				<div class="admin-section-card page-sections-box">
+				<div class="admin-form-section page-sections-box">
 					<span>Page sections</span>
-					<div class="page-section-check-grid">
-						<label class="page-section-checkbox"><input type="checkbox" name="pageSections" value="blog_feed" checked={selectedPage?.pageSections.includes("blog_feed")} disabled={Boolean(loadError) || !canSubmit} /> Blog feed grid</label>
-						<label class="page-section-checkbox"><input type="checkbox" name="pageSections" value="nav_grid" checked={selectedPage?.pageSections.includes("nav_grid")} disabled={Boolean(loadError) || !canSubmit} /> Navigation card grid</label>
-						<label class="page-section-checkbox"><input type="checkbox" name="pageSections" value="page_grid" checked={selectedPage?.pageSections.includes("page_grid")} disabled={Boolean(loadError) || !canSubmit} /> Other pages grid</label>
+					<div class="admin-check-grid page-section-check-grid">
+						<label class="admin-check-row page-section-checkbox"><input type="checkbox" name="pageSections" value="blog_feed" checked={selectedPage?.pageSections.includes("blog_feed")} disabled={Boolean(loadError) || !canSubmit} /> Blog feed grid</label>
+						<label class="admin-check-row page-section-checkbox"><input type="checkbox" name="pageSections" value="nav_grid" checked={selectedPage?.pageSections.includes("nav_grid")} disabled={Boolean(loadError) || !canSubmit} /> Navigation card grid</label>
+						<label class="admin-check-row page-section-checkbox"><input type="checkbox" name="pageSections" value="page_grid" checked={selectedPage?.pageSections.includes("page_grid")} disabled={Boolean(loadError) || !canSubmit} /> Other pages grid</label>
 					</div>
 				</div>
 				<div class="admin-form-actions">
@@ -113,18 +118,14 @@ const canSubmit = selectedPage ? canUpdate : canCreate;
 	}
 
 	.page-sections-box {
-		background: rgba(var(--gray-light), 0.3);
+		background: #f7f8fa;
 	}
 
 	.page-section-check-grid {
-		display: grid;
-		gap: 0.7rem;
-		margin-top: 0.8rem;
+		margin-top: 0.2rem;
 	}
 
 	.page-section-checkbox {
-		display: flex;
-		gap: 0.5rem;
-		align-items: center;
+		margin: 0;
 	}
 </style>

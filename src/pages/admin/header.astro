@@ -53,7 +53,7 @@ try {
 				<label style="grid-column: 1 / -1;"><span>Footer text</span><input name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
 			</div>
 			<label><span>Navigation items</span><textarea name="navItems" disabled={Boolean(loadError)}>{siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join("\n")}</textarea></label>
-			<div>
+			<div class="admin-form-section">
 				<p class="admin-muted">For the homepage use a page slug like `home` or `/home`. Empty or `/` also falls back to `home`.</p>
 				<p class="admin-muted">One item per line: `Label|/path` or `Label|https://example.com`.</p>
 				<button class="admin-primary-button" type="submit" disabled={Boolean(loadError)}>Save header</button>
