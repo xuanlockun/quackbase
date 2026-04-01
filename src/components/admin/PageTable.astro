@@ -1,0 +1,70 @@
+---
+import FormattedDate from "../FormattedDate.astro";
+import type { SitePage } from "../../lib/blog";
+
+interface Props {
+	pages: SitePage[];
+	canUpdate: boolean;
+	canDelete: boolean;
+}
+
+const { pages, canUpdate, canDelete } = Astro.props;
+---
+
+{
+	pages.length === 0 ? (
+		<div class="admin-empty-state">
+			<h2>No pages yet</h2>
+			<p>Create a page to add route-based content beyond the blog.</p>
+		</div>
+	) : (
+		<div class="admin-table-wrap">
+			<table class="admin-table table table-sm align-middle mb-0">
+				<thead>
+					<tr>
+						<th>Title</th>
+						<th>Status</th>
+						<th>Updated</th>
+						<th>Slug</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{
+						pages.map((page) => (
+							<tr>
+								<td>
+									<div class="admin-meta-block">
+										<strong>{page.title}</strong>
+										<span class="admin-muted">{page.description}</span>
+									</div>
+								</td>
+								<td>
+									<span class="admin-status-pill">{page.status}</span>
+								</td>
+								<td>
+									<FormattedDate date={page.updatedAt} />
+								</td>
+								<td>
+									<code>{page.slug}</code>
+								</td>
+								<td>
+									<div class="admin-row-actions">
+										{canUpdate && <a href={`/admin/pages/${page.id}/edit`}>Edit</a>}
+										<a href={`/${page.slug}/`}>View</a>
+										{canDelete && (
+											<form class="admin-inline-form" method="post" action="/api/admin/pages/delete">
+												<input type="hidden" name="id" value={page.id} />
+												<button class="admin-danger-button" type="submit">Delete</button>
+											</form>
+										)}
+									</div>
+								</td>
+							</tr>
+						))
+					}
+				</tbody>
+			</table>
+		</div>
+	)
+}

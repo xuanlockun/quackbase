@@ -38,6 +38,22 @@ export function getRequiredAdminPagePermissions(pathname: string): string[] | nu
 		return ["posts.update"];
 	}
 
+	if (pathname === "/admin/pages/new") {
+		return ["pages.create"];
+	}
+
+	if (/^\/admin\/pages\/[^/]+\/edit$/.test(pathname)) {
+		return ["pages.update"];
+	}
+
+	if (pathname === "/admin/users/new" || /^\/admin\/users\/[^/]+\/edit$/.test(pathname)) {
+		return ["users.manage"];
+	}
+
+	if (pathname === "/admin/roles/new" || /^\/admin\/roles\/[^/]+\/edit$/.test(pathname)) {
+		return ["roles.manage"];
+	}
+
 	return ADMIN_PAGE_POLICIES.get(pathname) ?? [];
 }
 

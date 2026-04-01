@@ -1,0 +1,97 @@
+---
+import type { AdminUserSummary, RoleSummary } from "../../lib/auth/types";
+
+interface Props {
+	mode: "create" | "edit";
+	action: string;
+	user?: AdminUserSummary | null;
+	roles: RoleSummary[];
+	canSubmit: boolean;
+	backHref?: string;
+	loadError?: string;
+}
+
+const {
+	mode,
+	action,
+	user = null,
+	roles,
+	canSubmit,
+	backHref = "/admin/users",
+	loadError = "",
+} = Astro.props;
+
+const submitLabel = mode === "edit" ? "Save user" : "Create user";
+const isDisabled = Boolean(loadError) || !canSubmit;
+const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
+---
+
+<div class="admin-form-header">
+	<a class="admin-ghost-button" href={backHref}>Back</a>
+	<p class="admin-muted">
+		{canSubmit
+			? "Manage admin user access and role assignments from one dedicated form."
+			: "Your role can view this page but cannot save changes."}
+	</p>
+</div>
+
+{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+
+<form class="admin-form-stack" method="post" action={action}>
+	<div class="admin-form-grid">
+		<label>
+			<span>Email</span>
+			<input
+				name="email"
+				type="email"
+				required={mode === "create"}
+				value={user?.email ?? ""}
+				readonly={mode === "edit"}
+				disabled={isDisabled || mode === "edit"}
+			/>
+		</label>
+		<label>
+			<span>Display name</span>
+			<input name="displayName" required value={user?.displayName ?? ""} disabled={isDisabled} />
+		</label>
+		<label>
+			<span>{mode === "edit" ? "New password" : "Password"}</span>
+			<input
+				name="password"
+				type="password"
+				minlength="8"
+				required={mode === "create"}
+				placeholder={mode === "edit" ? "Leave blank to keep current password" : ""}
+				disabled={isDisabled}
+			/>
+		</label>
+		<label class="admin-check-row">
+			<input type="checkbox" name="isActive" checked={user?.isActive ?? true} disabled={isDisabled} />
+			Active
+		</label>
+	</div>
+
+	<div class="admin-form-section">
+		<span>Roles</span>
+		<div class="admin-check-grid">
+			{
+				roles.map((role) => (
+					<label class="admin-check-row">
+						<input
+							type="checkbox"
+							name="roleIds"
+							value={role.id}
+							checked={selectedRoleIds.has(role.id)}
+							disabled={isDisabled}
+						/>
+						{role.label}
+					</label>
+				))
+			}
+		</div>
+	</div>
+
+	<div class="admin-form-actions">
+		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
+	</div>
+</form>

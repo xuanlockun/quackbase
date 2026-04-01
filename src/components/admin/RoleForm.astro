@@ -1,0 +1,87 @@
+---
+import type { AdminPermission, AdminRole } from "../../lib/auth/types";
+
+interface Props {
+	mode: "create" | "edit";
+	action: string;
+	role?: AdminRole | null;
+	permissions: AdminPermission[];
+	canSubmit: boolean;
+	backHref?: string;
+	loadError?: string;
+}
+
+const {
+	mode,
+	action,
+	role = null,
+	permissions,
+	canSubmit,
+	backHref = "/admin/roles",
+	loadError = "",
+} = Astro.props;
+
+const submitLabel = mode === "edit" ? "Save role" : "Create role";
+const isDisabled = Boolean(loadError) || !canSubmit;
+const selectedPermissionIds = new Set(role?.permissions.map((permission) => permission.id) ?? []);
+---
+
+<div class="admin-form-header">
+	<a class="admin-ghost-button" href={backHref}>Back</a>
+	<p class="admin-muted">
+		{canSubmit
+			? "Manage role labels and permission bundles from a dedicated form."
+			: "Your role can view this page but cannot save changes."}
+	</p>
+</div>
+
+{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+
+<form class="admin-form-stack" method="post" action={action}>
+	<div class="admin-form-grid">
+		<label>
+			<span>Role name</span>
+			<input
+				name="name"
+				required={mode === "create"}
+				pattern="[a-z0-9.-]+"
+				value={role?.name ?? ""}
+				readonly={mode === "edit"}
+				disabled={isDisabled || mode === "edit"}
+			/>
+		</label>
+		<label>
+			<span>Display label</span>
+			<input name="label" required value={role?.label ?? ""} disabled={isDisabled} />
+		</label>
+	</div>
+
+	<label>
+		<span>Description</span>
+		<textarea name="description" disabled={isDisabled}>{role?.description ?? ""}</textarea>
+	</label>
+
+	<div class="admin-form-section">
+		<span>Permissions</span>
+		<div class="admin-check-grid">
+			{
+				permissions.map((permission) => (
+					<label class="admin-check-row">
+						<input
+							type="checkbox"
+							name="permissionIds"
+							value={permission.id}
+							checked={selectedPermissionIds.has(permission.id)}
+							disabled={isDisabled}
+						/>
+						{permission.label}
+					</label>
+				))
+			}
+		</div>
+	</div>
+
+	<div class="admin-form-actions">
+		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
+	</div>
+</form>

@@ -11,6 +11,9 @@ Published posts are now stored in Cloudflare D1 and rendered on request, so cont
 - `/admin` is a page-oriented CMS dashboard with a dedicated admin sidebar
 - `/admin/posts` is a table-only post management view
 - `/admin/posts/new` and `/admin/posts/:id/edit` provide dedicated post forms
+- `/admin/pages`, `/admin/users`, and `/admin/roles` are now list-only CRUD index routes
+- `/admin/pages/:id/edit`, `/admin/users/:id/edit`, and `/admin/roles/:id/edit` provide dedicated edit views
+- `/admin/pages/new`, `/admin/users/new`, and `/admin/roles/new` provide dedicated create views
 - `/api/admin/*` contains the auth and post management handlers used by the admin UI
 - `src/content/blog/` is still in the repo as sample starter content, but it is no longer the live source of truth
 
@@ -71,6 +74,15 @@ If `CMS_ADMIN_TOKEN` is not set, the admin UI is left open. Set it for any real 
 - `/admin/posts` post list page
 - `/admin/posts/new` create post page
 - `/admin/posts/:id/edit` edit post page
+- `/admin/pages` page list page
+- `/admin/pages/new` create page route
+- `/admin/pages/:id/edit` edit page route
+- `/admin/users` user list page
+- `/admin/users/new` create user route
+- `/admin/users/:id/edit` edit user route
+- `/admin/roles` role list page
+- `/admin/roles/new` create role route
+- `/admin/roles/:id/edit` edit role route
 
 ## Commands
 
@@ -90,6 +102,9 @@ If `CMS_ADMIN_TOKEN` is not set, the admin UI is left open. Set it for any real 
 - `src/pages/admin/posts.astro` table-only posts list
 - `src/pages/admin/posts/new.astro` dedicated post creation page
 - `src/pages/admin/posts/[id]/edit.astro` dedicated post editing page
+- `src/pages/admin/pages.astro`, `src/pages/admin/users.astro`, and `src/pages/admin/roles.astro` list-only CRUD index pages
+- `src/pages/admin/pages/[id]/edit.astro`, `src/pages/admin/users/[id]/edit.astro`, and `src/pages/admin/roles/[id]/edit.astro` dedicated edit pages
+- `src/components/admin/PageForm.astro`, `src/components/admin/UserForm.astro`, and `src/components/admin/RoleForm.astro` shared per-entity forms
 - `src/pages/api/admin/posts.ts` post list and create handler
 - `src/pages/api/admin/posts/[id].ts` post detail and update handler
 - `src/pages/api/admin/posts/delete.ts` delete handler
@@ -101,5 +116,6 @@ If `CMS_ADMIN_TOKEN` is not set, the admin UI is left open. Set it for any real 
 
 - The CMS stores the post body as Markdown in D1 and renders it to HTML at request time.
 - The admin post workflow is route-driven instead of stacking list and editor states in one page.
+- The admin pages, users, and roles workflows also use dedicated list, create, and edit routes with a shared sidebar layout.
 - The starter Markdown content in `src/content/blog/` is still available if you want to reference or migrate it manually.
 - `npm run build` succeeds, but actual CRUD usage requires the `DB` binding to exist at runtime.

@@ -1,0 +1,68 @@
+---
+export const prerender = false;
+
+import UserForm from "../../../../components/admin/UserForm.astro";
+import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import { getAdminUserSummaryById } from "../../../../lib/db/admin-users";
+import { listRoleSummaries } from "../../../../lib/db/roles";
+import { getDb } from "../../../../lib/blog";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const { id } = Astro.params;
+const db = getDb(Astro.locals);
+
+let user = null;
+let loadError = "";
+let notFound = false;
+
+try {
+	const userId = Number(id);
+	if (!Number.isInteger(userId) || userId <= 0) {
+		notFound = true;
+	} else {
+		user = await getAdminUserSummaryById(db, userId);
+		notFound = !user;
+	}
+} catch (error) {
+	loadError = error instanceof Error ? error.message : "Failed to load the requested user.";
+}
+
+const roles = await listRoleSummaries(db);
+
+if (Astro.url.searchParams.get("error")) {
+	loadError = "The user could not be updated.";
+}
+---
+
+<AdminLayout
+	title="Edit User"
+	description="Edit an admin user."
+	session={session}
+	pageTitle="Edit User"
+	pageDescription="Update user details and role assignments in a dedicated editing screen."
+>
+	<div class="admin-content-stack">
+		{
+			notFound ? (
+				<div class="admin-empty-state">
+					<h2>User not found</h2>
+					<p class="admin-muted">The requested user could not be loaded for editing.</p>
+					<p><a class="admin-ghost-button" href="/admin/users">Back to users</a></p>
+				</div>
+			) : (
+				<UserForm
+					mode="edit"
+					action={`/api/admin/users/${id}`}
+					user={user}
+					roles={roles}
+					canSubmit={true}
+					loadError={loadError}
+				/>
+			)
+		}
+	</div>
+</AdminLayout>

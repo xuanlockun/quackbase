@@ -106,6 +106,30 @@ export async function listAdminUsers(db: D1Database): Promise<AdminUserSummary[]
 	}));
 }
 
+export async function getAdminUserSummaryById(db: D1Database, userId: number): Promise<AdminUserSummary | null> {
+	const user = await db
+		.prepare(
+			`SELECT id, email, display_name as displayName, is_active as isActive
+			FROM users
+			WHERE id = ?1
+			LIMIT 1`,
+		)
+		.bind(userId)
+		.first<{ id: number; email: string; displayName: string; isActive: number }>();
+
+	if (!user) {
+		return null;
+	}
+
+	return {
+		id: user.id,
+		email: user.email,
+		displayName: user.displayName,
+		isActive: user.isActive === 1,
+		roles: await getRoleSummariesForUser(db, user.id),
+	};
+}
+
 export async function createAdminUser(
 	db: D1Database,
 	input: CreateAdminUserInput,

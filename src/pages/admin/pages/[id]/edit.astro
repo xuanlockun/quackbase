@@ -1,0 +1,57 @@
+---
+export const prerender = false;
+
+import PageForm from "../../../../components/admin/PageForm.astro";
+import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import { getDb, getPageById } from "../../../../lib/blog";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const canUpdate = session.isSuperadmin || session.permissions.includes("pages.update");
+const { id } = Astro.params;
+
+let page = null;
+let loadError = "";
+let notFound = false;
+
+try {
+	const pageId = Number(id);
+	if (!Number.isInteger(pageId) || pageId <= 0) {
+		notFound = true;
+	} else {
+		page = await getPageById(getDb(Astro.locals), pageId);
+		notFound = !page;
+	}
+} catch (error) {
+	loadError = error instanceof Error ? error.message : "Failed to load the requested page.";
+}
+
+if (Astro.url.searchParams.get("error")) {
+	loadError = "The page could not be updated.";
+}
+---
+
+<AdminLayout
+	title="Edit Page"
+	description="Edit an existing custom page."
+	session={session}
+	pageTitle="Edit Page"
+	pageDescription="Update page content in a dedicated editor with a clear return path to the list."
+>
+	<div class="admin-content-stack">
+		{
+			notFound ? (
+				<div class="admin-empty-state">
+					<h2>Page not found</h2>
+					<p class="admin-muted">The requested page could not be loaded for editing.</p>
+					<p><a class="admin-ghost-button" href="/admin/pages">Back to pages</a></p>
+				</div>
+			) : (
+				<PageForm mode="edit" action="/api/admin/pages" page={page} canSubmit={canUpdate} loadError={loadError} />
+			)
+		}
+	</div>
+</AdminLayout>

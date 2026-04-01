@@ -73,6 +73,42 @@ export async function listRolesWithPermissions(db: D1Database): Promise<AdminRol
 	return roles;
 }
 
+export async function getRoleById(db: D1Database, roleId: number): Promise<AdminRole | null> {
+	const role = await db
+		.prepare(
+			`SELECT id, name, label, description, is_system as isSystem
+			FROM roles
+			WHERE id = ?1
+			LIMIT 1`,
+		)
+		.bind(roleId)
+		.first<{ id: number; name: string; label: string; description: string | null; isSystem: number }>();
+
+	if (!role) {
+		return null;
+	}
+
+	const permissions = await db
+		.prepare(
+			`SELECT p.id, p.name, p.label, p.description, p.resource, p.action
+			FROM role_permissions rp
+			INNER JOIN permissions p ON p.id = rp.permission_id
+			WHERE rp.role_id = ?1
+			ORDER BY p.resource ASC, p.action ASC, p.id ASC`,
+		)
+		.bind(roleId)
+		.all<AdminRole["permissions"][number]>();
+
+	return {
+		id: role.id,
+		name: role.name,
+		label: role.label,
+		description: role.description,
+		isSystem: role.isSystem === 1,
+		permissions: permissions.results ?? [],
+	};
+}
+
 export async function createRole(
 	db: D1Database,
 	input: CreateRoleInput,

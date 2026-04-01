@@ -297,6 +297,22 @@ export async function listPublishedPages(db: D1Database): Promise<SitePage[]> {
 	return (result.results ?? []).map(toSitePage);
 }
 
+export async function getPageById(db: D1Database, id: number): Promise<SitePage | null> {
+	await ensureSiteTables(db);
+
+	const result = await db
+		.prepare(
+			`SELECT id, title, slug, description, content_markdown, show_posts_section, page_sections, status, updated_at
+			FROM site_pages
+			WHERE id = ?1
+			LIMIT 1`,
+		)
+		.bind(id)
+		.first<SitePageRecord>();
+
+	return result ? toSitePage(result) : null;
+}
+
 export async function getPublishedPageBySlug(
 	db: D1Database,
 	slug: string,

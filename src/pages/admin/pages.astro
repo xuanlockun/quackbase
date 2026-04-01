@@ -1,7 +1,7 @@
 ---
 export const prerender = false;
 
-import FormattedDate from "../../components/FormattedDate.astro";
+import PageTable from "../../components/admin/PageTable.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getDb, listAllPages } from "../../lib/blog";
 
@@ -22,10 +22,6 @@ try {
 } catch (error) {
 	loadError = error instanceof Error ? error.message : "Failed to load pages.";
 }
-
-const selectedSlug = Astro.url.searchParams.get("slug");
-const selectedPage = selectedSlug ? pages.find((page) => page.slug === selectedSlug) ?? null : null;
-const canSubmit = selectedPage ? canUpdate : canCreate;
 ---
 
 <AdminLayout
@@ -33,99 +29,20 @@ const canSubmit = selectedPage ? canUpdate : canCreate;
 	description="Manage custom pages."
 	session={session}
 	pageTitle="Pages"
-	pageDescription="Manage landing pages and reusable route content."
+	pageDescription="Manage landing pages and reusable route content from a dedicated list workspace."
 >
 	<div slot="actions" class="admin-page-actions">
-		{canCreate && <a class="admin-primary-button" href="/admin/pages">New page</a>}
+		{canCreate && <a class="admin-primary-button" href="/admin/pages/new">Create Page</a>}
 		<a class="admin-ghost-button" href="/">View site</a>
 	</div>
 
 	<div class="admin-content-stack">
-		<section class="admin-section-card">
-			{Astro.url.searchParams.get("pageSaved") && <p class="admin-notice">Page saved.</p>}
-			{Astro.url.searchParams.get("pageDeleted") && <p class="admin-notice">Page deleted.</p>}
-			{Astro.url.searchParams.get("pageError") && <p class="admin-notice admin-notice-error">The page request failed.</p>}
-			{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
-			<div class="admin-table-wrap">
-				<table class="admin-table">
-					<thead><tr><th>Title</th><th>Status</th><th>Updated</th><th>Slug</th><th>Actions</th></tr></thead>
-					<tbody>
-						{
-							pages.map((page) => (
-								<tr>
-									<td>
-										<div class="admin-meta-block">
-											<strong>{page.title}</strong>
-											<span class="admin-muted">{page.description}</span>
-										</div>
-									</td>
-									<td><span class="admin-status-pill">{page.status}</span></td>
-									<td><FormattedDate date={page.updatedAt} /></td>
-									<td><code>{page.slug}</code></td>
-									<td>
-										<div class="admin-row-actions">
-											{canUpdate && <a href={`/admin/pages?slug=${page.slug}`}>Edit</a>}
-											<a href={`/${page.slug}/`}>View</a>
-											{canDelete && (
-												<form class="admin-inline-form" method="post" action="/api/admin/pages/delete">
-													<input type="hidden" name="id" value={page.id} />
-													<button class="admin-danger-button" type="submit">Delete</button>
-												</form>
-											)}
-										</div>
-									</td>
-								</tr>
-							))
-						}
-					</tbody>
-				</table>
-			</div>
-		</section>
-		<section class="admin-section-card">
-			<div class="admin-form-header">
-				<h2>{selectedPage ? "Edit Page" : "Create Page"}</h2>
-				<p class="admin-muted">{canSubmit ? "Changes save through permission-checked Worker APIs." : "Your role can view pages but cannot save changes."}</p>
-			</div>
-			<form class="admin-form-stack" method="post" action="/api/admin/pages">
-				{selectedPage && <input type="hidden" name="id" value={selectedPage.id} />}
-				<div class="admin-grid-two">
-					<label><span>Title</span><input name="title" required value={selectedPage?.title ?? ""} disabled={Boolean(loadError) || !canSubmit} /></label>
-					<label><span>Slug</span><input name="slug" required pattern="[a-z0-9-]+" value={selectedPage?.slug ?? ""} placeholder="services" disabled={Boolean(loadError) || !canSubmit} /></label>
-					<label><span>Description</span><input name="description" required value={selectedPage?.description ?? ""} placeholder="Page summary" disabled={Boolean(loadError) || !canSubmit} /></label>
-					<label><span>Status</span><select name="status" disabled={Boolean(loadError) || !canSubmit}><option value="published" selected={selectedPage?.status !== "draft"}>Published</option><option value="draft" selected={selectedPage?.status === "draft"}>Draft</option></select></label>
-				</div>
-				<label><span>Page content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError) || !canSubmit}>{selectedPage?.contentMarkdown ?? "# New page"}</textarea></label>
-				<div class="admin-form-section page-sections-box">
-					<span>Page sections</span>
-					<div class="admin-check-grid page-section-check-grid">
-						<label class="admin-check-row page-section-checkbox"><input type="checkbox" name="pageSections" value="blog_feed" checked={selectedPage?.pageSections.includes("blog_feed")} disabled={Boolean(loadError) || !canSubmit} /> Blog feed grid</label>
-						<label class="admin-check-row page-section-checkbox"><input type="checkbox" name="pageSections" value="nav_grid" checked={selectedPage?.pageSections.includes("nav_grid")} disabled={Boolean(loadError) || !canSubmit} /> Navigation card grid</label>
-						<label class="admin-check-row page-section-checkbox"><input type="checkbox" name="pageSections" value="page_grid" checked={selectedPage?.pageSections.includes("page_grid")} disabled={Boolean(loadError) || !canSubmit} /> Other pages grid</label>
-					</div>
-				</div>
-				<div class="admin-form-actions">
-					<button class="admin-primary-button" type="submit" disabled={Boolean(loadError) || !canSubmit}>{selectedPage ? "Save page" : "Create page"}</button>
-					{selectedPage && <a href={`/${selectedPage.slug}/`}>Open page</a>}
-				</div>
-			</form>
-		</section>
+		{Astro.url.searchParams.get("created") && <p class="admin-notice">Page created.</p>}
+		{Astro.url.searchParams.get("saved") && <p class="admin-notice">Page saved.</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">Page deleted.</p>}
+		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">The page request failed.</p>}
+		{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+
+		<PageTable pages={pages} canUpdate={canUpdate} canDelete={canDelete} />
 	</div>
 </AdminLayout>
-
-<style>
-	textarea {
-		min-height: 320px;
-	}
-
-	.page-sections-box {
-		background: #f7f8fa;
-	}
-
-	.page-section-check-grid {
-		margin-top: 0.2rem;
-	}
-
-	.page-section-checkbox {
-		margin: 0;
-	}
-</style>

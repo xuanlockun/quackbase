@@ -1,18 +1,14 @@
 import type { APIRoute } from "astro";
-import {
-	createPage,
-	getDb,
-	parsePageForm,
-	updatePage,
-} from "../../../lib/blog";
+import { createPage, getDb, parsePageForm, updatePage } from "../../../lib/blog";
 import { requireApiPermission } from "../../../lib/rbac/guards";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ locals, request, redirect }) => {
+	const formData = await request.formData();
+	const idValue = formData.get("id");
+
 	try {
-		const formData = await request.formData();
-		const idValue = formData.get("id");
 		const requiredPermission =
 			typeof idValue === "string" && idValue.trim() !== "" ? "pages.update" : "pages.create";
 		const session = await requireApiPermission(
@@ -28,13 +24,16 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 
 		if (typeof idValue === "string" && idValue.trim() !== "") {
 			await updatePage(getDb(locals), Number(idValue), input);
-			return redirect(`/admin/pages?slug=${input.slug}&pageSaved=1`);
+			return redirect("/admin/pages?saved=1");
 		}
 
 		await createPage(getDb(locals), input);
-		return redirect(`/admin/pages?slug=${input.slug}&pageSaved=1`);
+		return redirect("/admin/pages?created=1");
 	} catch (error) {
 		const message = error instanceof Error ? encodeURIComponent(error.message) : "unknown";
-		return redirect(`/admin/pages?pageError=${message}`);
+		if (typeof idValue === "string" && idValue.trim() !== "") {
+			return redirect(`/admin/pages/${idValue}/edit?error=${message}`);
+		}
+		return redirect(`/admin/pages/new?error=${message}`);
 	}
 };

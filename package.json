@@ -17,6 +17,7 @@
 		"@astrojs/sitemap": "3.6.1",
 		"astro": "5.16.9",
 		"bcryptjs": "^3.0.3",
+		"bootstrap": "^5.3.7",
 		"jose": "^6.1.0",
 		"micromark": "^4.0.2",
 		"micromark-extension-gfm": "^3.0.0",

@@ -1,0 +1,120 @@
+---
+import type { SitePage } from "../../lib/blog";
+
+interface Props {
+	mode: "create" | "edit";
+	action: string;
+	page?: SitePage | null;
+	canSubmit: boolean;
+	backHref?: string;
+	loadError?: string;
+}
+
+const {
+	mode,
+	action,
+	page = null,
+	canSubmit,
+	backHref = "/admin/pages",
+	loadError = "",
+} = Astro.props;
+
+const submitLabel = mode === "edit" ? "Save page" : "Create page";
+const isDisabled = Boolean(loadError) || !canSubmit;
+const pageSections = new Set(page?.pageSections ?? []);
+---
+
+<div class="admin-form-header">
+	<a class="admin-ghost-button" href={backHref}>Back</a>
+	<p class="admin-muted">
+		{canSubmit
+			? "Changes save through permission-checked page routes."
+			: "Your role can view this page but cannot save changes."}
+	</p>
+</div>
+
+{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+
+<form class="admin-form-stack" method="post" action={action}>
+	{mode === "edit" && page && <input type="hidden" name="id" value={page.id} />}
+	<div class="admin-form-grid">
+		<label>
+			<span>Title</span>
+			<input name="title" required value={page?.title ?? ""} disabled={isDisabled} />
+		</label>
+		<label>
+			<span>Slug</span>
+			<input
+				name="slug"
+				required
+				pattern="[a-z0-9-]+"
+				value={page?.slug ?? ""}
+				placeholder="services"
+				disabled={isDisabled}
+			/>
+		</label>
+		<label>
+			<span>Description</span>
+			<input
+				name="description"
+				required
+				value={page?.description ?? ""}
+				placeholder="Page summary"
+				disabled={isDisabled}
+			/>
+		</label>
+		<label>
+			<span>Status</span>
+			<select name="status" disabled={isDisabled}>
+				<option value="published" selected={page?.status !== "draft"}>Published</option>
+				<option value="draft" selected={page?.status === "draft"}>Draft</option>
+			</select>
+		</label>
+	</div>
+
+	<label>
+		<span>Page content</span>
+		<textarea name="contentMarkdown" required disabled={isDisabled}>{page?.contentMarkdown ?? "# New page"}</textarea>
+	</label>
+
+	<div class="admin-form-section">
+		<span>Page sections</span>
+		<div class="admin-check-grid">
+			<label class="admin-check-row">
+				<input
+					type="checkbox"
+					name="pageSections"
+					value="blog_feed"
+					checked={pageSections.has("blog_feed")}
+					disabled={isDisabled}
+				/>
+				Blog feed grid
+			</label>
+			<label class="admin-check-row">
+				<input
+					type="checkbox"
+					name="pageSections"
+					value="nav_grid"
+					checked={pageSections.has("nav_grid")}
+					disabled={isDisabled}
+				/>
+				Navigation card grid
+			</label>
+			<label class="admin-check-row">
+				<input
+					type="checkbox"
+					name="pageSections"
+					value="page_grid"
+					checked={pageSections.has("page_grid")}
+					disabled={isDisabled}
+				/>
+				Other pages grid
+			</label>
+		</div>
+	</div>
+
+	<div class="admin-form-actions">
+		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		{mode === "edit" && page && <a href={`/${page.slug}/`}>Open page</a>}
+	</div>
+</form>

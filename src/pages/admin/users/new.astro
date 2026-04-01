@@ -1,0 +1,34 @@
+---
+export const prerender = false;
+
+import UserForm from "../../../components/admin/UserForm.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { listRoleSummaries } from "../../../lib/db/roles";
+import { getDb } from "../../../lib/blog";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const roles = await listRoleSummaries(getDb(Astro.locals));
+const hasError = Astro.url.searchParams.get("error");
+---
+
+<AdminLayout
+	title="Create User"
+	description="Create a new admin user."
+	session={session}
+	pageTitle="Create User"
+	pageDescription="Add an admin user and assign their roles from a dedicated workflow."
+>
+	<div class="admin-content-stack">
+		<UserForm
+			mode="create"
+			action="/api/admin/users"
+			roles={roles}
+			canSubmit={true}
+			loadError={hasError ? "The user could not be created." : ""}
+		/>
+	</div>
+</AdminLayout>

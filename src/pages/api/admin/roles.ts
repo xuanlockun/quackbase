@@ -23,30 +23,32 @@ export const GET: APIRoute = async ({ locals, request, redirect }) => {
 };
 
 export const POST: APIRoute = async ({ locals, request, redirect }) => {
+	const isJsonRequest = (request.headers.get("content-type") ?? "").includes("application/json");
 	const session = await requireApiPermission(
 		{ locals, request, redirect },
 		["roles.manage"],
-		{ forceJson: true, clearCookieOnFailure: true },
+		isJsonRequest
+			? { forceJson: true, clearCookieOnFailure: true }
+			: { loginRedirect: "/admin/login", forbiddenRedirect: "/admin/roles" },
 	);
 	if (session instanceof Response) {
 		return session;
 	}
 
 	try {
-		const body = (await request.json()) as {
-			name?: unknown;
-			label?: unknown;
-			description?: unknown;
-			permissionIds?: unknown;
-		};
-
-		if (
-			typeof body.name !== "string" ||
-			typeof body.label !== "string" ||
-			!Array.isArray(body.permissionIds)
-		) {
-			return Response.json({ error: "Invalid request body." }, { status: 400 });
-		}
+		const body: {
+			name: string;
+			label: string;
+			description?: FormDataEntryValue | null;
+			permissionIds: unknown[];
+		} = isJsonRequest
+			? ((await request.json()) as {
+					name: string;
+					label: string;
+					description?: string;
+					permissionIds: unknown[];
+			  })
+			: parseCreateRoleForm(await request.formData());
 
 		const role = await createRole(
 			getDb(locals),
@@ -54,16 +56,34 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 				name: body.name,
 				label: body.label,
 				description: typeof body.description === "string" ? body.description : null,
-				permissionIds: body.permissionIds.map((value) => Number(value)).filter(Number.isFinite),
+				permissionIds: body.permissionIds.map((value: unknown) => Number(value)).filter(Number.isFinite),
 			},
 			session.userId,
 		);
 
 		logSecurityEvent("rbac.role.created", { actorUserId: session.userId, roleId: role.id, roleName: role.name });
-		return Response.json(role, { status: 201 });
+		return isJsonRequest ? Response.json(role, { status: 201 }) : redirect("/admin/roles?created=1");
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Failed to create role.";
 		const status = /UNIQUE|unique/i.test(message) ? 409 : 400;
-		return Response.json({ error: message }, { status });
+		return isJsonRequest
+			? Response.json({ error: message }, { status })
+			: redirect(`/admin/roles/new?error=${encodeURIComponent(message)}`);
 	}
 };
+
+function parseCreateRoleForm(formData: FormData) {
+	const name = formData.get("name");
+	const label = formData.get("label");
+
+	if (typeof name !== "string" || typeof label !== "string") {
+		throw new Error("Invalid request body.");
+	}
+
+	return {
+		name,
+		label,
+		description: formData.get("description"),
+		permissionIds: formData.getAll("permissionIds"),
+	};
+}

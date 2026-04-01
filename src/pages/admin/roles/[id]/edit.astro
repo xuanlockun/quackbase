@@ -1,0 +1,68 @@
+---
+export const prerender = false;
+
+import RoleForm from "../../../../components/admin/RoleForm.astro";
+import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import { listPermissions } from "../../../../lib/db/permissions";
+import { getRoleById } from "../../../../lib/db/roles";
+import { getDb } from "../../../../lib/blog";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const { id } = Astro.params;
+const db = getDb(Astro.locals);
+
+let role = null;
+let loadError = "";
+let notFound = false;
+
+try {
+	const roleId = Number(id);
+	if (!Number.isInteger(roleId) || roleId <= 0) {
+		notFound = true;
+	} else {
+		role = await getRoleById(db, roleId);
+		notFound = !role;
+	}
+} catch (error) {
+	loadError = error instanceof Error ? error.message : "Failed to load the requested role.";
+}
+
+const permissions = await listPermissions(db);
+
+if (Astro.url.searchParams.get("error")) {
+	loadError = "The role could not be updated.";
+}
+---
+
+<AdminLayout
+	title="Edit Role"
+	description="Edit an admin role."
+	session={session}
+	pageTitle="Edit Role"
+	pageDescription="Update role metadata and permission bundles in a dedicated full-width editor."
+>
+	<div class="admin-content-stack">
+		{
+			notFound ? (
+				<div class="admin-empty-state">
+					<h2>Role not found</h2>
+					<p class="admin-muted">The requested role could not be loaded for editing.</p>
+					<p><a class="admin-ghost-button" href="/admin/roles">Back to roles</a></p>
+				</div>
+			) : (
+				<RoleForm
+					mode="edit"
+					action={`/api/admin/roles/${id}`}
+					role={role}
+					permissions={permissions}
+					canSubmit={true}
+					loadError={loadError}
+				/>
+			)
+		}
+	</div>
+</AdminLayout>

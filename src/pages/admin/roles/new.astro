@@ -1,0 +1,34 @@
+---
+export const prerender = false;
+
+import RoleForm from "../../../components/admin/RoleForm.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { listPermissions } from "../../../lib/db/permissions";
+import { getDb } from "../../../lib/blog";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const permissions = await listPermissions(getDb(Astro.locals));
+const hasError = Astro.url.searchParams.get("error");
+---
+
+<AdminLayout
+	title="Create Role"
+	description="Create a new role."
+	session={session}
+	pageTitle="Create Role"
+	pageDescription="Add a reusable role bundle with a dedicated form and clear back navigation."
+>
+	<div class="admin-content-stack">
+		<RoleForm
+			mode="create"
+			action="/api/admin/roles"
+			permissions={permissions}
+			canSubmit={true}
+			loadError={hasError ? "The role could not be created." : ""}
+		/>
+	</div>
+</AdminLayout>

@@ -1,0 +1,60 @@
+---
+import type { AdminUserSummary } from "../../lib/auth/types";
+
+interface Props {
+	users: AdminUserSummary[];
+}
+
+const { users } = Astro.props;
+---
+
+{
+	users.length === 0 ? (
+		<div class="admin-empty-state">
+			<h2>No admin users yet</h2>
+			<p>Create an admin user to grant access to the dashboard.</p>
+		</div>
+	) : (
+		<div class="admin-table-wrap">
+			<table class="admin-table table table-sm align-middle mb-0">
+				<thead>
+					<tr>
+						<th>User</th>
+						<th>Status</th>
+						<th>Roles</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{
+						users.map((user) => (
+							<tr>
+								<td>
+									<div class="admin-meta-block">
+										<strong>{user.displayName}</strong>
+										<span class="admin-muted">{user.email}</span>
+									</div>
+								</td>
+								<td>
+									<span class:list={["admin-status-pill", !user.isActive && "admin-status-pill-inactive"]}>
+										{user.isActive ? "Active" : "Inactive"}
+									</span>
+								</td>
+								<td>
+									<div class="admin-row-actions">
+										{user.roles.length > 0 ? user.roles.map((role) => <span class="admin-role-chip">{role.label}</span>) : <span class="admin-muted">No roles</span>}
+									</div>
+								</td>
+								<td>
+									<div class="admin-row-actions">
+										<a href={`/admin/users/${user.id}/edit`}>Edit</a>
+									</div>
+								</td>
+							</tr>
+						))
+					}
+				</tbody>
+			</table>
+		</div>
+	)
+}

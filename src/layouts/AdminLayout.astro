@@ -1,4 +1,5 @@
 ---
+import "bootstrap/dist/css/bootstrap.min.css";
 import BaseHead from "../components/BaseHead.astro";
 import Sidebar from "../components/admin/Sidebar.astro";
 import { SITE_TITLE } from "../consts";
@@ -29,13 +30,13 @@ const {
 		<BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
 	</head>
 	<body class="admin-body">
-		<main class="admin-shell">
-			<aside class="admin-sidebar-column">
+		<main class="admin-shell d-flex min-vh-100 align-items-stretch">
+			<aside class="admin-sidebar-column flex-shrink-0">
 				<Sidebar session={session} />
 			</aside>
 
-			<div class="admin-content-column">
-				<section class="admin-panel admin-panel-main">
+			<div class="admin-content-column flex-grow-1 min-vw-0 p-2 p-lg-3">
+				<section class="admin-panel admin-panel-main h-100">
 					<header class="admin-page-header">
 						<div class="admin-page-copy">
 							<p class="admin-page-eyebrow">{pageEyebrow}</p>

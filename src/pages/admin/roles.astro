@@ -1,9 +1,8 @@
 ---
 export const prerender = false;
 
-import RoleEditor from "../../components/admin/RoleEditor.astro";
+import RoleTable from "../../components/admin/RoleTable.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import { listPermissions } from "../../lib/db/permissions";
 import { listRolesWithPermissions } from "../../lib/db/roles";
 import { getDb } from "../../lib/blog";
 
@@ -12,8 +11,7 @@ if (!session) {
 	return Astro.redirect("/admin/login");
 }
 
-const db = getDb(Astro.locals);
-const [roles, permissions] = await Promise.all([listRolesWithPermissions(db), listPermissions(db)]);
+const roles = await listRolesWithPermissions(getDb(Astro.locals));
 ---
 
 <AdminLayout
@@ -21,7 +19,17 @@ const [roles, permissions] = await Promise.all([listRolesWithPermissions(db), li
 	description="Manage RBAC roles and permission bundles."
 	session={session}
 	pageTitle="Roles"
-	pageDescription="Create reusable role bundles and tune permission sets."
+	pageDescription="Manage reusable role bundles from a dedicated list with route-based actions."
 >
-	<RoleEditor roles={roles} permissions={permissions} />
+	<div slot="actions" class="admin-page-actions">
+		<a class="admin-primary-button" href="/admin/roles/new">Create Role</a>
+	</div>
+
+	<div class="admin-content-stack">
+		{Astro.url.searchParams.get("created") && <p class="admin-notice">Role created.</p>}
+		{Astro.url.searchParams.get("saved") && <p class="admin-notice">Role saved.</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">Role deleted.</p>}
+		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">The role request failed.</p>}
+		<RoleTable roles={roles} />
+	</div>
 </AdminLayout>

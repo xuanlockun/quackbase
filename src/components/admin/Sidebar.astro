@@ -15,20 +15,20 @@ function isActiveLink(href: string, currentPath: string): boolean {
 }
 ---
 
-<nav class="admin-sidebar-nav" aria-label="Admin">
-	<div class="admin-sidebar-brand">
+<nav class="admin-sidebar-nav d-flex flex-column h-100 bg-white border-end" aria-label="Admin">
+	<div class="admin-sidebar-brand border-bottom">
 		<p class="admin-sidebar-kicker">Edge CMS</p>
-		<h2>Dashboard</h2>
-		<p class="admin-sidebar-copy">Dashboard</p>
+		<h2 class="h5 mb-1">Admin</h2>
+		<p class="admin-sidebar-copy">Content and access management</p>
 	</div>
 
-	<div class="admin-sidebar-section">
+	<div class="admin-sidebar-section border-bottom">
 		<p class="admin-sidebar-label">Signed in</p>
 		<strong>{session?.displayName ?? "Admin user"}</strong>
 		<p class="admin-sidebar-copy">{session?.email}</p>
 	</div>
 
-	<div class="admin-sidebar-links">
+	<div class="admin-sidebar-links nav nav-pills flex-column gap-1">
 		{
 			links.map((link) => (
 				<a class:list={["admin-sidebar-link", isActiveLink(link.href, pathname) && "is-active"]} href={link.href}>
@@ -38,7 +38,7 @@ function isActiveLink(href: string, currentPath: string): boolean {
 		}
 	</div>
 
-	<form method="post" action="/api/admin/auth/logout" class="admin-sidebar-logout">
+	<form method="post" action="/api/admin/auth/logout" class="admin-sidebar-logout mt-auto">
 		<button class="admin-ghost-button admin-logout-button" type="submit">Log out</button>
 	</form>
 </nav>

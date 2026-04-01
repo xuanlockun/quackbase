@@ -1,0 +1,31 @@
+---
+export const prerender = false;
+
+import PageForm from "../../../components/admin/PageForm.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
+const hasError = Astro.url.searchParams.get("error");
+---
+
+<AdminLayout
+	title="Create Page"
+	description="Create a new custom page."
+	session={session}
+	pageTitle="Create Page"
+	pageDescription="Add a new page in a dedicated full-width editing workspace."
+>
+	<div class="admin-content-stack">
+		<PageForm
+			mode="create"
+			action="/api/admin/pages"
+			canSubmit={canCreate}
+			loadError={hasError ? "The page could not be created." : ""}
+		/>
+	</div>
+</AdminLayout>
