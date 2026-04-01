@@ -2,22 +2,29 @@ import type { APIRoute } from "astro";
 import {
 	createPage,
 	getDb,
-	isAdminAuthenticated,
 	parsePageForm,
 	updatePage,
 } from "../../../lib/blog";
+import { requireApiPermission } from "../../../lib/rbac/guards";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ locals, request, redirect }) => {
-	if (!isAdminAuthenticated(request, locals)) {
-		return redirect("/admin/login");
-	}
-
 	try {
 		const formData = await request.formData();
-		const input = parsePageForm(formData);
 		const idValue = formData.get("id");
+		const requiredPermission =
+			typeof idValue === "string" && idValue.trim() !== "" ? "pages.update" : "pages.create";
+		const session = await requireApiPermission(
+			{ locals, request, redirect },
+			[requiredPermission],
+			{ loginRedirect: "/admin/login", forbiddenRedirect: "/admin/pages" },
+		);
+		if (session instanceof Response) {
+			return session;
+		}
+
+		const input = parsePageForm(formData);
 
 		if (typeof idValue === "string" && idValue.trim() !== "") {
 			await updatePage(getDb(locals), Number(idValue), input);

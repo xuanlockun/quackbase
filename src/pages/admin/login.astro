@@ -2,39 +2,36 @@
 export const prerender = false;
 
 import BaseHead from "../../components/BaseHead.astro";
-import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
+import Header from "../../components/Header.astro";
 import { SITE_TITLE } from "../../consts";
-import { getAdminToken, isAdminAuthenticated } from "../../lib/blog";
-
-const hasToken = Boolean(getAdminToken(Astro.locals));
-if (!hasToken || isAdminAuthenticated(Astro.request, Astro.locals)) {
-	return Astro.redirect("/admin");
-}
 
 const error = Astro.url.searchParams.get("error");
+const errorMessage =
+	error === "access-denied"
+		? "Your account authenticated, but it does not currently have admin access."
+		: error === "invalid"
+			? "The email or password was invalid."
+			: "";
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`Admin Login | ${SITE_TITLE}`} description="Sign in to manage blog posts." />
+		<BaseHead title={`Admin Login | ${SITE_TITLE}`} description="Sign in to manage Edge CMS." />
 		<style>
 			.panel {
-				max-width: 520px;
+				max-width: 540px;
 				margin: 2rem auto;
 				padding: 2rem;
 				background: white;
 				border-radius: 18px;
 				box-shadow: var(--box-shadow);
 			}
-			form {
-				display: grid;
-				gap: 1rem;
-			}
+			form,
 			label {
 				display: grid;
-				gap: 0.5rem;
+				gap: 1rem;
 			}
 			input,
 			button {
@@ -53,6 +50,9 @@ const error = Astro.url.searchParams.get("error");
 				color: #a61b29;
 				margin: 0;
 			}
+			.muted {
+				color: rgb(var(--gray));
+			}
 		</style>
 	</head>
 	<body>
@@ -60,12 +60,16 @@ const error = Astro.url.searchParams.get("error");
 		<main>
 			<section class="panel">
 				<h1>Admin Login</h1>
-				<p>Use the `CMS_ADMIN_TOKEN` secret to access the CMS.</p>
-				{error && <p class="error">Invalid admin token.</p>}
-				<form method="post" action="/api/admin/login">
+				<p class="muted">Sign in with your admin email and password to access the CMS dashboard.</p>
+				{errorMessage && <p class="error">{errorMessage}</p>}
+				<form method="post" action="/api/admin/auth/login">
 					<label>
-						<span>Admin token</span>
-						<input type="password" name="token" required />
+						<span>Email</span>
+						<input type="email" name="email" autocomplete="username" required />
+					</label>
+					<label>
+						<span>Password</span>
+						<input type="password" name="password" autocomplete="current-password" required />
 					</label>
 					<button type="submit">Sign in</button>
 				</form>

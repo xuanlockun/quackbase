@@ -1,17 +1,22 @@
 ---
 export const prerender = false;
 
+import AdminNav from "../../components/AdminNav.astro";
 import BaseHead from "../../components/BaseHead.astro";
 import Footer from "../../components/Footer.astro";
-import Header from "../../components/Header.astro";
 import FormattedDate from "../../components/FormattedDate.astro";
-import AdminNav from "../../components/AdminNav.astro";
+import Header from "../../components/Header.astro";
 import { SITE_TITLE } from "../../consts";
-import { getAdminToken, getDb, isAdminAuthenticated, listAllPosts } from "../../lib/blog";
+import { getDb, listAllPosts } from "../../lib/blog";
 
-if (getAdminToken(Astro.locals) && !isAdminAuthenticated(Astro.request, Astro.locals)) {
+const session = Astro.locals.adminSession;
+if (!session) {
 	return Astro.redirect("/admin/login");
 }
+
+const canCreate = session.isSuperadmin || session.permissions.includes("posts.create");
+const canUpdate = session.isSuperadmin || session.permissions.includes("posts.update");
+const canDelete = session.isSuperadmin || session.permissions.includes("posts.delete");
 
 let posts = [];
 let loadError = "";
@@ -24,6 +29,7 @@ try {
 
 const selectedSlug = Astro.url.searchParams.get("slug");
 const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedSlug) ?? null : null;
+const canSubmit = selectedPost ? canUpdate : canCreate;
 ---
 
 <!doctype html>
@@ -31,170 +37,37 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 	<head>
 		<BaseHead title={`Posts | ${SITE_TITLE}`} description="Manage blog posts." />
 		<style>
-			.cms-shell {
-				width: min(1280px, calc(100% - 2rem));
-				max-width: none;
-				display: grid;
-				grid-template-columns: 280px minmax(0, 1fr);
-				gap: 1.5rem;
-			}
-			.panel {
-				background: white;
-				border-radius: 22px;
-				box-shadow: 0 18px 40px rgba(var(--gray), 0.12);
-				padding: 1.35rem;
-				border: 1px solid rgba(var(--gray-light), 0.8);
-			}
-			.muted {
-				color: rgb(var(--gray));
-			}
-			.toolbar,
-			.row-actions,
-			.row-actions-inline {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 0.75rem;
-				align-items: center;
-			}
-			.toolbar {
-				justify-content: space-between;
-			}
-			.main-stack {
-				display: grid;
-				gap: 1.5rem;
-			}
-			form.editor {
-				display: grid;
-				gap: 1rem;
-			}
-			.grid {
-				display: grid;
-				grid-template-columns: repeat(2, minmax(0, 1fr));
-				gap: 1rem;
-			}
-			label {
-				display: grid;
-				gap: 0.5rem;
-				font-weight: 700;
-				font-size: 0.95rem;
-			}
-			input,
-			select,
-			textarea,
-			button {
-				font: inherit;
-				padding: 0.9rem 1rem;
-				border-radius: 14px;
-				border: 1px solid rgb(var(--gray-light));
-				box-sizing: border-box;
-			}
-			textarea {
-				min-height: 360px;
-				resize: vertical;
-			}
-			button {
-				cursor: pointer;
-			}
-			.primary,
-			.secondary,
-			.success,
-			.danger {
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				padding: 0.8rem 1rem;
-				border-radius: 999px;
-				font-weight: 700;
-				text-decoration: none;
-				transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-			}
-			.primary {
-				background: linear-gradient(135deg, #1f4fff, #3a7bff);
-				color: white;
-				border: none;
-				box-shadow: 0 12px 24px rgba(31, 79, 255, 0.22);
-			}
-			.secondary {
-				background: white;
-				color: rgb(var(--gray-dark));
-				border: 1px solid rgb(var(--gray-light));
-			}
-			.success {
-				background: linear-gradient(135deg, #177245, #2ba56a);
-				color: white;
-				border: none;
-				box-shadow: 0 12px 24px rgba(23, 114, 69, 0.2);
-			}
-			.danger {
-				background: #fff1f2;
-				color: #9f1239;
-				border: 1px solid #fecdd3;
-			}
-			.primary:hover,
-			.secondary:hover,
-			.success:hover,
-			.danger:hover {
-				transform: translateY(-1px);
-			}
-			.notice {
-				padding: 0.95rem 1rem;
-				border-radius: 14px;
-				background: rgba(35, 55, 255, 0.08);
-				color: var(--accent-dark);
-			}
-			.table-wrap {
-				overflow-x: auto;
-			}
-			table {
-				width: 100%;
-				border-collapse: separate;
-				border-spacing: 0;
-				font-size: 0.98rem;
-			}
-			th,
-			td {
-				padding: 1rem 0.85rem;
-				text-align: left;
-				border-bottom: 1px solid rgb(var(--gray-light));
-				vertical-align: top;
-			}
-			th {
-				font-size: 0.78rem;
-				letter-spacing: 0.08em;
-				text-transform: uppercase;
-				color: rgb(var(--gray));
-			}
-			tbody tr:hover {
-				background: rgba(35, 55, 255, 0.03);
-			}
-			.status-pill {
-				display: inline-block;
-				padding: 0.24rem 0.58rem;
-				border-radius: 999px;
-				background: rgba(35, 55, 255, 0.1);
-				color: var(--accent-dark);
-				font-size: 0.78rem;
-				font-weight: 700;
-				text-transform: uppercase;
-			}
-			.inline-form {
-				margin: 0;
-			}
-			@media (max-width: 960px) {
-				.cms-shell,
-				.grid {
-					grid-template-columns: 1fr;
-				}
-			}
+			.cms-shell { width: min(1280px, calc(100% - 2rem)); max-width: none; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 1.5rem; }
+			.panel { background: white; border-radius: 22px; box-shadow: 0 18px 40px rgba(var(--gray), 0.12); padding: 1.35rem; border: 1px solid rgba(var(--gray-light), 0.8); }
+			.main-stack, .editor { display: grid; gap: 1rem; }
+			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+			.toolbar, .row-actions, .row-actions-inline { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
+			label { display: grid; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; }
+			input, select, textarea, button { font: inherit; padding: 0.9rem 1rem; border-radius: 14px; border: 1px solid rgb(var(--gray-light)); box-sizing: border-box; }
+			textarea { min-height: 360px; resize: vertical; }
+			button { cursor: pointer; }
+			.primary, .secondary, .success, .danger { display: inline-flex; align-items: center; justify-content: center; padding: 0.8rem 1rem; border-radius: 999px; font-weight: 700; text-decoration: none; }
+			.primary { background: linear-gradient(135deg, #1f4fff, #3a7bff); color: white; border: none; }
+			.secondary { background: white; color: rgb(var(--gray-dark)); border: 1px solid rgb(var(--gray-light)); }
+			.success { background: linear-gradient(135deg, #177245, #2ba56a); color: white; border: none; }
+			.danger { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
+			.notice { padding: 0.95rem 1rem; border-radius: 14px; background: rgba(35, 55, 255, 0.08); color: var(--accent-dark); }
+			.table-wrap { overflow-x: auto; }
+			table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.98rem; }
+			th, td { padding: 1rem 0.85rem; text-align: left; border-bottom: 1px solid rgb(var(--gray-light)); vertical-align: top; }
+			th { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(var(--gray)); }
+			.status-pill { display: inline-block; padding: 0.24rem 0.58rem; border-radius: 999px; background: rgba(35, 55, 255, 0.1); color: var(--accent-dark); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; }
+			.inline-form { margin: 0; }
+			.muted { color: rgb(var(--gray)); }
+			@media (max-width: 960px) { .cms-shell, .grid { grid-template-columns: 1fr; } }
 		</style>
 	</head>
 	<body>
 		<Header />
 		<main class="cms-shell">
 			<aside class="panel">
-				<AdminNav />
+				<AdminNav session={session} />
 			</aside>
-
 			<div class="main-stack">
 				<section class="panel">
 					<div class="toolbar">
@@ -202,48 +75,36 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 							<h1>Posts</h1>
 							<p class="muted">Manage published articles and drafts from one table.</p>
 						</div>
-						<div class="toolbar">
-							<a class="success" href="/admin/posts">New post</a>
+						<div class="row-actions">
+							{canCreate && <a class="success" href="/admin/posts">New post</a>}
 							<a href="/blog">View blog</a>
 						</div>
 					</div>
-
 					{Astro.url.searchParams.get("saved") && <p class="notice">Post saved.</p>}
 					{Astro.url.searchParams.get("deleted") && <p class="notice">Post deleted.</p>}
 					{Astro.url.searchParams.get("error") && <p class="notice">The request failed.</p>}
 					{loadError && <p class="notice">{loadError}</p>}
-
 					<div class="table-wrap">
 						<table>
-							<thead>
-								<tr>
-									<th>Title</th>
-									<th>Status</th>
-									<th>Updated</th>
-									<th>Slug</th>
-									<th>Actions</th>
-								</tr>
-							</thead>
+							<thead><tr><th>Title</th><th>Status</th><th>Updated</th><th>Slug</th><th>Actions</th></tr></thead>
 							<tbody>
 								{
 									posts.map((post) => (
 										<tr>
-											<td>
-												<strong>{post.title}</strong>
-												<br />
-												<span class="muted">{post.description}</span>
-											</td>
+											<td><strong>{post.title}</strong><br /><span class="muted">{post.description}</span></td>
 											<td><span class="status-pill">{post.status}</span></td>
 											<td><FormattedDate date={post.updatedDate ?? post.pubDate} /></td>
 											<td><code>{post.slug}</code></td>
 											<td>
 												<div class="row-actions-inline">
-													<a href={`/admin/posts?slug=${post.slug}`}>Edit</a>
+													{canUpdate && <a href={`/admin/posts?slug=${post.slug}`}>Edit</a>}
 													<a href={`/blog/${post.slug}/`}>View</a>
-													<form class="inline-form" method="post" action="/api/admin/posts/delete">
-														<input type="hidden" name="id" value={post.id} />
-														<button class="danger" type="submit">Delete</button>
-													</form>
+													{canDelete && (
+														<form class="inline-form" method="post" action="/api/admin/posts/delete">
+															<input type="hidden" name="id" value={post.id} />
+															<button class="danger" type="submit">Delete</button>
+														</form>
+													)}
 												</div>
 											</td>
 										</tr>
@@ -257,26 +118,21 @@ const selectedPost = selectedSlug ? posts.find((post) => post.slug === selectedS
 				<section class="panel">
 					<div class="toolbar">
 						<h2>{selectedPost ? "Edit Post" : "Create Post"}</h2>
-						{getAdminToken(Astro.locals) && (
-							<form method="post" action="/api/admin/logout">
-								<button class="secondary" type="submit">Log out</button>
-							</form>
-						)}
+						<p class="muted">{canSubmit ? "Changes save through permission-checked Worker APIs." : "Your role can view posts but cannot save changes."}</p>
 					</div>
-
 					<form class="editor" method="post" action="/api/admin/posts">
 						{selectedPost && <input type="hidden" name="id" value={selectedPost.id} />}
 						<div class="grid">
-							<label><span>Title</span><input name="title" required value={selectedPost?.title ?? ""} disabled={Boolean(loadError)} /></label>
-							<label><span>Slug</span><input name="slug" required pattern="[a-z0-9-]+" value={selectedPost?.slug ?? ""} placeholder="my-post-slug" disabled={Boolean(loadError)} /></label>
-							<label><span>Description</span><input name="description" required value={selectedPost?.description ?? ""} placeholder="Short summary" disabled={Boolean(loadError)} /></label>
-							<label><span>Hero image URL</span><input name="heroImage" value={selectedPost?.heroImage ?? ""} placeholder="/blog-placeholder-1.jpg" disabled={Boolean(loadError)} /></label>
-							<label><span>Status</span><select name="status" disabled={Boolean(loadError)}><option value="published" selected={selectedPost?.status !== "draft"}>Published</option><option value="draft" selected={selectedPost?.status === "draft"}>Draft</option></select></label>
-							<label><span>Publish date</span><input type="datetime-local" name="pubDate" value={selectedPost ? selectedPost.pubDate.toISOString().slice(0, 16) : ""} disabled={Boolean(loadError)} /></label>
+							<label><span>Title</span><input name="title" required value={selectedPost?.title ?? ""} disabled={Boolean(loadError) || !canSubmit} /></label>
+							<label><span>Slug</span><input name="slug" required pattern="[a-z0-9-]+" value={selectedPost?.slug ?? ""} placeholder="my-post-slug" disabled={Boolean(loadError) || !canSubmit} /></label>
+							<label><span>Description</span><input name="description" required value={selectedPost?.description ?? ""} placeholder="Short summary" disabled={Boolean(loadError) || !canSubmit} /></label>
+							<label><span>Hero image URL</span><input name="heroImage" value={selectedPost?.heroImage ?? ""} placeholder="/blog-placeholder-1.jpg" disabled={Boolean(loadError) || !canSubmit} /></label>
+							<label><span>Status</span><select name="status" disabled={Boolean(loadError) || !canSubmit}><option value="published" selected={selectedPost?.status !== "draft"}>Published</option><option value="draft" selected={selectedPost?.status === "draft"}>Draft</option></select></label>
+							<label><span>Publish date</span><input type="datetime-local" name="pubDate" value={selectedPost ? selectedPost.pubDate.toISOString().slice(0, 16) : ""} disabled={Boolean(loadError) || !canSubmit} /></label>
 						</div>
-						<label><span>Markdown content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError)}>{selectedPost?.contentMarkdown ?? "# New post"}</textarea></label>
+						<label><span>Markdown content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError) || !canSubmit}>{selectedPost?.contentMarkdown ?? "# New post"}</textarea></label>
 						<div class="row-actions">
-							<button class="primary" type="submit" disabled={Boolean(loadError)}>{selectedPost ? "Save changes" : "Create post"}</button>
+							<button class="primary" type="submit" disabled={Boolean(loadError) || !canSubmit}>{selectedPost ? "Save changes" : "Create post"}</button>
 							{selectedPost && <a href={`/blog/${selectedPost.slug}/`}>Open post</a>}
 						</div>
 					</form>

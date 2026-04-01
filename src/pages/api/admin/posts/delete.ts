@@ -1,11 +1,17 @@
 import type { APIRoute } from "astro";
-import { deletePost, getDb, isAdminAuthenticated } from "../../../../lib/blog";
+import { deletePost, getDb } from "../../../../lib/blog";
+import { requireApiPermission } from "../../../../lib/rbac/guards";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ locals, request, redirect }) => {
-	if (!isAdminAuthenticated(request, locals)) {
-		return redirect("/admin/login");
+	const session = await requireApiPermission(
+		{ locals, request, redirect },
+		["posts.delete"],
+		{ loginRedirect: "/admin/login", forbiddenRedirect: "/admin/posts" },
+	);
+	if (session instanceof Response) {
+		return session;
 	}
 
 	try {

@@ -440,24 +440,6 @@ export async function deletePost(db: D1Database, id: number): Promise<void> {
 	await db.prepare("DELETE FROM posts WHERE id = ?1").bind(id).run();
 }
 
-export function getAdminToken(locals: App.Locals): string | undefined {
-	const token = locals.runtime.env.CMS_ADMIN_TOKEN?.trim();
-	return token ? token : undefined;
-}
-
-export function isAdminAuthenticated(request: Request, locals: App.Locals): boolean {
-	const token = getAdminToken(locals);
-	if (!token) {
-		return true;
-	}
-
-	const cookies = request.headers.get("cookie") ?? "";
-	return cookies
-		.split(";")
-		.map((part) => part.trim())
-		.some((part) => part === `cms_admin_token=${encodeURIComponent(token)}`);
-}
-
 export function parsePostForm(formData: FormData): BlogPostInput {
 	const title = requiredString(formData, "title");
 	const slug = slugify(requiredString(formData, "slug"));

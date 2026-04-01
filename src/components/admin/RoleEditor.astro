@@ -1,0 +1,284 @@
+---
+import PermissionBadge from "./PermissionBadge.astro";
+import type { AdminPermission, AdminRole } from "../../lib/auth/types";
+
+interface Props {
+	roles: AdminRole[];
+	permissions: AdminPermission[];
+}
+
+const { roles, permissions } = Astro.props;
+---
+
+<section class="panel-stack" id="role-editor" data-roles={JSON.stringify(roles)} data-permissions={JSON.stringify(permissions)}>
+	<section class="panel">
+		<h2>Roles</h2>
+		<div class="stack">
+			{
+				roles.map((role) => (
+					<article class="role-card">
+						<div class="toolbar">
+							<div>
+								<h3>{role.label}</h3>
+								<p class="muted"><code>{role.name}</code>{role.isSystem ? " • system role" : ""}</p>
+							</div>
+							<div class="toolbar">
+								<button class="secondary edit-role" type="button" data-role-id={role.id}>Edit</button>
+								{!role.isSystem && (
+									<button class="danger delete-role" type="button" data-role-id={role.id}>Delete</button>
+								)}
+							</div>
+						</div>
+						{role.description && <p>{role.description}</p>}
+						<div class="badge-row">
+							{role.permissions.map((permission) => (
+								<PermissionBadge label={permission.label} resource={permission.resource} />
+							))}
+						</div>
+					</article>
+				))
+			}
+		</div>
+	</section>
+
+	<section class="panel">
+		<h3>Create Role</h3>
+		<form class="stack" data-create-role-form>
+			<label><span>Role name</span><input name="name" required pattern="[a-z0-9.-]+" /></label>
+			<label><span>Display label</span><input name="label" required /></label>
+			<label><span>Description</span><textarea name="description"></textarea></label>
+			<fieldset>
+				<legend>Permissions</legend>
+				<div class="check-grid">
+					{
+						permissions.map((permission) => (
+							<label class="checkbox-row">
+								<input type="checkbox" name="permissionIds" value={permission.id} />
+								{permission.label}
+							</label>
+						))
+					}
+				</div>
+			</fieldset>
+			<p class="message" data-create-role-message></p>
+			<button class="primary" type="submit">Create role</button>
+		</form>
+	</section>
+
+	<section class="panel hidden" data-edit-role-panel>
+		<h3>Edit Role</h3>
+		<form class="stack" data-edit-role-form>
+			<input type="hidden" name="roleId" />
+			<label><span>Display label</span><input name="label" required /></label>
+			<label><span>Description</span><textarea name="description"></textarea></label>
+			<fieldset>
+				<legend>Permissions</legend>
+				<div class="check-grid" data-edit-permission-list></div>
+			</fieldset>
+			<p class="message" data-edit-role-message></p>
+			<div class="toolbar">
+				<button class="primary" type="submit">Save role</button>
+				<button class="secondary" type="button" data-cancel-role-edit>Cancel</button>
+			</div>
+		</form>
+	</section>
+</section>
+
+<script is:inline>
+	const roleRoot = document.getElementById("role-editor");
+	if (roleRoot) {
+		const roles = JSON.parse(roleRoot.dataset.roles ?? "[]");
+		const permissions = JSON.parse(roleRoot.dataset.permissions ?? "[]");
+		const editPanel = roleRoot.querySelector("[data-edit-role-panel]");
+		const editForm = roleRoot.querySelector("[data-edit-role-form]");
+		const editPermissionList = roleRoot.querySelector("[data-edit-permission-list]");
+
+		const selectedPermissionIds = (scope) =>
+			Array.from(scope.querySelectorAll('input[name="permissionIds"]:checked')).map((input) => Number(input.value));
+
+		const renderEditPermissionList = (selectedIds) => {
+			if (!editPermissionList) return;
+			editPermissionList.innerHTML = permissions
+				.map(
+					(permission) =>
+						`<label class="checkbox-row"><input type="checkbox" name="permissionIds" value="${permission.id}" ${
+							selectedIds.includes(permission.id) ? "checked" : ""
+						}/> ${permission.label}</label>`,
+				)
+				.join("");
+		};
+
+		roleRoot.querySelector("[data-create-role-form]")?.addEventListener("submit", async (event) => {
+			event.preventDefault();
+			const form = event.currentTarget;
+			const message = roleRoot.querySelector("[data-create-role-message]");
+			message.textContent = "";
+
+			const response = await fetch("/api/admin/roles", {
+				method: "POST",
+				headers: { "Content-Type": "application/json", Accept: "application/json" },
+				body: JSON.stringify({
+					name: form.name.value,
+					label: form.label.value,
+					description: form.description.value,
+					permissionIds: selectedPermissionIds(form),
+				}),
+			});
+
+			if (response.ok) {
+				window.location.reload();
+				return;
+			}
+
+			const body = await response.json().catch(() => ({ error: "Request failed." }));
+			message.textContent = body.error ?? "Request failed.";
+		});
+
+		roleRoot.querySelectorAll(".edit-role").forEach((button) => {
+			button.addEventListener("click", () => {
+				const roleId = Number(button.dataset.roleId);
+				const role = roles.find((entry) => entry.id === roleId);
+				if (!role || !editForm) return;
+
+				editPanel?.classList.remove("hidden");
+				editForm.roleId.value = String(role.id);
+				editForm.label.value = role.label;
+				editForm.description.value = role.description ?? "";
+				renderEditPermissionList(role.permissions.map((permission) => permission.id));
+			});
+		});
+
+		editForm?.addEventListener("submit", async (event) => {
+			event.preventDefault();
+			const form = event.currentTarget;
+			const message = roleRoot.querySelector("[data-edit-role-message]");
+			message.textContent = "";
+
+			const response = await fetch(`/api/admin/roles/${form.roleId.value}`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json", Accept: "application/json" },
+				body: JSON.stringify({
+					label: form.label.value,
+					description: form.description.value,
+					permissionIds: selectedPermissionIds(form),
+				}),
+			});
+
+			if (response.ok) {
+				window.location.reload();
+				return;
+			}
+
+			const body = await response.json().catch(() => ({ error: "Request failed." }));
+			message.textContent = body.error ?? "Request failed.";
+		});
+
+		roleRoot.querySelectorAll(".delete-role").forEach((button) => {
+			button.addEventListener("click", async () => {
+				if (!window.confirm("Delete this role?")) return;
+				const response = await fetch(`/api/admin/roles/${button.dataset.roleId}`, {
+					method: "DELETE",
+					headers: { Accept: "application/json" },
+				});
+
+				if (response.ok) {
+					window.location.reload();
+					return;
+				}
+
+				const body = await response.json().catch(() => ({ error: "Delete failed." }));
+				window.alert(body.error ?? "Delete failed.");
+			});
+		});
+
+		roleRoot.querySelector("[data-cancel-role-edit]")?.addEventListener("click", () => {
+			editPanel?.classList.add("hidden");
+		});
+	}
+</script>
+
+<style>
+	.panel-stack,
+	.stack {
+		display: grid;
+		gap: 1rem;
+	}
+	.panel,
+	.role-card {
+		background: white;
+		border-radius: 22px;
+		box-shadow: 0 18px 40px rgba(var(--gray), 0.12);
+		padding: 1.35rem;
+		border: 1px solid rgba(var(--gray-light), 0.8);
+	}
+	.role-card {
+		box-shadow: none;
+	}
+	.toolbar,
+	.badge-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.check-grid {
+		display: grid;
+		gap: 0.65rem;
+	}
+	.checkbox-row {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+	label,
+	fieldset {
+		display: grid;
+		gap: 0.45rem;
+	}
+	input,
+	textarea,
+	button {
+		font: inherit;
+		padding: 0.8rem 0.95rem;
+		border-radius: 12px;
+		border: 1px solid rgb(var(--gray-light));
+	}
+	textarea {
+		min-height: 120px;
+		resize: vertical;
+	}
+	button {
+		cursor: pointer;
+	}
+	.primary,
+	.secondary,
+	.danger {
+		border: none;
+	}
+	.primary {
+		background: linear-gradient(135deg, #1f4fff, #3a7bff);
+		color: white;
+	}
+	.secondary {
+		background: white;
+		color: rgb(var(--gray-dark));
+		border: 1px solid rgb(var(--gray-light));
+	}
+	.danger {
+		background: #fff1f2;
+		color: #9f1239;
+		border: 1px solid #fecdd3;
+	}
+	.message {
+		min-height: 1.2rem;
+		color: #9f1239;
+		margin: 0;
+	}
+	.muted {
+		color: rgb(var(--gray));
+	}
+	.hidden {
+		display: none;
+	}
+</style>

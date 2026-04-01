@@ -1,0 +1,299 @@
+openapi: 3.1.0
+info:
+  title: Admin Auth and RBAC API
+  version: 1.0.0
+  description: REST-style Worker endpoints for admin authentication, user management, role management, and permission assignment.
+servers:
+  - url: https://example.com
+paths:
+  /api/admin/auth/login:
+    post:
+      summary: Authenticate an admin user with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "204":
+          description: Login succeeded and session cookie was set.
+        "401":
+          description: Invalid credentials or inactive account.
+  /api/admin/auth/logout:
+    post:
+      summary: End the current admin session
+      responses:
+        "204":
+          description: Session cookie cleared.
+  /api/admin/users:
+    get:
+      summary: List admin users with assigned roles
+      responses:
+        "200":
+          description: Collection of admin users.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [users]
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        "403":
+          description: Missing required permission.
+    post:
+      summary: Create an admin user and assign roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateInput"
+      responses:
+        "201":
+          description: User created.
+        "403":
+          description: Missing required permission.
+        "409":
+          description: Duplicate email.
+  /api/admin/users/{userId}:
+    patch:
+      summary: Update an admin user profile or role assignments
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateInput"
+      responses:
+        "200":
+          description: User updated.
+        "403":
+          description: Missing required permission.
+        "404":
+          description: User not found.
+  /api/admin/roles:
+    get:
+      summary: List roles and their permissions
+      responses:
+        "200":
+          description: Collection of roles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [roles]
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Role"
+        "403":
+          description: Missing required permission.
+    post:
+      summary: Create a role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleCreateInput"
+      responses:
+        "201":
+          description: Role created.
+        "403":
+          description: Missing required permission.
+        "409":
+          description: Duplicate role name.
+  /api/admin/roles/{roleId}:
+    patch:
+      summary: Update role metadata or replace permission assignments
+      parameters:
+        - $ref: "#/components/parameters/RoleId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleUpdateInput"
+      responses:
+        "200":
+          description: Role updated.
+        "403":
+          description: Missing required permission.
+        "404":
+          description: Role not found.
+    delete:
+      summary: Delete a non-system role with no user assignments
+      parameters:
+        - $ref: "#/components/parameters/RoleId"
+      responses:
+        "204":
+          description: Role deleted.
+        "403":
+          description: Missing required permission or protected role.
+        "409":
+          description: Role still assigned to users.
+  /api/admin/permissions:
+    get:
+      summary: List the permission catalog
+      responses:
+        "200":
+          description: Collection of permissions.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [permissions]
+                properties:
+                  permissions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Permission"
+        "403":
+          description: Missing required permission.
+components:
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+    RoleId:
+      name: roleId
+      in: path
+      required: true
+      schema:
+        type: integer
+  schemas:
+    User:
+      type: object
+      required: [id, email, displayName, isActive, roles]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        isActive:
+          type: boolean
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleSummary"
+    UserCreateInput:
+      type: object
+      required: [email, password, displayName, roleIds]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        displayName:
+          type: string
+        roleIds:
+          type: array
+          items:
+            type: integer
+    UserUpdateInput:
+      type: object
+      properties:
+        displayName:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        isActive:
+          type: boolean
+        roleIds:
+          type: array
+          items:
+            type: integer
+    Role:
+      type: object
+      required: [id, name, label, isSystem, permissions]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+          nullable: true
+        isSystem:
+          type: boolean
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+    RoleSummary:
+      type: object
+      required: [id, name, label]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        label:
+          type: string
+    RoleCreateInput:
+      type: object
+      required: [name, label, permissionIds]
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        permissionIds:
+          type: array
+          items:
+            type: integer
+    RoleUpdateInput:
+      type: object
+      properties:
+        label:
+          type: string
+        description:
+          type: string
+        permissionIds:
+          type: array
+          items:
+            type: integer
+    Permission:
+      type: object
+      required: [id, name, label, resource, action]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+          nullable: true
+        resource:
+          type: string
+        action:
+          type: string

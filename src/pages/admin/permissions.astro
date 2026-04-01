@@ -1,0 +1,73 @@
+---
+export const prerender = false;
+
+import AdminNav from "../../components/AdminNav.astro";
+import BaseHead from "../../components/BaseHead.astro";
+import Footer from "../../components/Footer.astro";
+import Header from "../../components/Header.astro";
+import PermissionBadge from "../../components/admin/PermissionBadge.astro";
+import { SITE_TITLE } from "../../consts";
+import { listPermissions } from "../../lib/db/permissions";
+import { getDb } from "../../lib/blog";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const permissions = await listPermissions(getDb(Astro.locals));
+const groupedPermissions = Object.entries(
+	permissions.reduce<Record<string, typeof permissions>>((groups, permission) => {
+		groups[permission.resource] ??= [];
+		groups[permission.resource].push(permission);
+		return groups;
+	}, {}),
+);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Permissions | ${SITE_TITLE}`} description="Review the admin permission catalog." />
+		<style>
+			.cms-shell { width: min(1280px, calc(100% - 2rem)); max-width: none; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 1.5rem; }
+			.panel, .resource-card { background: white; border-radius: 22px; box-shadow: 0 18px 40px rgba(var(--gray), 0.12); padding: 1.35rem; border: 1px solid rgba(var(--gray-light), 0.8); }
+			.cards { display: grid; gap: 1rem; }
+			.badge-row { display: flex; flex-wrap: wrap; gap: 0.65rem; }
+			.muted { color: rgb(var(--gray)); }
+			code { font-size: 0.9rem; }
+			@media (max-width: 960px) { .cms-shell { grid-template-columns: 1fr; } }
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main class="cms-shell">
+			<aside class="panel">
+				<AdminNav session={session} />
+			</aside>
+			<section class="cards">
+				<div>
+					<h1>Permission Catalog</h1>
+					<p class="muted">Each permission maps to a discrete admin capability and is evaluated on every protected request.</p>
+				</div>
+				{
+					groupedPermissions.map(([resource, resourcePermissions]) => (
+						<article class="resource-card">
+							<h2>{resource}</h2>
+							<div class="badge-row">
+								{resourcePermissions.map((permission) => (
+									<div>
+										<PermissionBadge label={permission.label} resource={permission.resource} />
+										<p><code>{permission.name}</code></p>
+										<p class="muted">{permission.description}</p>
+									</div>
+								))}
+							</div>
+						</article>
+					))
+				}
+			</section>
+		</main>
+		<Footer />
+	</body>
+</html>
