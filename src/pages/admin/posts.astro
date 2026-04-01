@@ -3,6 +3,7 @@ export const prerender = false;
 
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import PostTable from "../../components/admin/PostTable.astro";
+import { getDb, listAllPosts, toAdminPostSummary } from "../../lib/blog";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -17,21 +18,9 @@ let posts = [];
 let loadError = "";
 
 try {
-	const response = await fetch(new URL("/api/admin/posts", Astro.url), {
-		headers: {
-			cookie: Astro.request.headers.get("cookie") ?? "",
-			accept: "application/json",
-		},
-	});
-
-	if (!response.ok) {
-		throw new Error("Failed to load posts.");
-	}
-
-	const data = await response.json();
-	posts = data.posts ?? [];
+	posts = (await listAllPosts(getDb(Astro.locals))).map(toAdminPostSummary);
 } catch (error) {
-	loadError = error instanceof Error ? error.message : "Failed to load CMS data.";
+	loadError = error instanceof Error ? error.message : "Failed to load posts.";
 }
 ---
 
