@@ -52,10 +52,61 @@ try {
 				<label><span>Footer text color</span><input name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
 				<label style="grid-column: 1 / -1;"><span>Footer text</span><input name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
 			</div>
-			<label><span>Navigation items</span><textarea name="navItems" disabled={Boolean(loadError)}>{siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join("\n")}</textarea></label>
+			<div class="admin-form-section">
+				<span>Navigation items</span>
+				<input
+					type="hidden"
+					name="navItems"
+					id="nav-items-payload"
+					value={siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join("\n")}
+					disabled={Boolean(loadError)}
+				/>
+				<div class="nav-items-editor" data-nav-items-editor data-disabled={Boolean(loadError)}>
+					<div class="nav-items-table" role="table">
+						<div class="nav-items-header" role="row">
+							<span>Label</span>
+							<span>Link</span>
+							<span>Action</span>
+						</div>
+						<div class="nav-items-rows" data-nav-items-rows>
+							{
+								siteConfig.navItems.map((item) => (
+									<div class="nav-item-row" role="row">
+										<input
+											type="text"
+											value={item.label}
+											placeholder="Home"
+											data-nav-label
+											disabled={Boolean(loadError)}
+										/>
+										<input
+											type="text"
+											value={item.href}
+											placeholder="/about or https://example.com"
+											data-nav-href
+											disabled={Boolean(loadError)}
+										/>
+										<button
+											class="admin-ghost-button nav-item-remove"
+											type="button"
+											data-nav-remove
+											disabled={Boolean(loadError)}
+										>
+											Remove
+										</button>
+									</div>
+								))
+							}
+						</div>
+					</div>
+					<button class="admin-ghost-button" type="button" data-nav-add disabled={Boolean(loadError)}>
+						Add row
+					</button>
+				</div>
+			</div>
 			<div class="admin-form-section">
 				<p class="admin-muted">For the homepage use a page slug like `home` or `/home`. Empty or `/` also falls back to `home`.</p>
-				<p class="admin-muted">One item per line: `Label|/path` or `Label|https://example.com`.</p>
+				<p class="admin-muted">Each row still saves in the same `Label|/path` or `Label|https://example.com` format.</p>
 				<button class="admin-primary-button" type="submit" disabled={Boolean(loadError)}>Save header</button>
 			</div>
 		</form>
@@ -63,7 +114,115 @@ try {
 </AdminLayout>
 
 <style>
-	textarea {
-		min-height: 220px;
+	.nav-items-editor {
+		display: grid;
+		gap: 0.9rem;
+	}
+
+	.nav-items-table {
+		display: grid;
+		gap: 0.65rem;
+	}
+
+	.nav-items-header,
+	.nav-item-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+		gap: 0.75rem;
+		align-items: center;
+	}
+
+	.nav-items-header {
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: var(--admin-muted, #60739f);
+	}
+
+	.nav-items-rows {
+		display: grid;
+		gap: 0.65rem;
+	}
+
+	.nav-item-remove {
+		justify-self: start;
+	}
+
+	@media (max-width: 720px) {
+		.nav-items-header {
+			display: none;
+		}
+
+		.nav-item-row {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>
+
+<script>
+	const editor = document.querySelector("[data-nav-items-editor]");
+	const rowsContainer = editor?.querySelector("[data-nav-items-rows]");
+	const payloadInput = document.getElementById("nav-items-payload");
+	const addButton = editor?.querySelector("[data-nav-add]");
+
+	const syncPayload = () => {
+		if (!(rowsContainer instanceof HTMLElement) || !(payloadInput instanceof HTMLInputElement)) {
+			return;
+		}
+
+		const rows = Array.from(rowsContainer.querySelectorAll(".nav-item-row"));
+		const lines = rows
+			.map((row) => {
+				const label = row.querySelector("[data-nav-label]");
+				const href = row.querySelector("[data-nav-href]");
+
+				if (!(label instanceof HTMLInputElement) || !(href instanceof HTMLInputElement)) {
+					return "";
+				}
+
+				const nextLabel = label.value.trim();
+				const nextHref = href.value.trim();
+				return nextLabel && nextHref ? `${nextLabel}|${nextHref}` : "";
+			})
+			.filter(Boolean);
+
+		payloadInput.value = lines.join("\n");
+	};
+
+	const createRow = (label = "", href = "") => {
+		const row = document.createElement("div");
+		row.className = "nav-item-row";
+		row.setAttribute("role", "row");
+		row.innerHTML = `
+			<input type="text" value="${label}" placeholder="Home" data-nav-label />
+			<input type="text" value="${href}" placeholder="/about or https://example.com" data-nav-href />
+			<button class="admin-ghost-button nav-item-remove" type="button" data-nav-remove>Remove</button>
+		`;
+		return row;
+	};
+
+	rowsContainer?.addEventListener("input", syncPayload);
+	rowsContainer?.addEventListener("click", (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLElement) || !target.matches("[data-nav-remove]")) {
+			return;
+		}
+
+		target.closest(".nav-item-row")?.remove();
+		syncPayload();
+	});
+
+	addButton?.addEventListener("click", () => {
+		if (!(rowsContainer instanceof HTMLElement)) {
+			return;
+		}
+
+		rowsContainer.append(createRow());
+		syncPayload();
+		const lastLabel = rowsContainer.querySelector(".nav-item-row:last-child [data-nav-label]");
+		if (lastLabel instanceof HTMLInputElement) {
+			lastLabel.focus();
+		}
+	});
+
+	syncPayload();
+</script>
