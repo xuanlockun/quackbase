@@ -1,10 +1,7 @@
 ---
 export const prerender = false;
 
-import AdminNav from "../../components/AdminNav.astro";
-import BaseHead from "../../components/BaseHead.astro";
-import Footer from "../../components/Footer.astro";
-import Header from "../../components/Header.astro";
+import AdminLayout from "../../layouts/AdminLayout.astro";
 import { SITE_TITLE } from "../../consts";
 import { getDb, getSiteConfig } from "../../lib/blog";
 
@@ -33,55 +30,40 @@ try {
 }
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={`Header | ${SITE_TITLE}`} description="Manage site settings." />
-		<style>
-			.wrap { width: min(1200px, calc(100% - 2rem)); max-width: none; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 1.5rem; }
-			.panel { background: white; border-radius: 18px; box-shadow: var(--box-shadow); padding: 1.25rem; }
-			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-			label { display: grid; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; }
-			input, textarea, button { font: inherit; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid rgb(var(--gray-light)); box-sizing: border-box; }
-			textarea { min-height: 220px; resize: vertical; }
-			.notice { padding: 0.9rem 1rem; border-radius: 12px; background: rgba(35, 55, 255, 0.08); color: var(--accent-dark); }
-			.primary { background: var(--accent); color: white; border: none; cursor: pointer; }
-			.muted { color: rgb(var(--gray)); }
-			@media (max-width: 960px) { .wrap, .grid { grid-template-columns: 1fr; } }
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main class="wrap">
-			<aside class="panel">
-				<AdminNav session={session} />
-				<h2>Site Chrome</h2>
-				<p class="muted">Navigation, header colors, and footer presentation live here.</p>
-			</aside>
-			<section class="panel">
-				<h1>Header & Footer</h1>
-				<p class="muted">Manage the brand title, navigation links, and the site chrome colors.</p>
-				{Astro.url.searchParams.get("siteSaved") && <p class="notice">Header settings saved.</p>}
-				{Astro.url.searchParams.get("siteError") && <p class="notice">Header settings could not be saved.</p>}
-				{loadError && <p class="notice">{loadError}</p>}
-				<form method="post" action="/api/admin/site" class="grid">
-					<label><span>Site title</span><input name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
-					<label><span>Home page slug</span><input name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
-					<label><span>Header background</span><input name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
-					<label><span>Header text color</span><input name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
-					<label><span>Header accent color</span><input name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
-					<label><span>Footer background</span><input name="footerBackground" value={siteConfig.footerBackground} placeholder="#eef2f7" disabled={Boolean(loadError)} /></label>
-					<label><span>Footer text color</span><input name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
-					<label style="grid-column: 1 / -1;"><span>Footer text</span><input name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
-					<label style="grid-column: 1 / -1;"><span>Navigation items</span><textarea name="navItems" disabled={Boolean(loadError)}>{siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join("\n")}</textarea></label>
-					<div style="grid-column: 1 / -1;">
-						<p class="muted">For the homepage use a page slug like `home` or `/home`. Empty or `/` also falls back to `home`.</p>
-						<p class="muted">One item per line: `Label|/path` or `Label|https://example.com`.</p>
-						<button class="primary" type="submit" disabled={Boolean(loadError)}>Save header</button>
-					</div>
-				</form>
-			</section>
-		</main>
-		<Footer />
-	</body>
-</html>
+<AdminLayout
+	title="Header"
+	description="Manage site settings."
+	session={session}
+	pageTitle="Header & Footer"
+	pageDescription="Manage the brand title, navigation links, and the site chrome colors."
+>
+	<div class="admin-content-stack">
+		{Astro.url.searchParams.get("siteSaved") && <p class="admin-notice">Header settings saved.</p>}
+		{Astro.url.searchParams.get("siteError") && <p class="admin-notice admin-notice-error">Header settings could not be saved.</p>}
+		{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+		<form method="post" action="/api/admin/site" class="admin-form-stack">
+			<div class="admin-grid-two">
+				<label><span>Site title</span><input name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
+				<label><span>Home page slug</span><input name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
+				<label><span>Header background</span><input name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
+				<label><span>Header text color</span><input name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
+				<label><span>Header accent color</span><input name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
+				<label><span>Footer background</span><input name="footerBackground" value={siteConfig.footerBackground} placeholder="#eef2f7" disabled={Boolean(loadError)} /></label>
+				<label><span>Footer text color</span><input name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
+				<label style="grid-column: 1 / -1;"><span>Footer text</span><input name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
+			</div>
+			<label><span>Navigation items</span><textarea name="navItems" disabled={Boolean(loadError)}>{siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join("\n")}</textarea></label>
+			<div>
+				<p class="admin-muted">For the homepage use a page slug like `home` or `/home`. Empty or `/` also falls back to `home`.</p>
+				<p class="admin-muted">One item per line: `Label|/path` or `Label|https://example.com`.</p>
+				<button class="admin-primary-button" type="submit" disabled={Boolean(loadError)}>Save header</button>
+			</div>
+		</form>
+	</div>
+</AdminLayout>
+
+<style>
+	textarea {
+		min-height: 220px;
+	}
+</style>

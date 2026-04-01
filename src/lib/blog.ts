@@ -36,6 +36,23 @@ export interface BlogPostInput {
 	pubDate?: string;
 }
 
+export interface AdminPostSummary {
+	id: number;
+	title: string;
+	description: string;
+	slug: string;
+	status: string;
+	updatedAt: string;
+	viewHref: string;
+	editHref: string;
+}
+
+export interface AdminPostDetail extends AdminPostSummary {
+	heroImage: string | null;
+	pubDate: string;
+	contentMarkdown: string;
+}
+
 export interface SiteNavItem {
 	label: string;
 	href: string;
@@ -368,6 +385,42 @@ export async function listAllPosts(db: D1Database): Promise<BlogPost[]> {
 		.all<BlogPostRecord>();
 
 	return (result.results ?? []).map(toBlogPost);
+}
+
+export async function getPostById(db: D1Database, id: number): Promise<BlogPost | null> {
+	const result = await db
+		.prepare(
+			`SELECT id, slug, title, description, content_markdown, hero_image, status, pub_date, updated_date
+			FROM posts
+			WHERE id = ?1
+			LIMIT 1`,
+		)
+		.bind(id)
+		.first<BlogPostRecord>();
+
+	return result ? toBlogPost(result) : null;
+}
+
+export function toAdminPostSummary(post: BlogPost): AdminPostSummary {
+	return {
+		id: post.id,
+		title: post.title,
+		description: post.description,
+		slug: post.slug,
+		status: post.status,
+		updatedAt: (post.updatedDate ?? post.pubDate).toISOString(),
+		viewHref: `/blog/${post.slug}/`,
+		editHref: `/admin/posts/${post.id}/edit`,
+	};
+}
+
+export function toAdminPostDetail(post: BlogPost): AdminPostDetail {
+	return {
+		...toAdminPostSummary(post),
+		heroImage: post.heroImage ?? null,
+		pubDate: post.pubDate.toISOString(),
+		contentMarkdown: post.contentMarkdown,
+	};
 }
 
 export async function getPublishedPostBySlug(

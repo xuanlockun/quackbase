@@ -1,0 +1,54 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Sidebar from "../components/admin/Sidebar.astro";
+import { SITE_TITLE } from "../consts";
+import type { AdminSession } from "../lib/auth/types";
+
+interface Props {
+	title: string;
+	description: string;
+	session: AdminSession | null;
+	pageTitle: string;
+	pageDescription?: string;
+	pageEyebrow?: string;
+}
+
+const {
+	title,
+	description,
+	session,
+	pageTitle,
+	pageDescription,
+	pageEyebrow = "Admin",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
+	</head>
+	<body class="admin-body">
+		<main class="admin-shell">
+			<aside class="admin-sidebar-column">
+				<Sidebar session={session} />
+			</aside>
+
+			<div class="admin-content-column">
+				<section class="admin-panel admin-panel-main">
+					<header class="admin-page-header">
+						<div class="admin-page-copy">
+							<p class="admin-page-eyebrow">{pageEyebrow}</p>
+							<h1>{pageTitle}</h1>
+							{pageDescription && <p class="admin-page-description">{pageDescription}</p>}
+						</div>
+						<div class="admin-page-actions">
+							<slot name="actions" />
+						</div>
+					</header>
+					<slot />
+				</section>
+			</div>
+		</main>
+	</body>
+</html>

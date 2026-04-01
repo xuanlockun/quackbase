@@ -5,7 +5,11 @@ import {
 	readAdminSessionCookie,
 } from "../../src/lib/auth/cookies";
 import { signAdminJwt, verifyAdminJwt } from "../../src/lib/auth/jwt";
-import { getDefaultAdminPath, sessionHasPermissions } from "../../src/lib/rbac/policies";
+import {
+	getDefaultAdminPath,
+	getRequiredAdminPagePermissions,
+	sessionHasPermissions,
+} from "../../src/lib/rbac/policies";
 import type { AdminSession } from "../../src/lib/auth/types";
 
 const SESSION: AdminSession = {
@@ -38,5 +42,7 @@ describe("admin auth and RBAC helpers", () => {
 		expect(getDefaultAdminPath(SESSION)).toBe("/admin/posts");
 		expect(sessionHasPermissions(SESSION, ["posts.read"])).toBe(true);
 		expect(sessionHasPermissions(SESSION, ["roles.manage"])).toBe(false);
+		expect(getRequiredAdminPagePermissions("/admin/posts/new")).toEqual(["posts.create"]);
+		expect(getRequiredAdminPagePermissions("/admin/posts/42/edit")).toEqual(["posts.update"]);
 	});
 });

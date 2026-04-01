@@ -1,0 +1,112 @@
+---
+import type { AdminPostDetail } from "../../lib/blog";
+
+interface Props {
+	mode: "create" | "edit";
+	action: string;
+	post?: AdminPostDetail | null;
+	canSubmit: boolean;
+	backHref?: string;
+	loadError?: string;
+}
+
+const {
+	mode,
+	action,
+	post = null,
+	canSubmit,
+	backHref = "/admin/posts",
+	loadError = "",
+} = Astro.props;
+
+const submitLabel = mode === "edit" ? "Save changes" : "Create post";
+const title = post?.title ?? "";
+const slug = post?.slug ?? "";
+const description = post?.description ?? "";
+const heroImage = post?.heroImage ?? "";
+const status = post?.status ?? "draft";
+const contentMarkdown = post?.contentMarkdown ?? "# New post";
+const pubDateValue = post?.pubDate ? new Date(post.pubDate).toISOString().slice(0, 16) : "";
+const isDisabled = Boolean(loadError) || !canSubmit;
+---
+
+<div class="admin-form-header">
+	<button class="admin-ghost-button" type="button" data-admin-back={backHref}>
+		Back
+	</button>
+	<p class="admin-muted">
+		{canSubmit
+			? "Changes save through permission-checked admin APIs."
+			: "Your role can view this form but cannot save changes."}
+	</p>
+</div>
+
+{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+
+<form class="admin-form-stack" method="post" action={action}>
+	{mode === "edit" && post && <input type="hidden" name="id" value={post.id} />}
+	<div class="admin-form-grid">
+		<label>
+			<span>Title</span>
+			<input name="title" required value={title} disabled={isDisabled} />
+		</label>
+		<label>
+			<span>Slug</span>
+			<input name="slug" required pattern="[a-z0-9-]+" value={slug} placeholder="my-post-slug" disabled={isDisabled} />
+		</label>
+		<label>
+			<span>Description</span>
+			<input name="description" required value={description} placeholder="Short summary" disabled={isDisabled} />
+		</label>
+		<label>
+			<span>Hero image URL</span>
+			<input name="heroImage" value={heroImage} placeholder="/blog-placeholder-1.jpg" disabled={isDisabled} />
+		</label>
+		<label>
+			<span>Status</span>
+			<select name="status" disabled={isDisabled}>
+				<option value="published" selected={status === "published"}>Published</option>
+				<option value="draft" selected={status === "draft"}>Draft</option>
+			</select>
+		</label>
+		<label>
+			<span>Publish date</span>
+			<input type="datetime-local" name="pubDate" value={pubDateValue} disabled={isDisabled} />
+		</label>
+	</div>
+
+	<label>
+		<span>Markdown content</span>
+		<textarea name="contentMarkdown" required disabled={isDisabled}>{contentMarkdown}</textarea>
+	</label>
+
+	<div class="admin-form-actions">
+		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		{mode === "edit" && post && <a href={post.viewHref}>Open post</a>}
+	</div>
+</form>
+
+<script is:inline>
+	document.addEventListener("click", (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLElement)) {
+			return;
+		}
+
+		const button = target.closest("[data-admin-back]");
+		if (!(button instanceof HTMLButtonElement)) {
+			return;
+		}
+
+		const fallbackHref = button.dataset.adminBack || "/admin/posts";
+		const referrer = document.referrer ? new URL(document.referrer, window.location.origin) : null;
+		const hasSameOriginReferrer = referrer?.origin === window.location.origin;
+
+		if (window.history.length > 1 && hasSameOriginReferrer) {
+			window.history.back();
+			return;
+		}
+
+		window.location.href = fallbackHref;
+	});
+</script>

@@ -1,0 +1,69 @@
+---
+import FormattedDate from "../FormattedDate.astro";
+import type { AdminPostSummary } from "../../lib/blog";
+
+interface Props {
+	posts: AdminPostSummary[];
+	canUpdate: boolean;
+	canDelete: boolean;
+}
+
+const { posts, canUpdate, canDelete } = Astro.props;
+---
+
+{
+	posts.length === 0 ? (
+		<div class="admin-empty-state">
+			<h2>No posts yet</h2>
+			<p>Create the first post to start building the editorial workflow.</p>
+		</div>
+	) : (
+		<div class="admin-table-wrap">
+			<table class="admin-table">
+				<thead>
+					<tr>
+						<th>Title</th>
+						<th>Status</th>
+						<th>Updated</th>
+						<th>Slug</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{
+						posts.map((post) => (
+							<tr>
+								<td>
+									<strong>{post.title}</strong>
+									<br />
+									<span class="admin-muted">{post.description}</span>
+								</td>
+								<td>
+									<span class="admin-status-pill">{post.status}</span>
+								</td>
+								<td>
+									<FormattedDate date={new Date(post.updatedAt)} />
+								</td>
+								<td>
+									<code>{post.slug}</code>
+								</td>
+								<td>
+									<div class="admin-row-actions">
+										{canUpdate && <a href={post.editHref}>Edit Post</a>}
+										<a href={post.viewHref}>View</a>
+										{canDelete && (
+											<form method="post" action="/api/admin/posts/delete" class="admin-inline-form">
+												<input type="hidden" name="id" value={post.id} />
+												<button class="admin-danger-button" type="submit">Delete</button>
+											</form>
+										)}
+									</div>
+								</td>
+							</tr>
+						))
+					}
+				</tbody>
+			</table>
+		</div>
+	)
+}

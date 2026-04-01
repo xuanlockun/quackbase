@@ -1,12 +1,8 @@
 ---
 export const prerender = false;
 
-import AdminNav from "../../components/AdminNav.astro";
-import BaseHead from "../../components/BaseHead.astro";
-import Footer from "../../components/Footer.astro";
-import Header from "../../components/Header.astro";
 import UserRoleTable from "../../components/admin/UserRoleTable.astro";
-import { SITE_TITLE } from "../../consts";
+import AdminLayout from "../../layouts/AdminLayout.astro";
 import { listAdminUsers } from "../../lib/db/admin-users";
 import { listRoleSummaries } from "../../lib/db/roles";
 import { getDb } from "../../lib/blog";
@@ -20,29 +16,12 @@ const db = getDb(Astro.locals);
 const [users, roles] = await Promise.all([listAdminUsers(db), listRoleSummaries(db)]);
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={`Users | ${SITE_TITLE}`} description="Manage admin users and role assignments." />
-		<style>
-			.cms-shell { width: min(1280px, calc(100% - 2rem)); max-width: none; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 1.5rem; }
-			.panel { background: white; border-radius: 22px; box-shadow: 0 18px 40px rgba(var(--gray), 0.12); padding: 1.35rem; border: 1px solid rgba(var(--gray-light), 0.8); }
-			.muted { color: rgb(var(--gray)); }
-			@media (max-width: 960px) { .cms-shell { grid-template-columns: 1fr; } }
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main class="cms-shell">
-			<aside class="panel">
-				<AdminNav session={session} />
-			</aside>
-			<section>
-				<h1>Users</h1>
-				<p class="muted">Assign roles to admin users and keep access current on the next protected request.</p>
-				<UserRoleTable users={users} roles={roles} />
-			</section>
-		</main>
-		<Footer />
-	</body>
-</html>
+<AdminLayout
+	title="Users"
+	description="Manage admin users and role assignments."
+	session={session}
+	pageTitle="Users"
+	pageDescription="Assign roles to admin users and keep access current on the next protected request."
+>
+	<UserRoleTable users={users} roles={roles} />
+</AdminLayout>

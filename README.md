@@ -8,8 +8,10 @@ Published posts are now stored in Cloudflare D1 and rendered on request, so cont
 
 - `/blog` loads published posts from D1
 - `/blog/[slug]` renders Markdown from D1 with `micromark`
-- `/admin` is a basic CMS dashboard for creating, editing, publishing, and deleting posts
-- `/api/admin/*` contains the form handlers for login and post management
+- `/admin` is a page-oriented CMS dashboard with a dedicated admin sidebar
+- `/admin/posts` is a table-only post management view
+- `/admin/posts/new` and `/admin/posts/:id/edit` provide dedicated post forms
+- `/api/admin/*` contains the auth and post management handlers used by the admin UI
 - `src/content/blog/` is still in the repo as sample starter content, but it is no longer the live source of truth
 
 ## Required setup
@@ -66,6 +68,9 @@ If `CMS_ADMIN_TOKEN` is not set, the admin UI is left open. Set it for any real 
 - `/blog/:slug` public post page
 - `/admin` CMS dashboard
 - `/admin/login` admin login page
+- `/admin/posts` post list page
+- `/admin/posts/new` create post page
+- `/admin/posts/:id/edit` edit post page
 
 ## Commands
 
@@ -79,9 +84,14 @@ If `CMS_ADMIN_TOKEN` is not set, the admin UI is left open. Set it for any real 
 
 ## Important files
 
-- `src/lib/blog.ts` D1 queries, Markdown rendering, auth helpers
-- `src/pages/admin/index.astro` CMS dashboard
-- `src/pages/api/admin/posts.ts` create/update handler
+- `src/lib/blog.ts` D1 queries, Markdown rendering, auth helpers, and admin post serializers
+- `src/layouts/AdminLayout.astro` shared admin shell
+- `src/pages/admin/index.astro` CMS dashboard redirect
+- `src/pages/admin/posts.astro` table-only posts list
+- `src/pages/admin/posts/new.astro` dedicated post creation page
+- `src/pages/admin/posts/[id]/edit.astro` dedicated post editing page
+- `src/pages/api/admin/posts.ts` post list and create handler
+- `src/pages/api/admin/posts/[id].ts` post detail and update handler
 - `src/pages/api/admin/posts/delete.ts` delete handler
 - `src/pages/blog/index.astro` public blog listing
 - `src/pages/blog/[...slug].astro` runtime post rendering
@@ -90,5 +100,6 @@ If `CMS_ADMIN_TOKEN` is not set, the admin UI is left open. Set it for any real 
 ## Notes
 
 - The CMS stores the post body as Markdown in D1 and renders it to HTML at request time.
+- The admin post workflow is route-driven instead of stacking list and editor states in one page.
 - The starter Markdown content in `src/content/blog/` is still available if you want to reference or migrate it manually.
 - `npm run build` succeeds, but actual CRUD usage requires the `DB` binding to exist at runtime.

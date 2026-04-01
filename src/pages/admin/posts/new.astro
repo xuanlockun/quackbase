@@ -1,0 +1,26 @@
+---
+export const prerender = false;
+
+import PostForm from "../../../components/admin/PostForm.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const canCreate = session.isSuperadmin || session.permissions.includes("posts.create");
+---
+
+<AdminLayout
+	title="Create Post"
+	description="Create a new blog post."
+	session={session}
+	pageTitle="Create Post"
+	pageDescription="Author a new post in a dedicated editor with no list-page distractions."
+>
+	<div class="admin-content-stack">
+		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">The post could not be created.</p>}
+		<PostForm mode="create" action="/api/admin/posts" canSubmit={canCreate} />
+	</div>
+</AdminLayout>

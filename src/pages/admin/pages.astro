@@ -1,12 +1,8 @@
 ---
 export const prerender = false;
 
-import AdminNav from "../../components/AdminNav.astro";
-import BaseHead from "../../components/BaseHead.astro";
-import Footer from "../../components/Footer.astro";
 import FormattedDate from "../../components/FormattedDate.astro";
-import Header from "../../components/Header.astro";
-import { SITE_TITLE } from "../../consts";
+import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getDb, listAllPages } from "../../lib/blog";
 
 const session = Astro.locals.adminSession;
@@ -32,120 +28,103 @@ const selectedPage = selectedSlug ? pages.find((page) => page.slug === selectedS
 const canSubmit = selectedPage ? canUpdate : canCreate;
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={`Pages | ${SITE_TITLE}`} description="Manage custom pages." />
-		<style>
-			.cms-shell { width: min(1280px, calc(100% - 2rem)); max-width: none; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 1.5rem; }
-			.panel { background: white; border-radius: 22px; box-shadow: 0 18px 40px rgba(var(--gray), 0.12); padding: 1.35rem; border: 1px solid rgba(var(--gray-light), 0.8); }
-			.main-stack, .editor { display: grid; gap: 1rem; }
-			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-			.toolbar, .row-actions, .row-actions-inline { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
-			label, .section-box { display: grid; gap: 0.5rem; }
-			label { font-weight: 700; font-size: 0.95rem; }
-			input, select, textarea, button { font: inherit; padding: 0.9rem 1rem; border-radius: 14px; border: 1px solid rgb(var(--gray-light)); box-sizing: border-box; }
-			textarea { min-height: 320px; resize: vertical; }
-			button { cursor: pointer; }
-			.primary, .secondary, .success, .danger { display: inline-flex; align-items: center; justify-content: center; padding: 0.8rem 1rem; border-radius: 999px; font-weight: 700; text-decoration: none; }
-			.primary { background: linear-gradient(135deg, #1f4fff, #3a7bff); color: white; border: none; }
-			.success { background: linear-gradient(135deg, #177245, #2ba56a); color: white; border: none; }
-			.secondary { background: white; color: rgb(var(--gray-dark)); border: 1px solid rgb(var(--gray-light)); }
-			.danger { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
-			.notice { padding: 0.95rem 1rem; border-radius: 14px; background: rgba(35, 55, 255, 0.08); color: var(--accent-dark); }
-			.table-wrap { overflow-x: auto; }
-			table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.98rem; }
-			th, td { padding: 1rem 0.85rem; text-align: left; border-bottom: 1px solid rgb(var(--gray-light)); vertical-align: top; }
-			th { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(var(--gray)); }
-			.status-pill { display: inline-block; padding: 0.24rem 0.58rem; border-radius: 999px; background: rgba(35, 55, 255, 0.1); color: var(--accent-dark); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; }
-			.section-box { padding: 1rem; border-radius: 16px; background: rgba(var(--gray-light), 0.35); border: 1px solid rgba(var(--gray-light), 0.9); }
-			.check-grid { display: grid; gap: 0.7rem; margin-top: 0.8rem; }
-			.checkbox-row { display: flex; gap: 0.5rem; align-items: center; }
-			.muted { color: rgb(var(--gray)); }
-			.inline-form { margin: 0; }
-			@media (max-width: 960px) { .cms-shell, .grid { grid-template-columns: 1fr; } }
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main class="cms-shell">
-			<aside class="panel"><AdminNav session={session} /></aside>
-			<div class="main-stack">
-				<section class="panel">
-					<div class="toolbar">
-						<div>
-							<h1>Pages</h1>
-							<p class="muted">Manage landing pages and reusable route content.</p>
-						</div>
-						<div class="row-actions">
-							{canCreate && <a class="success" href="/admin/pages">New page</a>}
-							<a href="/">View site</a>
-						</div>
-					</div>
-					{Astro.url.searchParams.get("pageSaved") && <p class="notice">Page saved.</p>}
-					{Astro.url.searchParams.get("pageDeleted") && <p class="notice">Page deleted.</p>}
-					{Astro.url.searchParams.get("pageError") && <p class="notice">The page request failed.</p>}
-					{loadError && <p class="notice">{loadError}</p>}
-					<div class="table-wrap">
-						<table>
-							<thead><tr><th>Title</th><th>Status</th><th>Updated</th><th>Slug</th><th>Actions</th></tr></thead>
-							<tbody>
-								{
-									pages.map((page) => (
-										<tr>
-											<td><strong>{page.title}</strong><br /><span class="muted">{page.description}</span></td>
-											<td><span class="status-pill">{page.status}</span></td>
-											<td><FormattedDate date={page.updatedAt} /></td>
-											<td><code>{page.slug}</code></td>
-											<td>
-												<div class="row-actions-inline">
-													{canUpdate && <a href={`/admin/pages?slug=${page.slug}`}>Edit</a>}
-													<a href={`/${page.slug}/`}>View</a>
-													{canDelete && (
-														<form class="inline-form" method="post" action="/api/admin/pages/delete">
-															<input type="hidden" name="id" value={page.id} />
-															<button class="danger" type="submit">Delete</button>
-														</form>
-													)}
-												</div>
-											</td>
-										</tr>
-									))
-								}
-							</tbody>
-						</table>
-					</div>
-				</section>
-				<section class="panel">
-					<div class="toolbar">
-						<h2>{selectedPage ? "Edit Page" : "Create Page"}</h2>
-						<p class="muted">{canSubmit ? "Changes save through permission-checked Worker APIs." : "Your role can view pages but cannot save changes."}</p>
-					</div>
-					<form class="editor" method="post" action="/api/admin/pages">
-						{selectedPage && <input type="hidden" name="id" value={selectedPage.id} />}
-						<div class="grid">
-							<label><span>Title</span><input name="title" required value={selectedPage?.title ?? ""} disabled={Boolean(loadError) || !canSubmit} /></label>
-							<label><span>Slug</span><input name="slug" required pattern="[a-z0-9-]+" value={selectedPage?.slug ?? ""} placeholder="services" disabled={Boolean(loadError) || !canSubmit} /></label>
-							<label><span>Description</span><input name="description" required value={selectedPage?.description ?? ""} placeholder="Page summary" disabled={Boolean(loadError) || !canSubmit} /></label>
-							<label><span>Status</span><select name="status" disabled={Boolean(loadError) || !canSubmit}><option value="published" selected={selectedPage?.status !== "draft"}>Published</option><option value="draft" selected={selectedPage?.status === "draft"}>Draft</option></select></label>
-						</div>
-						<label><span>Page content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError) || !canSubmit}>{selectedPage?.contentMarkdown ?? "# New page"}</textarea></label>
-						<div class="section-box">
-							<span>Page sections</span>
-							<div class="check-grid">
-								<label class="checkbox-row"><input type="checkbox" name="pageSections" value="blog_feed" checked={selectedPage?.pageSections.includes("blog_feed")} disabled={Boolean(loadError) || !canSubmit} /> Blog feed grid</label>
-								<label class="checkbox-row"><input type="checkbox" name="pageSections" value="nav_grid" checked={selectedPage?.pageSections.includes("nav_grid")} disabled={Boolean(loadError) || !canSubmit} /> Navigation card grid</label>
-								<label class="checkbox-row"><input type="checkbox" name="pageSections" value="page_grid" checked={selectedPage?.pageSections.includes("page_grid")} disabled={Boolean(loadError) || !canSubmit} /> Other pages grid</label>
-							</div>
-						</div>
-						<div class="row-actions">
-							<button class="primary" type="submit" disabled={Boolean(loadError) || !canSubmit}>{selectedPage ? "Save page" : "Create page"}</button>
-							{selectedPage && <a href={`/${selectedPage.slug}/`}>Open page</a>}
-						</div>
-					</form>
-				</section>
+<AdminLayout
+	title="Pages"
+	description="Manage custom pages."
+	session={session}
+	pageTitle="Pages"
+	pageDescription="Manage landing pages and reusable route content."
+>
+	<div slot="actions" class="admin-page-actions">
+		{canCreate && <a class="admin-primary-button" href="/admin/pages">New page</a>}
+		<a class="admin-ghost-button" href="/">View site</a>
+	</div>
+
+	<div class="admin-content-stack">
+		<section class="admin-section-card">
+			{Astro.url.searchParams.get("pageSaved") && <p class="admin-notice">Page saved.</p>}
+			{Astro.url.searchParams.get("pageDeleted") && <p class="admin-notice">Page deleted.</p>}
+			{Astro.url.searchParams.get("pageError") && <p class="admin-notice admin-notice-error">The page request failed.</p>}
+			{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+			<div class="admin-table-wrap">
+				<table class="admin-table">
+					<thead><tr><th>Title</th><th>Status</th><th>Updated</th><th>Slug</th><th>Actions</th></tr></thead>
+					<tbody>
+						{
+							pages.map((page) => (
+								<tr>
+									<td><strong>{page.title}</strong><br /><span class="admin-muted">{page.description}</span></td>
+									<td><span class="admin-status-pill">{page.status}</span></td>
+									<td><FormattedDate date={page.updatedAt} /></td>
+									<td><code>{page.slug}</code></td>
+									<td>
+										<div class="admin-row-actions">
+											{canUpdate && <a href={`/admin/pages?slug=${page.slug}`}>Edit</a>}
+											<a href={`/${page.slug}/`}>View</a>
+											{canDelete && (
+												<form class="admin-inline-form" method="post" action="/api/admin/pages/delete">
+													<input type="hidden" name="id" value={page.id} />
+													<button class="admin-danger-button" type="submit">Delete</button>
+												</form>
+											)}
+										</div>
+									</td>
+								</tr>
+							))
+						}
+					</tbody>
+				</table>
 			</div>
-		</main>
-		<Footer />
-	</body>
-</html>
+		</section>
+		<section class="admin-section-card">
+			<div class="admin-form-header">
+				<h2>{selectedPage ? "Edit Page" : "Create Page"}</h2>
+				<p class="admin-muted">{canSubmit ? "Changes save through permission-checked Worker APIs." : "Your role can view pages but cannot save changes."}</p>
+			</div>
+			<form class="admin-form-stack" method="post" action="/api/admin/pages">
+				{selectedPage && <input type="hidden" name="id" value={selectedPage.id} />}
+				<div class="admin-grid-two">
+					<label><span>Title</span><input name="title" required value={selectedPage?.title ?? ""} disabled={Boolean(loadError) || !canSubmit} /></label>
+					<label><span>Slug</span><input name="slug" required pattern="[a-z0-9-]+" value={selectedPage?.slug ?? ""} placeholder="services" disabled={Boolean(loadError) || !canSubmit} /></label>
+					<label><span>Description</span><input name="description" required value={selectedPage?.description ?? ""} placeholder="Page summary" disabled={Boolean(loadError) || !canSubmit} /></label>
+					<label><span>Status</span><select name="status" disabled={Boolean(loadError) || !canSubmit}><option value="published" selected={selectedPage?.status !== "draft"}>Published</option><option value="draft" selected={selectedPage?.status === "draft"}>Draft</option></select></label>
+				</div>
+				<label><span>Page content</span><textarea name="contentMarkdown" required disabled={Boolean(loadError) || !canSubmit}>{selectedPage?.contentMarkdown ?? "# New page"}</textarea></label>
+				<div class="admin-section-card page-sections-box">
+					<span>Page sections</span>
+					<div class="page-section-check-grid">
+						<label class="page-section-checkbox"><input type="checkbox" name="pageSections" value="blog_feed" checked={selectedPage?.pageSections.includes("blog_feed")} disabled={Boolean(loadError) || !canSubmit} /> Blog feed grid</label>
+						<label class="page-section-checkbox"><input type="checkbox" name="pageSections" value="nav_grid" checked={selectedPage?.pageSections.includes("nav_grid")} disabled={Boolean(loadError) || !canSubmit} /> Navigation card grid</label>
+						<label class="page-section-checkbox"><input type="checkbox" name="pageSections" value="page_grid" checked={selectedPage?.pageSections.includes("page_grid")} disabled={Boolean(loadError) || !canSubmit} /> Other pages grid</label>
+					</div>
+				</div>
+				<div class="admin-form-actions">
+					<button class="admin-primary-button" type="submit" disabled={Boolean(loadError) || !canSubmit}>{selectedPage ? "Save page" : "Create page"}</button>
+					{selectedPage && <a href={`/${selectedPage.slug}/`}>Open page</a>}
+				</div>
+			</form>
+		</section>
+	</div>
+</AdminLayout>
+
+<style>
+	textarea {
+		min-height: 320px;
+	}
+
+	.page-sections-box {
+		background: rgba(var(--gray-light), 0.3);
+	}
+
+	.page-section-check-grid {
+		display: grid;
+		gap: 0.7rem;
+		margin-top: 0.8rem;
+	}
+
+	.page-section-checkbox {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+</style>

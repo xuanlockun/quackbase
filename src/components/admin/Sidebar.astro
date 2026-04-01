@@ -1,0 +1,44 @@
+---
+import { getVisibleAdminNavItems } from "../../lib/rbac/policies";
+import type { AdminSession } from "../../lib/auth/types";
+
+interface Props {
+	session: AdminSession | null;
+}
+
+const { session } = Astro.props;
+const pathname = Astro.url.pathname;
+const links = getVisibleAdminNavItems(session);
+
+function isActiveLink(href: string, currentPath: string): boolean {
+	return currentPath === href || currentPath.startsWith(`${href}/`);
+}
+---
+
+<nav class="admin-sidebar-nav" aria-label="Admin">
+	<div class="admin-sidebar-brand">
+		<p class="admin-sidebar-kicker">Edge CMS</p>
+		<h2>Admin Workspace</h2>
+		<p class="admin-sidebar-copy">Focused tools for content, access, and site operations.</p>
+	</div>
+
+	<div class="admin-sidebar-section">
+		<p class="admin-sidebar-label">Signed in</p>
+		<strong>{session?.displayName ?? "Admin user"}</strong>
+		<p class="admin-sidebar-copy">{session?.email}</p>
+	</div>
+
+	<div class="admin-sidebar-links">
+		{
+			links.map((link) => (
+				<a class:list={["admin-sidebar-link", isActiveLink(link.href, pathname) && "is-active"]} href={link.href}>
+					<span>{link.label}</span>
+				</a>
+			))
+		}
+	</div>
+
+	<form method="post" action="/api/admin/auth/logout" class="admin-sidebar-logout">
+		<button class="admin-ghost-button admin-logout-button" type="submit">Log out</button>
+	</form>
+</nav>

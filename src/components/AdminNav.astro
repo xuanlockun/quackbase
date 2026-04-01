@@ -1,5 +1,5 @@
 ---
-import { getVisibleAdminNavItems } from "../lib/rbac/policies";
+import Sidebar from "./admin/Sidebar.astro";
 import type { AdminSession } from "../lib/auth/types";
 
 interface Props {
@@ -7,77 +7,6 @@ interface Props {
 }
 
 const { session } = Astro.props;
-const pathname = Astro.url.pathname;
-const links = getVisibleAdminNavItems(session);
 ---
 
-<nav class="admin-nav">
-	<div class="identity">
-		<p class="eyebrow">Signed in</p>
-		<strong>{session?.displayName ?? "Admin user"}</strong>
-		<p class="muted">{session?.email}</p>
-	</div>
-	{
-		links.map((link) => (
-			<a class:list={["admin-link", pathname === link.href && "active"]} href={link.href}>
-				{link.label}
-			</a>
-		))
-	}
-	<form method="post" action="/api/admin/auth/logout">
-		<button class="logout" type="submit">Log out</button>
-	</form>
-</nav>
-
-<style>
-	.admin-nav {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-	.identity {
-		padding: 1rem;
-		border-radius: 18px;
-		background: linear-gradient(180deg, rgba(35, 55, 255, 0.12), rgba(35, 55, 255, 0.04));
-		border: 1px solid rgba(35, 55, 255, 0.16);
-	}
-	.eyebrow,
-	.muted {
-		margin: 0;
-	}
-	.eyebrow {
-		font-size: 0.72rem;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: rgb(var(--gray));
-	}
-	.muted {
-		color: rgb(var(--gray));
-		word-break: break-word;
-	}
-	.admin-link,
-	.logout {
-		display: block;
-		width: 100%;
-		padding: 0.9rem 1rem;
-		border-radius: 14px;
-		background: rgba(255, 255, 255, 0.72);
-		border: 1px solid rgba(var(--gray-light), 0.8);
-		color: rgb(var(--gray-dark));
-		text-decoration: none;
-		box-shadow: 0 12px 24px rgba(var(--gray), 0.08);
-		font: inherit;
-		text-align: left;
-		cursor: pointer;
-	}
-	.admin-link.active {
-		background: rgba(35, 55, 255, 0.12);
-		border-color: rgba(35, 55, 255, 0.24);
-		color: var(--accent-dark);
-	}
-	.logout {
-		background: #fff1f2;
-		color: #9f1239;
-		border-color: #fecdd3;
-	}
-</style>
+<Sidebar session={session} />

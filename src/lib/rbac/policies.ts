@@ -30,6 +30,14 @@ export function getRequiredAdminPagePermissions(pathname: string): string[] | nu
 		return null;
 	}
 
+	if (pathname === "/admin/posts/new") {
+		return ["posts.create"];
+	}
+
+	if (/^\/admin\/posts\/[^/]+\/edit$/.test(pathname)) {
+		return ["posts.update"];
+	}
+
 	return ADMIN_PAGE_POLICIES.get(pathname) ?? [];
 }
 
