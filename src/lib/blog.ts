@@ -354,7 +354,7 @@ export async function createPage(db: D1Database, input: SitePageInput): Promise<
 			input.slug,
 			input.description,
 			input.contentMarkdown,
-			input.pageSections.includes("blog_feed") ? 1 : 0,
+			input.pageSections.some((section) => section.type === "blog_feed") ? 1 : 0,
 			input.status,
 			JSON.stringify(input.pageSections),
 		)
@@ -386,7 +386,7 @@ export async function updatePage(
 			input.slug,
 			input.description,
 			input.contentMarkdown,
-			input.pageSections.includes("blog_feed") ? 1 : 0,
+			input.pageSections.some((section) => section.type === "blog_feed") ? 1 : 0,
 			input.status,
 			JSON.stringify(input.pageSections),
 			id,

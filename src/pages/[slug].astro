@@ -30,11 +30,10 @@ if (!page) {
 			title={page.title}
 			description={page.description}
 			pubDate={page.updatedAt}
-			contentHtml={page.contentHtml}
 			showDate={false}
 			wideContent={true}
 		>
-			<CmsPageSections pageSlug={page.slug} pageSections={page.pageSections} />
+			<CmsPageSections pageSections={page.pageSections} contentHtml={page.contentHtml} />
 		</BlogPost>
 	) : (
 		<BlogPost
