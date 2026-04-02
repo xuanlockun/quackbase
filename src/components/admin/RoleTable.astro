@@ -1,19 +1,21 @@
 ---
 import PermissionBadge from "./PermissionBadge.astro";
 import type { AdminRole } from "../../lib/auth/types";
+import { getUiTranslations } from "../../lib/i18n";
 
 interface Props {
 	roles: AdminRole[];
 }
 
 const { roles } = Astro.props;
+const { t } = getUiTranslations(Astro);
 ---
 
 {
 	roles.length === 0 ? (
 		<div class="admin-empty-state">
-			<h2>No roles yet</h2>
-			<p>Create a role to group permission bundles for admin users.</p>
+			<h2>{t("messages.noRolesYet")}</h2>
+			<p>{t("messages.noRolesHelp")}</p>
 		</div>
 	) : (
 		<div class="admin-content-stack">
@@ -24,21 +26,21 @@ const { roles } = Astro.props;
 							<div class="admin-page-copy">
 								<h2 class="h5 mb-0">{role.label}</h2>
 								<p class="admin-page-description">
-									<code>{role.name}</code>{role.isSystem ? " | system role" : ""}
+									<code>{role.name}</code>{role.isSystem ? ` | ${t("messages.systemRole")}` : ""}
 								</p>
 							</div>
 							<div class="admin-row-actions">
-								<a href={`/admin/roles/${role.id}/edit`}>Edit</a>
+								<a href={`/admin/roles/${role.id}/edit`}>{t("actions.edit")}</a>
 								{
 									!role.isSystem && (
 										<form
 											class="admin-inline-form"
 											method="post"
 											action={`/api/admin/roles/${role.id}`}
-											onsubmit="return confirm('Delete this role?');"
+											onsubmit={`return confirm('${t("messages.deleteRoleConfirm")}');`}
 										>
 											<input type="hidden" name="_intent" value="delete" />
-											<button class="admin-danger-button" type="submit">Delete</button>
+											<button class="admin-danger-button" type="submit">{t("actions.delete")}</button>
 										</form>
 									)
 								}
@@ -49,7 +51,7 @@ const { roles } = Astro.props;
 							{role.permissions.map((permission) => (
 								<PermissionBadge label={permission.label} resource={permission.resource} />
 							))}
-							{role.permissions.length === 0 && <span class="admin-muted">No permissions assigned</span>}
+							{role.permissions.length === 0 && <span class="admin-muted">{t("messages.noPermissionsAssigned")}</span>}
 						</div>
 					</article>
 				))

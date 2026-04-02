@@ -3,6 +3,7 @@ export const prerender = false;
 
 import PostForm from "../../../components/admin/PostForm.astro";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { getUiTranslations } from "../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -10,17 +11,18 @@ if (!session) {
 }
 
 const canCreate = session.isSuperadmin || session.permissions.includes("posts.create");
+const { t } = getUiTranslations(Astro);
 ---
 
 <AdminLayout
-	title="Create Post"
-	description="Create a new blog post."
+	title={t("actions.createPost")}
+	description={t("messages.saveCreatePost")}
 	session={session}
-	pageTitle="Create Post"
-	pageDescription="Author a new post in a dedicated editor with no list-page distractions."
+	pageTitle={t("actions.createPost")}
+	pageDescription={t("messages.createPostDescription")}
 >
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">The post could not be created.</p>}
+		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.requestFailed")}</p>}
 		<PostForm mode="create" action="/api/admin/posts" canSubmit={canCreate} />
 	</div>
 </AdminLayout>

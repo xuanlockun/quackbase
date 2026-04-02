@@ -5,6 +5,7 @@ import RoleForm from "../../../components/admin/RoleForm.astro";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { listPermissions } from "../../../lib/db/permissions";
 import { getDb } from "../../../lib/blog";
+import { getUiTranslations } from "../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -13,14 +14,15 @@ if (!session) {
 
 const permissions = await listPermissions(getDb(Astro.locals));
 const hasError = Astro.url.searchParams.get("error");
+const { t } = getUiTranslations(Astro);
 ---
 
 <AdminLayout
-	title="Create Role"
-	description="Create a new role."
+	title={t("actions.createRole")}
+	description={t("messages.saveCreateRole")}
 	session={session}
-	pageTitle="Create Role"
-	pageDescription="Add a reusable role bundle with a dedicated form and clear back navigation."
+	pageTitle={t("actions.createRole")}
+	pageDescription={t("messages.createRoleDescription")}
 >
 	<div class="admin-content-stack">
 		<RoleForm
@@ -28,7 +30,7 @@ const hasError = Astro.url.searchParams.get("error");
 			action="/api/admin/roles"
 			permissions={permissions}
 			canSubmit={true}
-			loadError={hasError ? "The role could not be created." : ""}
+			loadError={hasError ? t("messages.roleRequestFailed") : ""}
 		/>
 	</div>
 </AdminLayout>

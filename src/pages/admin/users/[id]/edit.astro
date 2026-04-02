@@ -6,6 +6,7 @@ import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { getAdminUserSummaryById } from "../../../../lib/db/admin-users";
 import { listRoleSummaries } from "../../../../lib/db/roles";
 import { getDb } from "../../../../lib/blog";
+import { getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -14,6 +15,7 @@ if (!session) {
 
 const { id } = Astro.params;
 const db = getDb(Astro.locals);
+const { t, language } = getUiTranslations(Astro);
 
 let user = null;
 let loadError = "";
@@ -28,30 +30,30 @@ try {
 		notFound = !user;
 	}
 } catch (error) {
-	loadError = error instanceof Error ? error.message : "Failed to load the requested user.";
+	loadError = error instanceof Error ? error.message : t("messages.userRequestFailed");
 }
 
 const roles = await listRoleSummaries(db);
 
 if (Astro.url.searchParams.get("error")) {
-	loadError = "The user could not be updated.";
+	loadError = t("messages.userRequestFailed");
 }
 ---
 
 <AdminLayout
-	title="Edit User"
-	description="Edit an admin user."
+	title={t("actions.edit")}
+	description={t("messages.saveEditUser")}
 	session={session}
-	pageTitle="Edit User"
-	pageDescription="Update user details and role assignments in a dedicated editing screen."
+	pageTitle={t("actions.edit")}
+	pageDescription={t("messages.editUserDescription")}
 >
 	<div class="admin-content-stack">
 		{
 			notFound ? (
 				<div class="admin-empty-state">
-					<h2>User not found</h2>
-					<p class="admin-muted">The requested user could not be loaded for editing.</p>
-					<p><a class="admin-ghost-button" href="/admin/users">Back to users</a></p>
+					<h2>{t("headings.users")}</h2>
+					<p class="admin-muted">{t("messages.userRequestFailed")}</p>
+					<p><a class="admin-ghost-button" href={localizeAdminHref("/admin/users", language)}>{t("messages.backToUsers")}</a></p>
 				</div>
 			) : (
 				<UserForm

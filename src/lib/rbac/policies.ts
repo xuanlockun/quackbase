@@ -2,17 +2,17 @@ import type { AdminSession } from "../auth/types";
 
 export interface AdminNavItem {
 	href: string;
-	label: string;
+	labelKey: string;
 	permissions: string[];
 }
 
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
-	{ href: "/admin/posts", label: "Posts", permissions: ["posts.read"] },
-	{ href: "/admin/pages", label: "Pages", permissions: ["pages.read"] },
-	{ href: "/admin/header", label: "Header", permissions: ["site.manage"] },
-	{ href: "/admin/users", label: "Users", permissions: ["users.manage"] },
-	{ href: "/admin/roles", label: "Roles", permissions: ["roles.manage"] },
-	{ href: "/admin/permissions", label: "Permissions", permissions: ["permissions.read"] },
+	{ href: "/admin/posts", labelKey: "nav.posts", permissions: ["posts.read"] },
+	{ href: "/admin/pages", labelKey: "nav.pages", permissions: ["pages.read"] },
+	{ href: "/admin/header", labelKey: "nav.header", permissions: ["site.manage"] },
+	{ href: "/admin/users", labelKey: "nav.users", permissions: ["users.manage"] },
+	{ href: "/admin/roles", labelKey: "nav.roles", permissions: ["roles.manage"] },
+	{ href: "/admin/permissions", labelKey: "nav.permissions", permissions: ["permissions.read"] },
 ];
 
 const ADMIN_PAGE_POLICIES = new Map<string, string[]>([

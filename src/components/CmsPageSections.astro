@@ -5,6 +5,7 @@ import {
 	type PageSectionConfig,
 	listPublishedPosts,
 } from "../lib/blog";
+import { getUiTranslations } from "../lib/i18n";
 
 interface Props {
 	pageSections: PageSectionConfig[];
@@ -13,6 +14,7 @@ interface Props {
 }
 
 const { pageSections, contentHtml, currentLanguage = "en" } = Astro.props;
+const { t } = getUiTranslations(Astro);
 
 let posts = [];
 
@@ -62,7 +64,7 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 		if (section.type === "blog_feed" && posts.length > 0) {
 			return (
 				<section class="page-section">
-					<h2>Latest Posts</h2>
+					<h2>{t("headings.latestPosts")}</h2>
 					<div class="card-grid">
 						{
 							posts.slice(0, 6).map((post) => (
@@ -82,24 +84,24 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 			return (
 				<section class="page-section contact-section">
 					<div class="contact-copy">
-						<h2>Contact Us</h2>
-						<p>Use this section to collect messages from visitors. You can connect the form handler later.</p>
+						<h2>{t("headings.contactUs")}</h2>
+						<p>{t("messages.contactFormIntro")}</p>
 					</div>
 					<form class="contact-form" method="post" action="#">
 						<label>
-							<span>Name</span>
-							<input type="text" name="name" placeholder="Your name" />
+							<span>{t("labels.name")}</span>
+							<input type="text" name="name" placeholder={t("messages.yourName")} />
 						</label>
 						<label>
-							<span>Email</span>
-							<input type="email" name="email" placeholder="you@example.com" />
+							<span>{t("labels.email")}</span>
+							<input type="email" name="email" placeholder={t("messages.yourEmail")} />
 						</label>
 						<label class="contact-form-full">
-							<span>Message</span>
-							<textarea name="message" rows="5" placeholder="Tell us what you need"></textarea>
+							<span>{t("labels.message")}</span>
+							<textarea name="message" rows="5" placeholder={t("messages.tellUsWhatYouNeed")}></textarea>
 						</label>
 						<div class="contact-form-full contact-form-actions">
-							<button type="button">Send Message</button>
+							<button type="button">{t("actions.sendMessage")}</button>
 						</div>
 					</form>
 				</section>

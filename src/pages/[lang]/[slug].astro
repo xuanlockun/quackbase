@@ -4,11 +4,12 @@ export const prerender = false;
 import BlogPost from "../../layouts/BlogPost.astro";
 import CmsPageSections from "../../components/CmsPageSections.astro";
 import { getDb, getPublishedPageBySlug } from "../../lib/blog";
-import { isSupportedLanguage, resolveLanguage } from "../../lib/i18n";
+import { getUiTranslations, isSupportedLanguage, resolveLanguage } from "../../lib/i18n";
 
 const requestedLanguage = Astro.params.lang ?? "";
 const slug = Astro.params.slug ?? "";
 let page = null;
+const { t } = getUiTranslations(Astro);
 
 if (!isSupportedLanguage(requestedLanguage)) {
 	Astro.response.status = 404;
@@ -44,10 +45,10 @@ if (!page && Astro.response.status !== 404) {
 		</BlogPost>
 	) : (
 		<BlogPost
-			title="Page not found"
-			description="The requested page does not exist."
+			title={t("messages.pageNotFound")}
+			description={t("messages.pageNotFoundDescription")}
 			pubDate={new Date()}
-			contentHtml="<p>This page does not exist.</p>"
+			contentHtml={`<p>${t("messages.pageNotFoundBody")}</p>`}
 			showDate={false}
 			wideContent={true}
 			lang={resolveLanguage(requestedLanguage)}

@@ -3,13 +3,14 @@ export const prerender = false;
 
 import BlogPost from "../../../layouts/BlogPost.astro";
 import { getDb, getPublishedPostBySlug } from "../../../lib/blog";
-import { isSupportedLanguage, resolveLanguage } from "../../../lib/i18n";
+import { getUiTranslations, isSupportedLanguage, resolveLanguage } from "../../../lib/i18n";
 
 const requestedLanguage = Astro.params.lang ?? "";
 const slug = Astro.params.slug ?? "";
 
 let post = null;
 let loadError = "";
+const { t } = getUiTranslations(Astro);
 
 if (!isSupportedLanguage(requestedLanguage)) {
 	Astro.response.status = 404;
@@ -17,7 +18,7 @@ if (!isSupportedLanguage(requestedLanguage)) {
 	try {
 		post = await getPublishedPostBySlug(getDb(Astro.locals), slug, resolveLanguage(requestedLanguage));
 	} catch (error) {
-		loadError = error instanceof Error ? error.message : "Failed to load post.";
+		loadError = error instanceof Error ? error.message : t("messages.failedToLoadPosts");
 	}
 }
 
@@ -41,13 +42,13 @@ if (!post && !loadError && Astro.response.status !== 404) {
 		/>
 	) : (
 		<BlogPost
-			title={loadError ? "Blog is not ready" : "Post not found"}
-			description={loadError ? "The CMS database is not configured yet." : "The requested post does not exist."}
+			title={loadError ? t("messages.blogNotReady") : t("messages.postNotFound")}
+			description={loadError ? t("messages.blogNotReadyDescription") : t("messages.postNotFoundDescription")}
 			pubDate={new Date()}
 			contentHtml={
 				loadError
-					? `<p>Check the D1 binding, database ID, and run the posts migration.</p><p><code>${loadError}</code></p>`
-					: "<p>This post does not exist or is not published.</p>"
+					? `<p>${t("messages.blogNotReadyBody")}</p><p><code>${loadError}</code></p>`
+					: `<p>${t("messages.postNotFoundBody")}</p>`
 			}
 			lang={resolveLanguage(requestedLanguage)}
 		/>

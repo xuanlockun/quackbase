@@ -1,10 +1,12 @@
 ---
 import { getDb, getSiteConfig } from "../lib/blog";
+import { getUiTranslations } from "../lib/i18n";
 
 const today = new Date();
 let footerText = "Edge CMS. Content updates go live straight from D1.";
 let footerBackground = "#eef2f7";
 let footerTextColor = "#60739f";
+const { t } = getUiTranslations(Astro);
 
 try {
 	const config = await getSiteConfig(getDb(Astro.locals));
@@ -20,7 +22,7 @@ try {
 	&copy; {today.getFullYear()} {footerText}
 	<div class="social-links">
 		<a href="https://m.webtoo.ls/@astro" target="_blank">
-			<span class="sr-only">Follow Astro on Mastodon</span>
+			<span class="sr-only">{t("messages.followAstroMastodon")}</span>
 			<svg
 				viewBox="0 0 16 16"
 				aria-hidden="true"
@@ -34,7 +36,7 @@ try {
 			>
 		</a>
 		<a href="https://twitter.com/astrodotbuild" target="_blank">
-			<span class="sr-only">Follow Astro on Twitter</span>
+			<span class="sr-only">{t("messages.followAstroTwitter")}</span>
 			<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/twitter"
 				><path
 					fill="currentColor"
@@ -43,7 +45,7 @@ try {
 			>
 		</a>
 		<a href="https://github.com/withastro/astro" target="_blank">
-			<span class="sr-only">Go to Astro's GitHub repo</span>
+			<span class="sr-only">{t("messages.visitAstroGithub")}</span>
 			<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/github"
 				><path
 					fill="currentColor"

@@ -4,8 +4,10 @@ export const prerender = false;
 import BlogPost from '../layouts/BlogPost.astro';
 import CmsPageSections from '../components/CmsPageSections.astro';
 import { getDb, getPublishedPageBySlug, getSiteConfig } from '../lib/blog';
+import { getUiTranslations } from '../lib/i18n';
 
 let page = null;
+const { language, t } = getUiTranslations(Astro);
 
 try {
 	const db = getDb(Astro.locals);
@@ -28,17 +30,19 @@ if (!page) {
 			pubDate={page.updatedAt}
 			showDate={false}
 			wideContent={true}
+			lang={language}
 		>
-			<CmsPageSections pageSections={page.pageSections} contentHtml={page.contentHtml} />
+			<CmsPageSections pageSections={page.pageSections} contentHtml={page.contentHtml} currentLanguage={language} />
 		</BlogPost>
 	) : (
 		<BlogPost
-			title="Home page not configured"
-			description="Create a CMS page and choose its slug as the home page in the header settings."
+			title={t("messages.homePageNotConfigured")}
+			description={t("messages.configureHomePage")}
 			pubDate={new Date()}
-			contentHtml="<p>Create and publish a CMS page, then open the header settings and set <code>Home page slug</code> to that page slug, for example <code>home</code>.</p>"
+			contentHtml={`<p>${t("messages.configureHomePageBody")}</p>`}
 			showDate={false}
 			wideContent={true}
+			lang={language}
 		/>
 	)
 }

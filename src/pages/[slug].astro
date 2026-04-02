@@ -4,9 +4,11 @@ export const prerender = false;
 import BlogPost from "../layouts/BlogPost.astro";
 import CmsPageSections from "../components/CmsPageSections.astro";
 import { getDb, getPublishedPageBySlug } from "../lib/blog";
+import { getUiTranslations } from "../lib/i18n";
 
 const reservedSlugs = new Set(["admin"]);
 const slug = Astro.params.slug ?? "";
+const { t } = getUiTranslations(Astro);
 
 let page = null;
 
@@ -38,10 +40,10 @@ if (!page) {
 		</BlogPost>
 	) : (
 		<BlogPost
-			title="Page not found"
-			description="The requested page does not exist."
+			title={t("messages.pageNotFound")}
+			description={t("messages.pageNotFoundDescription")}
 			pubDate={new Date()}
-			contentHtml="<p>This page does not exist.</p>"
+			contentHtml={`<p>${t("messages.pageNotFoundBody")}</p>`}
 			showDate={false}
 			wideContent={true}
 			lang="en"

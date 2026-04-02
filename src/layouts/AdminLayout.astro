@@ -4,6 +4,7 @@ import BaseHead from "../components/BaseHead.astro";
 import Sidebar from "../components/admin/Sidebar.astro";
 import { SITE_TITLE } from "../consts";
 import type { AdminSession } from "../lib/auth/types";
+import { getUiTranslations } from "../lib/i18n";
 
 interface Props {
 	title: string;
@@ -22,10 +23,11 @@ const {
 	pageDescription,
 	pageEyebrow = "Admin",
 } = Astro.props;
+const { language } = getUiTranslations(Astro);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={language}>
 	<head>
 		<BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
 	</head>

@@ -1,15 +1,44 @@
+import type { AstroCookies } from "astro";
+import en from "../../locales/en.json";
+import vi from "../../locales/vi.json";
+
 export interface SupportedLanguage {
 	code: string;
 	label: string;
 }
 
 export type LocalizedText = Record<string, string>;
+interface TranslationTree {
+	[key: string]: string | TranslationTree;
+}
+
+interface TranslationContextInput {
+	url: URL;
+	locals?: App.Locals;
+	cookies?: AstroCookies;
+}
+
+export interface UiTranslations {
+	language: string;
+	t: (key: string, fallback?: string) => string;
+	localizeHref: (href: string) => string;
+	localizeAdminHref: (href: string) => string;
+	switchLanguageHref: (language: string) => string;
+}
 
 export const DEFAULT_LANGUAGE = "en";
+export const UI_LANGUAGE_COOKIE = "edge-ui-language";
+const UI_LANGUAGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
 export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
 	{ code: "en", label: "English" },
 	{ code: "vi", label: "Vietnamese" },
 ];
+
+const UI_TRANSLATIONS: Record<string, TranslationTree> = {
+	en: en as TranslationTree,
+	vi: vi as TranslationTree,
+};
 
 export function getSupportedLanguages(): SupportedLanguage[] {
 	return [...SUPPORTED_LANGUAGES];
@@ -108,6 +137,157 @@ export function stringifyLocalizedText(translations: LocalizedText): string {
 	return JSON.stringify(sortLocalizedText(normalizeLocalizedText(translations)));
 }
 
+export function readUiLanguagePreference(cookies?: Pick<AstroCookies, "get"> | null): string | null {
+	const storedValue = cookies?.get(UI_LANGUAGE_COOKIE)?.value;
+	return storedValue && isSupportedLanguage(storedValue) ? storedValue : null;
+}
+
+export function writeUiLanguagePreference(
+	cookies: Pick<AstroCookies, "set">,
+	language: string,
+): void {
+	const nextLanguage = resolveLanguage(language);
+	cookies.set(UI_LANGUAGE_COOKIE, nextLanguage, {
+		path: "/",
+		sameSite: "lax",
+		httpOnly: false,
+		maxAge: UI_LANGUAGE_COOKIE_MAX_AGE,
+	});
+}
+
+export function getPathLanguage(pathname: string): string | null {
+	const [firstSegment = ""] = pathname.split("/").filter(Boolean);
+	return isSupportedLanguage(firstSegment) ? firstSegment : null;
+}
+
+export function getQueryLanguage(url: URL): string | null {
+	const queryLanguage = url.searchParams.get("lang");
+	return queryLanguage && isSupportedLanguage(queryLanguage) ? queryLanguage : null;
+}
+
+export function resolveUiLanguage(
+	url: URL,
+	storedLanguage?: string | null,
+): { language: string; explicitLanguage: string | null } {
+	const pathLanguage = getPathLanguage(url.pathname);
+	const queryLanguage = getQueryLanguage(url);
+	const explicitLanguage = pathLanguage ?? queryLanguage;
+	return {
+		language: resolveLanguage(explicitLanguage ?? storedLanguage ?? DEFAULT_LANGUAGE),
+		explicitLanguage,
+	};
+}
+
+export function getUiTranslations(context: TranslationContextInput): UiTranslations {
+	const resolvedLanguage =
+		context.locals?.uiLanguage ??
+		resolveUiLanguage(context.url, readUiLanguagePreference(context.cookies)).language;
+
+	return {
+		language: resolvedLanguage,
+		t: (key, fallback) => translateKey(key, resolvedLanguage, fallback),
+		localizeHref: (href) => localizeHref(href, resolvedLanguage),
+		localizeAdminHref: (href) => localizeAdminHref(href, resolvedLanguage),
+		switchLanguageHref: (language) => getLanguageSwitchHref(context.url, language),
+	};
+}
+
+export function localizeHref(href: string, language = DEFAULT_LANGUAGE): string {
+	if (isPassthroughHref(href)) {
+		return href;
+	}
+
+	const url = toInternalUrl(href);
+	if (!url) {
+		return href;
+	}
+
+	if (url.pathname.startsWith("/admin")) {
+		return localizeAdminHref(href, language);
+	}
+
+	if (url.pathname.startsWith("/api")) {
+		return formatLocalUrl(url);
+	}
+
+	url.pathname = withLanguagePrefix(url.pathname, language);
+	url.searchParams.delete("lang");
+	return formatLocalUrl(url);
+}
+
+export function localizeAdminHref(href: string, language = DEFAULT_LANGUAGE): string {
+	if (isPassthroughHref(href)) {
+		return href;
+	}
+
+	const url = toInternalUrl(href);
+	if (!url) {
+		return href;
+	}
+
+	if (resolveLanguage(language) === DEFAULT_LANGUAGE) {
+		url.searchParams.delete("lang");
+	} else {
+		url.searchParams.set("lang", resolveLanguage(language));
+	}
+
+	return formatLocalUrl(url);
+}
+
+export function getLanguageSwitchHref(currentUrl: URL, language: string): string {
+	const nextLanguage = resolveLanguage(language);
+	if (currentUrl.pathname.startsWith("/admin")) {
+		return localizeAdminHref(currentUrl.pathname + currentUrl.search, nextLanguage);
+	}
+
+	return localizeHref(currentUrl.pathname + currentUrl.search, nextLanguage);
+}
+
+function translateKey(key: string, language: string, fallback?: string): string {
+	const value = resolveTreeValue(UI_TRANSLATIONS[resolveLanguage(language)], key);
+	if (typeof value === "string" && value.trim()) {
+		return value;
+	}
+
+	const defaultValue = resolveTreeValue(UI_TRANSLATIONS[DEFAULT_LANGUAGE], key);
+	if (typeof defaultValue === "string" && defaultValue.trim()) {
+		return defaultValue;
+	}
+
+	return fallback ?? key;
+}
+
+function resolveTreeValue(tree: TranslationTree | undefined, key: string): string | TranslationTree | undefined {
+	if (!tree) {
+		return undefined;
+	}
+
+	return key.split(".").reduce<string | TranslationTree | undefined>((current, segment) => {
+		if (!current || typeof current === "string") {
+			return undefined;
+		}
+
+		return current[segment];
+	}, tree);
+}
+
+function withLanguagePrefix(pathname: string, language: string): string {
+	if (pathname === "/") {
+		return `/${resolveLanguage(language)}/`;
+	}
+
+	const hasTrailingSlash = pathname.endsWith("/");
+	const segments = pathname.split("/").filter(Boolean);
+
+	if (segments.length > 0 && isSupportedLanguage(segments[0])) {
+		segments[0] = resolveLanguage(language);
+	} else {
+		segments.unshift(resolveLanguage(language));
+	}
+
+	return `/${segments.join("/")}${hasTrailingSlash ? "/" : ""}`;
+}
+
 function sortLocalizedText(translations: LocalizedText): LocalizedText {
 	const orderedCodes = [
 		DEFAULT_LANGUAGE,
@@ -128,4 +308,26 @@ function sortLocalizedText(translations: LocalizedText): LocalizedText {
 
 function isLanguageCode(value: string): boolean {
 	return /^[a-z]{2}(?:-[a-z]{2})?$/i.test(value);
+}
+
+function toInternalUrl(href: string): URL | null {
+	try {
+		return new URL(href, "https://edge-cms.local");
+	} catch {
+		return null;
+	}
+}
+
+function formatLocalUrl(url: URL): string {
+	return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function isPassthroughHref(href: string): boolean {
+	return (
+		!href ||
+		href.startsWith("#") ||
+		href.startsWith("mailto:") ||
+		href.startsWith("tel:") ||
+		href.startsWith("javascript:")
+	);
 }

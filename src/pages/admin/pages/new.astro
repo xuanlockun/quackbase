@@ -3,6 +3,7 @@ export const prerender = false;
 
 import PageForm from "../../../components/admin/PageForm.astro";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { getUiTranslations } from "../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -11,21 +12,22 @@ if (!session) {
 
 const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
 const hasError = Astro.url.searchParams.get("error");
+const { t } = getUiTranslations(Astro);
 ---
 
 <AdminLayout
-	title="Create Page"
-	description="Create a new custom page."
+	title={t("actions.createPage")}
+	description={t("messages.saveCreatePage")}
 	session={session}
-	pageTitle="Create Page"
-	pageDescription="Add a new page in a dedicated full-width editing workspace."
+	pageTitle={t("actions.createPage")}
+	pageDescription={t("messages.createPageDescription")}
 >
 	<div class="admin-content-stack">
 		<PageForm
 			mode="create"
 			action="/api/admin/pages"
 			canSubmit={canCreate}
-			loadError={hasError ? "The page could not be created." : ""}
+			loadError={hasError ? t("messages.pageRequestFailed") : ""}
 		/>
 	</div>
 </AdminLayout>

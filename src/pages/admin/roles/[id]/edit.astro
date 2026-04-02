@@ -6,6 +6,7 @@ import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { listPermissions } from "../../../../lib/db/permissions";
 import { getRoleById } from "../../../../lib/db/roles";
 import { getDb } from "../../../../lib/blog";
+import { getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -14,6 +15,7 @@ if (!session) {
 
 const { id } = Astro.params;
 const db = getDb(Astro.locals);
+const { t, language } = getUiTranslations(Astro);
 
 let role = null;
 let loadError = "";
@@ -28,30 +30,30 @@ try {
 		notFound = !role;
 	}
 } catch (error) {
-	loadError = error instanceof Error ? error.message : "Failed to load the requested role.";
+	loadError = error instanceof Error ? error.message : t("messages.roleRequestFailed");
 }
 
 const permissions = await listPermissions(db);
 
 if (Astro.url.searchParams.get("error")) {
-	loadError = "The role could not be updated.";
+	loadError = t("messages.roleRequestFailed");
 }
 ---
 
 <AdminLayout
-	title="Edit Role"
-	description="Edit an admin role."
+	title={t("actions.edit")}
+	description={t("messages.saveEditRole")}
 	session={session}
-	pageTitle="Edit Role"
-	pageDescription="Update role metadata and permission bundles in a dedicated full-width editor."
+	pageTitle={t("actions.edit")}
+	pageDescription={t("messages.editRoleDescription")}
 >
 	<div class="admin-content-stack">
 		{
 			notFound ? (
 				<div class="admin-empty-state">
-					<h2>Role not found</h2>
-					<p class="admin-muted">The requested role could not be loaded for editing.</p>
-					<p><a class="admin-ghost-button" href="/admin/roles">Back to roles</a></p>
+					<h2>{t("headings.roles")}</h2>
+					<p class="admin-muted">{t("messages.roleRequestFailed")}</p>
+					<p><a class="admin-ghost-button" href={localizeAdminHref("/admin/roles", language)}>{t("messages.backToRoles")}</a></p>
 				</div>
 			) : (
 				<RoleForm

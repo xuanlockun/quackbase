@@ -1,6 +1,7 @@
 ---
 import FormattedDate from "../FormattedDate.astro";
 import type { AdminPostSummary } from "../../lib/blog";
+import { getUiTranslations } from "../../lib/i18n";
 
 interface Props {
 	posts: AdminPostSummary[];
@@ -9,24 +10,25 @@ interface Props {
 }
 
 const { posts, canUpdate, canDelete } = Astro.props;
+const { t } = getUiTranslations(Astro);
 ---
 
 {
 	posts.length === 0 ? (
 		<div class="admin-empty-state">
-			<h2>No posts yet</h2>
-			<p>Create the first post to start building the editorial workflow.</p>
+			<h2>{t("messages.noPostsYet")}</h2>
+			<p>{t("messages.noPostsHelp")}</p>
 		</div>
 	) : (
 		<div class="admin-table-wrap">
 			<table class="admin-table">
 				<thead>
 					<tr>
-						<th>Title</th>
-						<th>Status</th>
-						<th>Updated</th>
-						<th>Slug</th>
-						<th>Actions</th>
+						<th>{t("labels.title")}</th>
+						<th>{t("labels.status")}</th>
+						<th>{t("labels.updated")}</th>
+						<th>{t("labels.slug")}</th>
+						<th>{t("labels.action")}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -40,7 +42,7 @@ const { posts, canUpdate, canDelete } = Astro.props;
 									</div>
 								</td>
 								<td>
-									<span class="admin-status-pill">{post.status}</span>
+									<span class="admin-status-pill">{t(`status.${post.status}`, post.status)}</span>
 								</td>
 								<td>
 									<FormattedDate date={new Date(post.updatedAt)} />
@@ -50,12 +52,12 @@ const { posts, canUpdate, canDelete } = Astro.props;
 								</td>
 								<td>
 									<div class="admin-row-actions">
-										{canUpdate && <a href={post.editHref}>Edit Post</a>}
-										<a href={post.viewHref}>View</a>
+										{canUpdate && <a href={post.editHref}>{t("actions.editPost")}</a>}
+										<a href={post.viewHref}>{t("actions.view")}</a>
 										{canDelete && (
 											<form method="post" action="/api/admin/posts/delete" class="admin-inline-form">
 												<input type="hidden" name="id" value={post.id} />
-												<button class="admin-danger-button" type="submit">Delete</button>
+												<button class="admin-danger-button" type="submit">{t("actions.delete")}</button>
 											</form>
 										)}
 									</div>

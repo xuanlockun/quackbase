@@ -5,6 +5,7 @@ import RoleTable from "../../components/admin/RoleTable.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { listRolesWithPermissions } from "../../lib/db/roles";
 import { getDb } from "../../lib/blog";
+import { getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -12,24 +13,25 @@ if (!session) {
 }
 
 const roles = await listRolesWithPermissions(getDb(Astro.locals));
+const { t } = getUiTranslations(Astro);
 ---
 
 <AdminLayout
-	title="Roles"
-	description="Manage RBAC roles and permission bundles."
+	title={t("headings.roles")}
+	description={t("messages.manageRoles")}
 	session={session}
-	pageTitle="Roles"
-	pageDescription="Manage reusable role bundles from a dedicated list with route-based actions."
+	pageTitle={t("headings.roles")}
+	pageDescription={t("messages.manageRoleBundles")}
 >
 	<div slot="actions" class="admin-page-actions">
-		<a class="admin-primary-button" href="/admin/roles/new">Create Role</a>
+		<a class="admin-primary-button" href="/admin/roles/new">{t("actions.createRole")}</a>
 	</div>
 
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("created") && <p class="admin-notice">Role created.</p>}
-		{Astro.url.searchParams.get("saved") && <p class="admin-notice">Role saved.</p>}
-		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">Role deleted.</p>}
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">The role request failed.</p>}
+		{Astro.url.searchParams.get("created") && <p class="admin-notice">{t("messages.roleCreated")}</p>}
+		{Astro.url.searchParams.get("saved") && <p class="admin-notice">{t("messages.roleSaved")}</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">{t("messages.roleDeleted")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.roleRequestFailed")}</p>}
 		<RoleTable roles={roles} />
 	</div>
 </AdminLayout>

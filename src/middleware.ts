@@ -1,6 +1,7 @@
 import { defineMiddleware } from "astro:middleware";
 import { clearAdminSessionCookie } from "./lib/auth/cookies";
 import { resolveAdminSession } from "./lib/auth/session";
+import { readUiLanguagePreference, resolveUiLanguage, writeUiLanguagePreference } from "./lib/i18n";
 import {
 	getDefaultAdminPath,
 	getRequiredAdminPagePermissions,
@@ -9,6 +10,14 @@ import {
 
 export const onRequest = defineMiddleware(async (context, next) => {
 	const { pathname } = context.url;
+	const storedUiLanguage = readUiLanguagePreference(context.cookies);
+	const { language: uiLanguage, explicitLanguage } = resolveUiLanguage(context.url, storedUiLanguage);
+
+	context.locals.uiLanguage = uiLanguage;
+
+	if (explicitLanguage && explicitLanguage !== storedUiLanguage) {
+		writeUiLanguagePreference(context.cookies, explicitLanguage);
+	}
 
 	if (!pathname.startsWith("/admin")) {
 		return next();

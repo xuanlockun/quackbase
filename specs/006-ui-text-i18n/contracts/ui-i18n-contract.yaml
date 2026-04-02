@@ -1,0 +1,116 @@
+openapi: 3.1.0
+info:
+  title: UI I18n Language Resolution Contract
+  version: 0.1.0
+  description: >
+    Contract for lightweight shared UI translation using bundled locale dictionaries,
+    language-prefixed frontend routes, saved preference fallback, and key-level English fallback.
+servers:
+  - url: https://example.com
+paths:
+  /en/{slug}:
+    get:
+      summary: Render a localized page with English UI text
+      operationId: renderEnglishPageUi
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Page rendered with English UI dictionary entries
+  /vi/{slug}:
+    get:
+      summary: Render a localized page with Vietnamese UI text
+      operationId: renderVietnamesePageUi
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Page rendered with Vietnamese UI dictionary entries or English fallback for missing keys
+  /en/blog/{slug}:
+    get:
+      summary: Render a localized blog post with English UI text
+      operationId: renderEnglishBlogUi
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Blog post rendered with English UI dictionary entries
+  /vi/blog/{slug}:
+    get:
+      summary: Render a localized blog post with Vietnamese UI text
+      operationId: renderVietnameseBlogUi
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Blog post rendered with Vietnamese UI dictionary entries or English fallback for missing keys
+components:
+  parameters:
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  schemas:
+    SupportedLanguage:
+      type: object
+      required: [code, label]
+      properties:
+        code:
+          type: string
+          enum: [en, vi]
+        label:
+          type: string
+    InterfaceLanguageContext:
+      type: object
+      required: [resolvedLanguage, fallbackLanguage]
+      properties:
+        routeLanguage:
+          type: string
+          nullable: true
+          enum: [en, vi]
+        savedPreference:
+          type: string
+          nullable: true
+          enum: [en, vi]
+        resolvedLanguage:
+          type: string
+          enum: [en, vi]
+        fallbackLanguage:
+          type: string
+          enum: [en]
+    TranslationLookupRequest:
+      type: object
+      required: [key, language]
+      properties:
+        key:
+          type: string
+          examples:
+            - nav.posts
+            - actions.create
+            - headings.adminPosts
+        language:
+          type: string
+          enum: [en, vi]
+    TranslationLookupResult:
+      type: object
+      required: [key, language, value, usedFallback]
+      properties:
+        key:
+          type: string
+        language:
+          type: string
+          enum: [en, vi]
+        value:
+          type: string
+        usedFallback:
+          type: boolean
+    LocaleDictionary:
+      type: object
+      description: Nested translation keys loaded from a bundled JSON dictionary file.
+      additionalProperties:
+        oneOf:
+          - type: string
+          - $ref: "#/components/schemas/LocaleDictionary"

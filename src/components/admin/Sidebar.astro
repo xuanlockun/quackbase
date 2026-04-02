@@ -1,6 +1,7 @@
 ---
 import { getVisibleAdminNavItems } from "../../lib/rbac/policies";
 import type { AdminSession } from "../../lib/auth/types";
+import { getSupportedLanguages, getUiTranslations } from "../../lib/i18n";
 
 interface Props {
 	session: AdminSession | null;
@@ -9,6 +10,8 @@ interface Props {
 const { session } = Astro.props;
 const pathname = Astro.url.pathname;
 const links = getVisibleAdminNavItems(session);
+const languages = getSupportedLanguages();
+const { language, t, localizeAdminHref, switchLanguageHref } = getUiTranslations(Astro);
 
 function isActiveLink(href: string, currentPath: string): boolean {
 	return currentPath === href || currentPath.startsWith(`${href}/`);
@@ -17,28 +20,69 @@ function isActiveLink(href: string, currentPath: string): boolean {
 
 <nav class="admin-sidebar-nav d-flex flex-column h-100 bg-white border-end" aria-label="Admin">
 	<div class="admin-sidebar-brand border-bottom">
-		<p class="admin-sidebar-kicker">Edge CMS</p>
-		<h2 class="h5 mb-1">Admin</h2>
-		<p class="admin-sidebar-copy">Content and access management</p>
+		<p class="admin-sidebar-kicker">{t("app.brand")}</p>
+		<h2 class="h5 mb-1">{t("app.admin")}</h2>
+		<p class="admin-sidebar-copy">{t("messages.contentAndAccessManagement")}</p>
 	</div>
 
 	<div class="admin-sidebar-section border-bottom">
-		<p class="admin-sidebar-label">Signed in</p>
-		<strong>{session?.displayName ?? "Admin user"}</strong>
+		<p class="admin-sidebar-label">{t("labels.signedIn")}</p>
+		<strong>{session?.displayName ?? t("messages.adminUserFallback")}</strong>
 		<p class="admin-sidebar-copy">{session?.email}</p>
+	</div>
+
+	<div class="admin-sidebar-section border-bottom">
+		<p class="admin-sidebar-label">{t("headings.languageSwitcher")}</p>
+		<div class="admin-language-switcher">
+			{
+				languages.map((entry) => (
+					<a
+						class:list={["admin-language-link", entry.code === language && "is-active"]}
+						href={switchLanguageHref(entry.code)}
+					>
+						{entry.code.toUpperCase()}
+					</a>
+				))
+			}
+		</div>
 	</div>
 
 	<div class="admin-sidebar-links nav nav-pills flex-column gap-1">
 		{
 			links.map((link) => (
-				<a class:list={["admin-sidebar-link", isActiveLink(link.href, pathname) && "is-active"]} href={link.href}>
-					<span>{link.label}</span>
+				<a
+					class:list={["admin-sidebar-link", isActiveLink(link.href, pathname) && "is-active"]}
+					href={localizeAdminHref(link.href)}
+				>
+					<span>{t(link.labelKey)}</span>
 				</a>
 			))
 		}
 	</div>
 
 	<form method="post" action="/api/admin/auth/logout" class="admin-sidebar-logout mt-auto">
-		<button class="admin-ghost-button admin-logout-button" type="submit">Log out</button>
+		<button class="admin-ghost-button admin-logout-button" type="submit">{t("actions.logOut")}</button>
 	</form>
 </nav>
+
+<style>
+	.admin-language-switcher {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.admin-language-link {
+		padding: 0.25rem 0.6rem;
+		border: 1px solid rgba(var(--gray), 0.25);
+		border-radius: 999px;
+		text-decoration: none;
+		color: inherit;
+		font-size: 0.85rem;
+	}
+
+	.admin-language-link.is-active {
+		background: rgb(var(--accent));
+		border-color: rgb(var(--accent));
+		color: white;
+	}
+</style>

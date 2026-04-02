@@ -4,11 +4,13 @@ export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { SITE_TITLE } from "../../consts";
 import { getDb, getSiteConfig } from "../../lib/blog";
+import { getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
 	return Astro.redirect("/admin/login");
 }
+const { t } = getUiTranslations(Astro);
 
 let loadError = "";
 let siteConfig = {
@@ -20,40 +22,40 @@ let siteConfig = {
 	footerText: "Edge CMS. Content updates go live straight from D1.",
 	footerBackground: "#eef2f7",
 	footerTextColor: "#60739f",
-	navItems: [{ label: "Home", href: "/", sortOrder: 0 }],
+	navItems: [{ label: t("nav.home"), href: "/", sortOrder: 0 }],
 };
 
 try {
 	siteConfig = await getSiteConfig(getDb(Astro.locals));
 } catch (error) {
-	loadError = error instanceof Error ? error.message : "Failed to load site settings.";
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadSiteSettings");
 }
 ---
 
 <AdminLayout
-	title="Header"
-	description="Manage site settings."
+	title={t("nav.header")}
+	description={t("messages.manageSiteSettings")}
 	session={session}
-	pageTitle="Header & Footer"
-	pageDescription="Manage the brand title, navigation links, and the site chrome colors."
+	pageTitle={t("headings.headerFooter")}
+	pageDescription={t("messages.headerFooterDescription")}
 >
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("siteSaved") && <p class="admin-notice">Header settings saved.</p>}
-		{Astro.url.searchParams.get("siteError") && <p class="admin-notice admin-notice-error">Header settings could not be saved.</p>}
+		{Astro.url.searchParams.get("siteSaved") && <p class="admin-notice">{t("messages.headerSettingsSaved")}</p>}
+		{Astro.url.searchParams.get("siteError") && <p class="admin-notice admin-notice-error">{t("messages.headerSettingsFailed")}</p>}
 		{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
 		<form method="post" action="/api/admin/site" class="admin-form-stack">
 			<div class="admin-grid-two">
-				<label><span>Site title</span><input name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
-				<label><span>Home page slug</span><input name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
-				<label><span>Header background</span><input name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
-				<label><span>Header text color</span><input name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
-				<label><span>Header accent color</span><input name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
-				<label><span>Footer background</span><input name="footerBackground" value={siteConfig.footerBackground} placeholder="#eef2f7" disabled={Boolean(loadError)} /></label>
-				<label><span>Footer text color</span><input name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
-				<label style="grid-column: 1 / -1;"><span>Footer text</span><input name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.siteTitle")}</span><input name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.homePageSlug")}</span><input name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.headerBackground")}</span><input name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.headerTextColor")}</span><input name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.headerAccentColor")}</span><input name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.footerBackground")}</span><input name="footerBackground" value={siteConfig.footerBackground} placeholder="#eef2f7" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.footerTextColor")}</span><input name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
+				<label style="grid-column: 1 / -1;"><span>{t("labels.footerText")}</span><input name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
 			</div>
 			<div class="admin-form-section">
-				<span>Navigation items</span>
+				<span>{t("labels.navigationItems")}</span>
 				<input
 					type="hidden"
 					name="navItems"
@@ -61,12 +63,12 @@ try {
 					value={siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join("\n")}
 					disabled={Boolean(loadError)}
 				/>
-				<div class="nav-items-editor" data-nav-items-editor data-disabled={Boolean(loadError)}>
+				<div class="nav-items-editor" data-nav-items-editor data-disabled={Boolean(loadError)} data-remove-label={t("actions.remove")}>
 					<div class="nav-items-table" role="table">
 						<div class="nav-items-header" role="row">
-							<span>Label</span>
-							<span>Link</span>
-							<span>Action</span>
+							<span>{t("labels.label")}</span>
+							<span>{t("labels.link")}</span>
+							<span>{t("labels.action")}</span>
 						</div>
 						<div class="nav-items-rows" data-nav-items-rows>
 							{
@@ -92,7 +94,7 @@ try {
 											data-nav-remove
 											disabled={Boolean(loadError)}
 										>
-											Remove
+											{t("actions.remove")}
 										</button>
 									</div>
 								))
@@ -100,14 +102,14 @@ try {
 						</div>
 					</div>
 					<button class="admin-ghost-button" type="button" data-nav-add disabled={Boolean(loadError)}>
-						Add row
+						{t("actions.addRow")}
 					</button>
 				</div>
 			</div>
 			<div class="admin-form-section">
-				<p class="admin-muted">For the homepage use a page slug like `home` or `/home`. Empty or `/` also falls back to `home`.</p>
-				<p class="admin-muted">Each row still saves in the same `Label|/path` or `Label|https://example.com` format.</p>
-				<button class="admin-primary-button" type="submit" disabled={Boolean(loadError)}>Save header</button>
+				<p class="admin-muted">{t("messages.homePageSlugHelp")}</p>
+				<p class="admin-muted">{t("messages.navStorageHelp")}</p>
+				<button class="admin-primary-button" type="submit" disabled={Boolean(loadError)}>{t("actions.saveHeader")}</button>
 			</div>
 		</form>
 	</div>
@@ -163,6 +165,7 @@ try {
 	const rowsContainer = editor?.querySelector("[data-nav-items-rows]");
 	const payloadInput = document.getElementById("nav-items-payload");
 	const addButton = editor?.querySelector("[data-nav-add]");
+	const removeLabel = editor instanceof HTMLElement ? editor.dataset.removeLabel || "Remove" : "Remove";
 
 	const syncPayload = () => {
 		if (!(rowsContainer instanceof HTMLElement) || !(payloadInput instanceof HTMLInputElement)) {
@@ -195,7 +198,7 @@ try {
 		row.innerHTML = `
 			<input type="text" value="${label}" placeholder="Home" data-nav-label />
 			<input type="text" value="${href}" placeholder="/about or https://example.com" data-nav-href />
-			<button class="admin-ghost-button nav-item-remove" type="button" data-nav-remove>Remove</button>
+			<button class="admin-ghost-button nav-item-remove" type="button" data-nav-remove>${removeLabel}</button>
 		`;
 		return row;
 	};

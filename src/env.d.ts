@@ -9,5 +9,6 @@ type AdminSession = import("./lib/auth/types").AdminSession;
 declare namespace App {
 	interface Locals extends Runtime {
 		adminSession: AdminSession | null;
+		uiLanguage: string;
 	}
 }

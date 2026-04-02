@@ -4,6 +4,7 @@ export const prerender = false;
 import PageTable from "../../components/admin/PageTable.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getDb, listAllPages } from "../../lib/blog";
+import { getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -13,6 +14,7 @@ if (!session) {
 const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
 const canUpdate = session.isSuperadmin || session.permissions.includes("pages.update");
 const canDelete = session.isSuperadmin || session.permissions.includes("pages.delete");
+const { t, language } = getUiTranslations(Astro);
 
 let pages = [];
 let loadError = "";
@@ -20,27 +22,27 @@ let loadError = "";
 try {
 	pages = await listAllPages(getDb(Astro.locals));
 } catch (error) {
-	loadError = error instanceof Error ? error.message : "Failed to load pages.";
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadPages");
 }
 ---
 
 <AdminLayout
-	title="Pages"
-	description="Manage custom pages."
+	title={t("headings.pages")}
+	description={t("messages.manageCustomPages")}
 	session={session}
-	pageTitle="Pages"
-	pageDescription="Manage landing pages and reusable route content from a dedicated list workspace."
+	pageTitle={t("headings.pages")}
+	pageDescription={t("messages.manageLandingPages")}
 >
 	<div slot="actions" class="admin-page-actions">
-		{canCreate && <a class="admin-primary-button" href="/admin/pages/new">Create Page</a>}
-		<a class="admin-ghost-button" href="/en/">View site</a>
+		{canCreate && <a class="admin-primary-button" href="/admin/pages/new">{t("actions.createPage")}</a>}
+		<a class="admin-ghost-button" href={`/${language}/`}>{t("actions.viewSite")}</a>
 	</div>
 
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("created") && <p class="admin-notice">Page created.</p>}
-		{Astro.url.searchParams.get("saved") && <p class="admin-notice">Page saved.</p>}
-		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">Page deleted.</p>}
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">The page request failed.</p>}
+		{Astro.url.searchParams.get("created") && <p class="admin-notice">{t("messages.pageCreated")}</p>}
+		{Astro.url.searchParams.get("saved") && <p class="admin-notice">{t("messages.pageSaved")}</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">{t("messages.pageDeleted")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.pageRequestFailed")}</p>}
 		{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
 
 		<PageTable pages={pages} canUpdate={canUpdate} canDelete={canDelete} />

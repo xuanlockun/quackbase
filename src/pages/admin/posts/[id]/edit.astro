@@ -5,6 +5,7 @@ import type { AdminPostDetail } from "../../../../lib/blog";
 import PostForm from "../../../../components/admin/PostForm.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { getDb, getPostById, toAdminPostDetail } from "../../../../lib/blog";
+import { getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -13,6 +14,7 @@ if (!session) {
 
 const canUpdate = session.isSuperadmin || session.permissions.includes("posts.update");
 const { id } = Astro.params;
+const { t, language } = getUiTranslations(Astro);
 
 let post: AdminPostDetail | null = null;
 let loadError = "";
@@ -28,25 +30,25 @@ try {
 		notFound = !post;
 	}
 } catch (error) {
-	loadError = error instanceof Error ? error.message : "Failed to load the requested post.";
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadPosts");
 }
 ---
 
 <AdminLayout
-	title="Edit Post"
-	description="Edit an existing blog post."
+	title={t("actions.editPost")}
+	description={t("messages.saveEditPost")}
 	session={session}
-	pageTitle="Edit Post"
-	pageDescription="Make changes in a dedicated editor tied to one post record."
+	pageTitle={t("actions.editPost")}
+	pageDescription={t("messages.editPostDescription")}
 >
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">The post could not be updated.</p>}
+		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.requestFailed")}</p>}
 		{
 			notFound ? (
 				<div class="admin-empty-state">
-					<h2>Post not found</h2>
-					<p class="admin-muted">The requested post could not be loaded for editing.</p>
-					<p><a class="admin-ghost-button" href="/admin/posts">Back to posts</a></p>
+					<h2>{t("messages.postNotFound")}</h2>
+					<p class="admin-muted">{t("messages.failedToLoadPosts")}</p>
+					<p><a class="admin-ghost-button" href={localizeAdminHref("/admin/posts", language)}>{t("messages.backToPosts")}</a></p>
 				</div>
 			) : (
 				<PostForm

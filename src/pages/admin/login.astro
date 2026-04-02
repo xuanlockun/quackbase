@@ -5,20 +5,22 @@ import BaseHead from "../../components/BaseHead.astro";
 import Footer from "../../components/Footer.astro";
 import Header from "../../components/Header.astro";
 import { SITE_TITLE } from "../../consts";
+import { getUiTranslations } from "../../lib/i18n";
 
 const error = Astro.url.searchParams.get("error");
+const { language, t } = getUiTranslations(Astro);
 const errorMessage =
 	error === "access-denied"
-		? "Your account authenticated, but it does not currently have admin access."
+		? t("messages.accessDenied")
 		: error === "invalid"
-			? "The email or password was invalid."
+			? t("messages.invalidCredentials")
 			: "";
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={language}>
 	<head>
-		<BaseHead title={`Admin Login | ${SITE_TITLE}`} description="Sign in to manage Edge CMS." />
+		<BaseHead title={`${t("headings.adminLogin")} | ${SITE_TITLE}`} description={t("messages.signInIntro")} />
 		<style>
 			.panel {
 				max-width: 540px;
@@ -59,19 +61,19 @@ const errorMessage =
 		<Header />
 		<main>
 			<section class="panel">
-				<h1>Admin Login</h1>
-				<p class="muted">Sign in with your admin email and password to access the CMS dashboard.</p>
+				<h1>{t("headings.adminLogin")}</h1>
+				<p class="muted">{t("messages.signInIntro")}</p>
 				{errorMessage && <p class="error">{errorMessage}</p>}
 				<form method="post" action="/api/admin/auth/login">
 					<label>
-						<span>Email</span>
+						<span>{t("labels.email")}</span>
 						<input type="email" name="email" autocomplete="username" required />
 					</label>
 					<label>
-						<span>Password</span>
+						<span>{t("labels.password")}</span>
 						<input type="password" name="password" autocomplete="current-password" required />
 					</label>
-					<button type="submit">Sign in</button>
+					<button type="submit">{t("actions.signIn")}</button>
 				</form>
 			</section>
 		</main>

@@ -4,6 +4,7 @@ export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import PostTable from "../../components/admin/PostTable.astro";
 import { getDb, listAllPosts, toAdminPostSummary } from "../../lib/blog";
+import { getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -13,6 +14,7 @@ if (!session) {
 const canCreate = session.isSuperadmin || session.permissions.includes("posts.create");
 const canUpdate = session.isSuperadmin || session.permissions.includes("posts.update");
 const canDelete = session.isSuperadmin || session.permissions.includes("posts.delete");
+const { t, language } = getUiTranslations(Astro);
 
 let posts = [];
 let loadError = "";
@@ -20,26 +22,26 @@ let loadError = "";
 try {
 	posts = (await listAllPosts(getDb(Astro.locals))).map(toAdminPostSummary);
 } catch (error) {
-	loadError = error instanceof Error ? error.message : "Failed to load posts.";
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadPosts");
 }
 ---
 
 <AdminLayout
-	title="Posts"
-	description="Manage blog posts."
+	title={t("headings.posts")}
+	description={t("messages.manageBlogPosts")}
 	session={session}
-	pageTitle="Posts"
-	pageDescription="Manage published articles and drafts from a focused table view."
+	pageTitle={t("headings.posts")}
+	pageDescription={t("messages.managePublishedArticles")}
 >
 	<div slot="actions" class="admin-page-actions">
-		{canCreate && <a class="admin-primary-button" href="/admin/posts/new">Create Post</a>}
-		<a class="admin-ghost-button" href="/en/blog">View blog</a>
+		{canCreate && <a class="admin-primary-button" href="/admin/posts/new">{t("actions.createPost")}</a>}
+		<a class="admin-ghost-button" href={`/${language}/blog/`}>{t("actions.viewBlog")}</a>
 	</div>
 
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("saved") && <p class="admin-notice">Post saved.</p>}
-		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">Post deleted.</p>}
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">The request failed.</p>}
+		{Astro.url.searchParams.get("saved") && <p class="admin-notice">{t("messages.postSaved")}</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">{t("messages.postDeleted")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.requestFailed")}</p>}
 		{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
 
 		<PostTable posts={posts} canUpdate={canUpdate} canDelete={canDelete} />

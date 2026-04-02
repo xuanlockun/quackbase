@@ -5,6 +5,7 @@ import UserForm from "../../../components/admin/UserForm.astro";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { listRoleSummaries } from "../../../lib/db/roles";
 import { getDb } from "../../../lib/blog";
+import { getUiTranslations } from "../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -13,14 +14,15 @@ if (!session) {
 
 const roles = await listRoleSummaries(getDb(Astro.locals));
 const hasError = Astro.url.searchParams.get("error");
+const { t } = getUiTranslations(Astro);
 ---
 
 <AdminLayout
-	title="Create User"
-	description="Create a new admin user."
+	title={t("actions.createUser")}
+	description={t("messages.saveCreateUser")}
 	session={session}
-	pageTitle="Create User"
-	pageDescription="Add an admin user and assign their roles from a dedicated workflow."
+	pageTitle={t("actions.createUser")}
+	pageDescription={t("messages.createUserDescription")}
 >
 	<div class="admin-content-stack">
 		<UserForm
@@ -28,7 +30,7 @@ const hasError = Astro.url.searchParams.get("error");
 			action="/api/admin/users"
 			roles={roles}
 			canSubmit={true}
-			loadError={hasError ? "The user could not be created." : ""}
+			loadError={hasError ? t("messages.userRequestFailed") : ""}
 		/>
 	</div>
 </AdminLayout>

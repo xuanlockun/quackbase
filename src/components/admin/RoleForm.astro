@@ -1,5 +1,6 @@
 ---
 import type { AdminPermission, AdminRole } from "../../lib/auth/types";
+import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
 	mode: "create" | "edit";
@@ -21,17 +22,18 @@ const {
 	loadError = "",
 } = Astro.props;
 
-const submitLabel = mode === "edit" ? "Save role" : "Create role";
+const { t, language } = getUiTranslations(Astro);
+const submitLabel = mode === "edit" ? t("actions.saveRole") : t("actions.createRole");
 const isDisabled = Boolean(loadError) || !canSubmit;
 const selectedPermissionIds = new Set(role?.permissions.map((permission) => permission.id) ?? []);
 ---
 
 <div class="admin-form-header">
-	<a class="admin-ghost-button" href={backHref}>Back</a>
+	<a class="admin-ghost-button" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
 	<p class="admin-muted">
 		{canSubmit
-			? "Manage role labels and permission bundles from a dedicated form."
-			: "Your role can view this page but cannot save changes."}
+			? t("messages.manageRoleForm")
+			: t("messages.cannotSavePage")}
 	</p>
 </div>
 
@@ -40,7 +42,7 @@ const selectedPermissionIds = new Set(role?.permissions.map((permission) => perm
 <form class="admin-form-stack" method="post" action={action}>
 	<div class="admin-form-grid">
 		<label>
-			<span>Role name</span>
+			<span>{t("labels.roleName")}</span>
 			<input
 				name="name"
 				required={mode === "create"}
@@ -51,18 +53,18 @@ const selectedPermissionIds = new Set(role?.permissions.map((permission) => perm
 			/>
 		</label>
 		<label>
-			<span>Display label</span>
+			<span>{t("labels.displayName")}</span>
 			<input name="label" required value={role?.label ?? ""} disabled={isDisabled} />
 		</label>
 	</div>
 
 	<label>
-		<span>Description</span>
+		<span>{t("labels.description")}</span>
 		<textarea name="description" disabled={isDisabled}>{role?.description ?? ""}</textarea>
 	</label>
 
 	<div class="admin-form-section">
-		<span>Permissions</span>
+		<span>{t("labels.permissions")}</span>
 		<div class="admin-check-grid">
 			{
 				permissions.map((permission) => (

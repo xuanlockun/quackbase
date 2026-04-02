@@ -1,28 +1,30 @@
 ---
 import type { AdminUserSummary } from "../../lib/auth/types";
+import { getUiTranslations } from "../../lib/i18n";
 
 interface Props {
 	users: AdminUserSummary[];
 }
 
 const { users } = Astro.props;
+const { t } = getUiTranslations(Astro);
 ---
 
 {
 	users.length === 0 ? (
 		<div class="admin-empty-state">
-			<h2>No admin users yet</h2>
-			<p>Create an admin user to grant access to the dashboard.</p>
+			<h2>{t("messages.noUsersYet")}</h2>
+			<p>{t("messages.noUsersHelp")}</p>
 		</div>
 	) : (
 		<div class="admin-table-wrap">
 			<table class="admin-table table table-sm align-middle mb-0">
 				<thead>
 					<tr>
-						<th>User</th>
-						<th>Status</th>
-						<th>Roles</th>
-						<th>Actions</th>
+						<th>{t("labels.user")}</th>
+						<th>{t("labels.status")}</th>
+						<th>{t("labels.roles")}</th>
+						<th>{t("labels.action")}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -37,17 +39,17 @@ const { users } = Astro.props;
 								</td>
 								<td>
 									<span class:list={["admin-status-pill", !user.isActive && "admin-status-pill-inactive"]}>
-										{user.isActive ? "Active" : "Inactive"}
+										{user.isActive ? t("status.active") : t("status.inactive")}
 									</span>
 								</td>
 								<td>
 									<div class="admin-row-actions">
-										{user.roles.length > 0 ? user.roles.map((role) => <span class="admin-role-chip">{role.label}</span>) : <span class="admin-muted">No roles</span>}
+										{user.roles.length > 0 ? user.roles.map((role) => <span class="admin-role-chip">{role.label}</span>) : <span class="admin-muted">{t("messages.noRolesAssigned")}</span>}
 									</div>
 								</td>
 								<td>
 									<div class="admin-row-actions">
-										<a href={`/admin/users/${user.id}/edit`}>Edit</a>
+										<a href={`/admin/users/${user.id}/edit`}>{t("actions.edit")}</a>
 									</div>
 								</td>
 							</tr>

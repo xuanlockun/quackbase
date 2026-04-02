@@ -1,6 +1,7 @@
 ---
 import type { AdminPostDetail } from "../../lib/blog";
 import { getSupportedLanguages } from "../../lib/blog";
+import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
 	mode: "create" | "edit";
@@ -20,9 +21,10 @@ const {
 	loadError = "",
 } = Astro.props;
 
-const submitLabel = mode === "edit" ? "Save changes" : "Create post";
+const { t, language } = getUiTranslations(Astro);
+const submitLabel = mode === "edit" ? t("actions.saveChanges") : t("actions.createPost");
 const languages = getSupportedLanguages();
-const initialLanguage = post?.requestedLanguage ?? "en";
+const initialLanguage = post?.requestedLanguage ?? language;
 const titleTranslations = {
 	en: "",
 	...(post?.titleTranslations ?? {}),
@@ -40,13 +42,13 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 ---
 
 <div class="admin-form-header">
-	<button class="admin-ghost-button" type="button" data-admin-back={backHref}>
-		Back
+	<button class="admin-ghost-button" type="button" data-admin-back={localizeAdminHref(backHref, language)}>
+		{t("actions.back")}
 	</button>
 	<p class="admin-muted">
 		{canSubmit
-			? "Changes save through permission-checked admin APIs."
-			: "Your role can view this form but cannot save changes."}
+			? t("messages.changesSaveAdminApi")
+			: t("messages.cannotSaveForm")}
 	</p>
 </div>
 
@@ -56,26 +58,26 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 	{mode === "edit" && post && <input type="hidden" name="id" value={post.id} />}
 	<div class="admin-form-grid">
 		<label>
-			<span>Slug</span>
+			<span>{t("labels.slug")}</span>
 			<input name="slug" required pattern="[a-z0-9-]+" value={slug} placeholder="my-post-slug" disabled={isDisabled} />
 		</label>
 		<label>
-			<span>Description</span>
+			<span>{t("labels.description")}</span>
 			<input name="description" required value={description} placeholder="Short summary" disabled={isDisabled} />
 		</label>
 		<label>
-			<span>Hero image URL</span>
+			<span>{t("labels.heroImageUrl")}</span>
 			<input name="heroImage" value={heroImage} placeholder="/blog-placeholder-1.jpg" disabled={isDisabled} />
 		</label>
 		<label>
-			<span>Status</span>
+			<span>{t("labels.status")}</span>
 			<select name="status" disabled={isDisabled}>
-				<option value="published" selected={status === "published"}>Published</option>
-				<option value="draft" selected={status === "draft"}>Draft</option>
+				<option value="published" selected={status === "published"}>{t("status.published")}</option>
+				<option value="draft" selected={status === "draft"}>{t("status.draft")}</option>
 			</select>
 		</label>
 		<label>
-			<span>Publish date</span>
+			<span>{t("labels.publishDate")}</span>
 			<input type="datetime-local" name="pubDate" value={pubDateValue} disabled={isDisabled} />
 		</label>
 	</div>
@@ -83,10 +85,10 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 	<div class="admin-form-section localized-editor" data-localized-editor data-active-language={initialLanguage}>
 		<div class="localized-editor-header">
 			<div>
-				<h2>Localized content</h2>
-				<p class="admin-muted">Write the title and content for each supported language in one editor.</p>
+				<h2>{t("headings.localizedContent")}</h2>
+				<p class="admin-muted">{t("messages.localizedPostHelp")}</p>
 			</div>
-			<div class="localized-editor-tabs" role="tablist" aria-label="Post languages">
+			<div class="localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
 				{
 					languages.map((language) => (
 						<button
@@ -115,7 +117,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 					hidden={initialLanguage !== language.code}
 				>
 					<label>
-						<span>Title ({language.label})</span>
+						<span>{t("labels.title")} ({language.label})</span>
 						<input
 							data-title-input={language.code}
 							value={titleTranslations[language.code] ?? ""}
@@ -124,7 +126,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 						/>
 					</label>
 					<label>
-						<span>Content ({language.label})</span>
+						<span>{t("labels.content")} ({language.label})</span>
 						<textarea data-content-input={language.code} rows="14" disabled={isDisabled}
 							>{contentTranslations[language.code] ?? (language.code === "en" ? "# New post" : "")}</textarea
 						>
@@ -136,7 +138,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 
 	<div class="admin-form-actions">
 		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
-		{mode === "edit" && post && <a href={post.viewHref}>Open post</a>}
+		{mode === "edit" && post && <a href={post.viewHref}>{t("actions.openPost")}</a>}
 	</div>
 </form>
 

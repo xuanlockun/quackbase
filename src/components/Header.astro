@@ -2,13 +2,16 @@
 import HeaderLink from './HeaderLink.astro';
 import { SITE_TITLE } from '../consts';
 import { getDb, getSiteConfig, type SiteNavItem } from '../lib/blog';
+import { getSupportedLanguages, getUiTranslations } from '../lib/i18n';
 
 let siteTitle = SITE_TITLE;
 let headerBackground = '#ffffff';
 let headerTextColor = '#0f1219';
 let headerAccentColor = '#2337ff';
+const { language, t, localizeHref, localizeAdminHref, switchLanguageHref } = getUiTranslations(Astro);
+const languages = getSupportedLanguages();
 let navItems: SiteNavItem[] = [
-	{ label: 'Home', href: '/', sortOrder: 0 },
+	{ label: t("nav.home"), href: '/', sortOrder: 0 },
 ];
 
 try {
@@ -23,23 +26,34 @@ try {
 }
 
 if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.href === '/admin')) {
-	navItems = [...navItems, { label: 'CMS', href: '/admin', sortOrder: 999 }];
+	navItems = [...navItems, { label: t("nav.cms"), href: '/admin', sortOrder: 999 }];
 }
 ---
 
 <header style={`--header-bg:${headerBackground}; --header-text:${headerTextColor}; --header-accent:${headerAccentColor};`}>
 	<nav>
-		<h2><a href="/">{siteTitle}</a></h2>
+		<h2><a href={localizeHref("/")}>{siteTitle}</a></h2>
 		<div class="internal-links">
 			{
 				navItems.map((item) => (
-					<HeaderLink href={item.href}>{item.label}</HeaderLink>
+					<HeaderLink href={item.href.startsWith('/admin') ? localizeAdminHref(item.href) : localizeHref(item.href)}>
+						{item.label}
+					</HeaderLink>
+				))
+			}
+		</div>
+		<div class="language-links" aria-label={t("headings.languageSwitcher")}>
+			{
+				languages.map((entry) => (
+					<a class:list={["language-link", entry.code === language && "active"]} href={switchLanguageHref(entry.code)}>
+						{entry.code.toUpperCase()}
+					</a>
 				))
 			}
 		</div>
 		<div class="social-links">
 			<a href="https://m.webtoo.ls/@astro" target="_blank">
-				<span class="sr-only">Follow Astro on Mastodon</span>
+				<span class="sr-only">{t("messages.followAstroMastodon")}</span>
 				<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32"
 					><path
 						fill="currentColor"
@@ -48,7 +62,7 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 				>
 			</a>
 			<a href="https://twitter.com/astrodotbuild" target="_blank">
-				<span class="sr-only">Follow Astro on Twitter</span>
+				<span class="sr-only">{t("messages.followAstroTwitter")}</span>
 				<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32"
 					><path
 						fill="currentColor"
@@ -57,7 +71,7 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 				>
 			</a>
 			<a href="https://github.com/withastro/astro" target="_blank">
-				<span class="sr-only">Go to Astro's GitHub repo</span>
+				<span class="sr-only">{t("messages.visitAstroGithub")}</span>
 				<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32"
 					><path
 						fill="currentColor"
@@ -94,6 +108,21 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 		display: flex;
 		flex-wrap: wrap;
 	}
+	.language-links {
+		display: flex;
+		gap: 0.5rem;
+		margin-left: auto;
+	}
+	.language-link {
+		font-size: 0.85rem;
+		border-radius: 999px;
+		border: 1px solid rgba(var(--black), 0.12);
+		padding: 0.35rem 0.7rem;
+	}
+	.language-link.active {
+		border-bottom-color: transparent;
+		background: color-mix(in srgb, var(--header-accent) 14%, white);
+	}
 	nav a {
 		padding: 1em 0.5em;
 		color: var(--header-text);
@@ -115,6 +144,9 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 		}
 		.internal-links {
 			justify-content: center;
+		}
+		.language-links {
+			margin-left: 0;
 		}
 		.social-links {
 			display: none;

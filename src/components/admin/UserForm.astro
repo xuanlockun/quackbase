@@ -1,5 +1,6 @@
 ---
 import type { AdminUserSummary, RoleSummary } from "../../lib/auth/types";
+import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
 	mode: "create" | "edit";
@@ -21,17 +22,18 @@ const {
 	loadError = "",
 } = Astro.props;
 
-const submitLabel = mode === "edit" ? "Save user" : "Create user";
+const { t, language } = getUiTranslations(Astro);
+const submitLabel = mode === "edit" ? t("actions.saveUser") : t("actions.createUser");
 const isDisabled = Boolean(loadError) || !canSubmit;
 const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
 ---
 
 <div class="admin-form-header">
-	<a class="admin-ghost-button" href={backHref}>Back</a>
+	<a class="admin-ghost-button" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
 	<p class="admin-muted">
 		{canSubmit
-			? "Manage admin user access and role assignments from one dedicated form."
-			: "Your role can view this page but cannot save changes."}
+			? t("messages.manageUserForm")
+			: t("messages.cannotSavePage")}
 	</p>
 </div>
 
@@ -40,7 +42,7 @@ const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
 <form class="admin-form-stack" method="post" action={action}>
 	<div class="admin-form-grid">
 		<label>
-			<span>Email</span>
+			<span>{t("labels.email")}</span>
 			<input
 				name="email"
 				type="email"
@@ -51,28 +53,28 @@ const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
 			/>
 		</label>
 		<label>
-			<span>Display name</span>
+			<span>{t("labels.displayName")}</span>
 			<input name="displayName" required value={user?.displayName ?? ""} disabled={isDisabled} />
 		</label>
 		<label>
-			<span>{mode === "edit" ? "New password" : "Password"}</span>
+			<span>{mode === "edit" ? t("labels.newPassword") : t("labels.password")}</span>
 			<input
 				name="password"
 				type="password"
 				minlength="8"
 				required={mode === "create"}
-				placeholder={mode === "edit" ? "Leave blank to keep current password" : ""}
+				placeholder={mode === "edit" ? t("labels.newPassword") : ""}
 				disabled={isDisabled}
 			/>
 		</label>
 		<label class="admin-check-row">
 			<input type="checkbox" name="isActive" checked={user?.isActive ?? true} disabled={isDisabled} />
-			Active
+			{t("labels.active")}
 		</label>
 	</div>
 
 	<div class="admin-form-section">
-		<span>Roles</span>
+		<span>{t("labels.roles")}</span>
 		<div class="admin-check-grid">
 			{
 				roles.map((role) => (

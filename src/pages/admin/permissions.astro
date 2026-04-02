@@ -5,6 +5,7 @@ import PermissionBadge from "../../components/admin/PermissionBadge.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { listPermissions } from "../../lib/db/permissions";
 import { getDb } from "../../lib/blog";
+import { getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -19,14 +20,15 @@ const groupedPermissions = Object.entries(
 		return groups;
 	}, {}),
 );
+const { t } = getUiTranslations(Astro);
 ---
 
 <AdminLayout
-	title="Permissions"
-	description="Review the admin permission catalog."
+	title={t("nav.permissions")}
+	description={t("messages.managePermissions")}
 	session={session}
-	pageTitle="Permission Catalog"
-	pageDescription="Each permission maps to a discrete admin capability and is evaluated on every protected request."
+	pageTitle={t("headings.permissionCatalog")}
+	pageDescription={t("messages.permissionCatalogDescription")}
 >
 	<section class="admin-card-stack">
 		{

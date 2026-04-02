@@ -4,6 +4,7 @@ export const prerender = false;
 import PageForm from "../../../../components/admin/PageForm.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { getDb, getPageById } from "../../../../lib/blog";
+import { getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -12,6 +13,7 @@ if (!session) {
 
 const canUpdate = session.isSuperadmin || session.permissions.includes("pages.update");
 const { id } = Astro.params;
+const { t, language } = getUiTranslations(Astro);
 
 let page = null;
 let loadError = "";
@@ -26,28 +28,28 @@ try {
 		notFound = !page;
 	}
 } catch (error) {
-	loadError = error instanceof Error ? error.message : "Failed to load the requested page.";
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadPages");
 }
 
 if (Astro.url.searchParams.get("error")) {
-	loadError = "The page could not be updated.";
+	loadError = t("messages.pageRequestFailed");
 }
 ---
 
 <AdminLayout
-	title="Edit Page"
-	description="Edit an existing custom page."
+	title={t("actions.edit")}
+	description={t("messages.saveEditPage")}
 	session={session}
-	pageTitle="Edit Page"
-	pageDescription="Update page content in a dedicated editor with a clear return path to the list."
+	pageTitle={t("actions.edit")}
+	pageDescription={t("messages.editPageDescription")}
 >
 	<div class="admin-content-stack">
 		{
 			notFound ? (
 				<div class="admin-empty-state">
-					<h2>Page not found</h2>
-					<p class="admin-muted">The requested page could not be loaded for editing.</p>
-					<p><a class="admin-ghost-button" href="/admin/pages">Back to pages</a></p>
+					<h2>{t("messages.pageNotFound")}</h2>
+					<p class="admin-muted">{t("messages.failedToLoadPages")}</p>
+					<p><a class="admin-ghost-button" href={localizeAdminHref("/admin/pages", language)}>{t("messages.backToPages")}</a></p>
 				</div>
 			) : (
 				<PageForm mode="edit" action="/api/admin/pages" page={page} canSubmit={canUpdate} loadError={loadError} />

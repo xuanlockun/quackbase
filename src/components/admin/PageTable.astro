@@ -1,6 +1,7 @@
 ---
 import FormattedDate from "../FormattedDate.astro";
 import { getLocalizedPagePath, type SitePage } from "../../lib/blog";
+import { getUiTranslations } from "../../lib/i18n";
 
 interface Props {
 	pages: SitePage[];
@@ -9,24 +10,25 @@ interface Props {
 }
 
 const { pages, canUpdate, canDelete } = Astro.props;
+const { t, language } = getUiTranslations(Astro);
 ---
 
 {
 	pages.length === 0 ? (
 		<div class="admin-empty-state">
-			<h2>No pages yet</h2>
-			<p>Create a page to add route-based content beyond the blog.</p>
+			<h2>{t("messages.noPagesYet")}</h2>
+			<p>{t("messages.noPagesHelp")}</p>
 		</div>
 	) : (
 		<div class="admin-table-wrap">
 			<table class="admin-table table table-sm align-middle mb-0">
 				<thead>
 					<tr>
-						<th>Title</th>
-						<th>Status</th>
-						<th>Updated</th>
-						<th>Slug</th>
-						<th>Actions</th>
+						<th>{t("labels.title")}</th>
+						<th>{t("labels.status")}</th>
+						<th>{t("labels.updated")}</th>
+						<th>{t("labels.slug")}</th>
+						<th>{t("labels.action")}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -40,7 +42,7 @@ const { pages, canUpdate, canDelete } = Astro.props;
 									</div>
 								</td>
 								<td>
-									<span class="admin-status-pill">{page.status}</span>
+									<span class="admin-status-pill">{t(`status.${page.status}`, page.status)}</span>
 								</td>
 								<td>
 									<FormattedDate date={page.updatedAt} />
@@ -50,12 +52,12 @@ const { pages, canUpdate, canDelete } = Astro.props;
 								</td>
 								<td>
 									<div class="admin-row-actions">
-										{canUpdate && <a href={`/admin/pages/${page.id}/edit`}>Edit</a>}
-										<a href={getLocalizedPagePath(page.slug)}>View</a>
+										{canUpdate && <a href={`/admin/pages/${page.id}/edit`}>{t("actions.edit")}</a>}
+										<a href={getLocalizedPagePath(page.slug, language)}>{t("actions.view")}</a>
 										{canDelete && (
 											<form class="admin-inline-form" method="post" action="/api/admin/pages/delete">
 												<input type="hidden" name="id" value={page.id} />
-												<button class="admin-danger-button" type="submit">Delete</button>
+												<button class="admin-danger-button" type="submit">{t("actions.delete")}</button>
 											</form>
 										)}
 									</div>
