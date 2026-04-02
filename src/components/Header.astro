@@ -75,15 +75,24 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 		flex-wrap: wrap;
 		gap: 0.15rem;
 	}
-	nav a {
+	.internal-links a,
+	h2 a {
 		padding: 1em 0.5em;
 		color: var(--header-text);
 		border-bottom: 4px solid transparent;
 		text-decoration: none;
 	}
-	nav a.active {
+	.internal-links a.active,
+	h2 a.active {
 		text-decoration: none;
 		border-bottom-color: var(--header-accent);
+	}
+	:global(.language-switch) {
+		margin-left: auto;
+	}
+	:global(.language-switch-link) {
+		padding: 0.375rem 0.75rem;
+		border-bottom: 0;
 	}
 	@media (max-width: 720px) {
 		nav {
@@ -92,6 +101,9 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 		}
 		.internal-links {
 			justify-content: center;
+		}
+		:global(.language-switch) {
+			margin-left: 0;
 		}
 	}
 </style>
