@@ -59,7 +59,7 @@ describe("UI i18n integration behavior", () => {
 		expect(context.language).toBe("vi");
 		expect(context.localizeHref("/blog/hello-world/")).toBe("/vi/blog/hello-world/");
 		expect(context.localizeAdminHref("/admin/pages")).toBe("/admin/pages?lang=vi");
-		expect(context.switchLanguageHref("en")).toBe("/admin/posts");
+		expect(context.switchLanguageHref("en")).toBe("/admin/posts?lang=en");
 	});
 
 	it("ignores unsupported stored preferences and returns to English", () => {

@@ -38,7 +38,7 @@ describe("UI i18n contract helpers", () => {
 	it("generates language switcher hrefs for frontend and admin requests", () => {
 		expect(getLanguageSwitchHref(new URL("https://example.com/vi/"), "en")).toBe("/en/");
 		expect(getLanguageSwitchHref(new URL("https://example.com/vi/about/"), "en")).toBe("/en/about/");
-		expect(getLanguageSwitchHref(new URL("https://example.com/admin/posts?lang=vi"), "en")).toBe("/admin/posts");
+		expect(getLanguageSwitchHref(new URL("https://example.com/admin/posts?lang=vi"), "en")).toBe("/admin/posts?lang=en");
 	});
 
 	it("switches language by replacing the existing prefix instead of duplicating it", () => {

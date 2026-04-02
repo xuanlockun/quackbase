@@ -237,7 +237,7 @@ export function localizeAdminHref(href: string, language = DEFAULT_LANGUAGE): st
 export function getLanguageSwitchHref(currentUrl: URL, language: string): string {
 	const nextLanguage = resolveLanguage(language);
 	if (currentUrl.pathname.startsWith("/admin")) {
-		return localizeAdminHref(currentUrl.pathname + currentUrl.search, nextLanguage);
+		return getAdminLanguageSwitchHref(currentUrl, nextLanguage);
 	}
 
 	return switchLang(currentUrl.pathname + currentUrl.search, nextLanguage);
@@ -286,6 +286,12 @@ function withLanguagePrefix(pathname: string, language: string): string {
 
 	const basePath = normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`;
 	return `/${nextLanguage}${basePath}${hasTrailingSlash && !basePath.endsWith("/") ? "/" : ""}`;
+}
+
+function getAdminLanguageSwitchHref(currentUrl: URL, language: string): string {
+	const url = new URL(currentUrl.pathname + currentUrl.search, "https://edge-cms.local");
+	url.searchParams.set("lang", resolveLanguage(language));
+	return formatLocalUrl(url);
 }
 
 function stripLanguagePrefix(pathname: string): string {
