@@ -240,7 +240,11 @@ export function getLanguageSwitchHref(currentUrl: URL, language: string): string
 		return localizeAdminHref(currentUrl.pathname + currentUrl.search, nextLanguage);
 	}
 
-	return localizeHref(currentUrl.pathname + currentUrl.search, nextLanguage);
+	return switchLang(currentUrl.pathname + currentUrl.search, nextLanguage);
+}
+
+export function switchLang(href: string, language: string): string {
+	return localizeHref(href, language);
 }
 
 function translateKey(key: string, language: string, fallback?: string): string {
@@ -272,20 +276,29 @@ function resolveTreeValue(tree: TranslationTree | undefined, key: string): strin
 }
 
 function withLanguagePrefix(pathname: string, language: string): string {
-	if (pathname === "/") {
-		return `/${resolveLanguage(language)}/`;
+	const nextLanguage = resolveLanguage(language);
+	const hasTrailingSlash = pathname === "/" || pathname.endsWith("/");
+	const normalizedPath = stripLanguagePrefix(pathname);
+
+	if (normalizedPath === "/") {
+		return `/${nextLanguage}/`;
 	}
 
-	const hasTrailingSlash = pathname.endsWith("/");
+	const basePath = normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`;
+	return `/${nextLanguage}${basePath}${hasTrailingSlash && !basePath.endsWith("/") ? "/" : ""}`;
+}
+
+function stripLanguagePrefix(pathname: string): string {
 	const segments = pathname.split("/").filter(Boolean);
-
-	if (segments.length > 0 && isSupportedLanguage(segments[0])) {
-		segments[0] = resolveLanguage(language);
-	} else {
-		segments.unshift(resolveLanguage(language));
+	if (segments.length === 0) {
+		return "/";
 	}
 
-	return `/${segments.join("/")}${hasTrailingSlash ? "/" : ""}`;
+	if (isSupportedLanguage(segments[0])) {
+		segments.shift();
+	}
+
+	return segments.length === 0 ? "/" : `/${segments.join("/")}`;
 }
 
 function sortLocalizedText(translations: LocalizedText): LocalizedText {

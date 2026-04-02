@@ -6,6 +6,7 @@ import {
 	localizeAdminHref,
 	localizeHref,
 	resolveUiLanguage,
+	switchLang,
 } from "../../src/lib/i18n";
 
 describe("UI i18n contract helpers", () => {
@@ -26,15 +27,24 @@ describe("UI i18n contract helpers", () => {
 	});
 
 	it("localizes frontend and admin hrefs without breaking route shape", () => {
+		expect(localizeHref("/", "vi")).toBe("/vi/");
 		expect(localizeHref("/blog/hello-world/", "vi")).toBe("/vi/blog/hello-world/");
 		expect(localizeHref("/en/about/", "vi")).toBe("/vi/about/");
+		expect(localizeHref("/vi/about/", "en")).toBe("/en/about/");
 		expect(localizeAdminHref("/admin/posts", "vi")).toBe("/admin/posts?lang=vi");
 		expect(localizeAdminHref("/admin/posts?tab=all", "en")).toBe("/admin/posts?tab=all");
 	});
 
 	it("generates language switcher hrefs for frontend and admin requests", () => {
+		expect(getLanguageSwitchHref(new URL("https://example.com/vi/"), "en")).toBe("/en/");
 		expect(getLanguageSwitchHref(new URL("https://example.com/vi/about/"), "en")).toBe("/en/about/");
 		expect(getLanguageSwitchHref(new URL("https://example.com/admin/posts?lang=vi"), "en")).toBe("/admin/posts");
+	});
+
+	it("switches language by replacing the existing prefix instead of duplicating it", () => {
+		expect(switchLang("/vi/", "en")).toBe("/en/");
+		expect(switchLang("/vi/blog/hello-world/", "en")).toBe("/en/blog/hello-world/");
+		expect(switchLang("/about/", "vi")).toBe("/vi/about/");
 	});
 
 	it("detects supported path languages only on the first segment", () => {

@@ -3,16 +3,26 @@ export const prerender = false;
 
 import BlogPost from "../layouts/BlogPost.astro";
 import CmsPageSections from "../components/CmsPageSections.astro";
-import { getDb, getPublishedPageBySlug } from "../lib/blog";
-import { getUiTranslations } from "../lib/i18n";
+import { getDb, getPublishedPageBySlug, getSiteConfig } from "../lib/blog";
+import { getUiTranslations, isSupportedLanguage, resolveLanguage } from "../lib/i18n";
 
 const reservedSlugs = new Set(["admin"]);
 const slug = Astro.params.slug ?? "";
 const { t } = getUiTranslations(Astro);
 
 let page = null;
+let language = "en";
 
-if (!reservedSlugs.has(slug)) {
+if (isSupportedLanguage(slug)) {
+	try {
+		const db = getDb(Astro.locals);
+		const config = await getSiteConfig(db);
+		language = resolveLanguage(slug);
+		page = await getPublishedPageBySlug(db, config.homePageSlug, language);
+	} catch {
+		page = null;
+	}
+} else if (!reservedSlugs.has(slug)) {
 	try {
 		const db = getDb(Astro.locals);
 		page = await getPublishedPageBySlug(db, slug, "en");
@@ -34,9 +44,9 @@ if (!page) {
 			pubDate={page.updatedAt}
 			showDate={false}
 			wideContent={true}
-			lang="en"
+			lang={language}
 		>
-			<CmsPageSections pageSections={page.pageSections} contentHtml={page.contentHtml} currentLanguage="en" />
+			<CmsPageSections pageSections={page.pageSections} contentHtml={page.contentHtml} currentLanguage={language} />
 		</BlogPost>
 	) : (
 		<BlogPost
@@ -46,7 +56,7 @@ if (!page) {
 			contentHtml={`<p>${t("messages.pageNotFoundBody")}</p>`}
 			showDate={false}
 			wideContent={true}
-			lang="en"
+			lang={language}
 		/>
 	)
 }
