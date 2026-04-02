@@ -185,6 +185,8 @@ export async function listPublishedPosts(
 	db: D1Database,
 	language = DEFAULT_LANGUAGE,
 ): Promise<BlogPost[]> {
+	await ensurePostTables(db);
+
 	const result = await db
 		.prepare(
 			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
@@ -451,6 +453,8 @@ export async function deletePage(db: D1Database, id: number): Promise<void> {
 }
 
 export async function listAllPosts(db: D1Database, language = DEFAULT_LANGUAGE): Promise<BlogPost[]> {
+	await ensurePostTables(db);
+
 	const result = await db
 		.prepare(
 			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
@@ -467,6 +471,8 @@ export async function getPostById(
 	id: number,
 	language = DEFAULT_LANGUAGE,
 ): Promise<BlogPost | null> {
+	await ensurePostTables(db);
+
 	const result = await db
 		.prepare(
 			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
@@ -517,6 +523,8 @@ export async function getPublishedPostBySlug(
 	slug: string,
 	language = DEFAULT_LANGUAGE,
 ): Promise<BlogPost | null> {
+	await ensurePostTables(db);
+
 	const result = await db
 		.prepare(
 			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
@@ -531,6 +539,8 @@ export async function getPublishedPostBySlug(
 }
 
 export async function createPost(db: D1Database, input: BlogPostInput): Promise<number> {
+	await ensurePostTables(db);
+
 	const result = await db
 		.prepare(
 			`INSERT INTO posts (slug, title, description, content, hero_image, status, pub_date, updated_date)
@@ -555,6 +565,8 @@ export async function updatePost(
 	id: number,
 	input: BlogPostInput,
 ): Promise<void> {
+	await ensurePostTables(db);
+
 	await db
 		.prepare(
 			`UPDATE posts
@@ -582,6 +594,8 @@ export async function updatePost(
 }
 
 export async function deletePost(db: D1Database, id: number): Promise<void> {
+	await ensurePostTables(db);
+
 	await db.prepare("DELETE FROM posts WHERE id = ?1").bind(id).run();
 }
 
@@ -844,6 +858,46 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			WHERE NOT EXISTS (SELECT 1 FROM navigation_items)`,
 		),
 	]);
+}
+
+async function ensurePostTables(db: D1Database): Promise<void> {
+	await db.batch([
+		db.prepare(
+			`CREATE TABLE IF NOT EXISTS posts (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				slug TEXT NOT NULL UNIQUE,
+				title TEXT NOT NULL,
+				description TEXT NOT NULL,
+				content_markdown TEXT NOT NULL,
+				hero_image TEXT,
+				status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+				pub_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+		),
+		db.prepare(`CREATE INDEX IF NOT EXISTS idx_posts_status_pub_date ON posts (status, pub_date DESC)`),
+	]);
+
+	const postColumns = await db.prepare(`PRAGMA table_info(posts)`).all<{ name: string }>();
+	const columnNames = new Set((postColumns.results ?? []).map((column) => column.name));
+
+	if (!columnNames.has("content") && columnNames.has("content_markdown")) {
+		await db.prepare(`ALTER TABLE posts RENAME COLUMN content_markdown TO content`).run();
+	}
+
+	await db
+		.prepare(
+			`UPDATE posts
+			SET title = CASE
+				WHEN json_valid(title) THEN title
+				ELSE json_object('en', title)
+			END,
+			content = CASE
+				WHEN json_valid(content) THEN content
+				ELSE json_object('en', content)
+			END`,
+		)
+		.run();
 }
 
 function toSitePage(row: SitePageRecord, requestedLanguage = DEFAULT_LANGUAGE): SitePage {
