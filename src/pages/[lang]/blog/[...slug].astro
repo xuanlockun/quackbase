@@ -1,20 +1,27 @@
 ---
 export const prerender = false;
 
-import BlogPost from '../../layouts/BlogPost.astro';
-import { getDb, getPublishedPostBySlug } from '../../lib/blog';
+import BlogPost from "../../../layouts/BlogPost.astro";
+import { getDb, getPublishedPostBySlug } from "../../../lib/blog";
+import { isSupportedLanguage, resolveLanguage } from "../../../lib/i18n";
 
-const slug = Astro.params.slug ?? '';
+const requestedLanguage = Astro.params.lang ?? "";
+const slug = Astro.params.slug ?? "";
+
 let post = null;
 let loadError = "";
 
-try {
-	post = await getPublishedPostBySlug(getDb(Astro.locals), slug, "en");
-} catch (error) {
-	loadError = error instanceof Error ? error.message : "Failed to load post.";
+if (!isSupportedLanguage(requestedLanguage)) {
+	Astro.response.status = 404;
+} else {
+	try {
+		post = await getPublishedPostBySlug(getDb(Astro.locals), slug, resolveLanguage(requestedLanguage));
+	} catch (error) {
+		loadError = error instanceof Error ? error.message : "Failed to load post.";
+	}
 }
 
-if (!post && !loadError) {
+if (!post && !loadError && Astro.response.status !== 404) {
 	Astro.response.status = 404;
 } else if (loadError) {
 	Astro.response.status = 503;
@@ -30,7 +37,7 @@ if (!post && !loadError) {
 			updatedDate={post.updatedDate}
 			heroImage={post.heroImage}
 			contentHtml={post.contentHtml}
-			lang="en"
+			lang={post.resolvedLanguage}
 		/>
 	) : (
 		<BlogPost
@@ -42,7 +49,7 @@ if (!post && !loadError) {
 					? `<p>Check the D1 binding, database ID, and run the posts migration.</p><p><code>${loadError}</code></p>`
 					: "<p>This post does not exist or is not published.</p>"
 			}
-			lang="en"
+			lang={resolveLanguage(requestedLanguage)}
 		/>
 	)
 }

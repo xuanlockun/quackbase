@@ -1,5 +1,6 @@
 ---
 import type { PageSectionConfig, SitePage } from "../../lib/blog";
+import { getSupportedLanguages, getLocalizedPagePath } from "../../lib/blog";
 
 interface Props {
 	mode: "create" | "edit";
@@ -21,6 +22,16 @@ const {
 
 const submitLabel = mode === "edit" ? "Save page" : "Create page";
 const isDisabled = Boolean(loadError) || !canSubmit;
+const languages = getSupportedLanguages();
+const initialLanguage = page?.requestedLanguage ?? "en";
+const titleTranslations = {
+	en: "",
+	...(page?.titleTranslations ?? {}),
+};
+const contentTranslations = {
+	en: "# New page",
+	...(page?.contentTranslations ?? {}),
+};
 const sectionMap = new Map((page?.pageSections ?? []).map((section) => [section.type, section]));
 const pageContentSection = sectionMap.get("page_content") ?? { type: "page_content", order: 1 };
 const bannerSection = sectionMap.get("banner_slider");
@@ -48,10 +59,6 @@ const initialSections: PageSectionConfig[] = [
 <form class="admin-form-stack" method="post" action={action}>
 	{mode === "edit" && page && <input type="hidden" name="id" value={page.id} />}
 	<div class="admin-form-grid">
-		<label>
-			<span>Title</span>
-			<input name="title" required value={page?.title ?? ""} disabled={isDisabled} />
-		</label>
 		<label>
 			<span>Slug</span>
 			<input
@@ -82,10 +89,59 @@ const initialSections: PageSectionConfig[] = [
 		</label>
 	</div>
 
-	<label>
-		<span>Page content</span>
-		<textarea name="contentMarkdown" required disabled={isDisabled}>{page?.contentMarkdown ?? "# New page"}</textarea>
-	</label>
+	<div class="admin-form-section localized-editor" data-localized-editor data-active-language={initialLanguage}>
+		<div class="localized-editor-header">
+			<div>
+				<h2>Localized content</h2>
+				<p class="admin-muted">Keep every language version of this page inside one editor.</p>
+			</div>
+			<div class="localized-editor-tabs" role="tablist" aria-label="Page languages">
+				{
+					languages.map((language) => (
+						<button
+							type="button"
+							class:list={["localized-editor-tab", initialLanguage === language.code && "is-active"]}
+							data-language-tab={language.code}
+							role="tab"
+							aria-selected={initialLanguage === language.code ? "true" : "false"}
+							disabled={isDisabled}
+						>
+							{language.code.toUpperCase()}
+						</button>
+					))
+				}
+			</div>
+		</div>
+
+		<input type="hidden" name="title" data-title-translations value={JSON.stringify(titleTranslations)} />
+		<input type="hidden" name="content" data-content-translations value={JSON.stringify(contentTranslations)} />
+
+		{
+			languages.map((language) => (
+				<section
+					class:list={["localized-editor-panel", initialLanguage === language.code && "is-active"]}
+					data-language-panel={language.code}
+					hidden={initialLanguage !== language.code}
+				>
+					<label>
+						<span>Title ({language.label})</span>
+						<input
+							data-title-input={language.code}
+							value={titleTranslations[language.code] ?? ""}
+							placeholder={language.code === "en" ? "About us" : "Gioi thieu"}
+							disabled={isDisabled}
+						/>
+					</label>
+					<label>
+						<span>Content ({language.label})</span>
+						<textarea data-content-input={language.code} rows="14" disabled={isDisabled}
+							>{contentTranslations[language.code] ?? (language.code === "en" ? "# New page" : "")}</textarea
+						>
+					</label>
+				</section>
+			))
+		}
+	</div>
 
 	<div class="admin-form-section">
 		<div class="page-sections-heading">
@@ -108,7 +164,7 @@ const initialSections: PageSectionConfig[] = [
 				<div class="page-section-card-top">
 					<div>
 						<strong>Page content</strong>
-						<p class="admin-muted">The markdown content you wrote above.</p>
+						<p class="admin-muted">The localized content you wrote in the active language panel above.</p>
 					</div>
 					<label class="page-section-order">
 						<span>Order</span>
@@ -189,20 +245,57 @@ const initialSections: PageSectionConfig[] = [
 
 	<div class="admin-form-actions">
 		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
-		{mode === "edit" && page && <a href={`/${page.slug}/`}>Open page</a>}
+		{mode === "edit" && page && <a href={getLocalizedPagePath(page.slug)}>Open page</a>}
 	</div>
 </form>
 
 <style>
+	.localized-editor,
 	.page-sections-stack {
 		display: grid;
 		gap: 1rem;
 	}
 
+	.localized-editor-header,
+	.page-section-card-top {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.localized-editor-header h2 {
+		margin: 0;
+		font-size: 1.1rem;
+	}
+
+	.localized-editor-header p,
 	.page-sections-heading p {
 		margin: 0.35rem 0 0;
 	}
 
+	.localized-editor-tabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.localized-editor-tab {
+		border: 1px solid rgba(var(--gray), 0.25);
+		border-radius: 999px;
+		padding: 0.4rem 0.8rem;
+		background: white;
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.localized-editor-tab.is-active {
+		background: rgb(var(--accent));
+		border-color: rgb(var(--accent));
+		color: white;
+	}
+
+	.localized-editor-panel,
 	.page-section-card {
 		display: grid;
 		gap: 0.8rem;
@@ -211,11 +304,8 @@ const initialSections: PageSectionConfig[] = [
 		background: rgba(var(--gray-light), 0.28);
 	}
 
-	.page-section-card-top {
-		display: flex;
-		align-items: start;
-		justify-content: space-between;
-		gap: 1rem;
+	.localized-editor-panel textarea {
+		min-height: 280px;
 	}
 
 	.page-section-order {
@@ -233,6 +323,7 @@ const initialSections: PageSectionConfig[] = [
 	}
 
 	@media (max-width: 720px) {
+		.localized-editor-header,
 		.page-section-card-top {
 			flex-direction: column;
 			align-items: stretch;
@@ -241,6 +332,81 @@ const initialSections: PageSectionConfig[] = [
 </style>
 
 <script>
+	const syncLocalizedEditor = (root) => {
+		if (!(root instanceof HTMLElement)) {
+			return;
+		}
+
+		const titleField = root.querySelector("[data-title-translations]");
+		const contentField = root.querySelector("[data-content-translations]");
+		if (!(titleField instanceof HTMLInputElement) || !(contentField instanceof HTMLInputElement)) {
+			return;
+		}
+
+		const titleTranslations = {};
+		root.querySelectorAll("[data-title-input]").forEach((input) => {
+			if (!(input instanceof HTMLInputElement)) {
+				return;
+			}
+			const code = input.dataset.titleInput;
+			if (code) {
+				titleTranslations[code] = input.value;
+			}
+		});
+
+		const contentTranslations = {};
+		root.querySelectorAll("[data-content-input]").forEach((input) => {
+			if (!(input instanceof HTMLTextAreaElement)) {
+				return;
+			}
+			const code = input.dataset.contentInput;
+			if (code) {
+				contentTranslations[code] = input.value;
+			}
+		});
+
+		titleField.value = JSON.stringify(titleTranslations);
+		contentField.value = JSON.stringify(contentTranslations);
+	};
+
+	document.querySelectorAll("[data-localized-editor]").forEach((root) => {
+		if (!(root instanceof HTMLElement)) {
+			return;
+		}
+
+		const setActiveLanguage = (language) => {
+			root.dataset.activeLanguage = language;
+			root.querySelectorAll("[data-language-tab]").forEach((button) => {
+				if (!(button instanceof HTMLButtonElement)) {
+					return;
+				}
+				const isActive = button.dataset.languageTab === language;
+				button.classList.toggle("is-active", isActive);
+				button.setAttribute("aria-selected", isActive ? "true" : "false");
+			});
+			root.querySelectorAll("[data-language-panel]").forEach((panel) => {
+				if (!(panel instanceof HTMLElement)) {
+					return;
+				}
+				const isActive = panel.dataset.languagePanel === language;
+				panel.hidden = !isActive;
+				panel.classList.toggle("is-active", isActive);
+			});
+		};
+
+		root.querySelectorAll("[data-language-tab]").forEach((button) => {
+			button.addEventListener("click", () => {
+				if (button instanceof HTMLButtonElement && button.dataset.languageTab) {
+					setActiveLanguage(button.dataset.languageTab);
+				}
+			});
+		});
+
+		root.addEventListener("input", () => syncLocalizedEditor(root));
+		syncLocalizedEditor(root);
+		setActiveLanguage(root.dataset.activeLanguage || "en");
+	});
+
 	const editor = document.querySelector("[data-page-sections-editor]");
 	const payload = document.querySelector("[data-page-sections-config]");
 

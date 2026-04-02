@@ -1,5 +1,6 @@
 ---
 import {
+	getLocalizedPostPath,
 	getDb,
 	type PageSectionConfig,
 	listPublishedPosts,
@@ -8,16 +9,17 @@ import {
 interface Props {
 	pageSections: PageSectionConfig[];
 	contentHtml: string;
+	currentLanguage?: string;
 }
 
-const { pageSections, contentHtml } = Astro.props;
+const { pageSections, contentHtml, currentLanguage = "en" } = Astro.props;
 
 let posts = [];
 
 try {
 	const db = getDb(Astro.locals);
 	if (pageSections.some((section) => section.type === "blog_feed")) {
-		posts = await listPublishedPosts(db);
+		posts = await listPublishedPosts(db, currentLanguage);
 	}
 } catch {
 	posts = [];
@@ -64,7 +66,7 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 					<div class="card-grid">
 						{
 							posts.slice(0, 6).map((post) => (
-								<a class="mini-card" href={`/blog/${post.slug}/`}>
+								<a class="mini-card" href={getLocalizedPostPath(post.slug, currentLanguage)}>
 									<img src={post.heroImage || "/blog-placeholder-1.jpg"} alt="" width={520} height={292} />
 									<h3>{post.title}</h3>
 									<p>{post.description}</p>

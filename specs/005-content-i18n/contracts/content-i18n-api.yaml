@@ -1,0 +1,314 @@
+openapi: 3.1.0
+info:
+  title: Content I18n Admin And Frontend API
+  version: 0.1.0
+  description: >
+    Contract for lightweight multilingual post and page management using JSON-backed
+    translatable fields in Cloudflare D1 and language-prefixed public routes.
+servers:
+  - url: https://example.com
+paths:
+  /api/admin/posts:
+    get:
+      summary: List posts for the admin posts table
+      operationId: listAdminPosts
+      responses:
+        "200":
+          description: Posts loaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [posts]
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdminPostSummary"
+        "302":
+          description: Redirect to login or fallback route when access is denied
+    post:
+      summary: Create a new multilingual post
+      operationId: createAdminPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostWritePayload"
+      responses:
+        "201":
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostWriteResult"
+        "400":
+          description: Validation error
+        "302":
+          description: Redirect to login or fallback route when access is denied
+  /api/admin/posts/{id}:
+    get:
+      summary: Fetch one multilingual post for the dedicated edit page
+      operationId: getAdminPost
+      parameters:
+        - $ref: "#/components/parameters/ContentId"
+      responses:
+        "200":
+          description: Post loaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [post]
+                properties:
+                  post:
+                    $ref: "#/components/schemas/AdminPostDetail"
+        "404":
+          description: Post not found
+        "302":
+          description: Redirect to login or fallback route when access is denied
+    post:
+      summary: Update an existing multilingual post
+      operationId: updateAdminPost
+      parameters:
+        - $ref: "#/components/parameters/ContentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostWritePayload"
+      responses:
+        "200":
+          description: Post updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostWriteResult"
+        "400":
+          description: Validation error
+        "404":
+          description: Post not found
+        "302":
+          description: Redirect to login or fallback route when access is denied
+  /api/admin/pages:
+    post:
+      summary: Create or update a multilingual page
+      operationId: saveAdminPage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PageWritePayload"
+      responses:
+        "200":
+          description: Page updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageWriteResult"
+        "201":
+          description: Page created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageWriteResult"
+        "400":
+          description: Validation error
+        "302":
+          description: Redirect to login or fallback route when access is denied
+  /en/blog/{slug}:
+    get:
+      summary: Read a published blog post in English
+      operationId: getEnglishPost
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Localized post rendered with English values or English fallback
+        "404":
+          description: Post not found
+  /vi/blog/{slug}:
+    get:
+      summary: Read a published blog post in Vietnamese
+      operationId: getVietnamesePost
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Localized post rendered with Vietnamese values or English fallback
+        "404":
+          description: Post not found
+  /en/{slug}:
+    get:
+      summary: Read a published page in English
+      operationId: getEnglishPage
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Localized page rendered with English values or English fallback
+        "404":
+          description: Page not found
+  /vi/{slug}:
+    get:
+      summary: Read a published page in Vietnamese
+      operationId: getVietnamesePage
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Localized page rendered with Vietnamese values or English fallback
+        "404":
+          description: Page not found
+components:
+  parameters:
+    ContentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  schemas:
+    LocalizedText:
+      type: object
+      required: [en]
+      properties:
+        en:
+          type: string
+          minLength: 1
+        vi:
+          type: string
+      additionalProperties:
+        type: string
+    AdminPostSummary:
+      type: object
+      required: [id, slug, title, status, updatedAt, viewHref, editHref]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        slug:
+          type: string
+        title:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/LocalizedText"
+        status:
+          type: string
+          enum: [draft, published]
+        updatedAt:
+          type: string
+          format: date-time
+        viewHref:
+          type: string
+          example: /en/blog/hello-world/
+        editHref:
+          type: string
+          example: /admin/posts/42/edit
+    AdminPostDetail:
+      allOf:
+        - $ref: "#/components/schemas/AdminPostSummary"
+        - type: object
+          required: [content, description]
+          properties:
+            description:
+              type: string
+            heroImage:
+              type: string
+              nullable: true
+            pubDate:
+              type: string
+              format: date-time
+            titleTranslations:
+              $ref: "#/components/schemas/LocalizedText"
+            content:
+              oneOf:
+                - type: string
+                - $ref: "#/components/schemas/LocalizedText"
+            contentTranslations:
+              $ref: "#/components/schemas/LocalizedText"
+    PostWritePayload:
+      type: object
+      required: [slug, title, content, status]
+      properties:
+        slug:
+          type: string
+          minLength: 1
+        title:
+          $ref: "#/components/schemas/LocalizedText"
+        description:
+          type: string
+        content:
+          $ref: "#/components/schemas/LocalizedText"
+        heroImage:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published]
+        pubDate:
+          type: string
+          format: date-time
+          nullable: true
+    PostWriteResult:
+      type: object
+      required: [postId, redirectTo, message]
+      properties:
+        postId:
+          type: integer
+          minimum: 1
+        redirectTo:
+          type: string
+        message:
+          type: string
+    PageWritePayload:
+      type: object
+      required: [slug, title, content, status]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        slug:
+          type: string
+          minLength: 1
+        title:
+          $ref: "#/components/schemas/LocalizedText"
+        description:
+          type: string
+        content:
+          $ref: "#/components/schemas/LocalizedText"
+        pageSections:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              order:
+                type: integer
+                minimum: 1
+        status:
+          type: string
+          enum: [draft, published]
+    PageWriteResult:
+      type: object
+      required: [pageId, redirectTo, message]
+      properties:
+        pageId:
+          type: integer
+          minimum: 1
+        redirectTo:
+          type: string
+        message:
+          type: string

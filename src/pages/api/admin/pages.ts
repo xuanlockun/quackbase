@@ -1,12 +1,14 @@
 import type { APIRoute } from "astro";
-import { createPage, getDb, parsePageForm, updatePage } from "../../../lib/blog";
+import { createPage, getDb, parsePageForm, parsePagePayload, updatePage } from "../../../lib/blog";
 import { requireApiPermission } from "../../../lib/rbac/guards";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ locals, request, redirect }) => {
-	const formData = await request.formData();
-	const idValue = formData.get("id");
+	const isJsonRequest = request.headers.get("content-type")?.includes("application/json") ?? false;
+	const formData = isJsonRequest ? null : await request.formData();
+	const payload = isJsonRequest ? await request.json() : null;
+	const idValue = formData?.get("id");
 
 	try {
 		const requiredPermission =
@@ -20,14 +22,28 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			return session;
 		}
 
-		const input = parsePageForm(formData);
+		const input = isJsonRequest ? parsePagePayload(payload) : parsePageForm(formData as FormData);
 
 		if (typeof idValue === "string" && idValue.trim() !== "") {
 			await updatePage(getDb(locals), Number(idValue), input);
+			if (isJsonRequest) {
+				return Response.json({
+					pageId: Number(idValue),
+					redirectTo: "/admin/pages?saved=1",
+					message: "Page saved.",
+				});
+			}
 			return redirect("/admin/pages?saved=1");
 		}
 
-		await createPage(getDb(locals), input);
+		const pageId = await createPage(getDb(locals), input);
+		if (isJsonRequest) {
+			return Response.json({
+				pageId,
+				redirectTo: "/admin/pages?created=1",
+				message: "Page created.",
+			}, { status: 201 });
+		}
 		return redirect("/admin/pages?created=1");
 	} catch (error) {
 		const message = error instanceof Error ? encodeURIComponent(error.message) : "unknown";

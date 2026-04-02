@@ -13,6 +13,7 @@ interface Props {
 	contentHtml?: string;
 	showDate?: boolean;
 	wideContent?: boolean;
+	lang?: string;
 }
 
 const {
@@ -24,10 +25,11 @@ const {
 	contentHtml,
 	showDate = true,
 	wideContent = false,
+	lang = "en",
 } = Astro.props;
 ---
 
-<html lang="en">
+<html lang={lang}>
 	<head>
 		<BaseHead title={title} description={description} />
 		<style>

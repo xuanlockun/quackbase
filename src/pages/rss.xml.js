@@ -1,11 +1,11 @@
 import rss from "@astrojs/rss";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
-import { getDb, listPublishedPosts } from "../lib/blog";
+import { getDb, getLocalizedPostPath, listPublishedPosts } from "../lib/blog";
 
 export const prerender = false;
 
 export async function GET(context) {
-	const posts = await listPublishedPosts(getDb(context.locals));
+	const posts = await listPublishedPosts(getDb(context.locals), "en");
 	return rss({
 		title: SITE_TITLE,
 		description: SITE_DESCRIPTION,
@@ -14,7 +14,7 @@ export async function GET(context) {
 			title: post.title,
 			description: post.description,
 			pubDate: post.pubDate,
-			link: `/blog/${post.slug}/`,
+			link: getLocalizedPostPath(post.slug, "en"),
 		})),
 	});
 }

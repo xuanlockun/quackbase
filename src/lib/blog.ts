@@ -1,12 +1,21 @@
 import { micromark } from "micromark";
 import { gfm, gfmHtml } from "micromark-extension-gfm";
+import {
+	DEFAULT_LANGUAGE,
+	type LocalizedText,
+	getLocalizedPostPath,
+	normalizeLocalizedText,
+	resolveLanguage,
+	resolveLocalizedValue,
+	stringifyLocalizedText,
+} from "./i18n";
 
 export interface BlogPostRecord {
 	id: number;
 	slug: string;
 	title: string;
 	description: string;
-	content_markdown: string;
+	content: string;
 	hero_image: string | null;
 	status: string;
 	pub_date: string;
@@ -17,20 +26,24 @@ export interface BlogPost {
 	id: number;
 	slug: string;
 	title: string;
+	titleTranslations: LocalizedText;
 	description: string;
-	contentMarkdown: string;
+	content: string;
+	contentTranslations: LocalizedText;
 	contentHtml: string;
 	heroImage?: string;
 	status: string;
 	pubDate: Date;
 	updatedDate?: Date;
+	requestedLanguage: string;
+	resolvedLanguage: string;
 }
 
 export interface BlogPostInput {
-	title: string;
+	titleTranslations: LocalizedText;
 	slug: string;
 	description: string;
-	contentMarkdown: string;
+	contentTranslations: LocalizedText;
 	heroImage?: string;
 	status: string;
 	pubDate?: string;
@@ -39,6 +52,7 @@ export interface BlogPostInput {
 export interface AdminPostSummary {
 	id: number;
 	title: string;
+	titleTranslations: LocalizedText;
 	description: string;
 	slug: string;
 	status: string;
@@ -50,7 +64,10 @@ export interface AdminPostSummary {
 export interface AdminPostDetail extends AdminPostSummary {
 	heroImage: string | null;
 	pubDate: string;
-	contentMarkdown: string;
+	content: string;
+	contentTranslations: LocalizedText;
+	requestedLanguage: string;
+	resolvedLanguage: string;
 }
 
 export interface SiteNavItem {
@@ -76,7 +93,7 @@ export interface SitePageRecord {
 	title: string;
 	slug: string;
 	description: string;
-	content_markdown: string;
+	content: string;
 	show_posts_section: number;
 	page_sections?: string | null;
 	status: string;
@@ -86,13 +103,17 @@ export interface SitePageRecord {
 export interface SitePage {
 	id: number;
 	title: string;
+	titleTranslations: LocalizedText;
 	slug: string;
 	description: string;
-	contentMarkdown: string;
+	content: string;
+	contentTranslations: LocalizedText;
 	contentHtml: string;
 	pageSections: PageSectionConfig[];
 	status: string;
 	updatedAt: Date;
+	requestedLanguage: string;
+	resolvedLanguage: string;
 }
 
 export type PageSectionType = "page_content" | "blog_feed" | "banner_slider" | "contact_form";
@@ -104,10 +125,10 @@ export interface PageSectionConfig {
 }
 
 export interface SitePageInput {
-	title: string;
+	titleTranslations: LocalizedText;
 	slug: string;
 	description: string;
-	contentMarkdown: string;
+	contentTranslations: LocalizedText;
 	pageSections: PageSectionConfig[];
 	status: string;
 }
@@ -128,32 +149,52 @@ export function renderMarkdown(markdown: string): string {
 	});
 }
 
-export function toBlogPost(row: BlogPostRecord): BlogPost {
+export { getDefaultLanguage, getSupportedLanguages, getLocalizedPagePath, getLocalizedPostPath } from "./i18n";
+
+export function toBlogPost(row: BlogPostRecord, requestedLanguage = DEFAULT_LANGUAGE): BlogPost {
+	const titleTranslations = normalizeLocalizedText(row.title, {
+		fallbackValue: row.title,
+	});
+	const contentTranslations = normalizeLocalizedText(row.content, {
+		fallbackValue: row.content,
+	});
+	const language = resolveLanguage(requestedLanguage);
+	const title = resolveLocalizedValue(titleTranslations, language);
+	const content = resolveLocalizedValue(contentTranslations, language);
+
 	return {
 		id: row.id,
 		slug: row.slug,
-		title: row.title,
+		title,
+		titleTranslations,
 		description: row.description,
-		contentMarkdown: row.content_markdown,
-		contentHtml: renderMarkdown(row.content_markdown),
+		content,
+		contentTranslations,
+		contentHtml: renderMarkdown(content),
 		heroImage: row.hero_image ?? undefined,
 		status: row.status,
 		pubDate: new Date(row.pub_date),
 		updatedDate: row.updated_date ? new Date(row.updated_date) : undefined,
+		requestedLanguage: language,
+		resolvedLanguage:
+			titleTranslations[language]?.trim() && contentTranslations[language]?.trim() ? language : DEFAULT_LANGUAGE,
 	};
 }
 
-export async function listPublishedPosts(db: D1Database): Promise<BlogPost[]> {
+export async function listPublishedPosts(
+	db: D1Database,
+	language = DEFAULT_LANGUAGE,
+): Promise<BlogPost[]> {
 	const result = await db
 		.prepare(
-			`SELECT id, slug, title, description, content_markdown, hero_image, status, pub_date, updated_date
+			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
 			FROM posts
 			WHERE status = 'published'
 			ORDER BY datetime(pub_date) DESC, id DESC`,
 		)
 		.all<BlogPostRecord>();
 
-	return (result.results ?? []).map(toBlogPost);
+	return (result.results ?? []).map((row) => toBlogPost(row, language));
 }
 
 export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
@@ -276,41 +317,48 @@ export async function saveSiteConfig(
 	await db.batch(statements);
 }
 
-export async function listAllPages(db: D1Database): Promise<SitePage[]> {
+export async function listAllPages(db: D1Database, language = DEFAULT_LANGUAGE): Promise<SitePage[]> {
 	await ensureSiteTables(db);
 
 	const result = await db
 		.prepare(
-			`SELECT id, title, slug, description, content_markdown, show_posts_section, page_sections, status, updated_at
+			`SELECT id, title, slug, description, content, show_posts_section, page_sections, status, updated_at
 			FROM site_pages
 			ORDER BY datetime(updated_at) DESC, id DESC`,
 		)
 		.all<SitePageRecord>();
 
-	return (result.results ?? []).map(toSitePage);
+	return (result.results ?? []).map((row) => toSitePage(row, language));
 }
 
-export async function listPublishedPages(db: D1Database): Promise<SitePage[]> {
+export async function listPublishedPages(
+	db: D1Database,
+	language = DEFAULT_LANGUAGE,
+): Promise<SitePage[]> {
 	await ensureSiteTables(db);
 
 	const result = await db
 		.prepare(
-			`SELECT id, title, slug, description, content_markdown, show_posts_section, page_sections, status, updated_at
+			`SELECT id, title, slug, description, content, show_posts_section, page_sections, status, updated_at
 			FROM site_pages
 			WHERE status = 'published'
 			ORDER BY datetime(updated_at) DESC, id DESC`,
 		)
 		.all<SitePageRecord>();
 
-	return (result.results ?? []).map(toSitePage);
+	return (result.results ?? []).map((row) => toSitePage(row, language));
 }
 
-export async function getPageById(db: D1Database, id: number): Promise<SitePage | null> {
+export async function getPageById(
+	db: D1Database,
+	id: number,
+	language = DEFAULT_LANGUAGE,
+): Promise<SitePage | null> {
 	await ensureSiteTables(db);
 
 	const result = await db
 		.prepare(
-			`SELECT id, title, slug, description, content_markdown, show_posts_section, page_sections, status, updated_at
+			`SELECT id, title, slug, description, content, show_posts_section, page_sections, status, updated_at
 			FROM site_pages
 			WHERE id = ?1
 			LIMIT 1`,
@@ -318,18 +366,19 @@ export async function getPageById(db: D1Database, id: number): Promise<SitePage 
 		.bind(id)
 		.first<SitePageRecord>();
 
-	return result ? toSitePage(result) : null;
+	return result ? toSitePage(result, language) : null;
 }
 
 export async function getPublishedPageBySlug(
 	db: D1Database,
 	slug: string,
+	language = DEFAULT_LANGUAGE,
 ): Promise<SitePage | null> {
 	await ensureSiteTables(db);
 
 	const result = await db
 		.prepare(
-			`SELECT id, title, slug, description, content_markdown, show_posts_section, status, updated_at
+			`SELECT id, title, slug, description, content, show_posts_section, status, updated_at
 			, page_sections
 			FROM site_pages
 			WHERE slug = ?1 AND status = 'published'
@@ -338,27 +387,29 @@ export async function getPublishedPageBySlug(
 		.bind(slug)
 		.first<SitePageRecord>();
 
-	return result ? toSitePage(result) : null;
+	return result ? toSitePage(result, language) : null;
 }
 
-export async function createPage(db: D1Database, input: SitePageInput): Promise<void> {
+export async function createPage(db: D1Database, input: SitePageInput): Promise<number> {
 	await ensureSiteTables(db);
 
-	await db
+	const result = await db
 		.prepare(
-			`INSERT INTO site_pages (title, slug, description, content_markdown, show_posts_section, status, updated_at, page_sections)
+			`INSERT INTO site_pages (title, slug, description, content, show_posts_section, status, updated_at, page_sections)
 			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP, ?7)`,
 		)
 		.bind(
-			input.title,
+			stringifyLocalizedText(input.titleTranslations),
 			input.slug,
 			input.description,
-			input.contentMarkdown,
+			stringifyLocalizedText(input.contentTranslations),
 			input.pageSections.some((section) => section.type === "blog_feed") ? 1 : 0,
 			input.status,
 			JSON.stringify(input.pageSections),
 		)
 		.run();
+
+	return Number(result.meta.last_row_id ?? 0);
 }
 
 export async function updatePage(
@@ -374,7 +425,7 @@ export async function updatePage(
 			SET title = ?1,
 				slug = ?2,
 				description = ?3,
-				content_markdown = ?4,
+				content = ?4,
 				show_posts_section = ?5,
 				status = ?6,
 				updated_at = CURRENT_TIMESTAMP,
@@ -382,10 +433,10 @@ export async function updatePage(
 			WHERE id = ?8`,
 		)
 		.bind(
-			input.title,
+			stringifyLocalizedText(input.titleTranslations),
 			input.slug,
 			input.description,
-			input.contentMarkdown,
+			stringifyLocalizedText(input.contentTranslations),
 			input.pageSections.some((section) => section.type === "blog_feed") ? 1 : 0,
 			input.status,
 			JSON.stringify(input.pageSections),
@@ -399,22 +450,26 @@ export async function deletePage(db: D1Database, id: number): Promise<void> {
 	await db.prepare("DELETE FROM site_pages WHERE id = ?1").bind(id).run();
 }
 
-export async function listAllPosts(db: D1Database): Promise<BlogPost[]> {
+export async function listAllPosts(db: D1Database, language = DEFAULT_LANGUAGE): Promise<BlogPost[]> {
 	const result = await db
 		.prepare(
-			`SELECT id, slug, title, description, content_markdown, hero_image, status, pub_date, updated_date
+			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
 			FROM posts
 			ORDER BY datetime(updated_date) DESC, id DESC`,
 		)
 		.all<BlogPostRecord>();
 
-	return (result.results ?? []).map(toBlogPost);
+	return (result.results ?? []).map((row) => toBlogPost(row, language));
 }
 
-export async function getPostById(db: D1Database, id: number): Promise<BlogPost | null> {
+export async function getPostById(
+	db: D1Database,
+	id: number,
+	language = DEFAULT_LANGUAGE,
+): Promise<BlogPost | null> {
 	const result = await db
 		.prepare(
-			`SELECT id, slug, title, description, content_markdown, hero_image, status, pub_date, updated_date
+			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
 			FROM posts
 			WHERE id = ?1
 			LIMIT 1`,
@@ -422,38 +477,49 @@ export async function getPostById(db: D1Database, id: number): Promise<BlogPost 
 		.bind(id)
 		.first<BlogPostRecord>();
 
-	return result ? toBlogPost(result) : null;
+	return result ? toBlogPost(result, language) : null;
 }
 
-export function toAdminPostSummary(post: BlogPost): AdminPostSummary {
+export function toAdminPostSummary(
+	post: BlogPost,
+	language = DEFAULT_LANGUAGE,
+): AdminPostSummary {
 	return {
 		id: post.id,
-		title: post.title,
+		title: resolveLocalizedValue(post.titleTranslations, language),
+		titleTranslations: post.titleTranslations,
 		description: post.description,
 		slug: post.slug,
 		status: post.status,
 		updatedAt: (post.updatedDate ?? post.pubDate).toISOString(),
-		viewHref: `/blog/${post.slug}/`,
+		viewHref: getLocalizedPostPath(post.slug, language),
 		editHref: `/admin/posts/${post.id}/edit`,
 	};
 }
 
-export function toAdminPostDetail(post: BlogPost): AdminPostDetail {
+export function toAdminPostDetail(
+	post: BlogPost,
+	language = DEFAULT_LANGUAGE,
+): AdminPostDetail {
 	return {
-		...toAdminPostSummary(post),
+		...toAdminPostSummary(post, language),
 		heroImage: post.heroImage ?? null,
 		pubDate: post.pubDate.toISOString(),
-		contentMarkdown: post.contentMarkdown,
+		content: resolveLocalizedValue(post.contentTranslations, language),
+		contentTranslations: post.contentTranslations,
+		requestedLanguage: resolveLanguage(language),
+		resolvedLanguage: post.resolvedLanguage,
 	};
 }
 
 export async function getPublishedPostBySlug(
 	db: D1Database,
 	slug: string,
+	language = DEFAULT_LANGUAGE,
 ): Promise<BlogPost | null> {
 	const result = await db
 		.prepare(
-			`SELECT id, slug, title, description, content_markdown, hero_image, status, pub_date, updated_date
+			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
 			FROM posts
 			WHERE slug = ?1 AND status = 'published'
 			LIMIT 1`,
@@ -461,25 +527,27 @@ export async function getPublishedPostBySlug(
 		.bind(slug)
 		.first<BlogPostRecord>();
 
-	return result ? toBlogPost(result) : null;
+	return result ? toBlogPost(result, language) : null;
 }
 
-export async function createPost(db: D1Database, input: BlogPostInput): Promise<void> {
-	await db
+export async function createPost(db: D1Database, input: BlogPostInput): Promise<number> {
+	const result = await db
 		.prepare(
-			`INSERT INTO posts (slug, title, description, content_markdown, hero_image, status, pub_date, updated_date)
+			`INSERT INTO posts (slug, title, description, content, hero_image, status, pub_date, updated_date)
 			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
 			input.slug,
-			input.title,
+			stringifyLocalizedText(input.titleTranslations),
 			input.description,
-			input.contentMarkdown,
+			stringifyLocalizedText(input.contentTranslations),
 			normalizeOptionalString(input.heroImage),
 			input.status,
 			normalizePubDate(input.pubDate),
 		)
 		.run();
+
+	return Number(result.meta.last_row_id ?? 0);
 }
 
 export async function updatePost(
@@ -493,7 +561,7 @@ export async function updatePost(
 			SET slug = ?1,
 				title = ?2,
 				description = ?3,
-				content_markdown = ?4,
+				content = ?4,
 				hero_image = ?5,
 				status = ?6,
 				pub_date = ?7,
@@ -502,9 +570,9 @@ export async function updatePost(
 		)
 		.bind(
 			input.slug,
-			input.title,
+			stringifyLocalizedText(input.titleTranslations),
 			input.description,
-			input.contentMarkdown,
+			stringifyLocalizedText(input.contentTranslations),
 			normalizeOptionalString(input.heroImage),
 			input.status,
 			normalizePubDate(input.pubDate),
@@ -518,22 +586,30 @@ export async function deletePost(db: D1Database, id: number): Promise<void> {
 }
 
 export function parsePostForm(formData: FormData): BlogPostInput {
-	const title = requiredString(formData, "title");
-	const slug = slugify(requiredString(formData, "slug"));
-	const description = requiredString(formData, "description");
-	const contentMarkdown = requiredString(formData, "contentMarkdown");
-	const status = normalizeStatus(requiredString(formData, "status"));
-	const heroImage = optionalString(formData, "heroImage");
-	const pubDate = optionalString(formData, "pubDate");
+	return {
+		titleTranslations: parseLocalizedFieldFromForm(formData, "title", "title_en"),
+		slug: slugify(requiredString(formData, "slug")),
+		description: requiredString(formData, "description"),
+		contentTranslations: parseLocalizedFieldFromForm(formData, "content", "content_en"),
+		heroImage: optionalString(formData, "heroImage") || undefined,
+		status: normalizeStatus(requiredString(formData, "status")),
+		pubDate: optionalString(formData, "pubDate") || undefined,
+	};
+}
+
+export function parsePostPayload(payload: unknown): BlogPostInput {
+	if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+		throw new Error("Invalid post payload.");
+	}
 
 	return {
-		title,
-		slug,
-		description,
-		contentMarkdown,
-		heroImage: heroImage || undefined,
-		status,
-		pubDate: pubDate || undefined,
+		titleTranslations: parseLocalizedFieldValue((payload as Record<string, unknown>).title, "title"),
+		slug: slugify(requiredPayloadString(payload, "slug")),
+		description: requiredPayloadString(payload, "description"),
+		contentTranslations: parseLocalizedFieldValue((payload as Record<string, unknown>).content, "content"),
+		heroImage: optionalPayloadString(payload, "heroImage") || undefined,
+		status: normalizeStatus(requiredPayloadString(payload, "status")),
+		pubDate: optionalPayloadString(payload, "pubDate") || undefined,
 	};
 }
 
@@ -594,12 +670,32 @@ export function parsePageForm(formData: FormData): SitePageInput {
 	const pageSections = parsePageSectionsForm(formData);
 
 	return {
-		title: requiredString(formData, "title"),
+		titleTranslations: parseLocalizedFieldFromForm(formData, "title", "title_en"),
 		slug: slugify(requiredString(formData, "slug")),
 		description: requiredString(formData, "description"),
-		contentMarkdown: requiredString(formData, "contentMarkdown"),
+		contentTranslations: parseLocalizedFieldFromForm(formData, "content", "content_en"),
 		pageSections,
 		status: normalizeStatus(requiredString(formData, "status")),
+	};
+}
+
+export function parsePagePayload(payload: unknown): SitePageInput {
+	if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+		throw new Error("Invalid page payload.");
+	}
+
+	const record = payload as Record<string, unknown>;
+	const pageSections: PageSectionConfig[] = Array.isArray(record.pageSections)
+		? normalizePageSections(record.pageSections)
+		: [{ type: "page_content", order: 1 }];
+
+	return {
+		titleTranslations: parseLocalizedFieldValue(record.title, "title"),
+		slug: slugify(requiredPayloadString(payload, "slug")),
+		description: requiredPayloadString(payload, "description"),
+		contentTranslations: parseLocalizedFieldValue(record.content, "content"),
+		pageSections,
+		status: normalizeStatus(requiredPayloadString(payload, "status")),
 	};
 }
 
@@ -673,7 +769,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				title TEXT NOT NULL,
 				slug TEXT NOT NULL UNIQUE,
 				description TEXT NOT NULL,
-				content_markdown TEXT NOT NULL,
+				content TEXT NOT NULL,
 				show_posts_section INTEGER NOT NULL DEFAULT 0,
 				page_sections TEXT NOT NULL DEFAULT '[]',
 				status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
@@ -709,6 +805,24 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			.run();
 	}
 
+	if (!columnNames.has("content") && columnNames.has("content_markdown")) {
+		await db.prepare(`ALTER TABLE site_pages RENAME COLUMN content_markdown TO content`).run();
+	}
+
+	await db
+		.prepare(
+			`UPDATE site_pages
+			SET title = CASE
+				WHEN json_valid(title) THEN title
+				ELSE json_object('en', title)
+			END,
+			content = CASE
+				WHEN json_valid(content) THEN content
+				ELSE json_object('en', content)
+			END`,
+		)
+		.run();
+
 	if (!settingsColumnNames.has("home_page_slug")) {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN home_page_slug TEXT NOT NULL DEFAULT 'home'`).run();
 	}
@@ -732,19 +846,33 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 	]);
 }
 
-function toSitePage(row: SitePageRecord): SitePage {
+function toSitePage(row: SitePageRecord, requestedLanguage = DEFAULT_LANGUAGE): SitePage {
 	const pageSections = parsePageSections(row.page_sections, row.show_posts_section);
+	const titleTranslations = normalizeLocalizedText(row.title, {
+		fallbackValue: row.title,
+	});
+	const contentTranslations = normalizeLocalizedText(row.content, {
+		fallbackValue: row.content,
+	});
+	const language = resolveLanguage(requestedLanguage);
+	const title = resolveLocalizedValue(titleTranslations, language);
+	const content = resolveLocalizedValue(contentTranslations, language);
 
 	return {
 		id: row.id,
-		title: row.title,
+		title,
+		titleTranslations,
 		slug: row.slug,
 		description: row.description,
-		contentMarkdown: row.content_markdown,
-		contentHtml: renderMarkdown(row.content_markdown),
+		content,
+		contentTranslations,
+		contentHtml: renderMarkdown(content),
 		pageSections,
 		status: row.status,
 		updatedAt: new Date(row.updated_at),
+		requestedLanguage: language,
+		resolvedLanguage:
+			titleTranslations[language]?.trim() && contentTranslations[language]?.trim() ? language : DEFAULT_LANGUAGE,
 	};
 }
 
@@ -820,16 +948,22 @@ function normalizePageSections(input: unknown[]): PageSectionConfig[] {
 				return null;
 			}
 
-			const rawType = "type" in item ? item.type : undefined;
+			const record = item as {
+				type?: unknown;
+				order?: unknown;
+				bannerUrls?: unknown;
+			};
+
+			const rawType = record.type;
 			if (typeof rawType !== "string" || !allowedTypes.has(rawType as PageSectionType)) {
 				return null;
 			}
 
-			const rawOrder = "order" in item ? Number(item.order) : index + 1;
+			const rawOrder = record.order !== undefined ? Number(record.order) : index + 1;
 			const order = Number.isFinite(rawOrder) ? Math.max(1, Math.floor(rawOrder)) : index + 1;
 			const bannerUrls =
-				rawType === "banner_slider" && Array.isArray(item.bannerUrls)
-					? item.bannerUrls
+				rawType === "banner_slider" && Array.isArray(record.bannerUrls)
+					? record.bannerUrls
 							.filter((entry): entry is string => typeof entry === "string")
 							.map((entry) => entry.trim())
 							.filter(Boolean)
@@ -852,6 +986,39 @@ function normalizePageSections(input: unknown[]): PageSectionConfig[] {
 	}
 
 	return deduped.sort((left, right) => left.order - right.order);
+}
+
+function parseLocalizedFieldFromForm(
+	formData: FormData,
+	key: string,
+	legacyKey: string,
+): LocalizedText {
+	const rawValue = formData.get(key);
+	const legacyValue = formData.get(legacyKey);
+	return parseLocalizedFieldValue(rawValue ?? legacyValue, key);
+}
+
+function parseLocalizedFieldValue(value: unknown, fieldName: string): LocalizedText {
+	try {
+		return normalizeLocalizedText(value, {
+			requireDefault: true,
+		});
+	} catch {
+		throw new Error(`Invalid localized field: ${fieldName}`);
+	}
+}
+
+function requiredPayloadString(payload: unknown, key: string): string {
+	const value = (payload as Record<string, unknown>)[key];
+	if (typeof value !== "string" || value.trim() === "") {
+		throw new Error(`Missing field: ${key}`);
+	}
+	return value.trim();
+}
+
+function optionalPayloadString(payload: unknown, key: string): string {
+	const value = (payload as Record<string, unknown>)[key];
+	return typeof value === "string" ? value.trim() : "";
 }
 
 function sanitizeHexColor(value: string, fallback: string): string {

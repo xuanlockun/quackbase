@@ -4,9 +4,11 @@ import {
 	getDb,
 	listAllPosts,
 	parsePostForm,
+	parsePostPayload,
 	toAdminPostSummary,
 	updatePost,
 } from "../../../lib/blog";
+import { getSupportedLanguages } from "../../../lib/i18n";
 import { requireApiPermission } from "../../../lib/rbac/guards";
 
 export const prerender = false;
@@ -23,7 +25,10 @@ export const GET: APIRoute = async ({ locals, request, redirect }) => {
 
 	try {
 		const posts = await listAllPosts(getDb(locals));
-		return Response.json({ posts: posts.map(toAdminPostSummary) });
+		return Response.json({
+			languages: getSupportedLanguages(),
+			posts: posts.map((post) => toAdminPostSummary(post)),
+		});
 	} catch {
 		return Response.json({ error: "Failed to load posts." }, { status: 500 });
 	}
@@ -31,8 +36,10 @@ export const GET: APIRoute = async ({ locals, request, redirect }) => {
 
 export const POST: APIRoute = async ({ locals, request, redirect }) => {
 	try {
-		const formData = await request.formData();
-		const idValue = formData.get("id");
+		const isJsonRequest = request.headers.get("content-type")?.includes("application/json") ?? false;
+		const formData = isJsonRequest ? null : await request.formData();
+		const payload = isJsonRequest ? await request.json() : null;
+		const idValue = formData?.get("id");
 		const requiredPermission =
 			typeof idValue === "string" && idValue.trim() !== "" ? "posts.update" : "posts.create";
 		const session = await requireApiPermission(
@@ -45,14 +52,28 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		}
 
 		const db = getDb(locals);
-		const input = parsePostForm(formData);
+		const input = isJsonRequest ? parsePostPayload(payload) : parsePostForm(formData as FormData);
 
 		if (typeof idValue === "string" && idValue.trim() !== "") {
 			await updatePost(db, Number(idValue), input);
+			if (isJsonRequest) {
+				return Response.json({
+					postId: Number(idValue),
+					redirectTo: "/admin/posts?saved=1",
+					message: "Post saved.",
+				});
+			}
 			return redirect(`/admin/posts?slug=${input.slug}&saved=1`);
 		}
 
-		await createPost(db, input);
+		const postId = await createPost(db, input);
+		if (isJsonRequest) {
+			return Response.json({
+				postId,
+				redirectTo: "/admin/posts?saved=1",
+				message: "Post created.",
+			}, { status: 201 });
+		}
 		return redirect(`/admin/posts?saved=1`);
 	} catch {
 		return redirect("/admin/posts/new?error=1");

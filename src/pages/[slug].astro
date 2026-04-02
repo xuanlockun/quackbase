@@ -13,7 +13,7 @@ let page = null;
 if (!reservedSlugs.has(slug)) {
 	try {
 		const db = getDb(Astro.locals);
-		page = await getPublishedPageBySlug(db, slug);
+		page = await getPublishedPageBySlug(db, slug, "en");
 	} catch {
 		page = null;
 	}
@@ -32,8 +32,9 @@ if (!page) {
 			pubDate={page.updatedAt}
 			showDate={false}
 			wideContent={true}
+			lang="en"
 		>
-			<CmsPageSections pageSections={page.pageSections} contentHtml={page.contentHtml} />
+			<CmsPageSections pageSections={page.pageSections} contentHtml={page.contentHtml} currentLanguage="en" />
 		</BlogPost>
 	) : (
 		<BlogPost
@@ -43,6 +44,7 @@ if (!page) {
 			contentHtml="<p>This page does not exist.</p>"
 			showDate={false}
 			wideContent={true}
+			lang="en"
 		/>
 	)
 }

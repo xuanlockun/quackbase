@@ -1,6 +1,6 @@
 ---
 import FormattedDate from "../FormattedDate.astro";
-import type { SitePage } from "../../lib/blog";
+import { getLocalizedPagePath, type SitePage } from "../../lib/blog";
 
 interface Props {
 	pages: SitePage[];
@@ -51,7 +51,7 @@ const { pages, canUpdate, canDelete } = Astro.props;
 								<td>
 									<div class="admin-row-actions">
 										{canUpdate && <a href={`/admin/pages/${page.id}/edit`}>Edit</a>}
-										<a href={`/${page.slug}/`}>View</a>
+										<a href={getLocalizedPagePath(page.slug)}>View</a>
 										{canDelete && (
 											<form class="admin-inline-form" method="post" action="/api/admin/pages/delete">
 												<input type="hidden" name="id" value={page.id} />

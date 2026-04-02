@@ -1,0 +1,56 @@
+---
+export const prerender = false;
+
+import BlogPost from "../../layouts/BlogPost.astro";
+import CmsPageSections from "../../components/CmsPageSections.astro";
+import { getDb, getPublishedPageBySlug } from "../../lib/blog";
+import { isSupportedLanguage, resolveLanguage } from "../../lib/i18n";
+
+const requestedLanguage = Astro.params.lang ?? "";
+const slug = Astro.params.slug ?? "";
+let page = null;
+
+if (!isSupportedLanguage(requestedLanguage)) {
+	Astro.response.status = 404;
+} else {
+	try {
+		const db = getDb(Astro.locals);
+		page = await getPublishedPageBySlug(db, slug, resolveLanguage(requestedLanguage));
+	} catch {
+		page = null;
+	}
+}
+
+if (!page && Astro.response.status !== 404) {
+	Astro.response.status = 404;
+}
+---
+
+{
+	page ? (
+		<BlogPost
+			title={page.title}
+			description={page.description}
+			pubDate={page.updatedAt}
+			showDate={false}
+			wideContent={true}
+			lang={page.resolvedLanguage}
+		>
+			<CmsPageSections
+				pageSections={page.pageSections}
+				contentHtml={page.contentHtml}
+				currentLanguage={resolveLanguage(requestedLanguage)}
+			/>
+		</BlogPost>
+	) : (
+		<BlogPost
+			title="Page not found"
+			description="The requested page does not exist."
+			pubDate={new Date()}
+			contentHtml="<p>This page does not exist.</p>"
+			showDate={false}
+			wideContent={true}
+			lang={resolveLanguage(requestedLanguage)}
+		/>
+	)
+}

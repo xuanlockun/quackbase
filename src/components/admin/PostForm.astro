@@ -1,5 +1,6 @@
 ---
 import type { AdminPostDetail } from "../../lib/blog";
+import { getSupportedLanguages } from "../../lib/blog";
 
 interface Props {
 	mode: "create" | "edit";
@@ -20,12 +21,20 @@ const {
 } = Astro.props;
 
 const submitLabel = mode === "edit" ? "Save changes" : "Create post";
-const title = post?.title ?? "";
+const languages = getSupportedLanguages();
+const initialLanguage = post?.requestedLanguage ?? "en";
+const titleTranslations = {
+	en: "",
+	...(post?.titleTranslations ?? {}),
+};
+const contentTranslations = {
+	en: "# New post",
+	...(post?.contentTranslations ?? {}),
+};
 const slug = post?.slug ?? "";
 const description = post?.description ?? "";
 const heroImage = post?.heroImage ?? "";
 const status = post?.status ?? "draft";
-const contentMarkdown = post?.contentMarkdown ?? "# New post";
 const pubDateValue = post?.pubDate ? new Date(post.pubDate).toISOString().slice(0, 16) : "";
 const isDisabled = Boolean(loadError) || !canSubmit;
 ---
@@ -46,10 +55,6 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 <form class="admin-form-stack" method="post" action={action}>
 	{mode === "edit" && post && <input type="hidden" name="id" value={post.id} />}
 	<div class="admin-form-grid">
-		<label>
-			<span>Title</span>
-			<input name="title" required value={title} disabled={isDisabled} />
-		</label>
 		<label>
 			<span>Slug</span>
 			<input name="slug" required pattern="[a-z0-9-]+" value={slug} placeholder="my-post-slug" disabled={isDisabled} />
@@ -75,10 +80,59 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 		</label>
 	</div>
 
-	<label>
-		<span>Markdown content</span>
-		<textarea name="contentMarkdown" required disabled={isDisabled}>{contentMarkdown}</textarea>
-	</label>
+	<div class="admin-form-section localized-editor" data-localized-editor data-active-language={initialLanguage}>
+		<div class="localized-editor-header">
+			<div>
+				<h2>Localized content</h2>
+				<p class="admin-muted">Write the title and content for each supported language in one editor.</p>
+			</div>
+			<div class="localized-editor-tabs" role="tablist" aria-label="Post languages">
+				{
+					languages.map((language) => (
+						<button
+							type="button"
+							class:list={["localized-editor-tab", initialLanguage === language.code && "is-active"]}
+							data-language-tab={language.code}
+							role="tab"
+							aria-selected={initialLanguage === language.code ? "true" : "false"}
+							disabled={isDisabled}
+						>
+							{language.code.toUpperCase()}
+						</button>
+					))
+				}
+			</div>
+		</div>
+
+		<input type="hidden" name="title" data-title-translations value={JSON.stringify(titleTranslations)} />
+		<input type="hidden" name="content" data-content-translations value={JSON.stringify(contentTranslations)} />
+
+		{
+			languages.map((language) => (
+				<section
+					class:list={["localized-editor-panel", initialLanguage === language.code && "is-active"]}
+					data-language-panel={language.code}
+					hidden={initialLanguage !== language.code}
+				>
+					<label>
+						<span>Title ({language.label})</span>
+						<input
+							data-title-input={language.code}
+							value={titleTranslations[language.code] ?? ""}
+							placeholder={language.code === "en" ? "Hello world" : "Xin chao"}
+							disabled={isDisabled}
+						/>
+					</label>
+					<label>
+						<span>Content ({language.label})</span>
+						<textarea data-content-input={language.code} rows="14" disabled={isDisabled}
+							>{contentTranslations[language.code] ?? (language.code === "en" ? "# New post" : "")}</textarea
+						>
+					</label>
+				</section>
+			))
+		}
+	</div>
 
 	<div class="admin-form-actions">
 		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
@@ -86,7 +140,147 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 	</div>
 </form>
 
+<style>
+	.localized-editor {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.localized-editor-header {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.localized-editor-header h2 {
+		margin: 0;
+		font-size: 1.1rem;
+	}
+
+	.localized-editor-header p {
+		margin: 0.35rem 0 0;
+	}
+
+	.localized-editor-tabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.localized-editor-tab {
+		border: 1px solid rgba(var(--gray), 0.25);
+		border-radius: 999px;
+		padding: 0.4rem 0.8rem;
+		background: white;
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.localized-editor-tab.is-active {
+		background: rgb(var(--accent));
+		border-color: rgb(var(--accent));
+		color: white;
+	}
+
+	.localized-editor-panel {
+		display: grid;
+		gap: 1rem;
+		padding: 1rem;
+		border-radius: 18px;
+		background: rgba(var(--gray-light), 0.2);
+	}
+
+	.localized-editor-panel textarea {
+		min-height: 300px;
+	}
+
+	@media (max-width: 720px) {
+		.localized-editor-header {
+			flex-direction: column;
+			align-items: stretch;
+		}
+	}
+</style>
+
 <script is:inline>
+	const syncLocalizedEditor = (root) => {
+		if (!(root instanceof HTMLElement)) {
+			return;
+		}
+
+		const titleField = root.querySelector("[data-title-translations]");
+		const contentField = root.querySelector("[data-content-translations]");
+		if (!(titleField instanceof HTMLInputElement) || !(contentField instanceof HTMLInputElement)) {
+			return;
+		}
+
+		const titleTranslations = {};
+		root.querySelectorAll("[data-title-input]").forEach((input) => {
+			if (!(input instanceof HTMLInputElement)) {
+				return;
+			}
+			const code = input.dataset.titleInput;
+			if (!code) {
+				return;
+			}
+			titleTranslations[code] = input.value;
+		});
+
+		const contentTranslations = {};
+		root.querySelectorAll("[data-content-input]").forEach((input) => {
+			if (!(input instanceof HTMLTextAreaElement)) {
+				return;
+			}
+			const code = input.dataset.contentInput;
+			if (!code) {
+				return;
+			}
+			contentTranslations[code] = input.value;
+		});
+
+		titleField.value = JSON.stringify(titleTranslations);
+		contentField.value = JSON.stringify(contentTranslations);
+	};
+
+	document.querySelectorAll("[data-localized-editor]").forEach((root) => {
+		if (!(root instanceof HTMLElement)) {
+			return;
+		}
+
+		const setActiveLanguage = (language) => {
+			root.dataset.activeLanguage = language;
+			root.querySelectorAll("[data-language-tab]").forEach((button) => {
+				if (!(button instanceof HTMLButtonElement)) {
+					return;
+				}
+				const isActive = button.dataset.languageTab === language;
+				button.classList.toggle("is-active", isActive);
+				button.setAttribute("aria-selected", isActive ? "true" : "false");
+			});
+			root.querySelectorAll("[data-language-panel]").forEach((panel) => {
+				if (!(panel instanceof HTMLElement)) {
+					return;
+				}
+				const isActive = panel.dataset.languagePanel === language;
+				panel.hidden = !isActive;
+				panel.classList.toggle("is-active", isActive);
+			});
+		};
+
+		root.querySelectorAll("[data-language-tab]").forEach((button) => {
+			button.addEventListener("click", () => {
+				if (button instanceof HTMLButtonElement && button.dataset.languageTab) {
+					setActiveLanguage(button.dataset.languageTab);
+				}
+			});
+		});
+
+		root.addEventListener("input", () => syncLocalizedEditor(root));
+		syncLocalizedEditor(root);
+		setActiveLanguage(root.dataset.activeLanguage || "en");
+	});
+
 	document.addEventListener("click", (event) => {
 		const target = event.target;
 		if (!(target instanceof HTMLElement)) {

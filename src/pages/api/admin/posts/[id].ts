@@ -3,9 +3,11 @@ import {
 	getDb,
 	getPostById,
 	parsePostForm,
+	parsePostPayload,
 	toAdminPostDetail,
 	updatePost,
 } from "../../../../lib/blog";
+import { getSupportedLanguages } from "../../../../lib/i18n";
 import { requireApiPermission } from "../../../../lib/rbac/guards";
 
 export const prerender = false;
@@ -30,7 +32,10 @@ export const GET: APIRoute = async ({ params, locals, request, redirect }) => {
 		return Response.json({ error: "Post not found." }, { status: 404 });
 	}
 
-	return Response.json({ post: toAdminPostDetail(post) });
+	return Response.json({
+		languages: getSupportedLanguages(),
+		post: toAdminPostDetail(post),
+	});
 };
 
 export const POST: APIRoute = async ({ params, locals, request, redirect }) => {
@@ -49,9 +54,16 @@ export const POST: APIRoute = async ({ params, locals, request, redirect }) => {
 	}
 
 	try {
-		const formData = await request.formData();
-		const input = parsePostForm(formData);
+		const isJsonRequest = request.headers.get("content-type")?.includes("application/json") ?? false;
+		const input = isJsonRequest ? parsePostPayload(await request.json()) : parsePostForm(await request.formData());
 		await updatePost(getDb(locals), id, input);
+		if (isJsonRequest) {
+			return Response.json({
+				postId: id,
+				redirectTo: "/admin/posts?saved=1",
+				message: "Post saved.",
+			});
+		}
 		return redirect("/admin/posts?saved=1");
 	} catch {
 		return redirect(`/admin/posts/${id}/edit?error=1`);
