@@ -68,7 +68,7 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 					<div class="card-grid">
 						{
 							posts.slice(0, 6).map((post) => (
-								<a class="mini-card" href={getLocalizedPostPath(post.slug, currentLanguage)}>
+								<a class="mini-card" href={getLocalizedPostPath(post.slugTranslations, currentLanguage)}>
 									<img src={post.heroImage || "/blog-placeholder-1.jpg"} alt="" width={520} height={292} />
 									<h3>{post.title}</h3>
 									<p>{post.description}</p>

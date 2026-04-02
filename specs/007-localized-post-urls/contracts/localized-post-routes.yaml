@@ -1,0 +1,228 @@
+openapi: 3.1.0
+info:
+  title: Localized Post URL And Admin Contract
+  version: 0.1.0
+  description: >
+    Contract for multilingual post management and localized clean post URLs using
+    language-specific slugs without the /blog prefix.
+servers:
+  - url: https://example.com
+paths:
+  /api/admin/posts:
+    get:
+      summary: List posts for the admin posts table
+      operationId: listAdminPosts
+      responses:
+        "200":
+          description: Posts loaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [posts]
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdminPostSummary"
+        "302":
+          description: Redirect to login or fallback route when access is denied
+    post:
+      summary: Create a localized post
+      operationId: createAdminPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostWritePayload"
+      responses:
+        "201":
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostWriteResult"
+        "400":
+          description: Validation error
+        "302":
+          description: Redirect to login or fallback route when access is denied
+  /api/admin/posts/{id}:
+    get:
+      summary: Fetch one localized post for the edit page
+      operationId: getAdminPost
+      parameters:
+        - $ref: "#/components/parameters/ContentId"
+      responses:
+        "200":
+          description: Post loaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [post]
+                properties:
+                  post:
+                    $ref: "#/components/schemas/AdminPostDetail"
+        "404":
+          description: Post not found
+        "302":
+          description: Redirect to login or fallback route when access is denied
+    post:
+      summary: Update an existing localized post
+      operationId: updateAdminPost
+      parameters:
+        - $ref: "#/components/parameters/ContentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostWritePayload"
+      responses:
+        "200":
+          description: Post updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostWriteResult"
+        "400":
+          description: Validation error
+        "404":
+          description: Post not found
+        "302":
+          description: Redirect to login or fallback route when access is denied
+  /{lang}/{slug}:
+    get:
+      summary: Read a published post using a clean localized URL
+      operationId: getLocalizedPost
+      parameters:
+        - $ref: "#/components/parameters/Language"
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Localized post rendered with requested-language values or English fallback
+        "404":
+          description: No published post matches the language-specific slug
+components:
+  parameters:
+    ContentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    Language:
+      name: lang
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [en, vi]
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  schemas:
+    LocalizedText:
+      type: object
+      required: [en]
+      properties:
+        en:
+          type: string
+          minLength: 1
+        vi:
+          type: string
+      additionalProperties:
+        type: string
+    LocalizedSlug:
+      type: object
+      required: [en]
+      properties:
+        en:
+          type: string
+          minLength: 1
+        vi:
+          type: string
+          minLength: 1
+      additionalProperties:
+        type: string
+        minLength: 1
+    AdminPostSummary:
+      type: object
+      required: [id, slug, title, status, updatedAt, viewHref, editHref]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        slug:
+          $ref: "#/components/schemas/LocalizedSlug"
+        title:
+          $ref: "#/components/schemas/LocalizedText"
+        status:
+          type: string
+          enum: [draft, published]
+        updatedAt:
+          type: string
+          format: date-time
+        viewHref:
+          type: string
+          example: /en/dog/
+        editHref:
+          type: string
+          example: /admin/posts/42/edit
+    AdminPostDetail:
+      allOf:
+        - $ref: "#/components/schemas/AdminPostSummary"
+        - type: object
+          required: [description, content]
+          properties:
+            description:
+              $ref: "#/components/schemas/LocalizedText"
+            content:
+              $ref: "#/components/schemas/LocalizedText"
+            heroImage:
+              type: string
+              nullable: true
+            pubDate:
+              type: string
+              format: date-time
+              nullable: true
+    PostWritePayload:
+      type: object
+      required: [slug, title, description, content, status]
+      properties:
+        slug:
+          $ref: "#/components/schemas/LocalizedSlug"
+        title:
+          $ref: "#/components/schemas/LocalizedText"
+        description:
+          $ref: "#/components/schemas/LocalizedText"
+        content:
+          $ref: "#/components/schemas/LocalizedText"
+        heroImage:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published]
+        pubDate:
+          type: string
+          format: date-time
+          nullable: true
+    PostWriteResult:
+      type: object
+      required: [postId, redirectTo, message]
+      properties:
+        postId:
+          type: integer
+          minimum: 1
+        redirectTo:
+          type: string
+          example: /admin/posts?saved=1
+        message:
+          type: string

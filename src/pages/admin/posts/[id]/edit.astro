@@ -26,7 +26,7 @@ try {
 		notFound = true;
 	} else {
 		const record = await getPostById(getDb(Astro.locals), postId);
-		post = record ? toAdminPostDetail(record) : null;
+		post = record ? toAdminPostDetail(record, language) : null;
 		notFound = !post;
 	}
 } catch (error) {

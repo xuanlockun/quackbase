@@ -1,11 +1,11 @@
 ---
 export const prerender = false;
 
-import BlogPost from '../../layouts/BlogPost.astro';
-import { getDb, getPublishedPostBySlug } from '../../lib/blog';
-import { getUiTranslations } from '../../lib/i18n';
+import BlogPost from "../../layouts/BlogPost.astro";
+import { getDb, getPublishedPostBySlug } from "../../lib/blog";
+import { getLocalizedPostPath, getUiTranslations } from "../../lib/i18n";
 
-const slug = Astro.params.slug ?? '';
+const slug = Astro.params.slug ?? "";
 let post = null;
 let loadError = "";
 const { t } = getUiTranslations(Astro);
@@ -16,35 +16,25 @@ try {
 	loadError = error instanceof Error ? error.message : t("messages.failedToLoadPosts");
 }
 
-if (!post && !loadError) {
+if (post) {
+	return Astro.redirect(getLocalizedPostPath(post.slugTranslations, "en"), 301);
+}
+
+if (!loadError) {
 	Astro.response.status = 404;
-} else if (loadError) {
+} else {
 	Astro.response.status = 503;
 }
 ---
 
-{
-	post ? (
-		<BlogPost
-			title={post.title}
-			description={post.description}
-			pubDate={post.pubDate}
-			updatedDate={post.updatedDate}
-			heroImage={post.heroImage}
-			contentHtml={post.contentHtml}
-			lang="en"
-		/>
-	) : (
-		<BlogPost
-			title={loadError ? t("messages.blogNotReady") : t("messages.postNotFound")}
-			description={loadError ? t("messages.blogNotReadyDescription") : t("messages.postNotFoundDescription")}
-			pubDate={new Date()}
-			contentHtml={
-				loadError
-					? `<p>${t("messages.blogNotReadyBody")}</p><p><code>${loadError}</code></p>`
-					: `<p>${t("messages.postNotFoundBody")}</p>`
-			}
-			lang="en"
-		/>
-	)
-}
+<BlogPost
+	title={loadError ? t("messages.blogNotReady") : t("messages.postNotFound")}
+	description={loadError ? t("messages.blogNotReadyDescription") : t("messages.postNotFoundDescription")}
+	pubDate={new Date()}
+	contentHtml={
+		loadError
+			? `<p>${t("messages.blogNotReadyBody")}</p><p><code>${loadError}</code></p>`
+			: `<p>${t("messages.postNotFoundBody")}</p>`
+	}
+	lang="en"
+/>

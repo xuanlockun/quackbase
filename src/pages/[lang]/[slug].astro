@@ -3,13 +3,16 @@ export const prerender = false;
 
 import BlogPost from "../../layouts/BlogPost.astro";
 import CmsPageSections from "../../components/CmsPageSections.astro";
-import { getDb, getPublishedPageBySlug } from "../../lib/blog";
+import { getDb, getPublishedPageBySlug, getPublishedPostBySlug } from "../../lib/blog";
 import { getUiTranslations, isSupportedLanguage, resolveLanguage } from "../../lib/i18n";
 
 const requestedLanguage = Astro.params.lang ?? "";
 const slug = Astro.params.slug ?? "";
-let page = null;
 const { t } = getUiTranslations(Astro);
+
+let page = null;
+let post = null;
+let loadError = "";
 
 if (!isSupportedLanguage(requestedLanguage)) {
 	Astro.response.status = 404;
@@ -17,13 +20,18 @@ if (!isSupportedLanguage(requestedLanguage)) {
 	try {
 		const db = getDb(Astro.locals);
 		page = await getPublishedPageBySlug(db, slug, resolveLanguage(requestedLanguage));
-	} catch {
-		page = null;
+		if (!page) {
+			post = await getPublishedPostBySlug(db, slug, resolveLanguage(requestedLanguage));
+		}
+	} catch (error) {
+		loadError = error instanceof Error ? error.message : t("messages.failedToLoadPosts");
 	}
 }
 
-if (!page && Astro.response.status !== 404) {
+if (!page && !post && !loadError && Astro.response.status !== 404) {
 	Astro.response.status = 404;
+} else if (loadError) {
+	Astro.response.status = 503;
 }
 ---
 
@@ -43,12 +51,28 @@ if (!page && Astro.response.status !== 404) {
 				currentLanguage={resolveLanguage(requestedLanguage)}
 			/>
 		</BlogPost>
+	) : post ? (
+		<BlogPost
+			title={post.title}
+			description={post.description}
+			pubDate={post.pubDate}
+			updatedDate={post.updatedDate}
+			heroImage={post.heroImage}
+			contentHtml={post.contentHtml}
+			lang={post.resolvedLanguage}
+		/>
 	) : (
 		<BlogPost
-			title={t("messages.pageNotFound")}
-			description={t("messages.pageNotFoundDescription")}
+			title={loadError ? t("messages.blogNotReady") : t("messages.pageNotFound")}
+			description={
+				loadError ? t("messages.blogNotReadyDescription") : t("messages.pageNotFoundDescription")
+			}
 			pubDate={new Date()}
-			contentHtml={`<p>${t("messages.pageNotFoundBody")}</p>`}
+			contentHtml={
+				loadError
+					? `<p>${t("messages.blogNotReadyBody")}</p><p><code>${loadError}</code></p>`
+					: `<p>${t("messages.pageNotFoundBody")}</p>`
+			}
 			showDate={false}
 			wideContent={true}
 			lang={resolveLanguage(requestedLanguage)}

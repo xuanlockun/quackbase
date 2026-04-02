@@ -42,7 +42,7 @@ describe("UI i18n integration behavior", () => {
 
 	it("uses English fallback when a non-default dictionary key is missing", () => {
 		const context = getUiTranslations({
-			url: new URL("https://example.com/vi/blog/hello-world/"),
+			url: new URL("https://example.com/vi/hello-world/"),
 			locals: { uiLanguage: "vi" } as App.Locals,
 		});
 
@@ -57,7 +57,7 @@ describe("UI i18n integration behavior", () => {
 		});
 
 		expect(context.language).toBe("vi");
-		expect(context.localizeHref("/blog/hello-world/")).toBe("/vi/blog/hello-world/");
+		expect(context.localizeHref("/hello-world/")).toBe("/vi/hello-world/");
 		expect(context.localizeAdminHref("/admin/pages")).toBe("/admin/pages?lang=vi");
 		expect(context.switchLanguageHref("en")).toBe("/admin/posts?lang=en");
 	});

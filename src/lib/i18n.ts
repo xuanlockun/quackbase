@@ -59,8 +59,12 @@ export function resolveLanguage(language?: string | null): string {
 	return DEFAULT_LANGUAGE;
 }
 
-export function getLocalizedPostPath(slug: string, language = DEFAULT_LANGUAGE): string {
-	return `/${resolveLanguage(language)}/blog/${slug}/`;
+export function getLocalizedPostPath(slug: string | LocalizedText, language = DEFAULT_LANGUAGE): string {
+	const resolvedSlug =
+		typeof slug === "string"
+			? slug.trim()
+			: resolveLocalizedValue(normalizeLocalizedText(slug, { requireDefault: true }), language);
+	return `/${resolveLanguage(language)}/${resolvedSlug}/`;
 }
 
 export function getLocalizedPagePath(slug: string, language = DEFAULT_LANGUAGE): string {

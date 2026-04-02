@@ -32,9 +32,10 @@ export const GET: APIRoute = async ({ params, locals, request, redirect }) => {
 		return Response.json({ error: "Post not found." }, { status: 404 });
 	}
 
+	const language = locals.uiLanguage ?? "en";
 	return Response.json({
 		languages: getSupportedLanguages(),
-		post: toAdminPostDetail(post),
+		post: toAdminPostDetail(post, language),
 	});
 };
 

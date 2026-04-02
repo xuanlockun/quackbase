@@ -25,9 +25,11 @@ export interface BlogPostRecord {
 export interface BlogPost {
 	id: number;
 	slug: string;
+	slugTranslations: LocalizedText;
 	title: string;
 	titleTranslations: LocalizedText;
 	description: string;
+	descriptionTranslations: LocalizedText;
 	content: string;
 	contentTranslations: LocalizedText;
 	contentHtml: string;
@@ -40,9 +42,9 @@ export interface BlogPost {
 }
 
 export interface BlogPostInput {
+	slugTranslations: LocalizedText;
 	titleTranslations: LocalizedText;
-	slug: string;
-	description: string;
+	descriptionTranslations: LocalizedText;
 	contentTranslations: LocalizedText;
 	heroImage?: string;
 	status: string;
@@ -54,7 +56,9 @@ export interface AdminPostSummary {
 	title: string;
 	titleTranslations: LocalizedText;
 	description: string;
+	descriptionTranslations: LocalizedText;
 	slug: string;
+	slugTranslations: LocalizedText;
 	status: string;
 	updatedAt: string;
 	viewHref: string;
@@ -153,22 +157,32 @@ export function renderMarkdown(markdown: string): string {
 export { getDefaultLanguage, getSupportedLanguages, getLocalizedPagePath, getLocalizedPostPath } from "./i18n";
 
 export function toBlogPost(row: BlogPostRecord, requestedLanguage = DEFAULT_LANGUAGE): BlogPost {
+	const slugTranslations = normalizeLocalizedSlugMap(row.slug, {
+		fallbackValue: row.slug,
+	});
 	const titleTranslations = normalizeLocalizedText(row.title, {
 		fallbackValue: row.title,
+	});
+	const descriptionTranslations = normalizeLocalizedText(row.description, {
+		fallbackValue: row.description,
 	});
 	const contentTranslations = normalizeLocalizedText(row.content, {
 		fallbackValue: row.content,
 	});
 	const language = resolveLanguage(requestedLanguage);
+	const slug = resolveLocalizedSlug(slugTranslations, language);
 	const title = resolveLocalizedValue(titleTranslations, language);
+	const description = resolveLocalizedValue(descriptionTranslations, language);
 	const content = resolveLocalizedValue(contentTranslations, language);
 
 	return {
 		id: row.id,
-		slug: row.slug,
+		slug,
+		slugTranslations,
 		title,
 		titleTranslations,
-		description: row.description,
+		description,
+		descriptionTranslations,
 		content,
 		contentTranslations,
 		contentHtml: renderMarkdown(content),
@@ -501,11 +515,13 @@ export function toAdminPostSummary(
 		id: post.id,
 		title: resolveLocalizedValue(post.titleTranslations, language),
 		titleTranslations: post.titleTranslations,
-		description: post.description,
-		slug: post.slug,
+		description: resolveLocalizedValue(post.descriptionTranslations, language),
+		descriptionTranslations: post.descriptionTranslations,
+		slug: resolveLocalizedSlug(post.slugTranslations, language),
+		slugTranslations: post.slugTranslations,
 		status: post.status,
 		updatedAt: (post.updatedDate ?? post.pubDate).toISOString(),
-		viewHref: getLocalizedPostPath(post.slug, language),
+		viewHref: getLocalizedPostPath(post.slugTranslations, language),
 		editHref: `/admin/posts/${post.id}/edit`,
 	};
 }
@@ -536,17 +552,20 @@ export async function getPublishedPostBySlug(
 		.prepare(
 			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
 			FROM posts
-			WHERE slug = ?1 AND status = 'published'
-			LIMIT 1`,
+			WHERE status = 'published'
+			ORDER BY datetime(pub_date) DESC, id DESC`,
 		)
-		.bind(slug)
-		.first<BlogPostRecord>();
+		.all<BlogPostRecord>();
 
-	return result ? toBlogPost(result, language) : null;
+	const matchedRow = findPublishedPostRecordBySlug(result.results ?? [], slug, language);
+	return matchedRow ? toBlogPost(matchedRow, language) : null;
 }
 
 export async function createPost(db: D1Database, input: BlogPostInput): Promise<number> {
 	await ensurePostTables(db);
+	if (input.status === "published") {
+		await assertPublishedPostSlugUniqueness(db, input.slugTranslations);
+	}
 
 	const result = await db
 		.prepare(
@@ -554,9 +573,9 @@ export async function createPost(db: D1Database, input: BlogPostInput): Promise<
 			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
-			input.slug,
+			stringifyLocalizedText(input.slugTranslations),
 			stringifyLocalizedText(input.titleTranslations),
-			input.description,
+			stringifyLocalizedText(input.descriptionTranslations),
 			stringifyLocalizedText(input.contentTranslations),
 			normalizeOptionalString(input.heroImage),
 			input.status,
@@ -573,6 +592,9 @@ export async function updatePost(
 	input: BlogPostInput,
 ): Promise<void> {
 	await ensurePostTables(db);
+	if (input.status === "published") {
+		await assertPublishedPostSlugUniqueness(db, input.slugTranslations, id);
+	}
 
 	await db
 		.prepare(
@@ -588,9 +610,9 @@ export async function updatePost(
 			WHERE id = ?8`,
 		)
 		.bind(
-			input.slug,
+			stringifyLocalizedText(input.slugTranslations),
 			stringifyLocalizedText(input.titleTranslations),
-			input.description,
+			stringifyLocalizedText(input.descriptionTranslations),
 			stringifyLocalizedText(input.contentTranslations),
 			normalizeOptionalString(input.heroImage),
 			input.status,
@@ -608,9 +630,9 @@ export async function deletePost(db: D1Database, id: number): Promise<void> {
 
 export function parsePostForm(formData: FormData): BlogPostInput {
 	return {
+		slugTranslations: parseLocalizedSlugFieldFromForm(formData, "slug", "slug"),
 		titleTranslations: parseLocalizedFieldFromForm(formData, "title", "title_en"),
-		slug: slugify(requiredString(formData, "slug")),
-		description: requiredString(formData, "description"),
+		descriptionTranslations: parseLocalizedFieldFromForm(formData, "description", "description"),
 		contentTranslations: parseLocalizedFieldFromForm(formData, "content", "content_en"),
 		heroImage: optionalString(formData, "heroImage") || undefined,
 		status: normalizeStatus(requiredString(formData, "status")),
@@ -624,9 +646,9 @@ export function parsePostPayload(payload: unknown): BlogPostInput {
 	}
 
 	return {
+		slugTranslations: parseLocalizedSlugFieldValue((payload as Record<string, unknown>).slug, "slug"),
 		titleTranslations: parseLocalizedFieldValue((payload as Record<string, unknown>).title, "title"),
-		slug: slugify(requiredPayloadString(payload, "slug")),
-		description: requiredPayloadString(payload, "description"),
+		descriptionTranslations: parseLocalizedFieldValue((payload as Record<string, unknown>).description, "description"),
 		contentTranslations: parseLocalizedFieldValue((payload as Record<string, unknown>).content, "content"),
 		heroImage: optionalPayloadString(payload, "heroImage") || undefined,
 		status: normalizeStatus(requiredPayloadString(payload, "status")),
@@ -762,6 +784,8 @@ export function slugify(value: string): string {
 	return value
 		.trim()
 		.toLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
 		.replace(/[^a-z0-9]+/g, "-")
 		.replace(/^-+|-+$/g, "");
 }
@@ -785,6 +809,94 @@ function normalizePubDate(value?: string): string {
 	}
 
 	return parsed.toISOString();
+}
+
+export function normalizeLocalizedSlugMap(
+	input: unknown,
+	options?: {
+		fallbackValue?: string;
+		requireDefault?: boolean;
+	},
+): LocalizedText {
+	const translations = normalizeLocalizedText(input, options);
+	const normalizedEntries = Object.entries(translations)
+		.map(([code, value]) => [code, slugify(value)] as const)
+		.filter(([, value]) => value);
+
+	const normalized = Object.fromEntries(normalizedEntries) as LocalizedText;
+	if (options?.requireDefault !== false && !normalized[DEFAULT_LANGUAGE]) {
+		throw new Error(`Missing ${DEFAULT_LANGUAGE} translation.`);
+	}
+	return normalized;
+}
+
+export function resolveLocalizedSlug(
+	slugTranslations: LocalizedText,
+	requestedLanguage = DEFAULT_LANGUAGE,
+): string {
+	return resolveLocalizedValue(slugTranslations, requestedLanguage);
+}
+
+export function findPublishedPostRecordBySlug(
+	rows: BlogPostRecord[],
+	slug: string,
+	language = DEFAULT_LANGUAGE,
+): BlogPostRecord | null {
+	const requestedSlug = slugify(slug);
+	const requestedLanguage = resolveLanguage(language);
+
+	for (const row of rows) {
+		const slugTranslations = normalizeLocalizedSlugMap(row.slug, {
+			fallbackValue: row.slug,
+		});
+		const localizedSlug = slugTranslations[requestedLanguage]?.trim();
+		if (localizedSlug && localizedSlug === requestedSlug) {
+			return row;
+		}
+	}
+
+	for (const row of rows) {
+		const slugTranslations = normalizeLocalizedSlugMap(row.slug, {
+			fallbackValue: row.slug,
+		});
+		const localizedSlug = slugTranslations[requestedLanguage]?.trim();
+		const defaultSlug = slugTranslations[DEFAULT_LANGUAGE]?.trim();
+		if (!localizedSlug && defaultSlug && defaultSlug === requestedSlug) {
+			return row;
+		}
+	}
+
+	return null;
+}
+
+async function assertPublishedPostSlugUniqueness(
+	db: D1Database,
+	slugTranslations: LocalizedText,
+	excludePostId?: number,
+): Promise<void> {
+	const result = await db
+		.prepare(
+			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
+			FROM posts
+			WHERE status = 'published'`,
+		)
+		.all<BlogPostRecord>();
+
+	for (const row of result.results ?? []) {
+		if (excludePostId && row.id === excludePostId) {
+			continue;
+		}
+
+		const existingTranslations = normalizeLocalizedSlugMap(row.slug, {
+			fallbackValue: row.slug,
+		});
+
+		for (const [languageCode, slugValue] of Object.entries(slugTranslations)) {
+			if (existingTranslations[languageCode] === slugValue) {
+				throw new Error(`Duplicate published slug for language: ${languageCode}`);
+			}
+		}
+	}
 }
 
 async function ensureSiteTables(db: D1Database): Promise<void> {
@@ -907,7 +1019,7 @@ async function ensurePostTables(db: D1Database): Promise<void> {
 		db.prepare(
 			`CREATE TABLE IF NOT EXISTS posts (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				slug TEXT NOT NULL UNIQUE,
+				slug TEXT NOT NULL,
 				title TEXT NOT NULL,
 				description TEXT NOT NULL,
 				content_markdown TEXT NOT NULL,
@@ -930,9 +1042,17 @@ async function ensurePostTables(db: D1Database): Promise<void> {
 	await db
 		.prepare(
 			`UPDATE posts
-			SET title = CASE
+			SET slug = CASE
+				WHEN json_valid(slug) THEN slug
+				ELSE json_object('en', slug)
+			END,
+			title = CASE
 				WHEN json_valid(title) THEN title
 				ELSE json_object('en', title)
+			END,
+			description = CASE
+				WHEN json_valid(description) THEN description
+				ELSE json_object('en', description)
 			END,
 			content = CASE
 				WHEN json_valid(content) THEN content
@@ -1094,9 +1214,29 @@ function parseLocalizedFieldFromForm(
 	return parseLocalizedFieldValue(rawValue ?? legacyValue, key);
 }
 
+function parseLocalizedSlugFieldFromForm(
+	formData: FormData,
+	key: string,
+	legacyKey: string,
+): LocalizedText {
+	const rawValue = formData.get(key);
+	const legacyValue = formData.get(legacyKey);
+	return parseLocalizedSlugFieldValue(rawValue ?? legacyValue, key);
+}
+
 function parseLocalizedFieldValue(value: unknown, fieldName: string): LocalizedText {
 	try {
 		return normalizeLocalizedText(value, {
+			requireDefault: true,
+		});
+	} catch {
+		throw new Error(`Invalid localized field: ${fieldName}`);
+	}
+}
+
+function parseLocalizedSlugFieldValue(value: unknown, fieldName: string): LocalizedText {
+	try {
+		return normalizeLocalizedSlugMap(value, {
 			requireDefault: true,
 		});
 	} catch {

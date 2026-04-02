@@ -14,7 +14,7 @@ export async function GET(context) {
 			title: post.title,
 			description: post.description,
 			pubDate: post.pubDate,
-			link: getLocalizedPostPath(post.slug, "en"),
+			link: getLocalizedPostPath(post.slugTranslations, "en"),
 		})),
 	});
 }

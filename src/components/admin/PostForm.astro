@@ -25,16 +25,22 @@ const { t, language } = getUiTranslations(Astro);
 const submitLabel = mode === "edit" ? t("actions.saveChanges") : t("actions.createPost");
 const languages = getSupportedLanguages();
 const initialLanguage = post?.requestedLanguage ?? language;
+const slugTranslations = {
+	en: "",
+	...(post?.slugTranslations ?? {}),
+};
 const titleTranslations = {
 	en: "",
 	...(post?.titleTranslations ?? {}),
+};
+const descriptionTranslations = {
+	en: "",
+	...(post?.descriptionTranslations ?? {}),
 };
 const contentTranslations = {
 	en: "# New post",
 	...(post?.contentTranslations ?? {}),
 };
-const slug = post?.slug ?? "";
-const description = post?.description ?? "";
 const heroImage = post?.heroImage ?? "";
 const status = post?.status ?? "draft";
 const pubDateValue = post?.pubDate ? new Date(post.pubDate).toISOString().slice(0, 16) : "";
@@ -57,14 +63,6 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 <form class="admin-form-stack" method="post" action={action}>
 	{mode === "edit" && post && <input type="hidden" name="id" value={post.id} />}
 	<div class="admin-form-grid">
-		<label>
-			<span>{t("labels.slug")}</span>
-			<input name="slug" required pattern="[a-z0-9-]+" value={slug} placeholder="my-post-slug" disabled={isDisabled} />
-		</label>
-		<label>
-			<span>{t("labels.description")}</span>
-			<input name="description" required value={description} placeholder="Short summary" disabled={isDisabled} />
-		</label>
 		<label>
 			<span>{t("labels.heroImageUrl")}</span>
 			<input name="heroImage" value={heroImage} placeholder="/blog-placeholder-1.jpg" disabled={isDisabled} />
@@ -106,7 +104,9 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 			</div>
 		</div>
 
+		<input type="hidden" name="slug" data-slug-translations value={JSON.stringify(slugTranslations)} />
 		<input type="hidden" name="title" data-title-translations value={JSON.stringify(titleTranslations)} />
+		<input type="hidden" name="description" data-description-translations value={JSON.stringify(descriptionTranslations)} />
 		<input type="hidden" name="content" data-content-translations value={JSON.stringify(contentTranslations)} />
 
 		{
@@ -122,6 +122,35 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 							data-title-input={language.code}
 							value={titleTranslations[language.code] ?? ""}
 							placeholder={language.code === "en" ? "Hello world" : "Xin chao"}
+							disabled={isDisabled}
+						/>
+					</label>
+					<label>
+						<span>{t("labels.slug")} ({language.label})</span>
+						<div class="localized-slug-row">
+							<input
+								data-slug-input={language.code}
+								value={slugTranslations[language.code] ?? ""}
+								placeholder={language.code === "en" ? "hello-world" : "xin-chao"}
+								pattern="[a-z0-9-]+"
+								disabled={isDisabled}
+							/>
+							<button
+								type="button"
+								class="admin-ghost-button"
+								data-generate-slug={language.code}
+								disabled={isDisabled}
+							>
+								{t("actions.generateSlug", "Generate slug")}
+							</button>
+						</div>
+					</label>
+					<label>
+						<span>{t("labels.description")} ({language.label})</span>
+						<input
+							data-description-input={language.code}
+							value={descriptionTranslations[language.code] ?? ""}
+							placeholder={language.code === "en" ? "Short summary" : "Tom tat ngan"}
 							disabled={isDisabled}
 						/>
 					</label>
@@ -197,27 +226,56 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 		min-height: 300px;
 	}
 
+	.localized-slug-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 0.75rem;
+		align-items: center;
+	}
+
 	@media (max-width: 720px) {
 		.localized-editor-header {
 			flex-direction: column;
 			align-items: stretch;
 		}
+
+		.localized-slug-row {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>
 
 <script is:inline>
+	const slugifyValue = (value) =>
+		value
+			.trim()
+			.toLowerCase()
+			.normalize("NFD")
+			.replace(/[\u0300-\u036f]/g, "")
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-+|-+$/g, "");
+
 	const syncLocalizedEditor = (root) => {
 		if (!(root instanceof HTMLElement)) {
 			return;
 		}
 
+		const slugField = root.querySelector("[data-slug-translations]");
 		const titleField = root.querySelector("[data-title-translations]");
+		const descriptionField = root.querySelector("[data-description-translations]");
 		const contentField = root.querySelector("[data-content-translations]");
-		if (!(titleField instanceof HTMLInputElement) || !(contentField instanceof HTMLInputElement)) {
+		if (
+			!(slugField instanceof HTMLInputElement) ||
+			!(titleField instanceof HTMLInputElement) ||
+			!(descriptionField instanceof HTMLInputElement) ||
+			!(contentField instanceof HTMLInputElement)
+		) {
 			return;
 		}
 
+		const slugTranslations = {};
 		const titleTranslations = {};
+		const descriptionTranslations = {};
 		root.querySelectorAll("[data-title-input]").forEach((input) => {
 			if (!(input instanceof HTMLInputElement)) {
 				return;
@@ -227,6 +285,28 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 				return;
 			}
 			titleTranslations[code] = input.value;
+		});
+
+		root.querySelectorAll("[data-slug-input]").forEach((input) => {
+			if (!(input instanceof HTMLInputElement)) {
+				return;
+			}
+			const code = input.dataset.slugInput;
+			if (!code) {
+				return;
+			}
+			slugTranslations[code] = slugifyValue(input.value);
+		});
+
+		root.querySelectorAll("[data-description-input]").forEach((input) => {
+			if (!(input instanceof HTMLInputElement)) {
+				return;
+			}
+			const code = input.dataset.descriptionInput;
+			if (!code) {
+				return;
+			}
+			descriptionTranslations[code] = input.value;
 		});
 
 		const contentTranslations = {};
@@ -241,7 +321,9 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 			contentTranslations[code] = input.value;
 		});
 
+		slugField.value = JSON.stringify(slugTranslations);
 		titleField.value = JSON.stringify(titleTranslations);
+		descriptionField.value = JSON.stringify(descriptionTranslations);
 		contentField.value = JSON.stringify(contentTranslations);
 	};
 
@@ -275,6 +357,24 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 				if (button instanceof HTMLButtonElement && button.dataset.languageTab) {
 					setActiveLanguage(button.dataset.languageTab);
 				}
+			});
+		});
+
+		root.querySelectorAll("[data-generate-slug]").forEach((button) => {
+			button.addEventListener("click", () => {
+				if (!(button instanceof HTMLButtonElement) || !button.dataset.generateSlug) {
+					return;
+				}
+
+				const code = button.dataset.generateSlug;
+				const titleInput = root.querySelector(`[data-title-input="${code}"]`);
+				const slugInput = root.querySelector(`[data-slug-input="${code}"]`);
+				if (!(titleInput instanceof HTMLInputElement) || !(slugInput instanceof HTMLInputElement)) {
+					return;
+				}
+
+				slugInput.value = slugifyValue(titleInput.value);
+				syncLocalizedEditor(root);
 			});
 		});
 
