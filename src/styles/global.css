@@ -516,11 +516,7 @@ hr {
 .language-switch {
 	display: inline-flex;
 	align-items: center;
-	gap: 0.2rem;
-	padding: 0.2rem;
-	border: 1px solid rgba(var(--gray), 0.2);
-	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.92);
+	gap: 0;
 }
 
 .language-switch-full {
@@ -529,23 +525,15 @@ hr {
 }
 
 .language-switch-link {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
 	min-width: 2.75rem;
-	padding: 0.45rem 0.8rem;
-	border-radius: 999px;
-	color: rgb(var(--gray-dark));
 	text-decoration: none;
-	font-size: 0.82rem;
 	font-weight: 700;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 }
 
-.language-switch-link.is-active {
-	background: rgb(var(--gray-dark));
-	color: white;
+.language-switch-full .language-switch-link {
+	flex: 1 1 0;
 }
 
 .banner-section {
@@ -727,7 +715,7 @@ hr {
 @media (max-width: 720px) {
 	.language-switch {
 		width: 100%;
-		justify-content: center;
+		justify-content: stretch;
 	}
 
 	.banner-section-frame {

@@ -14,7 +14,12 @@ const options = getLanguageSwitchOptions(Astro.url, language);
 	{
 		options.map((option) => (
 			<a
-				class:list={["language-switch-link", option.isActive && "is-active"]}
+				class:list={[
+					"btn",
+					"btn-sm",
+					"language-switch-link",
+					option.isActive ? "btn-dark is-active" : "btn-outline-secondary",
+				]}
 				href={option.href}
 				aria-current={option.isActive ? "true" : undefined}
 			>
