@@ -132,6 +132,11 @@ try {
 				<button class="admin-primary-button" type="submit" disabled={Boolean(loadError)}>{t("actions.saveHeader")}</button>
 			</div>
 		</form>
+		<div class="admin-form-section">
+			<strong>{t("headings.contactFormFields")}</strong>
+			<p class="admin-muted">{t("messages.contactFormSharedConfig")}</p>
+			<p><a class="admin-ghost-button" href="/admin/pages">{t("actions.manageContactForm")}</a></p>
+		</div>
 	</div>
 </AdminLayout>
 

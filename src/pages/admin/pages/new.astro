@@ -3,6 +3,8 @@ export const prerender = false;
 
 import PageForm from "../../../components/admin/PageForm.astro";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { getDb } from "../../../lib/blog";
+import { listFormFields } from "../../../lib/forms";
 import { getUiTranslations } from "../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
@@ -13,6 +15,13 @@ if (!session) {
 const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
 const hasError = Astro.url.searchParams.get("error");
 const { t } = getUiTranslations(Astro);
+let contactFormFields = [];
+
+try {
+	contactFormFields = await listFormFields(getDb(Astro.locals));
+} catch {
+	contactFormFields = [];
+}
 ---
 
 <AdminLayout
@@ -28,6 +37,7 @@ const { t } = getUiTranslations(Astro);
 			action="/api/admin/pages"
 			canSubmit={canCreate}
 			loadError={hasError ? t("messages.pageRequestFailed") : ""}
+			contactFormFields={contactFormFields}
 		/>
 	</div>
 </AdminLayout>

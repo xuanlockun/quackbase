@@ -46,7 +46,7 @@ describe("UI i18n integration behavior", () => {
 			locals: { uiLanguage: "vi" } as App.Locals,
 		});
 
-		expect(context.t("messages.pageNotFound")).toBe("Không tìm thấy trang");
+		expect(context.t("messages.pageNotFound")).toBe("Khong tim thay trang");
 		expect(context.t("messages.missingKeyForFallback", "fallback")).toBe("fallback");
 	});
 

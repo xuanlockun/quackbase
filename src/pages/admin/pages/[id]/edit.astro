@@ -4,6 +4,7 @@ export const prerender = false;
 import PageForm from "../../../../components/admin/PageForm.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { getDb, getPageById } from "../../../../lib/blog";
+import { listFormFields } from "../../../../lib/forms";
 import { getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
@@ -16,6 +17,7 @@ const { id } = Astro.params;
 const { t, language } = getUiTranslations(Astro);
 
 let page = null;
+let contactFormFields = [];
 let loadError = "";
 let notFound = false;
 
@@ -24,7 +26,9 @@ try {
 	if (!Number.isInteger(pageId) || pageId <= 0) {
 		notFound = true;
 	} else {
-		page = await getPageById(getDb(Astro.locals), pageId);
+		const db = getDb(Astro.locals);
+		page = await getPageById(db, pageId);
+		contactFormFields = await listFormFields(db);
 		notFound = !page;
 	}
 } catch (error) {
@@ -52,7 +56,14 @@ if (Astro.url.searchParams.get("error")) {
 					<p><a class="admin-ghost-button" href={localizeAdminHref("/admin/pages", language)}>{t("messages.backToPages")}</a></p>
 				</div>
 			) : (
-				<PageForm mode="edit" action="/api/admin/pages" page={page} canSubmit={canUpdate} loadError={loadError} />
+				<PageForm
+					mode="edit"
+					action="/api/admin/pages"
+					page={page}
+					canSubmit={canUpdate}
+					loadError={loadError}
+					contactFormFields={contactFormFields}
+				/>
 			)
 		}
 	</div>

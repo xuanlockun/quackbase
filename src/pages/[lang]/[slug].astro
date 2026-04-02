@@ -49,6 +49,7 @@ if (!page && !post && !loadError && Astro.response.status !== 404) {
 				pageSections={page.pageSections}
 				contentHtml={page.contentHtml}
 				currentLanguage={resolveLanguage(requestedLanguage)}
+				currentPath={Astro.url.pathname}
 			/>
 		</BlogPost>
 	) : post ? (

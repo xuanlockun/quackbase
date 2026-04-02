@@ -1,15 +1,15 @@
 ---
 import HeaderLink from './HeaderLink.astro';
+import LanguageSwitch from './LanguageSwitch.astro';
 import { SITE_TITLE } from '../consts';
 import { getDb, getSiteConfig, type SiteNavItem } from '../lib/blog';
-import { getSupportedLanguages, getUiTranslations } from '../lib/i18n';
+import { getUiTranslations } from '../lib/i18n';
 
 let siteTitle = SITE_TITLE;
 let headerBackground = '#ffffff';
 let headerTextColor = '#0f1219';
 let headerAccentColor = '#2337ff';
-const { language, t, localizeHref, localizeAdminHref, switchLanguageHref } = getUiTranslations(Astro);
-const languages = getSupportedLanguages();
+const { language, t, localizeHref, localizeAdminHref } = getUiTranslations(Astro);
 let navItems: SiteNavItem[] = [
 	{ label: t("nav.home"), labelTranslations: { en: "Home", vi: "Trang chu" }, href: '/', sortOrder: 0 },
 ];
@@ -45,21 +45,7 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 				))
 			}
 		</div>
-		<div class="btn-group btn-group-sm ms-auto" role="group" aria-label={t("headings.languageSwitcher")}>
-			{
-				languages.map((entry) => (
-					<a
-						class:list={[
-							"btn",
-							entry.code === language ? "btn-dark" : "btn-outline-secondary",
-						]}
-						href={switchLanguageHref(entry.code)}
-					>
-						{entry.code.toUpperCase()}
-					</a>
-				))
-			}
-		</div>
+		<LanguageSwitch />
 	</nav>
 </header>
 <style>
@@ -87,6 +73,7 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 	.internal-links {
 		display: flex;
 		flex-wrap: wrap;
+		gap: 0.15rem;
 	}
 	nav a {
 		padding: 1em 0.5em;

@@ -1,7 +1,8 @@
 ---
 import { getVisibleAdminNavItems } from "../../lib/rbac/policies";
 import type { AdminSession } from "../../lib/auth/types";
-import { getSupportedLanguages, getUiTranslations } from "../../lib/i18n";
+import LanguageSwitch from "../LanguageSwitch.astro";
+import { getUiTranslations } from "../../lib/i18n";
 
 interface Props {
 	session: AdminSession | null;
@@ -10,8 +11,7 @@ interface Props {
 const { session } = Astro.props;
 const pathname = Astro.url.pathname;
 const links = getVisibleAdminNavItems(session);
-const languages = getSupportedLanguages();
-const { language, t, localizeAdminHref, switchLanguageHref } = getUiTranslations(Astro);
+const { t, localizeAdminHref } = getUiTranslations(Astro);
 
 function isActiveLink(href: string, currentPath: string): boolean {
 	return currentPath === href || currentPath.startsWith(`${href}/`);
@@ -33,21 +33,7 @@ function isActiveLink(href: string, currentPath: string): boolean {
 
 	<div class="admin-sidebar-section border-bottom">
 		<p class="admin-sidebar-label">{t("headings.languageSwitcher")}</p>
-		<div class="btn-group btn-group-sm w-100" role="group" aria-label={t("headings.languageSwitcher")}>
-			{
-				languages.map((entry) => (
-					<a
-						class:list={[
-							"btn",
-							entry.code === language ? "btn-dark" : "btn-outline-secondary",
-						]}
-						href={switchLanguageHref(entry.code)}
-					>
-						{entry.code.toUpperCase()}
-					</a>
-				))
-			}
-		</div>
+		<LanguageSwitch fullWidth={true} />
 	</div>
 
 	<div class="admin-sidebar-links nav nav-pills flex-column gap-1">

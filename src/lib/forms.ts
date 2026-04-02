@@ -1,0 +1,338 @@
+import {
+	DEFAULT_LANGUAGE,
+	type LocalizedText,
+	normalizeLocalizedText,
+	resolveLanguage,
+	resolveLocalizedLabel,
+	stringifyLocalizedText,
+} from "./i18n";
+
+export type ContactFormFieldType = "text" | "email" | "textarea";
+
+interface ContactFormFieldRecord {
+	id: number;
+	type: string;
+	label: string;
+	required: number;
+	sort_order: number;
+}
+
+export interface ContactFormField {
+	id: number;
+	type: ContactFormFieldType;
+	label: LocalizedText;
+	required: boolean;
+	order: number;
+}
+
+export interface ContactFormFieldInput {
+	id?: number;
+	type: ContactFormFieldType;
+	label: LocalizedText;
+	required: boolean;
+	order: number;
+}
+
+export interface RenderableContactFormField extends ContactFormField {
+	inputName: string;
+	labelText: string;
+}
+
+export interface ContactFormSubmissionInput {
+	language: string;
+	sourcePath?: string;
+	values: Record<string, string>;
+}
+
+const SUPPORTED_FIELD_TYPES = new Set<ContactFormFieldType>(["text", "email", "textarea"]);
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export async function ensureFormTables(db: D1Database): Promise<void> {
+	await db.batch([
+		db.prepare(
+			`CREATE TABLE IF NOT EXISTS form_fields (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				type TEXT NOT NULL CHECK (type IN ('text', 'email', 'textarea')),
+				label TEXT NOT NULL,
+				required INTEGER NOT NULL DEFAULT 0 CHECK (required IN (0, 1)),
+				sort_order INTEGER NOT NULL DEFAULT 1,
+				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+		),
+		db.prepare(
+			`CREATE INDEX IF NOT EXISTS idx_form_fields_sort_order
+			ON form_fields (sort_order ASC, id ASC)`,
+		),
+		db.prepare(
+			`CREATE TABLE IF NOT EXISTS form_submissions (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				language TEXT NOT NULL,
+				source_path TEXT,
+				values_json TEXT NOT NULL,
+				submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+		),
+		db.prepare(
+			`CREATE INDEX IF NOT EXISTS idx_form_submissions_submitted_at
+			ON form_submissions (submitted_at DESC, id DESC)`,
+		),
+	]);
+}
+
+export async function listFormFields(db: D1Database): Promise<ContactFormField[]> {
+	await ensureFormTables(db);
+
+	const result = await db
+		.prepare(
+			`SELECT id, type, label, required, sort_order
+			FROM form_fields
+			ORDER BY sort_order ASC, id ASC`,
+		)
+		.all<ContactFormFieldRecord>();
+
+	return normalizeFormFields(result.results ?? []);
+}
+
+export async function saveFormFields(
+	db: D1Database,
+	fields: ContactFormFieldInput[],
+): Promise<ContactFormField[]> {
+	await ensureFormTables(db);
+	const normalizedFields = normalizeFormFields(fields);
+
+	const statements: D1PreparedStatement[] = [db.prepare(`DELETE FROM form_fields`)];
+	for (const field of normalizedFields) {
+		statements.push(
+			db
+				.prepare(
+					`INSERT INTO form_fields (type, label, required, sort_order, updated_at)
+					VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)`,
+				)
+				.bind(field.type, stringifyLocalizedText(field.label), field.required ? 1 : 0, field.order),
+		);
+	}
+
+	await db.batch(statements);
+	return listFormFields(db);
+}
+
+export async function createFormSubmission(
+	db: D1Database,
+	input: ContactFormSubmissionInput,
+): Promise<number> {
+	await ensureFormTables(db);
+
+	const result = await db
+		.prepare(
+			`INSERT INTO form_submissions (language, source_path, values_json, submitted_at)
+			VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)`,
+		)
+		.bind(
+			resolveLanguage(input.language),
+			normalizeOptionalString(input.sourcePath),
+			JSON.stringify(input.values),
+		)
+		.run();
+
+	return Number(result.meta.last_row_id ?? 0);
+}
+
+export function parseFormFieldsForm(formData: FormData, key = "contactFormFields"): ContactFormField[] {
+	return parseFormFieldsValue(formData.get(key), key);
+}
+
+export function parseFormFieldsPayload(payload: unknown, key = "fields"): ContactFormField[] {
+	if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+		throw new Error("Invalid form field payload.");
+	}
+
+	return parseFormFieldsValue((payload as Record<string, unknown>)[key], key);
+}
+
+export function parseContactFormSubmissionForm(formData: FormData): ContactFormSubmissionInput {
+	const values: Record<string, string> = {};
+	for (const [key, rawValue] of formData.entries()) {
+		if (!key.startsWith("field-") || typeof rawValue !== "string") {
+			continue;
+		}
+
+		values[key.slice("field-".length)] = rawValue.trim();
+	}
+
+	return {
+		language:
+			typeof formData.get("language") === "string" ? String(formData.get("language")) : DEFAULT_LANGUAGE,
+		sourcePath: typeof formData.get("sourcePath") === "string" ? String(formData.get("sourcePath")) : undefined,
+		values,
+	};
+}
+
+export function parseContactFormSubmissionPayload(payload: unknown): ContactFormSubmissionInput {
+	if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+		throw new Error("Invalid contact form payload.");
+	}
+
+	const record = payload as Record<string, unknown>;
+	const sourcePath = typeof record.sourcePath === "string" ? record.sourcePath.trim() : undefined;
+	const valuesRecord =
+		record.values && typeof record.values === "object" && !Array.isArray(record.values)
+			? (record.values as Record<string, unknown>)
+			: null;
+
+	if (!valuesRecord) {
+		throw new Error("Contact form values are required.");
+	}
+
+	const values: Record<string, string> = {};
+	for (const [key, value] of Object.entries(valuesRecord)) {
+		if (typeof value === "string") {
+			values[key] = value.trim();
+		}
+	}
+
+	return {
+		language: typeof record.language === "string" ? record.language : DEFAULT_LANGUAGE,
+		sourcePath,
+		values,
+	};
+}
+
+export function validateContactFormSubmission(
+	fields: ContactFormField[],
+	input: ContactFormSubmissionInput,
+): ContactFormSubmissionInput {
+	const normalizedFields = normalizeFormFields(fields);
+	if (normalizedFields.length === 0) {
+		throw new Error("No contact form fields are configured.");
+	}
+
+	const values: Record<string, string> = {};
+	for (const field of normalizedFields) {
+		const key = String(field.id);
+		const value = input.values[key]?.trim() ?? "";
+
+		if (field.required && !value) {
+			throw new Error(`Missing required field: ${key}`);
+		}
+
+		if (field.type === "email" && value && !EMAIL_PATTERN.test(value)) {
+			throw new Error(`Invalid email field: ${key}`);
+		}
+
+		values[key] = value;
+	}
+
+	return {
+		language: resolveLanguage(input.language),
+		sourcePath: normalizeOptionalString(input.sourcePath) ?? undefined,
+		values,
+	};
+}
+
+export function getRenderableFormFields(
+	fields: ContactFormField[],
+	language = DEFAULT_LANGUAGE,
+): RenderableContactFormField[] {
+	return normalizeFormFields(fields).map((field) => ({
+		...field,
+		inputName: getContactFieldInputName(field.id),
+		labelText: resolveLocalizedLabel(field.label, language),
+	}));
+}
+
+export function getContactFieldInputName(fieldId: number): string {
+	return `field-${fieldId}`;
+}
+
+export function normalizeFormFields(input: unknown): ContactFormField[] {
+	if (!Array.isArray(input)) {
+		return [];
+	}
+
+	const normalized = input
+		.map((item, index) => normalizeFormField(item, index))
+		.filter((field): field is ContactFormField => Boolean(field))
+		.sort((left, right) => left.order - right.order || left.id - right.id)
+		.map((field, index) => ({
+			...field,
+			order: index + 1,
+		}));
+
+	return normalized;
+}
+
+function parseFormFieldsValue(value: unknown, fieldName: string): ContactFormField[] {
+	try {
+		const parsed =
+			typeof value === "string" ? JSON.parse(value || "[]") : Array.isArray(value) ? value : [];
+		return normalizeFormFields(parsed);
+	} catch {
+		throw new Error(`Invalid localized field: ${fieldName}`);
+	}
+}
+
+function normalizeFormField(item: unknown, index: number): ContactFormField | null {
+	if (!item || typeof item !== "object") {
+		return null;
+	}
+
+	const record = item as Record<string, unknown>;
+	const type = normalizeFieldType(record.type);
+	if (!type) {
+		return null;
+	}
+
+	const id = normalizePositiveInteger(record.id) ?? index + 1;
+	const order = normalizePositiveInteger(record.order) ?? index + 1;
+
+	return {
+		id,
+		type,
+		label: normalizeLocalizedText(record.label, { requireDefault: true }),
+		required: normalizeBoolean(record.required),
+		order,
+	};
+}
+
+function normalizeFieldType(value: unknown): ContactFormFieldType | null {
+	if (typeof value !== "string") {
+		return null;
+	}
+
+	return SUPPORTED_FIELD_TYPES.has(value as ContactFormFieldType) ? (value as ContactFormFieldType) : null;
+}
+
+function normalizePositiveInteger(value: unknown): number | null {
+	const numericValue =
+		typeof value === "number"
+			? value
+			: typeof value === "string" && value.trim() !== ""
+				? Number.parseInt(value, 10)
+				: Number.NaN;
+
+	if (!Number.isFinite(numericValue) || numericValue <= 0) {
+		return null;
+	}
+
+	return Math.max(1, Math.floor(numericValue));
+}
+
+function normalizeBoolean(value: unknown): boolean {
+	if (typeof value === "boolean") {
+		return value;
+	}
+
+	if (typeof value === "number") {
+		return value === 1;
+	}
+
+	if (typeof value === "string") {
+		return ["1", "true", "on", "yes"].includes(value.trim().toLowerCase());
+	}
+
+	return false;
+}
+
+function normalizeOptionalString(value?: string | null): string | null {
+	return value && value.trim() ? value.trim() : null;
+}

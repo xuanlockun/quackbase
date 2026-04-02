@@ -26,6 +26,13 @@ export interface UiTranslations {
 	switchLanguageHref: (language: string) => string;
 }
 
+export interface LanguageSwitchOption {
+	code: string;
+	label: string;
+	href: string;
+	isActive: boolean;
+}
+
 export const DEFAULT_LANGUAGE = "en";
 export const UI_LANGUAGE_COOKIE = "edge-ui-language";
 const UI_LANGUAGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -87,6 +94,16 @@ export function resolveLocalizedValue(
 	}
 
 	return Object.values(translations).find((value) => value.trim() !== "")?.trim() ?? "";
+}
+
+export function resolveLocalizedLabel(
+	translations: LocalizedText | string,
+	requestedLanguage = DEFAULT_LANGUAGE,
+): string {
+	return resolveLocalizedValue(
+		typeof translations === "string" ? normalizeLocalizedText(translations) : translations,
+		requestedLanguage,
+	);
 }
 
 export function normalizeLocalizedText(
@@ -249,6 +266,19 @@ export function getLanguageSwitchHref(currentUrl: URL, language: string): string
 
 export function switchLang(href: string, language: string): string {
 	return localizeHref(href, language);
+}
+
+export function getLanguageSwitchOptions(
+	currentUrl: URL,
+	activeLanguage: string,
+): LanguageSwitchOption[] {
+	const resolvedLanguage = resolveLanguage(activeLanguage);
+	return getSupportedLanguages().map((entry) => ({
+		code: entry.code,
+		label: entry.label,
+		href: getLanguageSwitchHref(currentUrl, entry.code),
+		isActive: entry.code === resolvedLanguage,
+	}));
 }
 
 function translateKey(key: string, language: string, fallback?: string): string {

@@ -1,0 +1,55 @@
+---
+interface Props {
+	bannerUrls: string[];
+}
+
+const { bannerUrls } = Astro.props;
+---
+
+<section class="banner-section" data-banner-slider>
+	<div class="banner-section-frame">
+		<div class="banner-section-track">
+			{
+				bannerUrls.map((url, index) => (
+					<div class="banner-section-slide" data-banner-slide>
+						<img src={url} alt={`Banner ${index + 1}`} loading="lazy" />
+					</div>
+				))
+			}
+		</div>
+	</div>
+	{bannerUrls.length > 1 && (
+		<div class="banner-section-dots">
+			{
+				bannerUrls.map((_, index) => (
+					<button type="button" class="banner-section-dot" data-banner-dot data-slide-index={index} aria-label={`Show banner ${index + 1}`} />
+				))
+			}
+		</div>
+	)}
+</section>
+
+<script>
+	document.querySelectorAll("[data-banner-slider]").forEach((slider) => {
+		const track = slider.querySelector(".banner-section-track");
+		const slides = Array.from(slider.querySelectorAll("[data-banner-slide]"));
+		const dots = Array.from(slider.querySelectorAll("[data-banner-dot]"));
+		if (!(track instanceof HTMLElement) || slides.length <= 1) {
+			return;
+		}
+
+		let activeIndex = 0;
+		const update = (index) => {
+			activeIndex = index;
+			track.style.transform = `translateX(-${index * 100}%)`;
+			dots.forEach((dot, dotIndex) => dot.classList.toggle("is-active", dotIndex === index));
+		};
+
+		dots.forEach((dot, index) => {
+			dot.addEventListener("click", () => update(index));
+		});
+
+		update(0);
+		window.setInterval(() => update((activeIndex + 1) % slides.length), 5000);
+	});
+</script>

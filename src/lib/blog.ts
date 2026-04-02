@@ -138,6 +138,13 @@ export interface SitePageInput {
 	status: string;
 }
 
+export function hasPageSection(
+	pageSections: PageSectionConfig[],
+	type: PageSectionType,
+): boolean {
+	return pageSections.some((section) => section.type === type);
+}
+
 export function getDb(locals: App.Locals): D1Database {
 	const db = locals.runtime.env.DB;
 	if (!db) {

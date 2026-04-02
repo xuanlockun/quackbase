@@ -46,7 +46,12 @@ if (!page) {
 			wideContent={true}
 			lang={language}
 		>
-			<CmsPageSections pageSections={page.pageSections} contentHtml={page.contentHtml} currentLanguage={language} />
+			<CmsPageSections
+				pageSections={page.pageSections}
+				contentHtml={page.contentHtml}
+				currentLanguage={language}
+				currentPath={Astro.url.pathname}
+			/>
 		</BlogPost>
 	) : (
 		<BlogPost

@@ -5,26 +5,35 @@ import {
 	type PageSectionConfig,
 	listPublishedPosts,
 } from "../lib/blog";
+import BannerSection from "./BannerSection.astro";
+import DynamicForm from "./DynamicForm.astro";
+import { listFormFields } from "../lib/forms";
 import { getUiTranslations } from "../lib/i18n";
 
 interface Props {
 	pageSections: PageSectionConfig[];
 	contentHtml: string;
 	currentLanguage?: string;
+	currentPath?: string;
 }
 
-const { pageSections, contentHtml, currentLanguage = "en" } = Astro.props;
+const { pageSections, contentHtml, currentLanguage = "en", currentPath = "/" } = Astro.props;
 const { t } = getUiTranslations(Astro);
 
 let posts = [];
+let contactFields = [];
 
 try {
 	const db = getDb(Astro.locals);
 	if (pageSections.some((section) => section.type === "blog_feed")) {
 		posts = await listPublishedPosts(db, currentLanguage);
 	}
+	if (pageSections.some((section) => section.type === "contact_form")) {
+		contactFields = await listFormFields(db);
+	}
 } catch {
 	posts = [];
+	contactFields = [];
 }
 
 const orderedSections = [...pageSections].sort((left, right) => left.order - right.order);
@@ -37,28 +46,7 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 		}
 
 		if (section.type === "banner_slider" && section.bannerUrls && section.bannerUrls.length > 0) {
-			return (
-				<section class="page-section page-banner-slider" data-banner-slider>
-					<div class="banner-track">
-						{
-							section.bannerUrls.map((url, index) => (
-								<div class="banner-slide" data-banner-slide>
-									<img src={url} alt={`Banner ${index + 1}`} loading="lazy" />
-								</div>
-							))
-						}
-					</div>
-					{section.bannerUrls.length > 1 && (
-						<div class="banner-dots">
-							{
-								section.bannerUrls.map((_, index) => (
-									<button type="button" class="banner-dot" data-banner-dot data-slide-index={index} aria-label={`Show banner ${index + 1}`} />
-								))
-							}
-						</div>
-					)}
-				</section>
-			);
+			return <BannerSection bannerUrls={section.bannerUrls} />;
 		}
 
 		if (section.type === "blog_feed" && posts.length > 0) {
@@ -82,28 +70,13 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 
 		if (section.type === "contact_form") {
 			return (
-				<section class="page-section contact-section">
-					<div class="contact-copy">
-						<h2>{t("headings.contactUs")}</h2>
+				<section class="page-section contact-section-shell">
+					<div class="contact-section-copy">
+						<p class="contact-section-kicker">{t("headings.contactUs")}</p>
+						<h2>{t("headings.contactFormTitle")}</h2>
 						<p>{t("messages.contactFormIntro")}</p>
 					</div>
-					<form class="contact-form" method="post" action="#">
-						<label>
-							<span>{t("labels.name")}</span>
-							<input type="text" name="name" placeholder={t("messages.yourName")} />
-						</label>
-						<label>
-							<span>{t("labels.email")}</span>
-							<input type="email" name="email" placeholder={t("messages.yourEmail")} />
-						</label>
-						<label class="contact-form-full">
-							<span>{t("labels.message")}</span>
-							<textarea name="message" rows="5" placeholder={t("messages.tellUsWhatYouNeed")}></textarea>
-						</label>
-						<div class="contact-form-full contact-form-actions">
-							<button type="button">{t("actions.sendMessage")}</button>
-						</div>
-					</form>
+					<DynamicForm fields={contactFields} currentLanguage={currentLanguage} sourcePath={currentPath} />
 				</section>
 			);
 		}
@@ -128,7 +101,7 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 	}
 
 	.mini-card,
-	.contact-section {
+	.contact-section-shell {
 		display: block;
 		padding: 1rem;
 		border-radius: 18px;
@@ -153,7 +126,7 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 	}
 
 	.mini-card p,
-	.contact-copy p {
+	.contact-section-copy p {
 		margin: 0;
 		color: rgb(var(--gray));
 	}
@@ -162,90 +135,25 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 		margin-bottom: 0.85rem;
 	}
 
-	.page-banner-slider {
-		padding: 0;
-		background: transparent;
-		box-shadow: none;
-	}
-
-	.banner-track {
-		display: grid;
-		grid-auto-flow: column;
-		grid-auto-columns: 100%;
-		overflow: hidden;
-		border-radius: 24px;
-		box-shadow: var(--box-shadow);
-		scroll-snap-type: x mandatory;
-		transition: transform 320ms ease;
-	}
-
-	.banner-slide {
-		scroll-snap-align: start;
-	}
-
-	.banner-slide img {
-		margin-bottom: 0;
-		display: block;
-		max-height: 420px;
-	}
-
-	.banner-dots {
-		display: flex;
-		justify-content: center;
-		gap: 0.5rem;
-		margin-top: 0.8rem;
-	}
-
-	.banner-dot {
-		width: 0.8rem;
-		height: 0.8rem;
-		border: 0;
-		border-radius: 999px;
-		background: rgba(var(--gray), 0.35);
-		cursor: pointer;
-	}
-
-	.banner-dot.is-active {
-		background: rgb(var(--gray-dark));
-	}
-
-	.contact-section {
+	.contact-section-shell {
 		display: grid;
 		gap: 1rem;
+		padding: clamp(1.25rem, 3vw, 2rem);
 	}
 
-	.contact-form {
+	.contact-section-kicker {
+		margin: 0 0 0.5rem;
+		font-size: 0.82rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: rgb(var(--gray));
+	}
+
+	.contact-section-copy {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1rem;
-	}
-
-	.contact-form label {
-		display: grid;
-		gap: 0.35rem;
-	}
-
-	.contact-form-full {
-		grid-column: 1 / -1;
-	}
-
-	.contact-form input,
-	.contact-form textarea {
-		width: 100%;
-		padding: 0.85rem 1rem;
-		border: 1px solid rgba(var(--gray), 0.25);
-		border-radius: 14px;
-		font: inherit;
-	}
-
-	.contact-form-actions button {
-		padding: 0.85rem 1.2rem;
-		border: 0;
-		border-radius: 999px;
-		background: rgb(var(--accent));
-		color: white;
-		font: inherit;
-		cursor: pointer;
+		gap: 0.55rem;
+		max-width: 42rem;
 	}
 
 	@media (max-width: 1024px) {
@@ -255,34 +163,8 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 	}
 
 	@media (max-width: 720px) {
-		.card-grid,
-		.contact-form {
+		.card-grid {
 			grid-template-columns: 1fr;
 		}
 	}
 </style>
-
-<script>
-	document.querySelectorAll("[data-banner-slider]").forEach((slider) => {
-		const track = slider.querySelector(".banner-track");
-		const slides = Array.from(slider.querySelectorAll("[data-banner-slide]"));
-		const dots = Array.from(slider.querySelectorAll("[data-banner-dot]"));
-		if (!(track instanceof HTMLElement) || slides.length <= 1) {
-			return;
-		}
-
-		let activeIndex = 0;
-		const update = (index) => {
-			activeIndex = index;
-			track.style.transform = `translateX(-${index * 100}%)`;
-			dots.forEach((dot, dotIndex) => dot.classList.toggle("is-active", dotIndex === index));
-		};
-
-		dots.forEach((dot, index) => {
-			dot.addEventListener("click", () => update(index));
-		});
-
-		update(0);
-		window.setInterval(() => update((activeIndex + 1) % slides.length), 4500);
-	});
-</script>

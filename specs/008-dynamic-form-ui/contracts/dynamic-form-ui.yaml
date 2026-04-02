@@ -1,0 +1,151 @@
+openapi: 3.1.0
+info:
+  title: Dynamic Form UI Contract
+  version: 0.1.0
+  description: >
+    Contract for reusable language switch UI behavior, dynamic contact form field
+    configuration, and public contact form submission.
+servers:
+  - url: https://example.com
+paths:
+  /api/admin/form-fields:
+    get:
+      summary: Load dynamic contact form field configuration for admin editing
+      operationId: listAdminFormFields
+      responses:
+        "200":
+          description: Form field configuration loaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [fields]
+                properties:
+                  fields:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FormField"
+        "302":
+          description: Redirect to login or fallback route when access is denied
+    post:
+      summary: Save the dynamic contact form field configuration
+      operationId: saveAdminFormFields
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fields]
+              properties:
+                fields:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/FormFieldWrite"
+      responses:
+        "200":
+          description: Form configuration saved successfully
+        "400":
+          description: Validation error
+        "302":
+          description: Redirect to login or fallback route when access is denied
+  /api/forms/contact:
+    post:
+      summary: Submit the dynamic public contact form
+      operationId: submitContactForm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FormSubmissionWrite"
+      responses:
+        "200":
+          description: Submission accepted successfully
+        "400":
+          description: Validation error
+  /{lang}/{slug}:
+    get:
+      summary: Render a localized page that may contain a dynamic contact form section
+      operationId: getLocalizedPageWithDynamicForm
+      parameters:
+        - $ref: "#/components/parameters/Language"
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Page rendered successfully with banner and dynamic form sections as configured
+        "404":
+          description: Page not found
+components:
+  parameters:
+    Language:
+      name: lang
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [en, vi]
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  schemas:
+    LocalizedLabel:
+      type: object
+      required: [en]
+      properties:
+        en:
+          type: string
+          minLength: 1
+        vi:
+          type: string
+      additionalProperties:
+        type: string
+    FormField:
+      type: object
+      required: [id, type, label, required, order]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+          enum: [text, email, textarea]
+        label:
+          $ref: "#/components/schemas/LocalizedLabel"
+        required:
+          type: boolean
+        order:
+          type: integer
+          minimum: 1
+    FormFieldWrite:
+      type: object
+      required: [type, label, required, order]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+          enum: [text, email, textarea]
+        label:
+          $ref: "#/components/schemas/LocalizedLabel"
+        required:
+          type: boolean
+        order:
+          type: integer
+          minimum: 1
+    FormSubmissionWrite:
+      type: object
+      required: [language, values]
+      properties:
+        language:
+          type: string
+          enum: [en, vi]
+        values:
+          type: object
+          additionalProperties:
+            type: string
