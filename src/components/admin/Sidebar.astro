@@ -33,11 +33,14 @@ function isActiveLink(href: string, currentPath: string): boolean {
 
 	<div class="admin-sidebar-section border-bottom">
 		<p class="admin-sidebar-label">{t("headings.languageSwitcher")}</p>
-		<div class="admin-language-switcher">
+		<div class="btn-group btn-group-sm w-100" role="group" aria-label={t("headings.languageSwitcher")}>
 			{
 				languages.map((entry) => (
 					<a
-						class:list={["admin-language-link", entry.code === language && "is-active"]}
+						class:list={[
+							"btn",
+							entry.code === language ? "btn-dark" : "btn-outline-secondary",
+						]}
 						href={switchLanguageHref(entry.code)}
 					>
 						{entry.code.toUpperCase()}
@@ -64,25 +67,3 @@ function isActiveLink(href: string, currentPath: string): boolean {
 		<button class="admin-ghost-button admin-logout-button" type="submit">{t("actions.logOut")}</button>
 	</form>
 </nav>
-
-<style>
-	.admin-language-switcher {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	.admin-language-link {
-		padding: 0.25rem 0.6rem;
-		border: 1px solid rgba(var(--gray), 0.25);
-		border-radius: 999px;
-		text-decoration: none;
-		color: inherit;
-		font-size: 0.85rem;
-	}
-
-	.admin-language-link.is-active {
-		background: rgb(var(--accent));
-		border-color: rgb(var(--accent));
-		color: white;
-	}
-</style>

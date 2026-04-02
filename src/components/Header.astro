@@ -11,7 +11,7 @@ let headerAccentColor = '#2337ff';
 const { language, t, localizeHref, localizeAdminHref, switchLanguageHref } = getUiTranslations(Astro);
 const languages = getSupportedLanguages();
 let navItems: SiteNavItem[] = [
-	{ label: t("nav.home"), href: '/', sortOrder: 0 },
+	{ label: t("nav.home"), labelTranslations: { en: "Home", vi: "Trang chu" }, href: '/', sortOrder: 0 },
 ];
 
 try {
@@ -26,7 +26,10 @@ try {
 }
 
 if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.href === '/admin')) {
-	navItems = [...navItems, { label: t("nav.cms"), href: '/admin', sortOrder: 999 }];
+	navItems = [
+		...navItems,
+		{ label: t("nav.cms"), labelTranslations: { en: "CMS", vi: "CMS" }, href: '/admin', sortOrder: 999 },
+	];
 }
 ---
 
@@ -37,15 +40,21 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 			{
 				navItems.map((item) => (
 					<HeaderLink href={item.href.startsWith('/admin') ? localizeAdminHref(item.href) : localizeHref(item.href)}>
-						{item.label}
+						{item.labelTranslations?.[language] || item.labelTranslations?.en || item.label}
 					</HeaderLink>
 				))
 			}
 		</div>
-		<div class="language-links" aria-label={t("headings.languageSwitcher")}>
+		<div class="btn-group btn-group-sm ms-auto" role="group" aria-label={t("headings.languageSwitcher")}>
 			{
 				languages.map((entry) => (
-					<a class:list={["language-link", entry.code === language && "active"]} href={switchLanguageHref(entry.code)}>
+					<a
+						class:list={[
+							"btn",
+							entry.code === language ? "btn-dark" : "btn-outline-secondary",
+						]}
+						href={switchLanguageHref(entry.code)}
+					>
 						{entry.code.toUpperCase()}
 					</a>
 				))
@@ -108,21 +117,6 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 		display: flex;
 		flex-wrap: wrap;
 	}
-	.language-links {
-		display: flex;
-		gap: 0.5rem;
-		margin-left: auto;
-	}
-	.language-link {
-		font-size: 0.85rem;
-		border-radius: 999px;
-		border: 1px solid rgba(var(--black), 0.12);
-		padding: 0.35rem 0.7rem;
-	}
-	.language-link.active {
-		border-bottom-color: transparent;
-		background: color-mix(in srgb, var(--header-accent) 14%, white);
-	}
 	nav a {
 		padding: 1em 0.5em;
 		color: var(--header-text);
@@ -144,9 +138,6 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 		}
 		.internal-links {
 			justify-content: center;
-		}
-		.language-links {
-			margin-left: 0;
 		}
 		.social-links {
 			display: none;

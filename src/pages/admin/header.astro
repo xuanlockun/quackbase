@@ -22,7 +22,14 @@ let siteConfig = {
 	footerText: "Edge CMS. Content updates go live straight from D1.",
 	footerBackground: "#eef2f7",
 	footerTextColor: "#60739f",
-	navItems: [{ label: t("nav.home"), href: "/", sortOrder: 0 }],
+	navItems: [
+		{
+			label: t("nav.home"),
+			labelTranslations: { en: "Home", vi: "Trang chu" },
+			href: "/",
+			sortOrder: 0,
+		},
+	],
 };
 
 try {
@@ -60,13 +67,19 @@ try {
 					type="hidden"
 					name="navItems"
 					id="nav-items-payload"
-					value={siteConfig.navItems.map((item) => `${item.label}|${item.href}`).join("\n")}
+					value={JSON.stringify(
+						siteConfig.navItems.map((item) => ({
+							label: item.labelTranslations,
+							href: item.href,
+						})),
+					)}
 					disabled={Boolean(loadError)}
 				/>
 				<div class="nav-items-editor" data-nav-items-editor data-disabled={Boolean(loadError)} data-remove-label={t("actions.remove")}>
 					<div class="nav-items-table" role="table">
 						<div class="nav-items-header" role="row">
-							<span>{t("labels.label")}</span>
+							<span>{t("labels.label")} (EN)</span>
+							<span>{t("labels.label")} (VI)</span>
 							<span>{t("labels.link")}</span>
 							<span>{t("labels.action")}</span>
 						</div>
@@ -76,9 +89,16 @@ try {
 									<div class="nav-item-row" role="row">
 										<input
 											type="text"
-											value={item.label}
+											value={item.labelTranslations?.en ?? item.label}
 											placeholder="Home"
-											data-nav-label
+											data-nav-label-en
+											disabled={Boolean(loadError)}
+										/>
+										<input
+											type="text"
+											value={item.labelTranslations?.vi ?? ""}
+											placeholder="Trang chu"
+											data-nav-label-vi
 											disabled={Boolean(loadError)}
 										/>
 										<input
@@ -129,7 +149,7 @@ try {
 	.nav-items-header,
 	.nav-item-row {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) auto;
 		gap: 0.75rem;
 		align-items: center;
 	}
@@ -172,31 +192,46 @@ try {
 			return;
 		}
 
-		const rows = Array.from(rowsContainer.querySelectorAll(".nav-item-row"));
-		const lines = rows
+				const rows = Array.from(rowsContainer.querySelectorAll(".nav-item-row"));
+		const entries = rows
 			.map((row) => {
-				const label = row.querySelector("[data-nav-label]");
+				const labelEn = row.querySelector("[data-nav-label-en]");
+				const labelVi = row.querySelector("[data-nav-label-vi]");
 				const href = row.querySelector("[data-nav-href]");
 
-				if (!(label instanceof HTMLInputElement) || !(href instanceof HTMLInputElement)) {
-					return "";
+				if (
+					!(labelEn instanceof HTMLInputElement) ||
+					!(labelVi instanceof HTMLInputElement) ||
+					!(href instanceof HTMLInputElement)
+				) {
+					return null;
 				}
 
-				const nextLabel = label.value.trim();
+				const nextLabelEn = labelEn.value.trim();
+				const nextLabelVi = labelVi.value.trim();
 				const nextHref = href.value.trim();
-				return nextLabel && nextHref ? `${nextLabel}|${nextHref}` : "";
+				return nextLabelEn && nextHref
+					? {
+							label: {
+								en: nextLabelEn,
+								...(nextLabelVi ? { vi: nextLabelVi } : {}),
+							},
+							href: nextHref,
+						}
+					: null;
 			})
 			.filter(Boolean);
 
-		payloadInput.value = lines.join("\n");
+		payloadInput.value = JSON.stringify(entries);
 	};
 
-	const createRow = (label = "", href = "") => {
+	const createRow = (labelEn = "", labelVi = "", href = "") => {
 		const row = document.createElement("div");
 		row.className = "nav-item-row";
 		row.setAttribute("role", "row");
 		row.innerHTML = `
-			<input type="text" value="${label}" placeholder="Home" data-nav-label />
+			<input type="text" value="${labelEn}" placeholder="Home" data-nav-label-en />
+			<input type="text" value="${labelVi}" placeholder="Trang chu" data-nav-label-vi />
 			<input type="text" value="${href}" placeholder="/about or https://example.com" data-nav-href />
 			<button class="admin-ghost-button nav-item-remove" type="button" data-nav-remove>${removeLabel}</button>
 		`;
@@ -221,7 +256,7 @@ try {
 
 		rowsContainer.append(createRow());
 		syncPayload();
-		const lastLabel = rowsContainer.querySelector(".nav-item-row:last-child [data-nav-label]");
+		const lastLabel = rowsContainer.querySelector(".nav-item-row:last-child [data-nav-label-en]");
 		if (lastLabel instanceof HTMLInputElement) {
 			lastLabel.focus();
 		}

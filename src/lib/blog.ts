@@ -72,6 +72,7 @@ export interface AdminPostDetail extends AdminPostSummary {
 
 export interface SiteNavItem {
 	label: string;
+	labelTranslations: LocalizedText;
 	href: string;
 	sortOrder: number;
 }
@@ -246,11 +247,17 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 		footerText: footerSettings?.footer_text ?? "Edge CMS. Content updates go live straight from D1.",
 		footerBackground: footerSettings?.footer_background ?? "#eef2f7",
 		footerTextColor: footerSettings?.footer_text_color ?? "#60739f",
-		navItems: (navResult.results ?? []).map((item) => ({
-			label: item.label,
-			href: item.href,
-			sortOrder: item.sort_order,
-		})),
+		navItems: (navResult.results ?? []).map((item) => {
+			const labelTranslations = normalizeLocalizedText(item.label, {
+				fallbackValue: item.label,
+			});
+			return {
+				label: resolveLocalizedValue(labelTranslations, DEFAULT_LANGUAGE),
+				labelTranslations,
+				href: item.href,
+				sortOrder: item.sort_order,
+			};
+		}),
 	};
 }
 
@@ -312,7 +319,7 @@ export async function saveSiteConfig(
 					`INSERT INTO navigation_items (label, href, sort_order, is_visible)
 					VALUES (?1, ?2, ?3, 1)`,
 				)
-				.bind(item.label.trim(), normalizeHref(item.href), index),
+				.bind(stringifyLocalizedText(item.labelTranslations), normalizeHref(item.href), index),
 		),
 	];
 
@@ -649,23 +656,48 @@ export function parseSiteForm(formData: FormData): {
 	const footerTextColor = optionalString(formData, "footerTextColor") || "#60739f";
 	const navRaw = optionalString(formData, "navItems");
 
-	const navItems = navRaw
-		.split(/\r?\n/)
-		.map((line) => line.trim())
-		.filter(Boolean)
-		.map((line, index) => {
-			const [labelPart, hrefPart] = line.split("|");
-			const label = labelPart?.trim();
-			const href = hrefPart?.trim();
-			if (!label || !href) {
-				throw new Error("Navigation items must use the format Label|/path");
-			}
-			return {
-				label,
-				href,
-				sortOrder: index,
-			};
-		});
+	let navItems: SiteNavItem[] = [];
+	try {
+		const parsed = JSON.parse(navRaw);
+		if (Array.isArray(parsed)) {
+			navItems = parsed.map((item, index) => {
+				const record = item as Record<string, unknown>;
+				const href = typeof record.href === "string" ? record.href.trim() : "";
+				const labelTranslations = normalizeLocalizedText(record.label ?? record.labelTranslations, {
+					requireDefault: true,
+				});
+				if (!href) {
+					throw new Error("Navigation items must include a link.");
+				}
+				return {
+					label: resolveLocalizedValue(labelTranslations, DEFAULT_LANGUAGE),
+					labelTranslations,
+					href,
+					sortOrder: index,
+				};
+			});
+		}
+	} catch {
+		navItems = navRaw
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter(Boolean)
+			.map((line, index) => {
+				const [labelPart, hrefPart] = line.split("|");
+				const label = labelPart?.trim();
+				const href = hrefPart?.trim();
+				if (!label || !href) {
+					throw new Error("Navigation items must use the format Label|/path");
+				}
+				const labelTranslations = normalizeLocalizedText({ en: label }, { requireDefault: true });
+				return {
+					label,
+					labelTranslations,
+					href,
+					sortOrder: index,
+				};
+			});
+	}
 
 	return {
 		siteTitle,
@@ -854,10 +886,20 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 		),
 		db.prepare(
 			`INSERT INTO navigation_items (label, href, sort_order, is_visible)
-			SELECT 'Home', '/', 0, 1
+			SELECT json_object('en', 'Home', 'vi', 'Trang chu'), '/', 0, 1
 			WHERE NOT EXISTS (SELECT 1 FROM navigation_items)`,
 		),
 	]);
+
+	await db
+		.prepare(
+			`UPDATE navigation_items
+			SET label = CASE
+				WHEN json_valid(label) THEN label
+				ELSE json_object('en', label)
+			END`,
+		)
+		.run();
 }
 
 async function ensurePostTables(db: D1Database): Promise<void> {
