@@ -347,3 +347,92 @@ CREATE TABLE users (
 CREATE TABLE IF NOT EXISTS users (...);
 CREATE INDEX idx_users_email ON users(email);
 ```
+
+## 11. AI Output Validation Layer (Bắt buộc trước Deploy)
+
+Sau khi AI sinh code, KHÔNG được deploy ngay. 
+Phải đi qua lớp kiểm tra tự động để đảm bảo code tuân thủ Spec.
+
+### 11.1 Schema Validation
+
+- Sử dụng Zod hoặc TypeBox để validate input/output
+- Mapping trực tiếp từ Spec → schema
+
+**Ví dụ:**
+- Spec định nghĩa: `{ email: string }`
+- Code phải có validator tương ứng
+
+---
+
+### 11.2 Contract Testing (OpenAPI)
+
+- Tự động generate OpenAPI từ Spec hoặc code
+- So sánh:
+  - API thực tế vs Spec
+- Fail nếu mismatch
+
+---
+
+### 11.3 Lint Rules bắt buộc
+
+- ESLint / Biome rules:
+  - Không hardcode role
+  - Không bypass validation
+  - Không query DB trực tiếp ngoài service layer
+
+---
+
+### 11.4 CI Check: Spec vs Code
+
+Trong pipeline CI:
+
+- Parse Spec (`/specs/*.md` hoặc `.yaml`)
+- So sánh với:
+  - API routes thực tế
+  - DB schema
+- Nếu lệch → fail build
+
+---
+
+### 11.5 Nguyên tắc
+
+- ❌ Không có validation → không merge
+- ❌ Không pass CI → không deploy
+- ✅ Spec là source of truth
+
+## 12. Spec Lifecycle & State Management
+
+Mỗi Spec phải có trạng thái rõ ràng để kiểm soát việc AI code và thay đổi.
+
+### 12.1 Các trạng thái
+
+| State | Ý nghĩa | Có được code không? |
+|-------|--------|---------------------|
+| Draft | Đang viết | ❌ |
+| Review | Đang review nội bộ | ❌ |
+| Approved | Đã thống nhất với team/khách | ✅ |
+| In Development | AI đang code | ✅ |
+| Implemented | Đã code xong | ✅ |
+| Deprecated | Không còn dùng | ❌ |
+| Archived | Lưu trữ | ❌ |
+
+---
+
+### 12.2 Rule bắt buộc
+
+- ❌ Không được AI code khi Spec chưa `Approved`
+- ❌ Không sửa trực tiếp Spec `Implemented`
+- ✅ Nếu thay đổi lớn → tạo Spec mới + mark Spec cũ `Deprecated`
+- ✅ Mỗi Spec phải có version (`v1.0`, `v1.1`, ...)
+
+---
+
+### 12.3 Metadata mẫu
+
+```markdown
+## Metadata
+- **ID:** 005-content-i18n
+- **Status:** Approved
+- **Version:** 1.1.0
+- **Last Updated:** 2026-04-07
+- **Dependencies:** 003-post-crud
