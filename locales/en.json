@@ -175,6 +175,7 @@
     "manageRoleForm": "Manage role labels and permission bundles from a dedicated form.",
     "manageUserForm": "Manage admin user access and role assignments from one dedicated form.",
     "pageSectionsHelp": "Enable the sections you want and set the order they should appear on the page.",
+    "noPageSectionsConfigured": "No page sections configured yet.",
     "pageContent": "Page content",
     "pageContentHelp": "The localized content you wrote in the active language panel above.",
     "bannerSlider": "Banner slider",

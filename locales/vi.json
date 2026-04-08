@@ -175,6 +175,7 @@
     "manageRoleForm": "Quản lý nhãn vai trò và bộ quyền trong một form riêng.",
     "manageUserForm": "Quản lý truy cập admin và phân vai trò trong một form.",
     "pageSectionsHelp": "Bật các section bạn muốn và đặt thứ tự hiển thị trên trang.",
+    "noPageSectionsConfigured": "Chưa có phần trang nào được cấu hình.",
     "pageContent": "Nội dung trang",
     "pageContentHelp": "Nội dung đa ngôn ngữ bạn vừa nhập trong tab đang chọn ở trên.",
     "bannerSlider": "Banner slider",

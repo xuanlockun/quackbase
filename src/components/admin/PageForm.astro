@@ -78,6 +78,8 @@ const sectionCatalog = [
 	},
 ];
 const sectionCatalogJson = JSON.stringify(sectionCatalog);
+const sectionCatalogMap = new Map(sectionCatalog.map((entry) => [entry.type, entry]));
+const sectionRemoveLabelText = t("actions.remove");
 const initialContactFields = contactFormFields.map((field) => ({
 		id: field.id,
 		type: field.type,
@@ -228,21 +230,57 @@ const initialContactFields = contactFormFields.map((field) => ({
                         disabled={isDisabled}
                 />
 
-                <div
-                        class="admin-table"
-                        aria-label={t("headings.pageSections")}
-                        data-page-sections-editor
-                        data-section-remove-label={t("actions.remove")}
-                        data-section-catalog={sectionCatalogJson}
-                >
-                        <div class="admin-table-row admin-table-head" role="row">
-                                <span></span>
-                                <span>Section</span>
-                                <span>Details</span>
-                                <span>Actions</span>
-                        </div>
-                        <div class="admin-table-body" data-section-rows></div>
+        <div
+                class="admin-table"
+                aria-label={t("headings.pageSections")}
+                data-page-sections-editor
+                data-section-remove-label={t("actions.remove")}
+                data-section-catalog={sectionCatalogJson}
+        >
+                <div class="admin-table-row admin-table-head" role="row">
+                        <span></span>
+                        <span>Section</span>
+                        <span>Details</span>
+                        <span>Actions</span>
                 </div>
+                <div class="admin-table-body" data-section-rows>
+                        <p class="admin-table-empty admin-muted" data-section-empty hidden={initialSections.length > 0}>
+                                {t("messages.noPageSectionsConfigured")}
+                        </p>
+                        {
+                                initialSections.map((section) => {
+                                        const metadata = sectionCatalogMap.get(section.type) ?? sectionCatalog[0];
+                                        return (
+                                                <div
+                                                        class="admin-table-row section-row"
+                                                        data-section-row
+                                                        data-section-type={metadata.type}
+                                                        draggable={!isDisabled ? "true" : "false"}
+                                                >
+                                                        <span class="drag-handle" data-drag-handle aria-label={metadata.label}></span>
+                                                        <span>
+                                                                <strong>{metadata.label}</strong>
+                                                                <p class="admin-compact-copy">{metadata.description}</p>
+                                                        </span>
+                                                        <span class="section-control">
+                                                                <p class="admin-compact-copy">{metadata.details}</p>
+                                                        </span>
+                                                        <span class="section-actions">
+                                                                <button
+                                                                        class="admin-ghost-button"
+                                                                        type="button"
+                                                                        data-section-remove={metadata.removable === false ? undefined : ""}
+                                                                        disabled={metadata.removable === false || isDisabled}
+                                                                >
+                                                                        {sectionRemoveLabelText}
+                                                                </button>
+                                                        </span>
+                                                </div>
+                                        );
+                                })
+                        }
+                </div>
+        </div>
         </div>
 
         <div class="admin-form-section contact-fields-wrapper" data-contact-fields-wrapper hidden>
@@ -388,6 +426,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 	const sectionAddButton = document.querySelector("[data-section-add]");
 	const sectionEditor = document.querySelector("[data-page-sections-editor]");
 	const sectionRemoveLabel = sectionEditor?.dataset.sectionRemoveLabel ?? "Remove";
+	const sectionEmptyState = sectionEditor?.querySelector("[data-section-empty]");
 	const sectionAddLabel = sectionSelect?.dataset.sectionAddLabel ?? "Add section";
 	const SECTION_CATALOG = parseConfig(sectionEditor?.dataset.sectionCatalog);
 	const contactWrapper = document.querySelector("[data-contact-fields-wrapper]");
@@ -398,18 +437,6 @@ const initialContactFields = contactFormFields.map((field) => ({
 	const isSectionReadOnly = sectionAddButton?.dataset.readonly === "true";
 	const isContactReadOnly = addContactButton?.dataset.readonly === "true";
 	let nextFieldId = 0;
-
-	const initialSections = parseConfig(sectionInput?.value);
-	if (initialSections.length === 0 && SECTION_CATALOG.length > 0) {
-		const defaultSection = SECTION_CATALOG[0];
-		initialSections.push({ type: defaultSection.type });
-	}
-	initialSections.forEach((entry) => {
-		sectionRows?.appendChild(createSectionRow(entry.type));
-	});
-	updateSectionPicker();
-	toggleContactFields(initialSections.some((entry) => entry.type === "contact_form"));
-	syncSections();
 
 	const initialContactFields = parseConfig(contactPayload?.value);
 	nextFieldId = initialContactFields.reduce((max, field) => Math.max(max, Number(field.id ?? 0)), 0);
@@ -449,6 +476,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 			onReorder: syncSections,
 		});
 	}
+	syncSections();
 
 	addContactButton?.addEventListener("click", () => {
 		if (!contactRows) {
@@ -526,10 +554,11 @@ const initialContactFields = contactFormFields.map((field) => ({
 			const type = row.dataset.sectionType;
 			return type ? { type } : null;
 		});
-		sectionInput.value = JSON.stringify(payload);
-		updateSectionPicker();
-		toggleContactFields(payload.some((entry) => entry.type === "contact_form"));
-	}
+	sectionInput.value = JSON.stringify(payload);
+	updateSectionPicker();
+	toggleContactFields(payload.some((entry) => entry.type === "contact_form"));
+	updateSectionEmptyState();
+}
 
 	function updateSectionPicker() {
 		if (!sectionSelect || !sectionRows) {
@@ -559,6 +588,13 @@ const initialContactFields = contactFormFields.map((field) => ({
 			return;
 		}
 		contactWrapper.hidden = !visible;
+	}
+
+	function updateSectionEmptyState() {
+		if (!sectionEmptyState || !sectionRows) {
+			return;
+		}
+		sectionEmptyState.hidden = Boolean(sectionRows.querySelector("[data-section-row]"));
 	}
 
 	function createContactFieldRow(field = {}) {
