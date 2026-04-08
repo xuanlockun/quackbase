@@ -4,6 +4,7 @@ export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import LanguageForm from "../../components/admin/LanguageForm.astro";
 import LanguageTable from "../../components/admin/LanguageTable.astro";
+import languageManagerScript from "../../components/admin/language-manager.ts?url";
 import { getDb } from "../../lib/blog";
 import { listAllLanguages } from "../../lib/languages";
 import { getUiTranslations } from "../../lib/i18n";
@@ -55,5 +56,5 @@ try {
 		<div data-language-notice aria-live="polite"></div>
 	</div>
 
-	<script type="module" src={Astro.resolve("../../components/admin/language-manager.ts")} client:load></script>
+	<script type="module" src={languageManagerScript} client:load></script>
 </AdminLayout>
