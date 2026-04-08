@@ -268,7 +268,7 @@ try {
 		syncPayload();
 	});
 
-	function attachNavRow(row: HTMLElement) {
+	function attachNavRow(row) {
 		if (row.dataset.navRowDragAttached === "true") {
 			return;
 		}
@@ -280,7 +280,7 @@ try {
 		row.addEventListener("dragend", onNavDragEnd);
 	}
 
-	function onNavDragStart(event: DragEvent) {
+	function onNavDragStart(event) {
 		if (isReadOnly) {
 			return;
 		}
@@ -294,7 +294,7 @@ try {
 		event.dataTransfer?.setDragImage(row, 0, 0);
 	}
 
-	function onNavDragOver(event: DragEvent) {
+	function onNavDragOver(event) {
 		if (!draggedNavRow) {
 			return;
 		}
@@ -312,7 +312,7 @@ try {
 		}
 	}
 
-	function onNavDragDrop(event: DragEvent) {
+	function onNavDragDrop(event) {
 		event.preventDefault();
 		if (!draggedNavRow) {
 			return;

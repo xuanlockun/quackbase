@@ -816,7 +816,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 					order: index + 1,
 				};
 			})
-			.filter((field): field is { id?: number; type: string; required: boolean; label: { en: string; vi?: string }; order: number } => Boolean(field));
+			.filter((field) => Boolean(field));
 
 		contactPayload.value = JSON.stringify(fields);
 		if (contactEmptyState) {
