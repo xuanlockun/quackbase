@@ -194,7 +194,6 @@ try {
 	const addButton = editor?.querySelector("[data-nav-add]");
 	const removeLabel = editor instanceof HTMLElement ? editor.dataset.removeLabel || "Remove" : "Remove";
 	const isReadOnly = editor instanceof HTMLElement && editor.dataset.disabled === "true";
-	const navRowSelector = "[data-nav-row]";
 	let draggedNavRow: HTMLElement | null = null;
 
 	const syncPayload = () => {
@@ -248,8 +247,15 @@ try {
 			<input type="text" value="${href}" placeholder="/about or https://example.com" data-nav-href ${isReadOnly ? "disabled" : ""} />
 			<button class="admin-ghost-button nav-item-remove" type="button" data-nav-remove ${isReadOnly ? "disabled" : ""}>${removeLabel}</button>
 		`;
+		attachNavRow(row);
 		return row;
 	};
+
+	rowsContainer?.querySelectorAll(".nav-item-row").forEach((row) => {
+		if (row instanceof HTMLElement) {
+			attachNavRow(row);
+		}
+	});
 
 	rowsContainer?.addEventListener("input", syncPayload);
 	rowsContainer?.addEventListener("click", (event) => {
@@ -262,27 +268,39 @@ try {
 		syncPayload();
 	});
 
-	rowsContainer?.addEventListener("dragstart", (event) => {
+	function attachNavRow(row: HTMLElement) {
+		if (row.dataset.navRowDragAttached === "true") {
+			return;
+		}
+		row.dataset.navRowDragAttached = "true";
+		row.draggable = !isReadOnly;
+		row.addEventListener("dragstart", onNavDragStart);
+		row.addEventListener("dragover", onNavDragOver);
+		row.addEventListener("drop", onNavDragDrop);
+		row.addEventListener("dragend", onNavDragEnd);
+	}
+
+	function onNavDragStart(event: DragEvent) {
 		if (isReadOnly) {
 			return;
 		}
-		const row = findNavRow(event.target);
-		if (!row) {
+		const row = event.currentTarget;
+		if (!(row instanceof HTMLElement)) {
 			return;
 		}
 		draggedNavRow = row;
 		row.classList.add("is-dragging");
 		event.dataTransfer?.setData("text/plain", "");
 		event.dataTransfer?.setDragImage(row, 0, 0);
-	});
+	}
 
-	rowsContainer?.addEventListener("dragover", (event) => {
+	function onNavDragOver(event: DragEvent) {
 		if (!draggedNavRow) {
 			return;
 		}
 		event.preventDefault();
-		const row = findNavRow(event.target);
-		if (!row || row === draggedNavRow) {
+		const row = event.currentTarget;
+		if (!(row instanceof HTMLElement) || row === draggedNavRow) {
 			return;
 		}
 		const bounding = row.getBoundingClientRect();
@@ -292,9 +310,9 @@ try {
 		} else {
 			row.before(draggedNavRow);
 		}
-	});
+	}
 
-	rowsContainer?.addEventListener("drop", (event) => {
+	function onNavDragDrop(event: DragEvent) {
 		event.preventDefault();
 		if (!draggedNavRow) {
 			return;
@@ -302,17 +320,13 @@ try {
 		draggedNavRow.classList.remove("is-dragging");
 		draggedNavRow = null;
 		syncPayload();
-	});
+	}
 
-	rowsContainer?.addEventListener("dragend", () => {
+	function onNavDragEnd() {
 		if (draggedNavRow) {
 			draggedNavRow.classList.remove("is-dragging");
 			draggedNavRow = null;
 		}
-	});
-
-	function findNavRow(target: EventTarget | null): HTMLElement | null {
-		return target instanceof Element ? target.closest(navRowSelector) : null;
 	}
 
 	addButton?.addEventListener("click", () => {
