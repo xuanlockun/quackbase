@@ -4,7 +4,7 @@ export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import PostTable from "../../components/admin/PostTable.astro";
 import { getDb, listAllPosts, toAdminPostSummary } from "../../lib/blog";
-import { getUiTranslations, localizeHref } from "../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations, localizeHref } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -15,12 +15,15 @@ const canCreate = session.isSuperadmin || session.permissions.includes("posts.cr
 const canUpdate = session.isSuperadmin || session.permissions.includes("posts.update");
 const canDelete = session.isSuperadmin || session.permissions.includes("posts.delete");
 const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
 
 let posts = [];
 let loadError = "";
 
 try {
-	posts = (await listAllPosts(getDb(Astro.locals), language)).map((post) => toAdminPostSummary(post, language));
+	posts = (await listAllPosts(getDb(Astro.locals), language, catalog)).map((post) =>
+		toAdminPostSummary(post, language, catalog),
+	);
 } catch (error) {
 	loadError = error instanceof Error ? error.message : t("messages.failedToLoadPosts");
 }

@@ -7,7 +7,7 @@ import {
 	toAdminPostDetail,
 	updatePost,
 } from "../../../../lib/blog";
-import { getSupportedLanguages } from "../../../../lib/i18n";
+import { getLanguageCatalog, getSupportedLanguages } from "../../../../lib/i18n";
 import { requireApiPermission } from "../../../../lib/rbac/guards";
 
 export const prerender = false;
@@ -27,15 +27,16 @@ export const GET: APIRoute = async ({ params, locals, request, redirect }) => {
 		return Response.json({ error: "Post not found." }, { status: 404 });
 	}
 
-	const post = await getPostById(getDb(locals), id);
+	const catalog = getLanguageCatalog(locals);
+	const post = await getPostById(getDb(locals), id, undefined, catalog);
 	if (!post) {
 		return Response.json({ error: "Post not found." }, { status: 404 });
 	}
 
-	const language = locals.uiLanguage ?? "en";
+	const language = locals.uiLanguage ?? catalog.defaultLanguageCode;
 	return Response.json({
-		languages: getSupportedLanguages(),
-		post: toAdminPostDetail(post, language),
+		languages: getSupportedLanguages(catalog),
+		post: toAdminPostDetail(post, language, catalog),
 	});
 };
 
@@ -55,8 +56,12 @@ export const POST: APIRoute = async ({ params, locals, request, redirect }) => {
 	}
 
 	try {
+		const catalog = getLanguageCatalog(locals);
+		const defLang = catalog.defaultLanguageCode;
 		const isJsonRequest = request.headers.get("content-type")?.includes("application/json") ?? false;
-		const input = isJsonRequest ? parsePostPayload(await request.json()) : parsePostForm(await request.formData());
+		const input = isJsonRequest
+			? parsePostPayload(await request.json(), defLang)
+			: parsePostForm(await request.formData(), defLang);
 		await updatePost(getDb(locals), id, input);
 		if (isJsonRequest) {
 			return Response.json({

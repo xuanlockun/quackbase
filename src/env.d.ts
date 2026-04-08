@@ -1,3 +1,5 @@
+import type { LanguageCatalogState } from "./lib/languages";
+
 interface Env {
 	DB: D1Database;
 	JWT_SECRET: string;
@@ -10,5 +12,6 @@ declare namespace App {
 	interface Locals extends Runtime {
 		adminSession: AdminSession | null;
 		uiLanguage: string;
+		languageCatalog: LanguageCatalogState;
 	}
 }

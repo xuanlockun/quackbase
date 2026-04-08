@@ -1,6 +1,8 @@
 import { defineMiddleware } from "astro:middleware";
+import { getDb } from "./lib/blog";
 import { clearAdminSessionCookie } from "./lib/auth/cookies";
 import { resolveAdminSession } from "./lib/auth/session";
+import { FALLBACK_LANGUAGE_CATALOG, loadLanguageCatalog } from "./lib/languages";
 import { readUiLanguagePreference, resolveUiLanguage, writeUiLanguagePreference } from "./lib/i18n";
 import {
 	getDefaultAdminPath,
@@ -10,13 +12,25 @@ import {
 
 export const onRequest = defineMiddleware(async (context, next) => {
 	const { pathname } = context.url;
-	const storedUiLanguage = readUiLanguagePreference(context.cookies);
-	const { language: uiLanguage, explicitLanguage } = resolveUiLanguage(context.url, storedUiLanguage);
+
+	try {
+		const db = getDb(context.locals);
+		context.locals.languageCatalog = await loadLanguageCatalog(db);
+	} catch {
+		context.locals.languageCatalog = FALLBACK_LANGUAGE_CATALOG;
+	}
+
+	const storedUiLanguage = readUiLanguagePreference(context.cookies, context.locals.languageCatalog);
+	const { language: uiLanguage, explicitLanguage } = resolveUiLanguage(
+		context.url,
+		storedUiLanguage,
+		context.locals.languageCatalog,
+	);
 
 	context.locals.uiLanguage = uiLanguage;
 
 	if (explicitLanguage && explicitLanguage !== storedUiLanguage) {
-		writeUiLanguagePreference(context.cookies, explicitLanguage);
+		writeUiLanguagePreference(context.cookies, explicitLanguage, context.locals.languageCatalog);
 	}
 
 	if (!pathname.startsWith("/admin")) {

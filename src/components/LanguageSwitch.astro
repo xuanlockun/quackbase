@@ -1,5 +1,5 @@
 ---
-import { getLanguageSwitchOptions, getUiTranslations } from "../lib/i18n";
+import { getLanguageCatalog, getLanguageSwitchOptions, getUiTranslations } from "../lib/i18n";
 
 interface Props {
 	fullWidth?: boolean;
@@ -7,7 +7,8 @@ interface Props {
 
 const { fullWidth = false } = Astro.props;
 const { t, language } = getUiTranslations(Astro);
-const options = getLanguageSwitchOptions(Astro.url, language);
+const catalog = getLanguageCatalog(Astro.locals);
+const options = getLanguageSwitchOptions(Astro.url, language, catalog);
 ---
 
 <div class:list={["language-switch", fullWidth && "language-switch-full"]} role="group" aria-label={t("headings.languageSwitcher")}>

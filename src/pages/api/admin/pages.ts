@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { createPage, getDb, parsePageForm, parsePagePayload, updatePage } from "../../../lib/blog";
 import { parseFormFieldsForm, parseFormFieldsPayload, saveFormFields } from "../../../lib/forms";
+import { getLanguageCatalog } from "../../../lib/i18n";
 import { requireApiPermission } from "../../../lib/rbac/guards";
 
 export const prerender = false;
@@ -23,7 +24,8 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			return session;
 		}
 
-		const input = isJsonRequest ? parsePagePayload(payload) : parsePageForm(formData as FormData);
+		const defLang = getLanguageCatalog(locals).defaultLanguageCode;
+		const input = isJsonRequest ? parsePagePayload(payload, defLang) : parsePageForm(formData as FormData, defLang);
 		const db = getDb(locals);
 		const shouldSaveFormFields = isJsonRequest
 			? Boolean(

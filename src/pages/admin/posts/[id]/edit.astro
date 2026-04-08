@@ -5,7 +5,7 @@ import type { AdminPostDetail } from "../../../../lib/blog";
 import PostForm from "../../../../components/admin/PostForm.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { getDb, getPostById, toAdminPostDetail } from "../../../../lib/blog";
-import { getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -15,6 +15,7 @@ if (!session) {
 const canUpdate = session.isSuperadmin || session.permissions.includes("posts.update");
 const { id } = Astro.params;
 const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
 
 let post: AdminPostDetail | null = null;
 let loadError = "";
@@ -25,8 +26,8 @@ try {
 	if (!Number.isInteger(postId) || postId <= 0) {
 		notFound = true;
 	} else {
-		const record = await getPostById(getDb(Astro.locals), postId);
-		post = record ? toAdminPostDetail(record, language) : null;
+		const record = await getPostById(getDb(Astro.locals), postId, language, catalog);
+		post = record ? toAdminPostDetail(record, language, catalog) : null;
 		notFound = !post;
 	}
 } catch (error) {

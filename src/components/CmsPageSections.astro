@@ -8,7 +8,7 @@ import {
 import BannerSection from "./BannerSection.astro";
 import DynamicForm from "./DynamicForm.astro";
 import { listFormFields } from "../lib/forms";
-import { getUiTranslations } from "../lib/i18n";
+import { getLanguageCatalog, getUiTranslations } from "../lib/i18n";
 
 interface Props {
 	pageSections: PageSectionConfig[];
@@ -17,7 +17,8 @@ interface Props {
 	currentPath?: string;
 }
 
-const { pageSections, contentHtml, currentLanguage = "en", currentPath = "/" } = Astro.props;
+const catalog = getLanguageCatalog(Astro.locals);
+const { pageSections, contentHtml, currentLanguage = catalog.defaultLanguageCode, currentPath = "/" } = Astro.props;
 const { t } = getUiTranslations(Astro);
 
 let posts = [];
@@ -26,7 +27,7 @@ let contactFields = [];
 try {
 	const db = getDb(Astro.locals);
 	if (pageSections.some((section) => section.type === "blog_feed")) {
-		posts = await listPublishedPosts(db, currentLanguage);
+		posts = await listPublishedPosts(db, currentLanguage, catalog);
 	}
 	if (pageSections.some((section) => section.type === "contact_form")) {
 		contactFields = await listFormFields(db);
@@ -56,7 +57,7 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 					<div class="card-grid">
 						{
 							posts.slice(0, 6).map((post) => (
-								<a class="mini-card" href={getLocalizedPostPath(post.slugTranslations, currentLanguage)}>
+								<a class="mini-card" href={getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog)}>
 									<img src={post.heroImage || "/blog-placeholder-1.jpg"} alt="" width={520} height={292} />
 									<h3>{post.title}</h3>
 									<p>{post.description}</p>

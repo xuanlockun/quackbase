@@ -1,6 +1,6 @@
 ﻿# astro-blog-starter-template Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-02
+Auto-generated from all feature plans. Last updated: 2026-04-08
 
 ## Active Technologies
 - TypeScript 5.9, Astro 5, Node.js 22 compatibility in the Cloudflare Workers runtime + Astro, `@astrojs/cloudflare`, Wrangler, D1-backed content helpers in `src/lib/blog.ts`, existing RBAC guards and policies, and shared admin UI styles/components (002-admin-ui-refactor)
@@ -17,6 +17,8 @@ Auto-generated from all feature plans. Last updated: 2026-04-02
 - Cloudflare D1 (SQLite) with `posts.slug`, `posts.title`, `posts.description`, and `posts.content` stored as JSON strings in `TEXT` columns; migration wraps legacy scalar slug values into default-language JSON (007-localized-post-urls)
 - TypeScript 5.9, Astro 5, CSS, Node.js 22 compatibility in the Cloudflare Workers runtime + Astro, `@astrojs/cloudflare`, Wrangler, Cloudflare D1, existing `src/lib/blog.ts` content helpers, existing `src/lib/i18n.ts` language utilities, shared Astro admin/frontend components, Bootstrap 5 utility and form classes, and RBAC-protected admin pages (008-dynamic-form-ui)
 - Cloudflare D1 (SQLite) with a new `form_fields` table for dynamic field configuration and a new `form_submissions` table for submitted values; multilingual field labels stored as JSON strings in text columns (008-dynamic-form-ui)
+- TypeScript 5.9, Node.js 22 + Astro 5.16.x, `@astrojs/cloudflare`, Wrangler 4.x (009-dynamic-multilang-i18n)
+- Cloudflare D1 (SQLite); new `languages` table; existing `posts` JSON columns (009-dynamic-multilang-i18n)
 
 - TypeScript 5.9, Astro 5, Node.js 22 compatibility in the Cloudflare Workers runtime + Astro, `@astrojs/cloudflare`, Wrangler, D1, a Worker-compatible JWT library, `bcryptjs`, and shared cookie utilities (001-admin-auth-rbac)
 
@@ -37,8 +39,8 @@ npm test; npm run lint
 TypeScript 5.9, Astro 5, Node.js 22 compatibility in the Cloudflare Workers runtime: Follow standard conventions
 
 ## Recent Changes
+- 009-dynamic-multilang-i18n: Added TypeScript 5.9, Node.js 22 + Astro 5.16.x, `@astrojs/cloudflare`, Wrangler 4.x
 - 008-dynamic-form-ui: Added TypeScript 5.9, Astro 5, CSS, Node.js 22 compatibility in the Cloudflare Workers runtime + Astro, `@astrojs/cloudflare`, Wrangler, Cloudflare D1, existing `src/lib/blog.ts` content helpers, existing `src/lib/i18n.ts` language utilities, shared Astro admin/frontend components, Bootstrap 5 utility and form classes, and RBAC-protected admin pages
-- 007-localized-post-urls: Added TypeScript 5.9, Astro 5, CSS, Node.js 22 compatibility in the Cloudflare Workers runtime + Astro, `@astrojs/cloudflare`, Wrangler, Cloudflare D1, existing `src/lib/blog.ts` content helpers, existing `src/lib/i18n.ts` language utilities, shared admin Astro components/forms, and `micromark` rendering helpers
 - 007-localized-post-urls: Added TypeScript 5.9, Astro 5, CSS, Node.js 22 compatibility in the Cloudflare Workers runtime + Astro, `@astrojs/cloudflare`, Wrangler, Cloudflare D1, existing `src/lib/blog.ts` content helpers, existing `src/lib/i18n.ts` language utilities, shared admin Astro components/forms, and `micromark` rendering helpers
 
 

@@ -11,7 +11,8 @@
     "header": "Đầu trang",
     "users": "Người dùng",
     "roles": "Vai trò",
-    "permissions": "Quyền"
+    "permissions": "Quyền",
+    "languages": "Ngôn ngữ"
   },
   "actions": {
     "back": "Quay lại",

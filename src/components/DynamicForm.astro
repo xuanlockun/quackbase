@@ -3,7 +3,7 @@ import {
 	getRenderableFormFields,
 	type ContactFormField,
 } from "../lib/forms";
-import { getUiTranslations } from "../lib/i18n";
+import { getLanguageCatalog, getUiTranslations } from "../lib/i18n";
 
 interface Props {
 	fields: ContactFormField[];
@@ -11,9 +11,10 @@ interface Props {
 	sourcePath?: string;
 }
 
-const { fields, currentLanguage = "en", sourcePath = "/" } = Astro.props;
+const catalog = getLanguageCatalog(Astro.locals);
+const { fields, currentLanguage = catalog.defaultLanguageCode, sourcePath = "/" } = Astro.props;
 const { t } = getUiTranslations(Astro);
-const renderableFields = getRenderableFormFields(fields, currentLanguage);
+const renderableFields = getRenderableFormFields(fields, currentLanguage, catalog);
 ---
 
 {

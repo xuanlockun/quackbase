@@ -4,28 +4,30 @@ export const prerender = false;
 import BlogPost from "../layouts/BlogPost.astro";
 import CmsPageSections from "../components/CmsPageSections.astro";
 import { getDb, getPublishedPageBySlug, getSiteConfig } from "../lib/blog";
-import { getUiTranslations, isSupportedLanguage, resolveLanguage } from "../lib/i18n";
+import { getLanguageCatalog, getUiTranslations, isSupportedLanguage, resolveLanguage } from "../lib/i18n";
 
 const reservedSlugs = new Set(["admin"]);
 const slug = Astro.params.slug ?? "";
 const { t } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const def = catalog.defaultLanguageCode;
 
 let page = null;
-let language = "en";
+let language = def;
 
-if (isSupportedLanguage(slug)) {
+if (isSupportedLanguage(slug, catalog)) {
 	try {
 		const db = getDb(Astro.locals);
 		const config = await getSiteConfig(db);
-		language = resolveLanguage(slug);
-		page = await getPublishedPageBySlug(db, config.homePageSlug, language);
+		language = resolveLanguage(slug, catalog);
+		page = await getPublishedPageBySlug(db, config.homePageSlug, language, catalog);
 	} catch {
 		page = null;
 	}
 } else if (!reservedSlugs.has(slug)) {
 	try {
 		const db = getDb(Astro.locals);
-		page = await getPublishedPageBySlug(db, slug, "en");
+		page = await getPublishedPageBySlug(db, slug, def, catalog);
 	} catch {
 		page = null;
 	}

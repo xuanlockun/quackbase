@@ -1,6 +1,10 @@
 import type { AstroCookies } from "astro";
 import en from "../../locales/en.json";
 import vi from "../../locales/vi.json";
+import {
+	FALLBACK_LANGUAGE_CATALOG,
+	type LanguageCatalogState,
+} from "./languages";
 
 export interface SupportedLanguage {
 	code: string;
@@ -33,62 +37,80 @@ export interface LanguageSwitchOption {
 	isActive: boolean;
 }
 
+/** Legacy constant for UI locale files (`locales/en.json`, `locales/vi.json`) and string fallbacks. */
 export const DEFAULT_LANGUAGE = "en";
 export const UI_LANGUAGE_COOKIE = "edge-ui-language";
 const UI_LANGUAGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-
-export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
-	{ code: "en", label: "English" },
-	{ code: "vi", label: "Vietnamese" },
-];
 
 const UI_TRANSLATIONS: Record<string, TranslationTree> = {
 	en: en as TranslationTree,
 	vi: vi as TranslationTree,
 };
 
-export function getSupportedLanguages(): SupportedLanguage[] {
-	return [...SUPPORTED_LANGUAGES];
+export function getLanguageCatalog(locals?: App.Locals | null): LanguageCatalogState {
+	return locals?.languageCatalog ?? FALLBACK_LANGUAGE_CATALOG;
 }
 
-export function getDefaultLanguage(): string {
-	return DEFAULT_LANGUAGE;
+export function getSupportedLanguages(catalog?: LanguageCatalogState): SupportedLanguage[] {
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
+	return c.enabledLanguages.map((entry) => ({ code: entry.code, label: entry.label }));
 }
 
-export function isSupportedLanguage(language: string): boolean {
-	return SUPPORTED_LANGUAGES.some((entry) => entry.code === language);
+export function getDefaultLanguage(catalog?: LanguageCatalogState): string {
+	return catalog?.defaultLanguageCode ?? FALLBACK_LANGUAGE_CATALOG.defaultLanguageCode;
 }
 
-export function resolveLanguage(language?: string | null): string {
-	if (language && isSupportedLanguage(language)) {
+export function isSupportedLanguage(language: string, catalog?: LanguageCatalogState): boolean {
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
+	return c.enabledLanguages.some((entry) => entry.code === language);
+}
+
+export function resolveLanguage(language?: string | null, catalog?: LanguageCatalogState): string {
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
+	if (language && isSupportedLanguage(language, c)) {
 		return language;
 	}
-	return DEFAULT_LANGUAGE;
+	return c.defaultLanguageCode;
 }
 
-export function getLocalizedPostPath(slug: string | LocalizedText, language = DEFAULT_LANGUAGE): string {
+export function getLocalizedPostPath(
+	slug: string | LocalizedText,
+	language: string | undefined,
+	catalog?: LanguageCatalogState,
+): string {
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
 	const resolvedSlug =
 		typeof slug === "string"
 			? slug.trim()
-			: resolveLocalizedValue(normalizeLocalizedText(slug, { requireDefault: true }), language);
-	return `/${resolveLanguage(language)}/${resolvedSlug}/`;
+			: resolveLocalizedValue(
+					normalizeLocalizedText(slug, {
+						requireDefault: true,
+						defaultLanguageCode: c.defaultLanguageCode,
+					}),
+					language,
+					c,
+				);
+	return `/${resolveLanguage(language, c)}/${resolvedSlug}/`;
 }
 
-export function getLocalizedPagePath(slug: string, language = DEFAULT_LANGUAGE): string {
-	return `/${resolveLanguage(language)}/${slug}/`;
+export function getLocalizedPagePath(slug: string, language: string | undefined, catalog?: LanguageCatalogState): string {
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
+	return `/${resolveLanguage(language, c)}/${slug}/`;
 }
 
 export function resolveLocalizedValue(
 	translations: LocalizedText,
-	requestedLanguage = DEFAULT_LANGUAGE,
+	requestedLanguage: string | undefined,
+	catalog?: LanguageCatalogState,
 ): string {
-	const normalizedLanguage = resolveLanguage(requestedLanguage);
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
+	const normalizedLanguage = resolveLanguage(requestedLanguage, c);
 	const requestedValue = translations[normalizedLanguage]?.trim();
 	if (requestedValue) {
 		return requestedValue;
 	}
 
-	const defaultValue = translations[DEFAULT_LANGUAGE]?.trim();
+	const defaultValue = translations[c.defaultLanguageCode]?.trim();
 	if (defaultValue) {
 		return defaultValue;
 	}
@@ -98,11 +120,15 @@ export function resolveLocalizedValue(
 
 export function resolveLocalizedLabel(
 	translations: LocalizedText | string,
-	requestedLanguage = DEFAULT_LANGUAGE,
+	requestedLanguage: string | undefined,
+	catalog?: LanguageCatalogState,
 ): string {
 	return resolveLocalizedValue(
-		typeof translations === "string" ? normalizeLocalizedText(translations) : translations,
+		typeof translations === "string"
+			? normalizeLocalizedText(translations, { defaultLanguageCode: (catalog ?? FALLBACK_LANGUAGE_CATALOG).defaultLanguageCode })
+			: translations,
 		requestedLanguage,
+		catalog,
 	);
 }
 
@@ -111,8 +137,11 @@ export function normalizeLocalizedText(
 	options?: {
 		fallbackValue?: string;
 		requireDefault?: boolean;
+		/** Catalog default language key for required JSON fields (defaults to legacy `en`). */
+		defaultLanguageCode?: string;
 	},
 ): LocalizedText {
+	const defaultCode = options?.defaultLanguageCode ?? DEFAULT_LANGUAGE;
 	const entries: [string, string][] = [];
 
 	if (typeof input === "string") {
@@ -126,7 +155,7 @@ export function normalizeLocalizedText(
 		}
 
 		if (trimmed) {
-			entries.push([DEFAULT_LANGUAGE, trimmed]);
+			entries.push([defaultCode, trimmed]);
 		}
 	} else if (input && typeof input === "object" && !Array.isArray(input)) {
 		for (const [key, value] of Object.entries(input)) {
@@ -142,32 +171,47 @@ export function normalizeLocalizedText(
 	}
 
 	if (entries.length === 0 && options?.fallbackValue?.trim()) {
-		entries.push([DEFAULT_LANGUAGE, options.fallbackValue.trim()]);
+		entries.push([defaultCode, options.fallbackValue.trim()]);
 	}
 
 	const normalized = Object.fromEntries(entries) as LocalizedText;
 
-	if (options?.requireDefault !== false && !normalized[DEFAULT_LANGUAGE]) {
-		throw new Error(`Missing ${DEFAULT_LANGUAGE} translation.`);
+	if (options?.requireDefault !== false && !normalized[defaultCode]) {
+		throw new Error(`Missing ${defaultCode} translation.`);
 	}
 
 	return normalized;
 }
 
-export function stringifyLocalizedText(translations: LocalizedText): string {
-	return JSON.stringify(sortLocalizedText(normalizeLocalizedText(translations)));
+export function stringifyLocalizedText(
+	translations: LocalizedText,
+	catalog?: LanguageCatalogState,
+): string {
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
+	return JSON.stringify(
+		sortLocalizedText(
+			normalizeLocalizedText(translations, { defaultLanguageCode: c.defaultLanguageCode }),
+			c,
+		),
+	);
 }
 
-export function readUiLanguagePreference(cookies?: Pick<AstroCookies, "get"> | null): string | null {
+export function readUiLanguagePreference(
+	cookies?: Pick<AstroCookies, "get"> | null,
+	catalog?: LanguageCatalogState,
+): string | null {
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
 	const storedValue = cookies?.get(UI_LANGUAGE_COOKIE)?.value;
-	return storedValue && isSupportedLanguage(storedValue) ? storedValue : null;
+	return storedValue && isSupportedLanguage(storedValue, c) ? storedValue : null;
 }
 
 export function writeUiLanguagePreference(
 	cookies: Pick<AstroCookies, "set">,
 	language: string,
+	catalog?: LanguageCatalogState,
 ): void {
-	const nextLanguage = resolveLanguage(language);
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
+	const nextLanguage = resolveLanguage(language, c);
 	cookies.set(UI_LANGUAGE_COOKIE, nextLanguage, {
 		path: "/",
 		sameSite: "lax",
@@ -176,113 +220,126 @@ export function writeUiLanguagePreference(
 	});
 }
 
-export function getPathLanguage(pathname: string): string | null {
+export function getPathLanguage(pathname: string, catalog?: LanguageCatalogState): string | null {
 	const [firstSegment = ""] = pathname.split("/").filter(Boolean);
-	return isSupportedLanguage(firstSegment) ? firstSegment : null;
+	return isSupportedLanguage(firstSegment, catalog) ? firstSegment : null;
 }
 
-export function getQueryLanguage(url: URL): string | null {
+export function getQueryLanguage(url: URL, catalog?: LanguageCatalogState): string | null {
 	const queryLanguage = url.searchParams.get("lang");
-	return queryLanguage && isSupportedLanguage(queryLanguage) ? queryLanguage : null;
+	return queryLanguage && isSupportedLanguage(queryLanguage, catalog) ? queryLanguage : null;
 }
 
 export function resolveUiLanguage(
 	url: URL,
 	storedLanguage?: string | null,
+	catalog?: LanguageCatalogState,
 ): { language: string; explicitLanguage: string | null } {
-	const pathLanguage = getPathLanguage(url.pathname);
-	const queryLanguage = getQueryLanguage(url);
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
+	const pathLanguage = getPathLanguage(url.pathname, c);
+	const queryLanguage = getQueryLanguage(url, c);
 	const explicitLanguage = pathLanguage ?? queryLanguage;
 	return {
-		language: resolveLanguage(explicitLanguage ?? storedLanguage ?? DEFAULT_LANGUAGE),
+		language: resolveLanguage(explicitLanguage ?? storedLanguage ?? c.defaultLanguageCode, c),
 		explicitLanguage,
 	};
 }
 
 export function getUiTranslations(context: TranslationContextInput): UiTranslations {
+	const catalog = getLanguageCatalog(context.locals);
 	const resolvedLanguage =
 		context.locals?.uiLanguage ??
-		resolveUiLanguage(context.url, readUiLanguagePreference(context.cookies)).language;
+		resolveUiLanguage(context.url, readUiLanguagePreference(context.cookies, catalog), catalog).language;
 
 	return {
 		language: resolvedLanguage,
 		t: (key, fallback) => translateKey(key, resolvedLanguage, fallback),
-		localizeHref: (href) => localizeHref(href, resolvedLanguage),
-		localizeAdminHref: (href) => localizeAdminHref(href, resolvedLanguage),
-		switchLanguageHref: (language) => getLanguageSwitchHref(context.url, language),
+		localizeHref: (href) => localizeHref(href, resolvedLanguage, catalog),
+		localizeAdminHref: (href) => localizeAdminHref(href, resolvedLanguage, catalog),
+		switchLanguageHref: (language) => getLanguageSwitchHref(context.url, language, catalog),
 	};
 }
 
-export function localizeHref(href: string, language = DEFAULT_LANGUAGE): string {
+export function localizeHref(href: string, language: string | undefined, catalog?: LanguageCatalogState): string {
 	if (isPassthroughHref(href)) {
 		return href;
 	}
 
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
 	const url = toInternalUrl(href);
 	if (!url) {
 		return href;
 	}
 
 	if (url.pathname.startsWith("/admin")) {
-		return localizeAdminHref(href, language);
+		return localizeAdminHref(href, language, c);
 	}
 
 	if (url.pathname.startsWith("/api")) {
 		return formatLocalUrl(url);
 	}
 
-	url.pathname = withLanguagePrefix(url.pathname, language);
+	url.pathname = withLanguagePrefix(url.pathname, language, c);
 	url.searchParams.delete("lang");
 	return formatLocalUrl(url);
 }
 
-export function localizeAdminHref(href: string, language = DEFAULT_LANGUAGE): string {
+export function localizeAdminHref(href: string, language: string | undefined, catalog?: LanguageCatalogState): string {
 	if (isPassthroughHref(href)) {
 		return href;
 	}
 
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
 	const url = toInternalUrl(href);
 	if (!url) {
 		return href;
 	}
 
-	if (resolveLanguage(language) === DEFAULT_LANGUAGE) {
+	if (resolveLanguage(language, c) === c.defaultLanguageCode) {
 		url.searchParams.delete("lang");
 	} else {
-		url.searchParams.set("lang", resolveLanguage(language));
+		url.searchParams.set("lang", resolveLanguage(language, c));
 	}
 
 	return formatLocalUrl(url);
 }
 
-export function getLanguageSwitchHref(currentUrl: URL, language: string): string {
-	const nextLanguage = resolveLanguage(language);
+export function getLanguageSwitchHref(
+	currentUrl: URL,
+	language: string,
+	catalog?: LanguageCatalogState,
+): string {
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
+	const nextLanguage = resolveLanguage(language, c);
 	if (currentUrl.pathname.startsWith("/admin")) {
-		return getAdminLanguageSwitchHref(currentUrl, nextLanguage);
+		return getAdminLanguageSwitchHref(currentUrl, nextLanguage, c);
 	}
 
-	return switchLang(currentUrl.pathname + currentUrl.search, nextLanguage);
+	return switchLang(currentUrl.pathname + currentUrl.search, nextLanguage, c);
 }
 
-export function switchLang(href: string, language: string): string {
-	return localizeHref(href, language);
+export function switchLang(href: string, language: string, catalog?: LanguageCatalogState): string {
+	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
+	return localizeHref(href, language, c);
 }
 
 export function getLanguageSwitchOptions(
 	currentUrl: URL,
 	activeLanguage: string,
+	catalog: LanguageCatalogState,
 ): LanguageSwitchOption[] {
-	const resolvedLanguage = resolveLanguage(activeLanguage);
-	return getSupportedLanguages().map((entry) => ({
+	const c = catalog;
+	const resolvedLanguage = resolveLanguage(activeLanguage, c);
+	return c.enabledLanguages.map((entry) => ({
 		code: entry.code,
 		label: entry.label,
-		href: getLanguageSwitchHref(currentUrl, entry.code),
+		href: getLanguageSwitchHref(currentUrl, entry.code, c),
 		isActive: entry.code === resolvedLanguage,
 	}));
 }
 
 function translateKey(key: string, language: string, fallback?: string): string {
-	const value = resolveTreeValue(UI_TRANSLATIONS[resolveLanguage(language)], key);
+	const value = resolveTreeValue(UI_TRANSLATIONS[resolveLanguage(language, FALLBACK_LANGUAGE_CATALOG)], key);
 	if (typeof value === "string" && value.trim()) {
 		return value;
 	}
@@ -309,10 +366,10 @@ function resolveTreeValue(tree: TranslationTree | undefined, key: string): strin
 	}, tree);
 }
 
-function withLanguagePrefix(pathname: string, language: string): string {
-	const nextLanguage = resolveLanguage(language);
+function withLanguagePrefix(pathname: string, language: string | undefined, catalog: LanguageCatalogState): string {
+	const nextLanguage = resolveLanguage(language, catalog);
 	const hasTrailingSlash = pathname === "/" || pathname.endsWith("/");
-	const normalizedPath = stripLanguagePrefix(pathname);
+	const normalizedPath = stripLanguagePrefix(pathname, catalog);
 
 	if (normalizedPath === "/") {
 		return `/${nextLanguage}/`;
@@ -322,29 +379,29 @@ function withLanguagePrefix(pathname: string, language: string): string {
 	return `/${nextLanguage}${basePath}${hasTrailingSlash && !basePath.endsWith("/") ? "/" : ""}`;
 }
 
-function getAdminLanguageSwitchHref(currentUrl: URL, language: string): string {
+function getAdminLanguageSwitchHref(currentUrl: URL, language: string, catalog: LanguageCatalogState): string {
 	const url = new URL(currentUrl.pathname + currentUrl.search, "https://edge-cms.local");
-	url.searchParams.set("lang", resolveLanguage(language));
+	url.searchParams.set("lang", resolveLanguage(language, catalog));
 	return formatLocalUrl(url);
 }
 
-function stripLanguagePrefix(pathname: string): string {
+function stripLanguagePrefix(pathname: string, catalog: LanguageCatalogState): string {
 	const segments = pathname.split("/").filter(Boolean);
 	if (segments.length === 0) {
 		return "/";
 	}
 
-	if (isSupportedLanguage(segments[0])) {
+	if (isSupportedLanguage(segments[0], catalog)) {
 		segments.shift();
 	}
 
 	return segments.length === 0 ? "/" : `/${segments.join("/")}`;
 }
 
-function sortLocalizedText(translations: LocalizedText): LocalizedText {
+function sortLocalizedText(translations: LocalizedText, catalog: LanguageCatalogState): LocalizedText {
 	const orderedCodes = [
-		DEFAULT_LANGUAGE,
-		...SUPPORTED_LANGUAGES.map((entry) => entry.code).filter((code) => code !== DEFAULT_LANGUAGE),
+		catalog.defaultLanguageCode,
+		...catalog.enabledLanguages.map((e) => e.code).filter((code) => code !== catalog.defaultLanguageCode),
 		...Object.keys(translations).sort(),
 	];
 

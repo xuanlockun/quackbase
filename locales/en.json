@@ -11,7 +11,8 @@
     "header": "Header",
     "users": "Users",
     "roles": "Roles",
-    "permissions": "Permissions"
+    "permissions": "Permissions",
+    "languages": "Languages"
   },
   "actions": {
     "back": "Back",

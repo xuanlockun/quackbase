@@ -4,7 +4,7 @@ export const prerender = false;
 import PageTable from "../../components/admin/PageTable.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getDb, listAllPages } from "../../lib/blog";
-import { getUiTranslations } from "../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -15,12 +15,13 @@ const canCreate = session.isSuperadmin || session.permissions.includes("pages.cr
 const canUpdate = session.isSuperadmin || session.permissions.includes("pages.update");
 const canDelete = session.isSuperadmin || session.permissions.includes("pages.delete");
 const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
 
 let pages = [];
 let loadError = "";
 
 try {
-	pages = await listAllPages(getDb(Astro.locals));
+	pages = await listAllPages(getDb(Astro.locals), language, catalog);
 } catch (error) {
 	loadError = error instanceof Error ? error.message : t("messages.failedToLoadPages");
 }

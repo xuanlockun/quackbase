@@ -6,6 +6,7 @@ import {
 	resolveLocalizedLabel,
 	stringifyLocalizedText,
 } from "./i18n";
+import { loadLanguageCatalog, type LanguageCatalogState } from "./languages";
 
 export type ContactFormFieldType = "text" | "email" | "textarea";
 
@@ -81,6 +82,7 @@ export async function ensureFormTables(db: D1Database): Promise<void> {
 
 export async function listFormFields(db: D1Database): Promise<ContactFormField[]> {
 	await ensureFormTables(db);
+	const catalog = await loadLanguageCatalog(db);
 
 	const result = await db
 		.prepare(
@@ -90,7 +92,7 @@ export async function listFormFields(db: D1Database): Promise<ContactFormField[]
 		)
 		.all<ContactFormFieldRecord>();
 
-	return normalizeFormFields(result.results ?? []);
+	return normalizeFormFields(result.results ?? [], catalog.defaultLanguageCode);
 }
 
 export async function saveFormFields(
@@ -98,7 +100,8 @@ export async function saveFormFields(
 	fields: ContactFormFieldInput[],
 ): Promise<ContactFormField[]> {
 	await ensureFormTables(db);
-	const normalizedFields = normalizeFormFields(fields);
+	const catalog = await loadLanguageCatalog(db);
+	const normalizedFields = normalizeFormFields(fields, catalog.defaultLanguageCode);
 
 	const statements: D1PreparedStatement[] = [db.prepare(`DELETE FROM form_fields`)];
 	for (const field of normalizedFields) {
@@ -108,7 +111,7 @@ export async function saveFormFields(
 					`INSERT INTO form_fields (type, label, required, sort_order, updated_at)
 					VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)`,
 				)
-				.bind(field.type, stringifyLocalizedText(field.label), field.required ? 1 : 0, field.order),
+				.bind(field.type, stringifyLocalizedText(field.label, catalog), field.required ? 1 : 0, field.order),
 		);
 	}
 
@@ -121,6 +124,7 @@ export async function createFormSubmission(
 	input: ContactFormSubmissionInput,
 ): Promise<number> {
 	await ensureFormTables(db);
+	const catalog = await loadLanguageCatalog(db);
 
 	const result = await db
 		.prepare(
@@ -128,7 +132,7 @@ export async function createFormSubmission(
 			VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
-			resolveLanguage(input.language),
+			resolveLanguage(input.language, catalog),
 			normalizeOptionalString(input.sourcePath),
 			JSON.stringify(input.values),
 		)
@@ -200,6 +204,7 @@ export function parseContactFormSubmissionPayload(payload: unknown): ContactForm
 export function validateContactFormSubmission(
 	fields: ContactFormField[],
 	input: ContactFormSubmissionInput,
+	catalog?: LanguageCatalogState,
 ): ContactFormSubmissionInput {
 	const normalizedFields = normalizeFormFields(fields);
 	if (normalizedFields.length === 0) {
@@ -223,7 +228,7 @@ export function validateContactFormSubmission(
 	}
 
 	return {
-		language: resolveLanguage(input.language),
+		language: resolveLanguage(input.language, catalog),
 		sourcePath: normalizeOptionalString(input.sourcePath) ?? undefined,
 		values,
 	};
@@ -232,11 +237,12 @@ export function validateContactFormSubmission(
 export function getRenderableFormFields(
 	fields: ContactFormField[],
 	language = DEFAULT_LANGUAGE,
+	catalog?: LanguageCatalogState,
 ): RenderableContactFormField[] {
 	return normalizeFormFields(fields).map((field) => ({
 		...field,
 		inputName: getContactFieldInputName(field.id),
-		labelText: resolveLocalizedLabel(field.label, language),
+		labelText: resolveLocalizedLabel(field.label, language, catalog),
 	}));
 }
 
@@ -244,13 +250,13 @@ export function getContactFieldInputName(fieldId: number): string {
 	return `field-${fieldId}`;
 }
 
-export function normalizeFormFields(input: unknown): ContactFormField[] {
+export function normalizeFormFields(input: unknown, defaultLanguageCode?: string): ContactFormField[] {
 	if (!Array.isArray(input)) {
 		return [];
 	}
 
 	const normalized = input
-		.map((item, index) => normalizeFormField(item, index))
+		.map((item, index) => normalizeFormField(item, index, defaultLanguageCode))
 		.filter((field): field is ContactFormField => Boolean(field))
 		.sort((left, right) => left.order - right.order || left.id - right.id)
 		.map((field, index) => ({
@@ -271,7 +277,7 @@ function parseFormFieldsValue(value: unknown, fieldName: string): ContactFormFie
 	}
 }
 
-function normalizeFormField(item: unknown, index: number): ContactFormField | null {
+function normalizeFormField(item: unknown, index: number, defaultLanguageCode?: string): ContactFormField | null {
 	if (!item || typeof item !== "object") {
 		return null;
 	}
@@ -288,7 +294,10 @@ function normalizeFormField(item: unknown, index: number): ContactFormField | nu
 	return {
 		id,
 		type,
-		label: normalizeLocalizedText(record.label, { requireDefault: true }),
+		label: normalizeLocalizedText(record.label, {
+			requireDefault: true,
+			defaultLanguageCode: defaultLanguageCode ?? DEFAULT_LANGUAGE,
+		}),
 		required: normalizeBoolean(record.required),
 		order,
 	};

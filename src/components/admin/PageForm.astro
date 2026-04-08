@@ -2,7 +2,7 @@
 import type { PageSectionConfig, SitePage } from "../../lib/blog";
 import { getSupportedLanguages, getLocalizedPagePath } from "../../lib/blog";
 import type { ContactFormField } from "../../lib/forms";
-import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
 	mode: "create" | "edit";
@@ -25,16 +25,18 @@ const {
 } = Astro.props;
 
 const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const def = catalog.defaultLanguageCode;
 const submitLabel = mode === "edit" ? t("actions.savePage") : t("actions.createPage");
 const isDisabled = Boolean(loadError) || !canSubmit;
-const languages = getSupportedLanguages();
+const languages = getSupportedLanguages(catalog);
 const initialLanguage = page?.requestedLanguage ?? language;
 const titleTranslations = {
-	en: "",
+	[def]: "",
 	...(page?.titleTranslations ?? {}),
 };
 const contentTranslations = {
-	en: "# New page",
+	[def]: "# New page",
 	...(page?.contentTranslations ?? {}),
 };
 const sectionMap = new Map((page?.pageSections ?? []).map((section) => [section.type, section]));
@@ -99,7 +101,12 @@ const initialContactFields = contactFormFields.map((field) => ({
 		</label>
 	</div>
 
-	<div class="admin-form-section localized-editor" data-localized-editor data-active-language={initialLanguage}>
+	<div
+		class="admin-form-section localized-editor"
+		data-localized-editor
+		data-active-language={initialLanguage}
+		data-default-language={def}
+	>
 		<div class="localized-editor-header">
 			<div>
 				<h2>{t("headings.localizedContent")}</h2>
@@ -144,14 +151,14 @@ const initialContactFields = contactFormFields.map((field) => ({
 						<input
 							data-title-input={languageOption.code}
 							value={titleTranslations[languageOption.code] ?? ""}
-							placeholder={languageOption.code === "en" ? "About us" : "Gioi thieu"}
+							placeholder={languageOption.code === def ? "About us" : languageOption.code === "vi" ? "Gioi thieu" : ""}
 							disabled={isDisabled}
 						/>
 					</label>
 					<label>
 						<span>{t("labels.content")} ({languageOption.label})</span>
 						<textarea data-content-input={languageOption.code} rows="14" disabled={isDisabled}
-							>{contentTranslations[languageOption.code] ?? (languageOption.code === "en" ? "# New page" : "")}</textarea
+							>{contentTranslations[languageOption.code] ?? (languageOption.code === def ? "# New page" : "")}</textarea
 						>
 					</label>
 				</section>
@@ -348,7 +355,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 
 	<div class="admin-form-actions">
 		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
-		{mode === "edit" && page && <a href={getLocalizedPagePath(page.slug, language)}>{t("actions.openPage")}</a>}
+		{mode === "edit" && page && <a href={getLocalizedPagePath(page.slug, language, catalog)}>{t("actions.openPage")}</a>}
 	</div>
 </form>
 
@@ -545,7 +552,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 
 		root.addEventListener("input", () => syncLocalizedEditor(root));
 		syncLocalizedEditor(root);
-		setActiveLanguage(root.dataset.activeLanguage || "en");
+		setActiveLanguage(root.dataset.activeLanguage || root.dataset.defaultLanguage || "en");
 	});
 
 	const sectionsEditor = document.querySelector("[data-page-sections-editor]");

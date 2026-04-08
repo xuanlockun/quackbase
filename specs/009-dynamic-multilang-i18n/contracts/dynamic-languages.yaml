@@ -1,0 +1,159 @@
+openapi: 3.1.0
+info:
+  title: Dynamic Language Catalog API
+  version: 0.1.0
+  description: >
+    Admin CRUD for the D1-backed languages table and read-only listing of enabled
+    languages for public UI. All routes require existing session/RBAC patterns used
+    by other /api/admin/* handlers unless noted.
+servers:
+  - url: https://example.com
+paths:
+  /api/admin/languages:
+    get:
+      summary: List all languages (admin)
+      operationId: listLanguages
+      responses:
+        "200":
+          description: Catalog rows
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [languages]
+                properties:
+                  languages:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LanguageRow"
+        "302":
+          description: Unauthenticated or forbidden
+    post:
+      summary: Create a language
+      operationId: createLanguage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LanguageWrite"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [language]
+                properties:
+                  language:
+                    $ref: "#/components/schemas/LanguageRow"
+        "400":
+          description: Validation error (duplicate code, invalid code)
+        "302":
+          description: Unauthenticated or forbidden
+  /api/admin/languages/{code}:
+    patch:
+      summary: Update name, enabled, or default flag
+      operationId: updateLanguage
+      parameters:
+        - $ref: "#/components/parameters/LanguageCode"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LanguagePatch"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [language]
+                properties:
+                  language:
+                    $ref: "#/components/schemas/LanguageRow"
+        "400":
+          description: Validation error
+        "404":
+          description: Unknown code
+        "302":
+          description: Unauthenticated or forbidden
+  /api/languages:
+    get:
+      summary: List enabled languages for public switch (optional endpoint if needed)
+      operationId: listPublicLanguages
+      responses:
+        "200":
+          description: Enabled languages only
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [languages]
+                properties:
+                  languages:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PublicLanguage"
+components:
+  parameters:
+    LanguageCode:
+      name: code
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  schemas:
+    LanguageRow:
+      type: object
+      required: [id, code, name, enabled, is_default]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        code:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+        enabled:
+          type: boolean
+        is_default:
+          type: boolean
+    PublicLanguage:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+    LanguageWrite:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+          description: URL-safe language segment and JSON key
+        name:
+          type: string
+        enabled:
+          type: boolean
+          default: true
+        is_default:
+          type: boolean
+          default: false
+    LanguagePatch:
+      type: object
+      properties:
+        name:
+          type: string
+        enabled:
+          type: boolean
+        is_default:
+          type: boolean

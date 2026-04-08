@@ -1,7 +1,7 @@
 ---
 import type { AdminPostDetail } from "../../lib/blog";
 import { getSupportedLanguages } from "../../lib/blog";
-import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
 	mode: "create" | "edit";
@@ -22,23 +22,25 @@ const {
 } = Astro.props;
 
 const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const def = catalog.defaultLanguageCode;
 const submitLabel = mode === "edit" ? t("actions.saveChanges") : t("actions.createPost");
-const languages = getSupportedLanguages();
+const languages = getSupportedLanguages(catalog);
 const initialLanguage = post?.requestedLanguage ?? language;
 const slugTranslations = {
-	en: "",
+	[def]: "",
 	...(post?.slugTranslations ?? {}),
 };
 const titleTranslations = {
-	en: "",
+	[def]: "",
 	...(post?.titleTranslations ?? {}),
 };
 const descriptionTranslations = {
-	en: "",
+	[def]: "",
 	...(post?.descriptionTranslations ?? {}),
 };
 const contentTranslations = {
-	en: "# New post",
+	[def]: "# New post",
 	...(post?.contentTranslations ?? {}),
 };
 const heroImage = post?.heroImage ?? "";
@@ -80,7 +82,12 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 		</label>
 	</div>
 
-	<div class="admin-form-section localized-editor" data-localized-editor data-active-language={initialLanguage}>
+	<div
+		class="admin-form-section localized-editor"
+		data-localized-editor
+		data-active-language={initialLanguage}
+		data-default-language={def}
+	>
 		<div class="localized-editor-header">
 			<div>
 				<h2>{t("headings.localizedContent")}</h2>
@@ -121,7 +128,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 						<input
 							data-title-input={language.code}
 							value={titleTranslations[language.code] ?? ""}
-							placeholder={language.code === "en" ? "Hello world" : "Xin chao"}
+							placeholder={language.code === def ? "Hello world" : language.code === "vi" ? "Xin chao" : ""}
 							disabled={isDisabled}
 						/>
 					</label>
@@ -131,7 +138,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 							<input
 								data-slug-input={language.code}
 								value={slugTranslations[language.code] ?? ""}
-								placeholder={language.code === "en" ? "hello-world" : "xin-chao"}
+								placeholder={language.code === def ? "hello-world" : language.code === "vi" ? "xin-chao" : ""}
 								pattern="[a-z0-9-]+"
 								disabled={isDisabled}
 							/>
@@ -150,14 +157,14 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 						<input
 							data-description-input={language.code}
 							value={descriptionTranslations[language.code] ?? ""}
-							placeholder={language.code === "en" ? "Short summary" : "Tom tat ngan"}
+							placeholder={language.code === def ? "Short summary" : language.code === "vi" ? "Tom tat ngan" : ""}
 							disabled={isDisabled}
 						/>
 					</label>
 					<label>
 						<span>{t("labels.content")} ({language.label})</span>
 						<textarea data-content-input={language.code} rows="14" disabled={isDisabled}
-							>{contentTranslations[language.code] ?? (language.code === "en" ? "# New post" : "")}</textarea
+							>{contentTranslations[language.code] ?? (language.code === def ? "# New post" : "")}</textarea
 						>
 					</label>
 				</section>
@@ -380,7 +387,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 
 		root.addEventListener("input", () => syncLocalizedEditor(root));
 		syncLocalizedEditor(root);
-		setActiveLanguage(root.dataset.activeLanguage || "en");
+		setActiveLanguage(root.dataset.activeLanguage || root.dataset.defaultLanguage || "en");
 	});
 
 	document.addEventListener("click", (event) => {

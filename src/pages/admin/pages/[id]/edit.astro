@@ -5,7 +5,7 @@ import PageForm from "../../../../components/admin/PageForm.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { getDb, getPageById } from "../../../../lib/blog";
 import { listFormFields } from "../../../../lib/forms";
-import { getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -15,6 +15,7 @@ if (!session) {
 const canUpdate = session.isSuperadmin || session.permissions.includes("pages.update");
 const { id } = Astro.params;
 const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
 
 let page = null;
 let contactFormFields = [];
@@ -27,7 +28,7 @@ try {
 		notFound = true;
 	} else {
 		const db = getDb(Astro.locals);
-		page = await getPageById(db, pageId);
+		page = await getPageById(db, pageId, language, catalog);
 		contactFormFields = await listFormFields(db);
 		notFound = !page;
 	}

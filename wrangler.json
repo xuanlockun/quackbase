@@ -6,7 +6,8 @@
 		{
 			"binding": "DB",
 			"database_name": "my-d1",
-			"database_id": "d0365841-9c7f-4cad-b9f0-6ee5c1bf6810"
+			"database_id": "d0365841-9c7f-4cad-b9f0-6ee5c1bf6810",
+			"migrations_dir": "migrations"
 		}
 	],
 	"main": "./dist/_worker.js/index.js",

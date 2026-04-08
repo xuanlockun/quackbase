@@ -8,7 +8,7 @@ import {
 	toAdminPostSummary,
 	updatePost,
 } from "../../../lib/blog";
-import { getLocalizedPostPath, getSupportedLanguages } from "../../../lib/i18n";
+import { getLanguageCatalog, getLocalizedPostPath, getSupportedLanguages } from "../../../lib/i18n";
 import { requireApiPermission } from "../../../lib/rbac/guards";
 
 export const prerender = false;
@@ -24,11 +24,12 @@ export const GET: APIRoute = async ({ locals, request, redirect }) => {
 	}
 
 	try {
-		const language = locals.uiLanguage ?? "en";
-		const posts = await listAllPosts(getDb(locals), language);
+		const catalog = getLanguageCatalog(locals);
+		const language = locals.uiLanguage ?? catalog.defaultLanguageCode;
+		const posts = await listAllPosts(getDb(locals), language, catalog);
 		return Response.json({
-			languages: getSupportedLanguages(),
-			posts: posts.map((post) => toAdminPostSummary(post, language)),
+			languages: getSupportedLanguages(catalog),
+			posts: posts.map((post) => toAdminPostSummary(post, language, catalog)),
 		});
 	} catch {
 		return Response.json({ error: "Failed to load posts." }, { status: 500 });
@@ -53,7 +54,11 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		}
 
 		const db = getDb(locals);
-		const input = isJsonRequest ? parsePostPayload(payload) : parsePostForm(formData as FormData);
+		const catalog = getLanguageCatalog(locals);
+		const defLang = catalog.defaultLanguageCode;
+		const input = isJsonRequest
+			? parsePostPayload(payload, defLang)
+			: parsePostForm(formData as FormData, defLang);
 
 		if (typeof idValue === "string" && idValue.trim() !== "") {
 			await updatePost(db, Number(idValue), input);
@@ -64,7 +69,9 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 					message: "Post saved.",
 				});
 			}
-			return redirect(`/admin/posts?slug=${encodeURIComponent(getLocalizedPostPath(input.slugTranslations, "en"))}&saved=1`);
+			return redirect(
+				`/admin/posts?slug=${encodeURIComponent(getLocalizedPostPath(input.slugTranslations, defLang, catalog))}&saved=1`,
+			);
 		}
 
 		const postId = await createPost(db, input);

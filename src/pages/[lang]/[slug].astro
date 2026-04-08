@@ -4,31 +4,36 @@ export const prerender = false;
 import BlogPost from "../../layouts/BlogPost.astro";
 import CmsPageSections from "../../components/CmsPageSections.astro";
 import { getDb, getPublishedPageBySlug, getPublishedPostBySlug } from "../../lib/blog";
-import { getUiTranslations, isSupportedLanguage, resolveLanguage } from "../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations, isSupportedLanguage, resolveLanguage } from "../../lib/i18n";
 
+const catalog = getLanguageCatalog(Astro.locals);
 const requestedLanguage = Astro.params.lang ?? "";
 const slug = Astro.params.slug ?? "";
 const { t } = getUiTranslations(Astro);
+
+if (!isSupportedLanguage(requestedLanguage, catalog)) {
+	const target = new URL(Astro.url);
+	target.pathname = `/${catalog.defaultLanguageCode}/${slug}/`;
+	return Astro.redirect(target.toString(), 301);
+}
 
 let page = null;
 let post = null;
 let loadError = "";
 
-if (!isSupportedLanguage(requestedLanguage)) {
-	Astro.response.status = 404;
-} else {
-	try {
-		const db = getDb(Astro.locals);
-		page = await getPublishedPageBySlug(db, slug, resolveLanguage(requestedLanguage));
-		if (!page) {
-			post = await getPublishedPostBySlug(db, slug, resolveLanguage(requestedLanguage));
-		}
-	} catch (error) {
-		loadError = error instanceof Error ? error.message : t("messages.failedToLoadPosts");
+const lang = resolveLanguage(requestedLanguage, catalog);
+
+try {
+	const db = getDb(Astro.locals);
+	page = await getPublishedPageBySlug(db, slug, lang, catalog);
+	if (!page) {
+		post = await getPublishedPostBySlug(db, slug, lang, catalog);
 	}
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadPosts");
 }
 
-if (!page && !post && !loadError && Astro.response.status !== 404) {
+if (!page && !post && !loadError) {
 	Astro.response.status = 404;
 } else if (loadError) {
 	Astro.response.status = 503;
@@ -48,7 +53,7 @@ if (!page && !post && !loadError && Astro.response.status !== 404) {
 			<CmsPageSections
 				pageSections={page.pageSections}
 				contentHtml={page.contentHtml}
-				currentLanguage={resolveLanguage(requestedLanguage)}
+				currentLanguage={lang}
 				currentPath={Astro.url.pathname}
 			/>
 		</BlogPost>
@@ -76,7 +81,7 @@ if (!page && !post && !loadError && Astro.response.status !== 404) {
 			}
 			showDate={false}
 			wideContent={true}
-			lang={resolveLanguage(requestedLanguage)}
+			lang={lang}
 		/>
 	)
 }

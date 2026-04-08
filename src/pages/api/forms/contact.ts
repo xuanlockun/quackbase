@@ -7,6 +7,7 @@ import {
 	parseContactFormSubmissionPayload,
 	validateContactFormSubmission,
 } from "../../../lib/forms";
+import { getLanguageCatalog } from "../../../lib/i18n";
 
 export const prerender = false;
 
@@ -18,8 +19,9 @@ export const POST: APIRoute = async ({ locals, request }) => {
 			: parseContactFormSubmissionForm(await request.formData());
 
 		const db = getDb(locals);
+		const catalog = getLanguageCatalog(locals);
 		const fields = await listFormFields(db);
-		const validatedInput = validateContactFormSubmission(fields, input);
+		const validatedInput = validateContactFormSubmission(fields, input, catalog);
 		const submissionId = await createFormSubmission(db, validatedInput);
 
 		return Response.json({

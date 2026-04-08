@@ -3,21 +3,23 @@ export const prerender = false;
 
 import BlogPost from "../../layouts/BlogPost.astro";
 import { getDb, getPublishedPostBySlug } from "../../lib/blog";
-import { getLocalizedPostPath, getUiTranslations } from "../../lib/i18n";
+import { getLanguageCatalog, getLocalizedPostPath, getUiTranslations } from "../../lib/i18n";
 
 const slug = Astro.params.slug ?? "";
 let post = null;
 let loadError = "";
 const { t } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const def = catalog.defaultLanguageCode;
 
 try {
-	post = await getPublishedPostBySlug(getDb(Astro.locals), slug, "en");
+	post = await getPublishedPostBySlug(getDb(Astro.locals), slug, def, catalog);
 } catch (error) {
 	loadError = error instanceof Error ? error.message : t("messages.failedToLoadPosts");
 }
 
 if (post) {
-	return Astro.redirect(getLocalizedPostPath(post.slugTranslations, "en"), 301);
+	return Astro.redirect(getLocalizedPostPath(post.slugTranslations, def, catalog), 301);
 }
 
 if (!loadError) {
@@ -36,5 +38,5 @@ if (!loadError) {
 			? `<p>${t("messages.blogNotReadyBody")}</p><p><code>${loadError}</code></p>`
 			: `<p>${t("messages.postNotFoundBody")}</p>`
 	}
-	lang="en"
+	lang={def}
 />
