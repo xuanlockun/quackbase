@@ -230,58 +230,64 @@ const initialContactFields = contactFormFields.map((field) => ({
                         disabled={isDisabled}
                 />
 
-        <div
-                class="admin-table"
-                aria-label={t("headings.pageSections")}
-                data-page-sections-editor
-                data-section-remove-label={t("actions.remove")}
-                data-section-catalog={sectionCatalogJson}
-        >
-                <div class="admin-table-row admin-table-head" role="row">
-                        <span></span>
-                        <span>Section</span>
-                        <span>Details</span>
-                        <span>Actions</span>
-                </div>
-                <div class="admin-table-body" data-section-rows>
-                        <p class="admin-table-empty admin-muted" data-section-empty hidden={initialSections.length > 0}>
-                                {t("messages.noPageSectionsConfigured")}
-                        </p>
-                        {
-                                initialSections.map((section) => {
-                                        const metadata = sectionCatalogMap.get(section.type) ?? sectionCatalog[0];
-                                        return (
-                                                <div
-                                                        class="admin-table-row section-row"
-                                                        data-section-row
-                                                        data-section-type={metadata.type}
-                                                        draggable={!isDisabled ? "true" : "false"}
-                                                >
-                                                        <span class="drag-handle" data-drag-handle aria-label={metadata.label}></span>
-                                                        <span>
-                                                                <strong>{metadata.label}</strong>
-                                                                <p class="admin-compact-copy">{metadata.description}</p>
-                                                        </span>
-                                                        <span class="section-control">
-                                                                <p class="admin-compact-copy">{metadata.details}</p>
-                                                        </span>
-                                                        <span class="section-actions">
-                                                                <button
-                                                                        class="admin-ghost-button"
-                                                                        type="button"
-                                                                        data-section-remove={metadata.removable === false ? undefined : ""}
-                                                                        disabled={metadata.removable === false || isDisabled}
-                                                                >
-                                                                        {sectionRemoveLabelText}
-                                                                </button>
-                                                        </span>
-                                                </div>
-                                        );
-                                })
-                        }
-                </div>
-        </div>
-        </div>
+		<div
+			class="admin-table"
+			aria-label={t("headings.pageSections")}
+			data-page-sections-editor
+			data-section-remove-label={t("actions.remove")}
+			data-section-catalog={sectionCatalogJson}
+		>
+			<table class="admin-sections-table" role="table">
+				<thead>
+					<tr>
+						<th></th>
+						<th>{t("headings.pageSections")}</th>
+						<th>{t("labels.details") ?? "Details"}</th>
+						<th>{t("labels.action")}</th>
+					</tr>
+				</thead>
+				<tbody data-section-rows>
+					<tr class="admin-table-empty-row admin-muted" data-section-empty hidden={initialSections.length > 0}>
+						<td colSpan="4">{t("messages.noPageSectionsConfigured")}</td>
+					</tr>
+					{
+						initialSections.map((section) => {
+							const metadata = sectionCatalogMap.get(section.type) ?? sectionCatalog[0];
+							return (
+								<tr
+									class="admin-table-row section-row"
+									data-section-row
+									data-section-type={metadata.type}
+									draggable={!isDisabled ? "true" : "false"}
+								>
+									<td class="drag-cell">
+										<span class="drag-handle" data-drag-handle aria-label={metadata.label}></span>
+									</td>
+									<td>
+										<strong>{metadata.label}</strong>
+										<p class="admin-compact-copy">{metadata.description}</p>
+									</td>
+									<td class="section-control">
+										<p class="admin-compact-copy">{metadata.details}</p>
+									</td>
+									<td class="section-actions">
+										<button
+											class="admin-ghost-button"
+											type="button"
+											data-section-remove={metadata.removable === false ? undefined : ""}
+											disabled={metadata.removable === false || isDisabled}
+										>
+											{sectionRemoveLabelText}
+										</button>
+									</td>
+								</tr>
+							);
+						})
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
 
         <div class="admin-form-section contact-fields-wrapper" data-contact-fields-wrapper hidden>
                 <div
@@ -357,6 +363,40 @@ const initialContactFields = contactFormFields.map((field) => ({
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
+	}
+
+	.admin-sections-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.admin-sections-table th,
+	.admin-sections-table td {
+		padding: 0.45rem 0.6rem;
+		border-bottom: 1px solid rgba(var(--gray), 0.18);
+		vertical-align: top;
+	}
+
+	.admin-sections-table thead th {
+		font-size: 0.72rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--admin-muted, #60739f);
+		text-align: left;
+		padding-bottom: 0.7rem;
+	}
+
+	.admin-table-empty-row td {
+		padding: 1rem;
+		border: 1px dashed rgba(var(--gray), 0.3);
+		border-radius: 10px;
+		background: rgba(var(--gray-light), 0.2);
+		text-align: center;
+	}
+
+	.drag-cell {
+		width: 48px;
 	}
 
 	.localized-editor-tab {
@@ -436,8 +476,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 	const addContactButton = document.querySelector("[data-contact-field-add]");
 	const isSectionReadOnly = sectionAddButton?.dataset.readonly === "true";
 	const isContactReadOnly = addContactButton?.dataset.readonly === "true";
-	const sectionRowSelector = "[data-section-row]";
-	let draggedSectionRow: HTMLElement | null = null;
+	let draggedSectionRow = null;
 	let nextFieldId = 0;
 
 	const initialContactFields = parseConfig(contactPayload?.value);
@@ -567,7 +606,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 
 	function createSectionRow(type) {
 		const metadata = SECTION_CATALOG.find((entry) => entry.type === type) ?? SECTION_CATALOG[0];
-		const row = document.createElement("div");
+		const row = document.createElement("tr");
 		row.className = "admin-table-row section-row";
 		row.draggable = !isDisabled;
 		row.dataset.sectionRow = "";
@@ -577,15 +616,17 @@ const initialContactFields = contactFormFields.map((field) => ({
 				? `<button class="admin-ghost-button" type="button" disabled>${sectionRemoveLabel}</button>`
 				: `<button class="admin-ghost-button" type="button" data-section-remove>${sectionRemoveLabel}</button>`;
 		row.innerHTML = `
-        <span class="drag-handle" data-drag-handle aria-label="${metadata.label}"></span>
-        <span>
+        <td class="drag-cell">
+            <span class="drag-handle" data-drag-handle aria-label="${metadata.label}"></span>
+        </td>
+        <td>
             <strong>${metadata.label}</strong>
             <p class="admin-compact-copy">${metadata.description}</p>
-        </span>
-        <span class="section-control">
+        </td>
+        <td class="section-control">
             <p class="admin-compact-copy">${metadata.details}</p>
-        </span>
-        <span class="section-actions">${buttonMarkup}</span>`;
+        </td>
+        <td class="section-actions">${buttonMarkup}</td>`;
 		return row;
 	}
 
@@ -599,14 +640,14 @@ const initialContactFields = contactFormFields.map((field) => ({
 				const type = row.dataset.sectionType;
 				return type ? { type, order: index + 1 } : null;
 			})
-			.filter((entry): entry is { type: string; order: number } => Boolean(entry));
+			.filter((entry) => Boolean(entry));
 		sectionInput.value = JSON.stringify(payload);
 		updateSectionPicker();
 		toggleContactFields(payload.some((entry) => entry.type === "contact_form"));
 		updateSectionEmptyState();
 	}
 
-	function findSectionRow(target: EventTarget | null): HTMLElement | null {
+	function findSectionRow(target) {
 		return target instanceof Element ? target.closest("[data-section-row]") : null;
 	}
 

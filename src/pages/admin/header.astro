@@ -194,7 +194,7 @@ try {
 	const addButton = editor?.querySelector("[data-nav-add]");
 	const removeLabel = editor instanceof HTMLElement ? editor.dataset.removeLabel || "Remove" : "Remove";
 	const isReadOnly = editor instanceof HTMLElement && editor.dataset.disabled === "true";
-	let draggedNavRow: HTMLElement | null = null;
+	let draggedNavRow = null;
 
 	const syncPayload = () => {
 		if (!(rowsContainer instanceof HTMLElement) || !(payloadInput instanceof HTMLInputElement)) {
@@ -229,7 +229,7 @@ try {
 					  }
 					: null;
 			})
-			.filter((entry): entry is { label: { en: string; vi?: string }; href: string; order: number } => Boolean(entry));
+			.filter((entry) => Boolean(entry));
 
 		payloadInput.value = JSON.stringify(entries);
 	};
