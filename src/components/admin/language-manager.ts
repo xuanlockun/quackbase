@@ -8,12 +8,11 @@ if (!table || !form || !notice) {
 
 const tbody = table.querySelector("tbody");
 const apiBase = table.dataset.apiBase ?? "/api/admin/languages";
+const formAction = form.action || apiBase;
 const dataset = table.dataset;
 const columnCount = table.querySelectorAll("thead th").length || 5;
 const emptyMessage = dataset.textEmpty ?? "No languages are configured yet.";
 const loadingMessage = dataset.textLoading ?? "Loading languages...";
-
-console.log("[languages] manager script initialized");
 
 const messages = {
 	createSuccess: dataset.messageCreateSuccess ?? "Language created.",
@@ -100,23 +99,19 @@ async function refreshLanguages(): Promise<LanguageRecord[]> {
 	setLoadingState(true);
 	try {
 		const response = await fetch(apiBase);
-		console.log("[languages] GET response", response.status, response.statusText);
 		if (!response.ok) {
 			throw new Error(messages.error);
 		}
 		const result = await response.json().catch(() => null);
-		console.log("[languages] payload", result);
 		if (!result?.languages || !Array.isArray(result.languages)) {
 			throw new Error(messages.error);
 		}
-		console.log("[languages] list", result.languages);
 		renderRows(result.languages);
 		return result.languages;
 	} catch (error) {
 		if (!cachedLanguages.length) {
 			showMessageRow(emptyMessage);
 		}
-		console.error("[languages] refresh failed", error);
 		throw error;
 	} finally {
 		setLoadingState(false);
@@ -128,12 +123,10 @@ function renderRows(languages: LanguageRecord[]) {
 		return;
 	}
 	cachedLanguages = languages;
-	console.log("[languages] renderRows called", languages);
 	if (languages.length === 0) {
 		showMessageRow(emptyMessage);
 		return;
 	}
-	console.log("[languages] map codes", languages.map((entry) => entry.code));
 	tbody.innerHTML = "";
 	for (const language of languages) {
 		tbody.appendChild(buildRow(language));
@@ -164,7 +157,7 @@ form.addEventListener("submit", async (event) => {
 		isDefault: data.get("isDefault") !== null,
 	};
 	try {
-		const response = await fetch(apiBase, {
+	const response = await fetch(formAction, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(payload),

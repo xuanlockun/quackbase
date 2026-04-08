@@ -47,8 +47,8 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 	}
 
 	try {
-		const body = (await request.json()) as Record<string, unknown>;
-		const code = typeof body.code === "string" ? body.code.trim() : "";
+		const body = await parseLanguagePayload(request);
+		const code = typeof body.code === "string" ? body.code.trim().toLowerCase() : "";
 		const name = typeof body.name === "string" ? body.name.trim() : "";
 		if (!isValidLanguageCode(code)) {
 			return Response.json({ error: "Invalid language code." }, { status: 400 });
@@ -60,8 +60,8 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		const input: CreateLanguageInput = {
 			code,
 			name,
-			enabled: body.enabled === false ? false : true,
-			isDefault: body.isDefault === true,
+			enabled: parseBoolean(body.enabled, true),
+			isDefault: parseBoolean(body.isDefault, false),
 		};
 
 		const language = await createLanguage(getDb(locals), input);
@@ -78,7 +78,49 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			{ status: 201 },
 		);
 	} catch (error) {
-		const message = error instanceof Error ? error.message : "Unable to create language.";
+		const message = friendlyCreateLanguageError(error);
 		return Response.json({ error: message }, { status: 400 });
 	}
 };
+
+function parseBoolean(value: unknown, fallback: boolean): boolean {
+	if (typeof value === "boolean") {
+		return value;
+	}
+
+	if (typeof value === "string") {
+		const normalized = value.trim().toLowerCase();
+		if (normalized === "false" || normalized === "0" || normalized === "") {
+			return false;
+		}
+		return true;
+	}
+
+	return fallback;
+}
+
+async function parseLanguagePayload(request: Request): Promise<Record<string, unknown>> {
+	const contentType = request.headers.get("content-type") ?? "";
+	if (contentType.includes("application/json")) {
+		return (await request.json().catch(() => ({} as Record<string, unknown>))) ?? {};
+	}
+
+	const result: Record<string, unknown> = {};
+	const formData = await request.formData().catch(() => new FormData());
+	for (const [key, value] of formData.entries()) {
+		result[key] = value;
+	}
+
+	return result;
+}
+
+function friendlyCreateLanguageError(error: unknown): string {
+	if (error instanceof Error) {
+		if (/unique/i.test(error.message)) {
+			return "Language code already exists.";
+		}
+		return error.message;
+	}
+
+	return "Unable to create language.";
+}
