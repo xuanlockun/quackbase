@@ -436,6 +436,8 @@ const initialContactFields = contactFormFields.map((field) => ({
 	const addContactButton = document.querySelector("[data-contact-field-add]");
 	const isSectionReadOnly = sectionAddButton?.dataset.readonly === "true";
 	const isContactReadOnly = addContactButton?.dataset.readonly === "true";
+	const sectionRowSelector = "[data-section-row]";
+	let draggedSectionRow: HTMLElement | null = null;
 	let nextFieldId = 0;
 
 	const initialContactFields = parseConfig(contactPayload?.value);
@@ -468,14 +470,55 @@ const initialContactFields = contactFormFields.map((field) => ({
 		syncSections();
 	});
 
-	if (sectionRows) {
-		enableDragSorting({
-			container: sectionRows,
-			rowSelector: "[data-section-row]",
-			handleSelector: "[data-drag-handle]",
-			onReorder: syncSections,
-		});
-	}
+	sectionRows?.addEventListener("dragstart", (event) => {
+		if (isSectionReadOnly) {
+			return;
+		}
+		const row = findSectionRow(event.target);
+		if (!row || row.dataset.sectionRow === undefined) {
+			return;
+		}
+		draggedSectionRow = row;
+		row.classList.add("is-dragging");
+		event.dataTransfer?.setData("text/plain", "");
+		event.dataTransfer?.setDragImage(row, 0, 0);
+	});
+
+	sectionRows?.addEventListener("dragover", (event) => {
+		if (!draggedSectionRow) {
+			return;
+		}
+		event.preventDefault();
+		const row = findSectionRow(event.target);
+		if (!row || row === draggedSectionRow) {
+			return;
+		}
+		const bounding = row.getBoundingClientRect();
+		const after = event.clientY > bounding.top + bounding.height / 2;
+		if (after) {
+			row.after(draggedSectionRow);
+		} else {
+			row.before(draggedSectionRow);
+		}
+	});
+
+	sectionRows?.addEventListener("drop", (event) => {
+		event.preventDefault();
+		if (!draggedSectionRow) {
+			return;
+		}
+		draggedSectionRow.classList.remove("is-dragging");
+		draggedSectionRow = null;
+		syncSections();
+	});
+
+	sectionRows?.addEventListener("dragend", () => {
+		if (draggedSectionRow) {
+			draggedSectionRow.classList.remove("is-dragging");
+			draggedSectionRow = null;
+		}
+	});
+
 	syncSections();
 
 	addContactButton?.addEventListener("click", () => {
@@ -526,7 +569,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 		const metadata = SECTION_CATALOG.find((entry) => entry.type === type) ?? SECTION_CATALOG[0];
 		const row = document.createElement("div");
 		row.className = "admin-table-row section-row";
-		row.draggable = true;
+		row.draggable = !isDisabled;
 		row.dataset.sectionRow = "";
 		row.dataset.sectionType = metadata.type;
 		const buttonMarkup =
@@ -550,15 +593,22 @@ const initialContactFields = contactFormFields.map((field) => ({
 		if (!sectionInput || !sectionRows) {
 			return;
 		}
-		const payload = collectOrderedRowPayload(sectionRows.querySelectorAll("[data-section-row]"), (row) => {
-			const type = row.dataset.sectionType;
-			return type ? { type } : null;
-		});
-	sectionInput.value = JSON.stringify(payload);
-	updateSectionPicker();
-	toggleContactFields(payload.some((entry) => entry.type === "contact_form"));
-	updateSectionEmptyState();
-}
+		const rows = Array.from(sectionRows.querySelectorAll("[data-section-row]"));
+		const payload = rows
+			.map((row, index) => {
+				const type = row.dataset.sectionType;
+				return type ? { type, order: index + 1 } : null;
+			})
+			.filter((entry): entry is { type: string; order: number } => Boolean(entry));
+		sectionInput.value = JSON.stringify(payload);
+		updateSectionPicker();
+		toggleContactFields(payload.some((entry) => entry.type === "contact_form"));
+		updateSectionEmptyState();
+	}
+
+	function findSectionRow(target: EventTarget | null): HTMLElement | null {
+		return target instanceof Element ? target.closest("[data-section-row]") : null;
+	}
 
 	function updateSectionPicker() {
 		if (!sectionSelect || !sectionRows) {

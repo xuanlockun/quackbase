@@ -84,10 +84,10 @@ try {
 							<span>{t("labels.link")}</span>
 							<span>{t("labels.action")}</span>
 						</div>
-						<div class="nav-items-rows" data-nav-items-rows>
+									<div class="nav-items-rows" data-nav-items-rows>
 							{
 								siteConfig.navItems.map((item) => (
-									<div class="nav-item-row" role="row" draggable="true" data-nav-row>
+									<div class="nav-item-row" role="row" draggable={!Boolean(loadError) ? "true" : "false"} data-nav-row>
 										<span class="nav-drag-handle" data-drag-handle aria-label="Drag to reorder"></span>
 										<input
 											type="text"
@@ -187,7 +187,6 @@ try {
 </style>
 
 <script type="module">
-	import { collectOrderedRowPayload, enableDragSorting } from "../../lib/ui-table-order";
 
 	const editor = document.querySelector("[data-nav-items-editor]");
 	const rowsContainer = editor?.querySelector("[data-nav-items-rows]");
@@ -195,38 +194,43 @@ try {
 	const addButton = editor?.querySelector("[data-nav-add]");
 	const removeLabel = editor instanceof HTMLElement ? editor.dataset.removeLabel || "Remove" : "Remove";
 	const isReadOnly = editor instanceof HTMLElement && editor.dataset.disabled === "true";
+	const navRowSelector = "[data-nav-row]";
+	let draggedNavRow: HTMLElement | null = null;
 
 	const syncPayload = () => {
 		if (!(rowsContainer instanceof HTMLElement) || !(payloadInput instanceof HTMLInputElement)) {
 			return;
 		}
 
-		const entries = collectOrderedRowPayload(rowsContainer.querySelectorAll("[data-nav-row]"), (row) => {
-			const labelEn = row.querySelector("[data-nav-label-en]");
-			const labelVi = row.querySelector("[data-nav-label-vi]");
-			const href = row.querySelector("[data-nav-href]");
+		const entries = Array.from(rowsContainer.querySelectorAll("[data-nav-row]"))
+			.map((row, index) => {
+				const labelEn = row.querySelector("[data-nav-label-en]");
+				const labelVi = row.querySelector("[data-nav-label-vi]");
+				const href = row.querySelector("[data-nav-href]");
 
-			if (
-				!(labelEn instanceof HTMLInputElement) ||
-				!(labelVi instanceof HTMLInputElement) ||
-				!(href instanceof HTMLInputElement)
-			) {
-				return null;
-			}
+				if (
+					!(labelEn instanceof HTMLInputElement) ||
+					!(labelVi instanceof HTMLInputElement) ||
+					!(href instanceof HTMLInputElement)
+				) {
+					return null;
+				}
 
-			const nextLabelEn = labelEn.value.trim();
-			const nextLabelVi = labelVi.value.trim();
-			const nextHref = href.value.trim();
-			return nextLabelEn && nextHref
-				? {
-						label: {
-							en: nextLabelEn,
-							...(nextLabelVi ? { vi: nextLabelVi } : {}),
-						},
-						href: nextHref,
-					}
-				: null;
-		});
+				const nextLabelEn = labelEn.value.trim();
+				const nextLabelVi = labelVi.value.trim();
+				const nextHref = href.value.trim();
+				return nextLabelEn && nextHref
+					? {
+							label: {
+								en: nextLabelEn,
+								...(nextLabelVi ? { vi: nextLabelVi } : {}),
+							},
+							href: nextHref,
+							order: index + 1,
+					  }
+					: null;
+			})
+			.filter((entry): entry is { label: { en: string; vi?: string }; href: string; order: number } => Boolean(entry));
 
 		payloadInput.value = JSON.stringify(entries);
 	};
@@ -236,7 +240,7 @@ try {
 		row.className = "nav-item-row";
 		row.setAttribute("role", "row");
 		row.dataset.navRow = "";
-		row.draggable = true;
+		row.draggable = !isReadOnly;
 		row.innerHTML = `
 			<span class="nav-drag-handle" data-drag-handle aria-label="Drag to reorder"></span>
 			<input type="text" value="${labelEn}" placeholder="Home" data-nav-label-en ${isReadOnly ? "disabled" : ""} />
@@ -258,6 +262,59 @@ try {
 		syncPayload();
 	});
 
+	rowsContainer?.addEventListener("dragstart", (event) => {
+		if (isReadOnly) {
+			return;
+		}
+		const row = findNavRow(event.target);
+		if (!row) {
+			return;
+		}
+		draggedNavRow = row;
+		row.classList.add("is-dragging");
+		event.dataTransfer?.setData("text/plain", "");
+		event.dataTransfer?.setDragImage(row, 0, 0);
+	});
+
+	rowsContainer?.addEventListener("dragover", (event) => {
+		if (!draggedNavRow) {
+			return;
+		}
+		event.preventDefault();
+		const row = findNavRow(event.target);
+		if (!row || row === draggedNavRow) {
+			return;
+		}
+		const bounding = row.getBoundingClientRect();
+		const after = event.clientY > bounding.top + bounding.height / 2;
+		if (after) {
+			row.after(draggedNavRow);
+		} else {
+			row.before(draggedNavRow);
+		}
+	});
+
+	rowsContainer?.addEventListener("drop", (event) => {
+		event.preventDefault();
+		if (!draggedNavRow) {
+			return;
+		}
+		draggedNavRow.classList.remove("is-dragging");
+		draggedNavRow = null;
+		syncPayload();
+	});
+
+	rowsContainer?.addEventListener("dragend", () => {
+		if (draggedNavRow) {
+			draggedNavRow.classList.remove("is-dragging");
+			draggedNavRow = null;
+		}
+	});
+
+	function findNavRow(target: EventTarget | null): HTMLElement | null {
+		return target instanceof Element ? target.closest(navRowSelector) : null;
+	}
+
 	addButton?.addEventListener("click", () => {
 		if (isReadOnly || !(rowsContainer instanceof HTMLElement)) {
 			return;
@@ -270,15 +327,6 @@ try {
 			lastLabel.focus();
 		}
 	});
-
-	if (rowsContainer) {
-		enableDragSorting({
-			container: rowsContainer,
-			rowSelector: "[data-nav-row]",
-			handleSelector: "[data-drag-handle]",
-			onReorder: syncPayload,
-		});
-	}
 
 	syncPayload();
 </script>
