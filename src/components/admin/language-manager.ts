@@ -13,6 +13,8 @@ const columnCount = table.querySelectorAll("thead th").length || 5;
 const emptyMessage = dataset.textEmpty ?? "No languages are configured yet.";
 const loadingMessage = dataset.textLoading ?? "Loading languages...";
 
+console.log("[languages] manager script initialized");
+
 const messages = {
 	createSuccess: dataset.messageCreateSuccess ?? "Language created.",
 	updateSuccess: dataset.messageUpdateSuccess ?? "Language updated.",
