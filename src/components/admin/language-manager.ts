@@ -179,6 +179,8 @@ table.addEventListener("click", (event) => {
 	}
 });
 
+refreshLanguages().catch((error) => showNotice(error instanceof Error ? error.message : messages.error, "danger"));
+
 type LanguageRecord = {
 	code: string;
 	name: string;
