@@ -6,6 +6,13 @@ export interface LanguageRow {
 	isDefault: boolean;
 }
 
+export interface LanguageEntry {
+	code: string;
+	name: string;
+	enabled: boolean;
+	isDefault: boolean;
+}
+
 /** Request-scoped catalog for routing, fallback, and the public language switch. */
 export interface LanguageCatalogState {
 	defaultLanguageCode: string;
@@ -130,6 +137,64 @@ export interface CreateLanguageInput {
 	isDefault?: boolean;
 }
 
+async function ensureDefaultLanguageExists(db: D1Database): Promise<void> {
+	const hasDefault = await db.prepare(`SELECT 1 FROM languages WHERE is_default = 1 LIMIT 1`).first();
+	if (!hasDefault) {
+		const fallback = await db
+			.prepare(`SELECT code FROM languages WHERE enabled = 1 ORDER BY name COLLATE NOCASE ASC LIMIT 1`)
+			.first<{ code: string }>();
+		if (fallback?.code) {
+			await db.prepare(`UPDATE languages SET is_default = 1 WHERE code = ?1`).bind(fallback.code).run();
+		}
+	}
+}
+
+async function countEnabledLanguages(db: D1Database): Promise<number> {
+	const row = await db.prepare(`SELECT COUNT(*) as count FROM languages WHERE enabled = 1`).first<{ count: number }>();
+	return row?.count ?? 0;
+}
+
+export async function toggleLanguageEnabled(db: D1Database, code: string, enabled: boolean): Promise<LanguageRow> {
+	const language = await getLanguageByCode(db, code);
+	if (!language) {
+		throw new Error("Language not found.");
+	}
+
+	if (language.enabled === enabled) {
+		return language;
+	}
+
+	if (!enabled) {
+		if (language.isDefault) {
+			throw new Error("Cannot disable the default language.");
+		}
+		const enabledCount = await countEnabledLanguages(db);
+		if (enabledCount <= 1) {
+			throw new Error("At least one language must remain enabled.");
+		}
+	}
+
+	await db.prepare(`UPDATE languages SET enabled = ?1 WHERE code = ?2`).bind(enabled ? 1 : 0, code).run();
+	return getLanguageByCode(db, code);
+}
+
+export async function setLanguageDefault(db: D1Database, code: string): Promise<LanguageRow> {
+	const language = await getLanguageByCode(db, code);
+	if (!language) {
+		throw new Error("Language not found.");
+	}
+
+	const statements: D1PreparedStatement[] = [];
+	statements.push(db.prepare(`UPDATE languages SET is_default = 0`));
+	statements.push(
+		db
+			.prepare(`UPDATE languages SET is_default = 1, enabled = 1 WHERE code = ?1`)
+			.bind(code.trim()),
+	);
+	await db.batch(statements);
+	return getLanguageByCode(db, code);
+}
+
 export async function createLanguage(db: D1Database, input: CreateLanguageInput): Promise<LanguageRow> {
 	const code = input.code.trim();
 	const name = input.name.trim();
@@ -143,27 +208,15 @@ export async function createLanguage(db: D1Database, input: CreateLanguageInput)
 	await ensureLanguageTables(db);
 
 	const enabled = input.enabled !== false ? 1 : 0;
-	const wantsDefault = input.isDefault === true;
+	await db
+		.prepare(`INSERT INTO languages (code, name, enabled, is_default) VALUES (?1, ?2, ?3, 0)`)
+		.bind(code, name, enabled)
+		.run();
 
-	const batch: D1PreparedStatement[] = [];
-	if (wantsDefault) {
-		batch.push(db.prepare(`UPDATE languages SET is_default = 0`));
-	}
-	batch.push(
-		db.prepare(`INSERT INTO languages (code, name, enabled, is_default) VALUES (?1, ?2, ?3, ?4)`).bind(
-			code,
-			name,
-			enabled,
-			wantsDefault ? 1 : 0,
-		),
-	);
-	await db.batch(batch);
-
-	if (!wantsDefault) {
-		const hasDefault = await db.prepare(`SELECT 1 FROM languages WHERE is_default = 1 LIMIT 1`).first();
-		if (!hasDefault) {
-			await db.prepare(`UPDATE languages SET is_default = 1 WHERE code = ?1`).bind(code).run();
-		}
+	if (input.isDefault === true) {
+		await setLanguageDefault(db, code);
+	} else {
+		await ensureDefaultLanguageExists(db);
 	}
 
 	const created = await getLanguageByCode(db, code);
@@ -194,33 +247,16 @@ export async function updateLanguageByCode(
 		throw new Error("Language name is required.");
 	}
 
-	const nextEnabled = input.enabled !== undefined ? (input.enabled ? 1 : 0) : existing.enabled ? 1 : 0;
-	let nextDefault = input.isDefault !== undefined ? (input.isDefault ? 1 : 0) : existing.isDefault ? 1 : 0;
-
-	if (!nextEnabled && nextDefault) {
-		nextDefault = 0;
+	if (nextName !== existing.name) {
+		await db.prepare(`UPDATE languages SET name = ?1 WHERE code = ?2`).bind(nextName, code.trim()).run();
 	}
 
-	const statements: D1PreparedStatement[] = [];
+	if (input.enabled !== undefined) {
+		await toggleLanguageEnabled(db, code, input.enabled);
+	}
+
 	if (input.isDefault === true) {
-		statements.push(db.prepare(`UPDATE languages SET is_default = 0`));
-		nextDefault = 1;
-	}
-	statements.push(
-		db
-			.prepare(`UPDATE languages SET name = ?1, enabled = ?2, is_default = ?3 WHERE code = ?4`)
-			.bind(nextName, nextEnabled, nextDefault, code.trim()),
-	);
-	await db.batch(statements);
-
-	const stillHasDefault = await db.prepare(`SELECT 1 FROM languages WHERE is_default = 1 LIMIT 1`).first();
-	if (!stillHasDefault) {
-		const pick = await db
-			.prepare(`SELECT code FROM languages WHERE enabled = 1 ORDER BY name COLLATE NOCASE ASC LIMIT 1`)
-			.first<{ code: string }>();
-		if (pick?.code) {
-			await db.prepare(`UPDATE languages SET is_default = 1 WHERE code = ?1`).bind(pick.code).run();
-		}
+		await setLanguageDefault(db, code);
 	}
 
 	return getLanguageByCode(db, code);

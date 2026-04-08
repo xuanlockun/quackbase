@@ -11,21 +11,29 @@ const catalog = getLanguageCatalog(Astro.locals);
 const options = getLanguageSwitchOptions(Astro.url, language, catalog);
 ---
 
-<div class:list={["language-switch", fullWidth && "language-switch-full"]} role="group" aria-label={t("headings.languageSwitcher")}>
-	{
-		options.map((option) => (
-			<a
-				class:list={[
-					"btn",
-					"btn-sm",
-					"language-switch-link",
-					option.isActive ? "btn-dark is-active" : "btn-outline-secondary",
-				]}
-				href={option.href}
-				aria-current={option.isActive ? "true" : undefined}
-			>
-				{option.code.toUpperCase()}
-			</a>
-		))
-	}
+<div class:list={["language-switch", fullWidth && "language-switch-full"]}>
+	<label class="visually-hidden" for="language-switch-dropdown">{t("headings.languageSwitcher")}</label>
+	<select
+		id="language-switch-dropdown"
+		class="form-select form-select-sm language-switch-select"
+		aria-label={t("headings.languageSwitcher")}
+		onchange="if (this.value) window.location.href = this.value"
+	>
+		{
+			options.map((option) => (
+				<option
+					value={option.href}
+					selected={option.isActive}
+					data-code={option.code}
+				>
+					{option.code.toUpperCase()} - {option.label}
+				</option>
+			))
+		}
+	</select>
 </div>
+<style>
+	.language-switch-select {
+		width: 100%;
+	}
+</style>

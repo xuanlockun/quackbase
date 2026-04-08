@@ -2,7 +2,12 @@ import { defineMiddleware } from "astro:middleware";
 import { getDb } from "./lib/blog";
 import { clearAdminSessionCookie } from "./lib/auth/cookies";
 import { resolveAdminSession } from "./lib/auth/session";
-import { FALLBACK_LANGUAGE_CATALOG, loadLanguageCatalog } from "./lib/languages";
+import {
+	FALLBACK_LANGUAGE_CATALOG,
+	loadLanguageCatalog,
+	isValidLanguageCode,
+	LanguageCatalogState,
+} from "./lib/languages";
 import { readUiLanguagePreference, resolveUiLanguage, writeUiLanguagePreference } from "./lib/i18n";
 import {
 	getDefaultAdminPath,
@@ -10,12 +15,56 @@ import {
 	sessionHasPermissions,
 } from "./lib/rbac/policies";
 
+function ensureCatalog(catalog: LanguageCatalogState | null): LanguageCatalogState {
+	if (!catalog || catalog.enabledLanguages.length === 0) {
+		return FALLBACK_LANGUAGE_CATALOG;
+	}
+	return catalog;
+}
+
+function removeLeadingLanguageSegment(pathname: string, catalog: LanguageCatalogState): string {
+	const segments = pathname.split("/").filter(Boolean);
+	if (segments.length === 0) {
+		return "/";
+	}
+	if (isValidLanguageCode(segments[0]) && catalog.enabledLanguages.every((lang) => lang.code !== segments[0])) {
+		segments.shift();
+	}
+	if (segments.length === 0) {
+		return "/";
+	}
+	return `/${segments.join("/")}`;
+}
+
+function buildFallbackPath(
+	pathname: string,
+	search: string,
+	hash: string,
+	catalog: LanguageCatalogState,
+): string {
+	const normalized = removeLeadingLanguageSegment(pathname, catalog);
+	const trailingSlash = pathname.endsWith("/") || normalized === "/";
+	let base = normalized === "/" ? "/" : normalized;
+	const prefix = `/${catalog.defaultLanguageCode}`;
+	const combined = base === "/" ? "/" : `${base.startsWith("/") ? base : `/${base}`}`;
+	const path = trailingSlash && !combined.endsWith("/") ? `${combined}/` : combined;
+	return `${prefix}${path === "/" ? "/" : path}${search}${hash}`;
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
 	const { pathname } = context.url;
 
 	try {
 		const db = getDb(context.locals);
-		context.locals.languageCatalog = await loadLanguageCatalog(db);
+		const catalog = ensureCatalog(await loadLanguageCatalog(db));
+		context.locals.languageCatalog = catalog;
+		if (!pathname.startsWith("/admin") && !pathname.startsWith("/api")) {
+			const firstSegment = pathname.split("/").filter(Boolean)[0];
+			if (firstSegment && isValidLanguageCode(firstSegment) && catalog.enabledLanguages.every((lang) => lang.code !== firstSegment)) {
+				const redirectPath = buildFallbackPath(context.url.pathname, context.url.search, context.url.hash, catalog);
+				return context.redirect(redirectPath);
+			}
+		}
 	} catch {
 		context.locals.languageCatalog = FALLBACK_LANGUAGE_CATALOG;
 	}

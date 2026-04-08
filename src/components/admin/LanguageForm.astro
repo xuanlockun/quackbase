@@ -1,0 +1,58 @@
+---
+import { getUiTranslations } from "../../lib/i18n";
+
+interface Props {
+	formMessages?: {
+		success?: string;
+		error?: string;
+	};
+}
+
+const { formMessages = {} } = Astro.props as Props;
+const { t } = getUiTranslations(Astro);
+const messages = {
+	success: formMessages.success ?? t("messages.languageCreated"),
+	error: formMessages.error ?? t("messages.languageCreateFailed"),
+};
+---
+
+<form
+	class="card card-body"
+	data-language-form
+	data-message-success={messages.success}
+	data-message-error={messages.error}
+>
+	<h3 class="h5 mb-3">{t("headings.languages")}</h3>
+	<div class="mb-3">
+		<label class="form-label" for="language-code">{t("labels.code")}</label>
+		<input
+			class="form-control"
+			id="language-code"
+			name="code"
+			type="text"
+			required
+			placeholder="en"
+			pattern="[a-z]{2}(?:-[a-z]{2})?"
+		/>
+		<div class="form-text">{t("messages.languageCodeHelp")}</div>
+	</div>
+	<div class="mb-3">
+		<label class="form-label" for="language-name">{t("labels.name")}</label>
+		<input class="form-control" id="language-name" name="name" type="text" required />
+	</div>
+	<div class="form-check mb-2">
+		<input class="form-check-input" type="checkbox" id="language-enabled" name="enabled" checked />
+		<label class="form-check-label" for="language-enabled">
+			{t("labels.enabled")}
+		</label>
+	</div>
+	<div class="form-check mb-3">
+		<input class="form-check-input" type="checkbox" id="language-default" name="isDefault" />
+		<label class="form-check-label" for="language-default">
+			{t("actions.setDefaultLanguage")}
+		</label>
+	</div>
+	<button type="submit" class="btn btn-primary w-100">
+		{t("actions.createLanguage")}
+	</button>
+</form>

@@ -1,0 +1,114 @@
+---
+import type { LanguageEntry } from "../../lib/languages";
+import { getUiTranslations } from "../../lib/i18n";
+
+interface Props {
+	languages: LanguageEntry[];
+	tableMessages?: {
+		createSuccess?: string;
+		updateSuccess?: string;
+		error?: string;
+	};
+	textActive?: string;
+	textInactive?: string;
+	textDefault?: string;
+	textSetDefault?: string;
+}
+
+const {
+	languages = [],
+	tableMessages = {},
+	textActive,
+	textInactive,
+	textDefault,
+	textSetDefault,
+} = Astro.props as Props;
+const { t } = getUiTranslations(Astro);
+const messages = {
+	createSuccess: tableMessages.createSuccess ?? t("messages.languageCreated"),
+	updateSuccess: tableMessages.updateSuccess ?? t("messages.languageSaved"),
+	error: tableMessages.error ?? t("messages.languageRequestFailed"),
+};
+const texts = {
+	active: textActive ?? t("status.active"),
+	inactive: textInactive ?? t("status.inactive"),
+	defaultLabel: textDefault ?? t("labels.default"),
+	setDefault: textSetDefault ?? t("actions.setDefaultLanguage"),
+};
+---
+
+<div class="table-responsive">
+	<table
+		class="table table-striped table-borderless mb-0"
+		data-language-table
+		data-api-base="/api/admin/languages"
+		data-message-create-success={messages.createSuccess}
+		data-message-update-success={messages.updateSuccess}
+		data-message-error={messages.error}
+		data-text-active={texts.active}
+		data-text-inactive={texts.inactive}
+		data-text-default={texts.defaultLabel}
+		data-text-set-default={texts.setDefault}
+	>
+		<thead>
+			<tr>
+				<th scope="col">{t("labels.code")}</th>
+				<th scope="col">{t("labels.name")}</th>
+				<th scope="col">{t("labels.enabled")}</th>
+				<th scope="col">{t("labels.defaultLanguage")}</th>
+				<th scope="col">{t("status.active")}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{
+				languages.map((language) => (
+					<tr data-language-row data-language-code={language.code}>
+						<td>
+							<code>{language.code}</code>
+						</td>
+						<td>{language.name}</td>
+						<td>
+							<button
+								type="button"
+								class="btn btn-sm btn-outline-primary"
+								data-action="toggle-enabled"
+								data-code={language.code}
+								data-enabled={language.enabled}
+							>
+								{language.enabled ? texts.active : texts.inactive}
+							</button>
+						</td>
+						<td>
+							<button
+								type="button"
+								class:list={[
+									"btn",
+									"btn-sm",
+									"btn-outline-secondary",
+									language.isDefault && "active",
+								]}
+								aria-pressed={language.isDefault ? "true" : "false"}
+								data-action="set-default"
+								data-code={language.code}
+								data-default={language.isDefault}
+							>
+								{language.isDefault ? texts.defaultLabel : texts.setDefault}
+							</button>
+						</td>
+						<td>
+							<span
+								class:list={[
+									"badge",
+									language.isDefault ? "bg-primary" : language.enabled ? "bg-success" : "bg-secondary",
+								]}
+								data-language-status
+							>
+								{language.isDefault ? texts.defaultLabel : language.enabled ? texts.active : texts.inactive}
+							</span>
+						</td>
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+</div>

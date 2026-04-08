@@ -315,12 +315,22 @@ export function getLanguageSwitchHref(
 		return getAdminLanguageSwitchHref(currentUrl, nextLanguage, c);
 	}
 
-	return switchLang(currentUrl.pathname + currentUrl.search, nextLanguage, c);
+	return switchLang(`${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`, nextLanguage, c);
 }
 
 export function switchLang(href: string, language: string, catalog?: LanguageCatalogState): string {
 	const c = catalog ?? FALLBACK_LANGUAGE_CATALOG;
-	return localizeHref(href, language, c);
+	const url = toInternalUrl(href);
+	if (!url) {
+		return href;
+	}
+
+	const normalizedPath = stripLanguagePrefix(url.pathname, c);
+	const needsTrailingSlash = url.pathname !== "/" && url.pathname.endsWith("/") && normalizedPath !== "/";
+	const pathWithSuffix = needsTrailingSlash ? `${normalizedPath}/` : normalizedPath;
+	url.pathname = withLanguagePrefix(pathWithSuffix, language, c);
+	url.searchParams.delete("lang");
+	return formatLocalUrl(url);
 }
 
 export function getLanguageSwitchOptions(

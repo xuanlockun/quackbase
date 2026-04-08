@@ -41,7 +41,9 @@
     "logOut": "Đăng xuất",
     "manageContactForm": "Quản lý form liên hệ",
     "switchToEnglish": "EN",
-    "switchToVietnamese": "VI"
+    "switchToVietnamese": "VI",
+    "createLanguage": "Tạo ngôn ngữ",
+    "setDefaultLanguage": "Đặt làm ngôn ngữ mặc định"
   },
   "labels": {
     "signedIn": "Đã đăng nhập",
@@ -82,6 +84,9 @@
     "user": "Người dùng",
     "updated": "Cập nhật",
     "name": "Tên",
+    "code": "Mã",
+    "enabled": "Đã bật",
+    "defaultLanguage": "Ngôn ngữ mặc định",
     "message": "Tin nhắn",
     "bannerImageUrls": "URL ảnh banner"
   },
@@ -99,7 +104,8 @@
     "users": "Người dùng",
     "permissionCatalog": "Danh mục quyền",
     "headerFooter": "Đầu trang và chân trang",
-    "languageSwitcher": "Ngôn ngữ"
+    "languageSwitcher": "Ngôn ngữ",
+    "languages": "Ngôn ngữ"
   },
   "status": {
     "draft": "Bản nháp",
@@ -116,6 +122,7 @@
     "cannotSavePage": "Vai trò của bạn có thể xem trang này nhưng không thể lưu thay đổi.",
     "localizedPostHelp": "Nhập tiêu đề và nội dung cho mỗi ngôn ngữ trong cùng một trình sửa.",
     "localizedPageHelp": "Giữ các phiên bản ngôn ngữ của trang trong cùng một trình sửa.",
+    "languageCodeHelp": "Dùng mã ISO dạng `en`, `vi`, hoặc `en-US`.",
     "noPostsYet": "Chưa có bài viết",
     "noPostsHelp": "Tạo bài viết đầu tiên để bắt đầu.",
     "noPagesYet": "Chưa có trang",
@@ -132,6 +139,7 @@
     "manageRoleBundles": "Quản lý bộ vai trò có thể tái sử dụng từ danh sách hành động theo route.",
     "manageUsers": "Quản lý người dùng admin và gán vai trò.",
     "manageAdminUsers": "Quản lý người dùng admin từ danh sách tập trung.",
+    "manageLanguagesHelp": "Tạo, bật và đặt ngôn ngữ mặc định từ một bảng điều khiển.",
     "managePermissions": "Xem danh mục quyền admin.",
     "permissionCatalogDescription": "Mỗi quyền ánh xạ tới một khả năng riêng và được kiểm tra trên mọi request được bảo vệ.",
     "manageSiteSettings": "Quản lý cài đặt trang.",
@@ -147,6 +155,10 @@
     "roleSaved": "Đã lưu vai trò.",
     "roleDeleted": "Đã xóa vai trò.",
     "roleRequestFailed": "Yêu cầu vai trò thất bại.",
+    "languageCreated": "Đã tạo ngôn ngữ.",
+    "languageSaved": "Đã lưu ngôn ngữ.",
+    "languageCreateFailed": "Không thể tạo ngôn ngữ.",
+    "languageRequestFailed": "Không thể tải hoặc cập nhật ngôn ngữ.",
     "userCreated": "Đã tạo người dùng.",
     "userSaved": "Đã lưu người dùng.",
     "userRequestFailed": "Yêu cầu người dùng thất bại.",
