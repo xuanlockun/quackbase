@@ -11,7 +11,7 @@ const apiBase = table.dataset.apiBase ?? "/api/admin/languages";
 const dataset = table.dataset;
 const columnCount = table.querySelectorAll("thead th").length || 5;
 const emptyMessage = dataset.textEmpty ?? "No languages are configured yet.";
-const loadingMessage = dataset.textLoading ?? "Loading languages…";
+const loadingMessage = dataset.textLoading ?? "Loading languages...";
 
 const messages = {
 	createSuccess: dataset.messageCreateSuccess ?? "Language created.",
@@ -25,6 +25,8 @@ const texts = {
 	defaultLabel: dataset.textDefault ?? "Default",
 	setDefault: dataset.textSetDefault ?? "Set as default",
 };
+
+let cachedLanguages: LanguageRecord[] = [];
 
 function showNotice(text: string, variant: "success" | "danger" = "success") {
 	notice.innerHTML = "";
@@ -109,7 +111,10 @@ async function refreshLanguages(): Promise<LanguageRecord[]> {
 		renderRows(result.languages);
 		return result.languages;
 	} catch (error) {
-		renderRows([]);
+		if (!cachedLanguages.length) {
+			showMessageRow(emptyMessage);
+		}
+		console.error("[languages] refresh failed", error);
 		throw error;
 	} finally {
 		setLoadingState(false);
@@ -120,11 +125,13 @@ function renderRows(languages: LanguageRecord[]) {
 	if (!tbody) {
 		return;
 	}
+	cachedLanguages = languages;
+	console.log("[languages] renderRows called", languages);
 	if (languages.length === 0) {
 		showMessageRow(emptyMessage);
 		return;
 	}
-	console.log("[languages] rendering", languages);
+	console.log("[languages] map codes", languages.map((entry) => entry.code));
 	tbody.innerHTML = "";
 	for (const language of languages) {
 		tbody.appendChild(buildRow(language));
@@ -191,11 +198,11 @@ table.addEventListener("click", (event) => {
 		return;
 	}
 
-if (action === "set-default") {
-	patchLanguage(code, { isDefault: true }, messages.updateSuccess).catch((error) =>
-		showNotice(error instanceof Error ? error.message : messages.error, "danger"),
-	);
-}
+	if (action === "set-default") {
+		patchLanguage(code, { isDefault: true }, messages.updateSuccess).catch((error) =>
+			showNotice(error instanceof Error ? error.message : messages.error, "danger"),
+		);
+	}
 });
 
 function showMessageRow(text: string) {
@@ -214,7 +221,7 @@ function showMessageRow(text: string) {
 
 function setLoadingState(isLoading: boolean) {
 	table.dataset.loading = isLoading ? "true" : "false";
-	if (isLoading) {
+	if (isLoading && cachedLanguages.length === 0) {
 		showMessageRow(loadingMessage);
 	}
 }
