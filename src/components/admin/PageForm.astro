@@ -458,8 +458,6 @@ const initialContactFields = contactFormFields.map((field) => ({
 </style>
 
 <script type="module">
-	import { collectOrderedRowPayload, enableDragSorting } from "../../lib/ui-table-order";
-
 	const sectionInput = document.querySelector("[data-page-sections-config]");
 	const sectionRows = document.querySelector("[data-section-rows]");
 	const sectionSelect = document.querySelector("[data-section-select]");
@@ -586,14 +584,53 @@ const initialContactFields = contactFormFields.map((field) => ({
 
 	contactRows?.addEventListener("input", syncContactFields);
 
-	if (contactRows) {
-		enableDragSorting({
-			container: contactRows,
-			rowSelector: "[data-contact-field]",
-			handleSelector: "[data-drag-handle]",
-			onReorder: syncContactFields,
-		});
-	}
+	let draggedContactRow = null;
+
+	contactRows?.addEventListener("dragstart", (event) => {
+		const row = findContactRow(event.target);
+		if (!row) {
+			return;
+		}
+		draggedContactRow = row;
+		row.classList.add("is-dragging");
+		event.dataTransfer?.setData("text/plain", "");
+		event.dataTransfer?.setDragImage(row, 0, 0);
+	});
+
+	contactRows?.addEventListener("dragover", (event) => {
+		if (!draggedContactRow) {
+			return;
+		}
+		event.preventDefault();
+		const row = findContactRow(event.target);
+		if (!row || row === draggedContactRow) {
+			return;
+		}
+		const bounding = row.getBoundingClientRect();
+		const after = event.clientY > bounding.top + bounding.height / 2;
+		if (after) {
+			row.after(draggedContactRow);
+		} else {
+			row.before(draggedContactRow);
+		}
+	});
+
+	contactRows?.addEventListener("drop", (event) => {
+		event.preventDefault();
+		if (!draggedContactRow) {
+			return;
+		}
+		draggedContactRow.classList.remove("is-dragging");
+		draggedContactRow = null;
+		syncContactFields();
+	});
+
+	contactRows?.addEventListener("dragend", () => {
+		if (draggedContactRow) {
+			draggedContactRow.classList.remove("is-dragging");
+			draggedContactRow = null;
+		}
+	});
 
 	function parseConfig(value) {
 		try {
@@ -651,6 +688,10 @@ const initialContactFields = contactFormFields.map((field) => ({
 		return target instanceof Element ? target.closest("[data-section-row]") : null;
 	}
 
+	function findContactRow(target) {
+		return target instanceof Element ? target.closest("[data-contact-field]") : null;
+	}
+
 	function updateSectionPicker() {
 		if (!sectionSelect || !sectionRows) {
 			return;
@@ -700,7 +741,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 		const metaTextarea = metadata?.textareaOption ?? "Textarea";
 		const row = document.createElement("div");
 		row.className = "contact-field-row";
-		row.draggable = true;
+		row.draggable = !isContactReadOnly;
 		row.dataset.contactField = "";
 		const assignedId = Number(field.id ?? nextFieldId + 1);
 		row.dataset.fieldId = String(assignedId);
@@ -750,29 +791,33 @@ const initialContactFields = contactFormFields.map((field) => ({
 		if (!contactPayload || !contactRows) {
 			return;
 		}
-		const fields = collectOrderedRowPayload(contactRows.querySelectorAll("[data-contact-field]"), (row) => {
-			const typeInput = row.querySelector("[data-contact-field-type]");
-			const requiredInput = row.querySelector("[data-contact-field-required]");
-			const labelEnInput = row.querySelector("[data-contact-field-label-en]");
-			const labelViInput = row.querySelector("[data-contact-field-label-vi]");
-			if (!(typeInput instanceof HTMLSelectElement) || !(labelEnInput instanceof HTMLInputElement)) {
-				return null;
-			}
-			const enValue = labelEnInput.value.trim();
-			if (!enValue) {
-				return null;
-			}
-			const viValue = labelViInput instanceof HTMLInputElement ? labelViInput.value.trim() : "";
-			return {
-				id: Number(row.dataset.fieldId) || undefined,
-				type: typeInput.value,
-				required: Boolean(requiredInput?.checked),
-				label: {
-					en: enValue,
-					...(viValue ? { vi: viValue } : {}),
-				},
-			};
-		});
+		const fields = Array.from(contactRows.querySelectorAll("[data-contact-field]"))
+			.map((row, index) => {
+				const typeInput = row.querySelector("[data-contact-field-type]");
+				const requiredInput = row.querySelector("[data-contact-field-required]");
+				const labelEnInput = row.querySelector("[data-contact-field-label-en]");
+				const labelViInput = row.querySelector("[data-contact-field-label-vi]");
+				if (!(typeInput instanceof HTMLSelectElement) || !(labelEnInput instanceof HTMLInputElement)) {
+					return null;
+				}
+				const enValue = labelEnInput.value.trim();
+				if (!enValue) {
+					return null;
+				}
+				const viValue = labelViInput instanceof HTMLInputElement ? labelViInput.value.trim() : "";
+				return {
+					id: Number(row.dataset.fieldId) || undefined,
+					type: typeInput.value,
+					required: Boolean(requiredInput?.checked),
+					label: {
+						en: enValue,
+						...(viValue ? { vi: viValue } : {}),
+					},
+					order: index + 1,
+				};
+			})
+			.filter((field): field is { id?: number; type: string; required: boolean; label: { en: string; vi?: string }; order: number } => Boolean(field));
+
 		contactPayload.value = JSON.stringify(fields);
 		if (contactEmptyState) {
 			contactEmptyState.hidden = fields.length > 0;
