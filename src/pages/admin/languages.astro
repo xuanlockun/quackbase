@@ -32,29 +32,27 @@ try {
 	pageTitle={t("headings.languages")}
 	pageDescription={t("messages.manageLanguagesHelp")}
 >
-	<div class="admin-page-content">
-		{loadError && <p class="alert alert-warning">{loadError}</p>}
-		<div class="row gy-4">
-			<div class="col-12 col-xl-8">
-				<LanguageTable
-					languages={languages}
-					tableMessages={{
-						createSuccess: t("messages.languageCreated"),
-						updateSuccess: t("messages.languageSaved"),
-						error: t("messages.languageRequestFailed"),
-					}}
-				/>
-			</div>
-			<div class="col-12 col-xl-4">
-				<LanguageForm
-					formMessages={{
-						success: t("messages.languageCreated"),
-						error: t("messages.languageCreateFailed"),
-					}}
-				/>
-			</div>
+	<div class="admin-page-content px-0">
+		{loadError && <p class="alert alert-warning mb-3">{loadError}</p>}
+		<div class="mb-4">
+			<LanguageTable
+				languages={languages}
+				tableMessages={{
+					createSuccess: t("messages.languageCreated"),
+					updateSuccess: t("messages.languageSaved"),
+					error: t("messages.languageRequestFailed"),
+				}}
+			/>
 		</div>
-		<div class="mt-3" data-language-notice aria-live="polite"></div>
+		<div class="mb-3">
+			<LanguageForm
+				formMessages={{
+					success: t("messages.languageCreated"),
+					error: t("messages.languageCreateFailed"),
+				}}
+			/>
+		</div>
+		<div data-language-notice aria-live="polite"></div>
 	</div>
 
 	<script type="module" src={Astro.resolve("../../components/admin/language-manager.ts")} client:load></script>

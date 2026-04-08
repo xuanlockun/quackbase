@@ -140,6 +140,8 @@
     "manageUsers": "Quản lý người dùng admin và gán vai trò.",
     "manageAdminUsers": "Quản lý người dùng admin từ danh sách tập trung.",
     "manageLanguagesHelp": "Tạo, bật và đặt ngôn ngữ mặc định từ một bảng điều khiển.",
+    "languageListEmpty": "Chưa có ngôn ngữ nào được cấu hình.",
+    "loadingLanguages": "Đang tải ngôn ngữ…",
     "managePermissions": "Xem danh mục quyền admin.",
     "permissionCatalogDescription": "Mỗi quyền ánh xạ tới một khả năng riêng và được kiểm tra trên mọi request được bảo vệ.",
     "manageSiteSettings": "Quản lý cài đặt trang.",

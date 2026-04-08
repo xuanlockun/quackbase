@@ -34,14 +34,17 @@ const texts = {
 	inactive: textInactive ?? t("status.inactive"),
 	defaultLabel: textDefault ?? t("labels.default"),
 	setDefault: textSetDefault ?? t("actions.setDefaultLanguage"),
+	emptyState: t("messages.languageListEmpty"),
 };
 ---
 
-<div class="table-responsive">
+<div class="table-responsive w-100">
 	<table
-		class="table table-striped table-borderless mb-0"
+		class="table table-striped table-borderless mb-0 w-100"
 		data-language-table
 		data-api-base="/api/admin/languages"
+		data-text-empty={texts.emptyState}
+		data-text-loading={t("messages.loadingLanguages")}
 		data-message-create-success={messages.createSuccess}
 		data-message-update-success={messages.updateSuccess}
 		data-message-error={messages.error}
@@ -61,53 +64,61 @@ const texts = {
 		</thead>
 		<tbody>
 			{
-				languages.map((language) => (
-					<tr data-language-row data-language-code={language.code}>
-						<td>
-							<code>{language.code}</code>
-						</td>
-						<td>{language.name}</td>
-						<td>
-							<button
-								type="button"
-								class="btn btn-sm btn-outline-primary"
-								data-action="toggle-enabled"
-								data-code={language.code}
-								data-enabled={language.enabled}
-							>
-								{language.enabled ? texts.active : texts.inactive}
-							</button>
-						</td>
-						<td>
-							<button
-								type="button"
-								class:list={[
-									"btn",
-									"btn-sm",
-									"btn-outline-secondary",
-									language.isDefault && "active",
-								]}
-								aria-pressed={language.isDefault ? "true" : "false"}
-								data-action="set-default"
-								data-code={language.code}
-								data-default={language.isDefault}
-							>
-								{language.isDefault ? texts.defaultLabel : texts.setDefault}
-							</button>
-						</td>
-						<td>
-							<span
-								class:list={[
-									"badge",
-									language.isDefault ? "bg-primary" : language.enabled ? "bg-success" : "bg-secondary",
-								]}
-								data-language-status
-							>
-								{language.isDefault ? texts.defaultLabel : language.enabled ? texts.active : texts.inactive}
-							</span>
+				languages.length === 0 ? (
+					<tr>
+						<td colspan="5" class="text-center text-muted py-4 small">
+							{texts.emptyState}
 						</td>
 					</tr>
-				))
+				) : (
+					languages.map((language) => (
+						<tr data-language-row data-language-code={language.code}>
+							<td>
+								<code>{language.code}</code>
+							</td>
+							<td>{language.name}</td>
+							<td>
+								<button
+									type="button"
+									class="btn btn-sm btn-outline-primary"
+									data-action="toggle-enabled"
+									data-code={language.code}
+									data-enabled={language.enabled}
+								>
+									{language.enabled ? texts.active : texts.inactive}
+								</button>
+							</td>
+							<td>
+								<button
+									type="button"
+									class:list={[
+										"btn",
+										"btn-sm",
+										"btn-outline-secondary",
+										language.isDefault && "active",
+									]}
+									aria-pressed={language.isDefault ? "true" : "false"}
+									data-action="set-default"
+									data-code={language.code}
+									data-default={language.isDefault}
+								>
+									{language.isDefault ? texts.defaultLabel : texts.setDefault}
+								</button>
+							</td>
+							<td>
+								<span
+									class:list={[
+										"badge",
+										language.isDefault ? "bg-primary" : language.enabled ? "bg-success" : "bg-secondary",
+									]}
+									data-language-status
+								>
+									{language.isDefault ? texts.defaultLabel : language.enabled ? texts.active : texts.inactive}
+								</span>
+							</td>
+						</tr>
+					))
+				)
 			}
 		</tbody>
 	</table>

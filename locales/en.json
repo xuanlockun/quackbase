@@ -140,6 +140,8 @@
     "manageUsers": "Manage admin users and role assignments.",
     "manageAdminUsers": "Manage admin users from a focused list without inline create or edit panels.",
     "manageLanguagesHelp": "Create, enable, and default languages from one admin workspace.",
+    "languageListEmpty": "No languages are configured yet.",
+    "loadingLanguages": "Loading languages…",
     "managePermissions": "Review the admin permission catalog.",
     "permissionCatalogDescription": "Each permission maps to a discrete admin capability and is evaluated on every protected request.",
     "manageSiteSettings": "Manage site settings.",

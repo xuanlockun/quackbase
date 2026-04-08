@@ -9,6 +9,9 @@ if (!table || !form || !notice) {
 const tbody = table.querySelector("tbody");
 const apiBase = table.dataset.apiBase ?? "/api/admin/languages";
 const dataset = table.dataset;
+const columnCount = table.querySelectorAll("thead th").length || 5;
+const emptyMessage = dataset.textEmpty ?? "No languages are configured yet.";
+const loadingMessage = dataset.textLoading ?? "Loading languages…";
 
 const messages = {
 	createSuccess: dataset.messageCreateSuccess ?? "Language created.",
@@ -90,22 +93,38 @@ function buildRow(language: LanguageRecord): HTMLTableRowElement {
 }
 
 async function refreshLanguages(): Promise<LanguageRecord[]> {
-	const response = await fetch(apiBase);
-	if (!response.ok) {
-		throw new Error(messages.error);
+	setLoadingState(true);
+	try {
+		const response = await fetch(apiBase);
+		console.log("[languages] GET response", response.status, response.statusText);
+		if (!response.ok) {
+			throw new Error(messages.error);
+		}
+		const result = await response.json().catch(() => null);
+		console.log("[languages] payload", result);
+		if (!result?.languages || !Array.isArray(result.languages)) {
+			throw new Error(messages.error);
+		}
+		console.log("[languages] list", result.languages);
+		renderRows(result.languages);
+		return result.languages;
+	} catch (error) {
+		renderRows([]);
+		throw error;
+	} finally {
+		setLoadingState(false);
 	}
-	const result = await response.json();
-	if (!result?.languages) {
-		throw new Error(messages.error);
-	}
-	renderRows(result.languages);
-	return result.languages;
 }
 
 function renderRows(languages: LanguageRecord[]) {
 	if (!tbody) {
 		return;
 	}
+	if (languages.length === 0) {
+		showMessageRow(emptyMessage);
+		return;
+	}
+	console.log("[languages] rendering", languages);
 	tbody.innerHTML = "";
 	for (const language of languages) {
 		tbody.appendChild(buildRow(language));
@@ -172,12 +191,33 @@ table.addEventListener("click", (event) => {
 		return;
 	}
 
-	if (action === "set-default") {
-		patchLanguage(code, { isDefault: true }, messages.updateSuccess).catch((error) =>
-			showNotice(error instanceof Error ? error.message : messages.error, "danger"),
-		);
-	}
+if (action === "set-default") {
+	patchLanguage(code, { isDefault: true }, messages.updateSuccess).catch((error) =>
+		showNotice(error instanceof Error ? error.message : messages.error, "danger"),
+	);
+}
 });
+
+function showMessageRow(text: string) {
+	if (!tbody) {
+		return;
+	}
+	const row = document.createElement("tr");
+	const cell = document.createElement("td");
+	cell.colSpan = columnCount;
+	cell.className = "text-center text-muted py-4 small";
+	cell.textContent = text;
+	row.appendChild(cell);
+	tbody.innerHTML = "";
+	tbody.appendChild(row);
+}
+
+function setLoadingState(isLoading: boolean) {
+	table.dataset.loading = isLoading ? "true" : "false";
+	if (isLoading) {
+		showMessageRow(loadingMessage);
+	}
+}
 
 refreshLanguages().catch((error) => showNotice(error instanceof Error ? error.message : messages.error, "danger"));
 
