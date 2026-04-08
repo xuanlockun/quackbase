@@ -21,6 +21,7 @@
 		"jose": "^6.1.0",
 		"micromark": "^4.0.2",
 		"micromark-extension-gfm": "^3.0.0",
+		"sortablejs": "^1.15.7",
 		"typescript": "5.9.3"
 	},
 	"devDependencies": {

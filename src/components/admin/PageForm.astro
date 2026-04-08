@@ -170,7 +170,19 @@ const initialContactFields = contactFormFields.map((field) => ({
 		<div class="page-sections-heading">
 			<div>
 				<span>{t("headings.pageSections")}</span>
-				<p class="admin-muted">{t("messages.pageSectionsHelp")}</p>
+			</div>
+			<div class="page-sections-actions">
+				<select data-section-select>
+					<option value="" selected disabled>{t("actions.addSection")}</option>
+				</select>
+				<button
+					class="admin-ghost-button"
+					type="button"
+					data-section-add
+					disabled={isDisabled}
+				>
+					{t("actions.addSection")}
+				</button>
 			</div>
 		</div>
 
@@ -189,166 +201,45 @@ const initialContactFields = contactFormFields.map((field) => ({
 			disabled={isDisabled}
 		/>
 
-		<div class="page-sections-stack" data-page-sections-editor>
-			<div class="page-section-card page-section-card-always" data-section="page_content">
-				<div class="page-section-card-top">
-					<div>
-						<strong>{t("messages.pageContent")}</strong>
-						<p class="admin-muted">{t("messages.pageContentHelp")}</p>
-					</div>
-					<label class="page-section-order">
-						<span>{t("labels.order")}</span>
-						<input type="number" min="1" value={pageContentSection.order} data-section-order disabled={isDisabled} />
-					</label>
-				</div>
+		<div class="admin-table" aria-label={t("headings.pageSections")}>
+			<div class="admin-table-row admin-table-head" role="row">
+				<span></span>
+				<span>Section</span>
+				<span>Details</span>
+				<span>Actions</span>
 			</div>
+			<div class="admin-table-body" data-section-rows></div>
+		</div>
+	</div>
 
-			<div class="page-section-card" data-section="banner_slider">
-				<div class="page-section-card-top">
-					<label class="admin-check-row">
-						<input type="checkbox" data-section-enabled checked={Boolean(bannerSection)} disabled={isDisabled} />
-						{t("messages.bannerSlider")}
-					</label>
-					<label class="page-section-order">
-						<span>{t("labels.order")}</span>
-						<input
-							type="number"
-							min="1"
-							value={bannerSection?.order ?? 1}
-							data-section-order
-							disabled={isDisabled}
-						/>
-					</label>
-				</div>
-				<label>
-					<span>{t("labels.bannerImageUrls")}</span>
-					<textarea
-						rows="4"
-						placeholder="https://example.com/banner-1.jpg&#10;https://example.com/banner-2.jpg"
-						data-banner-urls
-						disabled={isDisabled}
-					>{bannerSection?.bannerUrls?.join("\n") ?? ""}</textarea>
-				</label>
+	<div class="admin-form-section contact-fields-wrapper" data-contact-fields-wrapper hidden>
+		<div
+			class="contact-fields-editor"
+			data-contact-fields-editor
+			data-disabled={String(isDisabled)}
+			data-remove-label={t("actions.remove")}
+			data-type-label={t("labels.fieldType")}
+			data-required-label={t("labels.required")}
+			data-label-en={`${t("labels.label")} (EN)`}
+			data-label-vi={`${t("labels.label")} (VI)`}
+			data-text-option={t("labels.textField")}
+			data-email-option={t("labels.emailField")}
+			data-textarea-option={t("labels.textareaField")}
+		>
+			<div class="contact-fields-toolbar">
+				<strong>{t("headings.contactFormFields")}</strong>
+				<button class="admin-ghost-button" type="button" data-contact-field-add disabled={isDisabled}>
+					{t("actions.addField")}
+				</button>
 			</div>
-
-			<div class="page-section-card" data-section="blog_feed">
-				<div class="page-section-card-top">
-					<label class="admin-check-row">
-						<input type="checkbox" data-section-enabled checked={Boolean(blogFeedSection)} disabled={isDisabled} />
-						{t("messages.blogFeedGrid")}
-					</label>
-					<label class="page-section-order">
-						<span>{t("labels.order")}</span>
-						<input
-							type="number"
-							min="1"
-							value={blogFeedSection?.order ?? 2}
-							data-section-order
-							disabled={isDisabled}
-						/>
-					</label>
+			<p class="admin-muted">{t("messages.contactFormSharedConfig")}</p>
+			<div class="contact-fields-config">
+				<div class="contact-fields-table" role="table">
+					<div class="contact-fields-rows" data-contact-fields-rows></div>
 				</div>
-				<p class="admin-muted">{t("messages.latestPublishedPosts")}</p>
-			</div>
-
-			<div class="page-section-card contact-builder-card" data-section="contact_form">
-				<div class="page-section-card-top">
-					<label class="admin-check-row">
-						<input type="checkbox" data-section-enabled checked={Boolean(contactSection)} disabled={isDisabled} />
-						{t("messages.contactForm")}
-					</label>
-					<label class="page-section-order">
-						<span>{t("labels.order")}</span>
-						<input
-							type="number"
-							min="1"
-							value={contactSection?.order ?? 3}
-							data-section-order
-							disabled={isDisabled}
-						/>
-					</label>
-				</div>
-				<div class="contact-builder-copy">
-					<p class="admin-muted">{t("messages.contactFormBuilderHelp")}</p>
-					<p class="admin-muted">{t("messages.contactFormSharedConfig")}</p>
-				</div>
-				<div
-					class="contact-fields-editor"
-					data-contact-fields-editor
-					data-disabled={String(isDisabled)}
-					data-remove-label={t("actions.remove")}
-					data-empty-label={t("messages.noContactFieldsConfigured")}
-					data-type-label={t("labels.fieldType")}
-					data-order-label={t("labels.order")}
-					data-required-label={t("labels.required")}
-					data-label-en={`${t("labels.label")} (EN)`}
-					data-label-vi={`${t("labels.label")} (VI)`}
-					data-text-option={t("labels.textField")}
-					data-email-option={t("labels.emailField")}
-					data-textarea-option={t("labels.textareaField")}
-				>
-					<div class="contact-fields-toolbar">
-						<strong>{t("headings.contactFormFields")}</strong>
-						<button class="admin-ghost-button" type="button" data-contact-field-add disabled={isDisabled}>
-							{t("actions.addField")}
-						</button>
-					</div>
-
-					<div class="contact-fields-stack" data-contact-fields-rows>
-						{
-							initialContactFields.map((field) => (
-								<div class="contact-field-row" data-contact-field data-field-id={field.id}>
-									<div class="contact-field-meta">
-										<label>
-											<span>{t("labels.fieldType")}</span>
-											<select data-contact-field-type disabled={isDisabled}>
-												<option value="text" selected={field.type === "text"}>{t("labels.textField")}</option>
-												<option value="email" selected={field.type === "email"}>{t("labels.emailField")}</option>
-												<option value="textarea" selected={field.type === "textarea"}>{t("labels.textareaField")}</option>
-											</select>
-										</label>
-										<label>
-											<span>{t("labels.order")}</span>
-											<input type="number" min="1" value={field.order} data-contact-field-order disabled={isDisabled} />
-										</label>
-										<label class="contact-field-required">
-											<span>{t("labels.required")}</span>
-											<input type="checkbox" data-contact-field-required checked={field.required} disabled={isDisabled} />
-										</label>
-										<button class="admin-ghost-button" type="button" data-contact-field-remove disabled={isDisabled}>
-											{t("actions.remove")}
-										</button>
-									</div>
-									<div class="contact-field-labels">
-										<label>
-											<span>{t("labels.label")} (EN)</span>
-											<input
-												type="text"
-												value={field.label.en ?? ""}
-												placeholder="Message"
-												data-contact-field-label-en
-												disabled={isDisabled}
-											/>
-										</label>
-										<label>
-											<span>{t("labels.label")} (VI)</span>
-											<input
-												type="text"
-												value={field.label.vi ?? ""}
-												placeholder="Tin nhan"
-												data-contact-field-label-vi
-												disabled={isDisabled}
-											/>
-										</label>
-									</div>
-								</div>
-							))
-						}
-					</div>
-					<p class="admin-muted" data-contact-fields-empty hidden={initialContactFields.length > 0}>
-						{t("messages.noContactFieldsConfigured")}
-					</p>
-				</div>
+				<p class="admin-muted" data-contact-fields-empty hidden>
+					{t("messages.noContactFieldsConfigured")}
+				</p>
 			</div>
 		</div>
 	</div>
@@ -361,19 +252,15 @@ const initialContactFields = contactFormFields.map((field) => ({
 
 <style>
 	.localized-editor,
-	.page-sections-stack,
-	.contact-fields-stack,
-	.contact-builder-copy,
-	.contact-field-labels {
+	.contact-fields-config {
 		display: grid;
 		gap: 1rem;
 	}
 
 	.localized-editor-header,
-	.page-section-card-top,
 	.contact-fields-toolbar {
 		display: flex;
-		align-items: end;
+		align-items: flex-end;
 		justify-content: space-between;
 		gap: 1rem;
 	}
@@ -383,8 +270,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 		font-size: 1.1rem;
 	}
 
-	.localized-editor-header p,
-	.page-sections-heading p {
+	.localized-editor-header p {
 		margin: 0.35rem 0 0;
 	}
 
@@ -409,72 +295,45 @@ const initialContactFields = contactFormFields.map((field) => ({
 		color: white;
 	}
 
-	.localized-editor-panel,
-	.page-section-card,
-	.contact-field-row {
+	.localized-editor-panel {
 		display: grid;
 		gap: 0.8rem;
-		padding: 1rem;
-		border-radius: 18px;
-		background: rgba(var(--gray-light), 0.28);
 	}
 
 	.localized-editor-panel textarea {
 		min-height: 280px;
 	}
 
-	.page-section-order {
-		display: grid;
-		gap: 0.35rem;
-		min-width: 96px;
-	}
-
-	.page-section-order input {
-		max-width: 96px;
-	}
-
-	.page-section-card :global(textarea[data-banner-urls]) {
-		min-height: 110px;
-	}
-
-	.contact-field-meta {
-		display: grid;
-		grid-template-columns: repeat(4, minmax(0, auto));
-		gap: 0.75rem;
-		align-items: end;
-	}
-
-	.contact-field-meta label,
-	.contact-field-labels label {
-		display: grid;
-		gap: 0.35rem;
-	}
-
-	.contact-field-required {
-		min-width: 92px;
-	}
-
-	.contact-builder-card {
+	.page-sections-heading {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
 		gap: 1rem;
 	}
 
-	@media (max-width: 900px) {
-		.contact-field-meta {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
+	.page-sections-actions {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+
+	.page-sections-actions select {
+		min-width: 200px;
+		border-radius: 8px;
+		border: 1px solid rgba(var(--gray), 0.35);
+		padding: 0.4rem 0.6rem;
+		background: white;
+	}
+
+	.contact-fields-toolbar strong {
+		font-size: 0.95rem;
 	}
 
 	@media (max-width: 720px) {
 		.localized-editor-header,
-		.page-section-card-top,
 		.contact-fields-toolbar {
 			flex-direction: column;
 			align-items: stretch;
-		}
-
-		.contact-field-meta,
-		.contact-field-labels {
-			grid-template-columns: 1fr;
 		}
 	}
 </style>
