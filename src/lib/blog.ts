@@ -10,6 +10,7 @@ import {
 	stringifyLocalizedText,
 } from "./i18n";
 import { FALLBACK_LANGUAGE_CATALOG, type LanguageCatalogState, loadLanguageCatalog } from "./languages";
+import { normalizePayloadOrder } from "./ui-table-order";
 
 function catalogOrFallback(catalog?: LanguageCatalogState): LanguageCatalogState {
 	return catalog ?? FALLBACK_LANGUAGE_CATALOG;
@@ -1196,27 +1197,25 @@ function parsePageSections(value?: string | null, legacyShowPosts?: number): Pag
 
 function parsePageSectionsForm(formData: FormData): PageSectionConfig[] {
 	const rawConfig = optionalString(formData, "pageSectionsConfig");
-	if (rawConfig) {
-		try {
-			const parsed = JSON.parse(rawConfig);
-			if (Array.isArray(parsed)) {
-				const normalized = normalizePageSections(parsed);
-				if (normalized.length > 0) {
-					return normalized;
-				}
-			}
-		} catch {
-			throw new Error("Page sections configuration is invalid.");
-		}
+	if (!rawConfig) {
+		return normalizePageSections([{ type: "page_content", order: 1 }]);
 	}
 
-	const legacySections = formData
-		.getAll("pageSections")
-		.filter((value): value is string => typeof value === "string")
-		.map((value) => value.trim())
-		.filter((value) => ["blog_feed"].includes(value));
+	try {
+		const parsed = JSON.parse(rawConfig);
+		if (!Array.isArray(parsed)) {
+			throw new Error();
+		}
 
-	return normalizePageSections(["page_content", ...legacySections]);
+		const normalized = normalizePageSections(parsed);
+		if (normalized.length === 0) {
+			throw new Error();
+		}
+
+		return normalized;
+	} catch {
+		throw new Error("Page sections configuration is invalid.");
+	}
 }
 
 function normalizePageSections(input: unknown[]): PageSectionConfig[] {
@@ -1280,7 +1279,7 @@ function normalizePageSections(input: unknown[]): PageSectionConfig[] {
 		deduped.push({ type: "page_content", order: 1 });
 	}
 
-	return deduped.sort((left, right) => left.order - right.order);
+	return normalizePayloadOrder(deduped);
 }
 
 function parseLocalizedFieldFromForm(

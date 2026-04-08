@@ -258,7 +258,6 @@ export function normalizeFormFields(input: unknown, defaultLanguageCode?: string
 	const normalized = input
 		.map((item, index) => normalizeFormField(item, index, defaultLanguageCode))
 		.filter((field): field is ContactFormField => Boolean(field))
-		.sort((left, right) => left.order - right.order || left.id - right.id)
 		.map((field, index) => ({
 			...field,
 			order: index + 1,

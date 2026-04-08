@@ -76,8 +76,9 @@ try {
 					disabled={Boolean(loadError)}
 				/>
 				<div class="nav-items-editor" data-nav-items-editor data-disabled={Boolean(loadError)} data-remove-label={t("actions.remove")}>
-					<div class="nav-items-table" role="table">
+					<div class="nav-items-table" role="table" data-nav-items-table>
 						<div class="nav-items-header" role="row">
+							<span></span>
 							<span>{t("labels.label")} (EN)</span>
 							<span>{t("labels.label")} (VI)</span>
 							<span>{t("labels.link")}</span>
@@ -86,7 +87,8 @@ try {
 						<div class="nav-items-rows" data-nav-items-rows>
 							{
 								siteConfig.navItems.map((item) => (
-									<div class="nav-item-row" role="row">
+									<div class="nav-item-row" role="row" draggable="true" data-nav-row>
+										<span class="nav-drag-handle" data-drag-handle aria-label="Drag to reorder"></span>
 										<input
 											type="text"
 											value={item.labelTranslations?.en ?? item.label}
@@ -127,7 +129,6 @@ try {
 				</div>
 			</div>
 			<div class="admin-form-section">
-				<p class="admin-muted">{t("messages.homePageSlugHelp")}</p>
 				<p class="admin-muted">{t("messages.navStorageHelp")}</p>
 				<button class="admin-primary-button" type="submit" disabled={Boolean(loadError)}>{t("actions.saveHeader")}</button>
 			</div>
@@ -185,47 +186,47 @@ try {
 	}
 </style>
 
-<script>
+<script type="module">
+	import { collectOrderedRowPayload, enableDragSorting } from "../../lib/ui-table-order";
+
 	const editor = document.querySelector("[data-nav-items-editor]");
 	const rowsContainer = editor?.querySelector("[data-nav-items-rows]");
 	const payloadInput = document.getElementById("nav-items-payload");
 	const addButton = editor?.querySelector("[data-nav-add]");
 	const removeLabel = editor instanceof HTMLElement ? editor.dataset.removeLabel || "Remove" : "Remove";
+	const isReadOnly = editor instanceof HTMLElement && editor.dataset.disabled === "true";
 
 	const syncPayload = () => {
 		if (!(rowsContainer instanceof HTMLElement) || !(payloadInput instanceof HTMLInputElement)) {
 			return;
 		}
 
-				const rows = Array.from(rowsContainer.querySelectorAll(".nav-item-row"));
-		const entries = rows
-			.map((row) => {
-				const labelEn = row.querySelector("[data-nav-label-en]");
-				const labelVi = row.querySelector("[data-nav-label-vi]");
-				const href = row.querySelector("[data-nav-href]");
+		const entries = collectOrderedRowPayload(rowsContainer.querySelectorAll("[data-nav-row]"), (row) => {
+			const labelEn = row.querySelector("[data-nav-label-en]");
+			const labelVi = row.querySelector("[data-nav-label-vi]");
+			const href = row.querySelector("[data-nav-href]");
 
-				if (
-					!(labelEn instanceof HTMLInputElement) ||
-					!(labelVi instanceof HTMLInputElement) ||
-					!(href instanceof HTMLInputElement)
-				) {
-					return null;
-				}
+			if (
+				!(labelEn instanceof HTMLInputElement) ||
+				!(labelVi instanceof HTMLInputElement) ||
+				!(href instanceof HTMLInputElement)
+			) {
+				return null;
+			}
 
-				const nextLabelEn = labelEn.value.trim();
-				const nextLabelVi = labelVi.value.trim();
-				const nextHref = href.value.trim();
-				return nextLabelEn && nextHref
-					? {
-							label: {
-								en: nextLabelEn,
-								...(nextLabelVi ? { vi: nextLabelVi } : {}),
-							},
-							href: nextHref,
-						}
-					: null;
-			})
-			.filter(Boolean);
+			const nextLabelEn = labelEn.value.trim();
+			const nextLabelVi = labelVi.value.trim();
+			const nextHref = href.value.trim();
+			return nextLabelEn && nextHref
+				? {
+						label: {
+							en: nextLabelEn,
+							...(nextLabelVi ? { vi: nextLabelVi } : {}),
+						},
+						href: nextHref,
+					}
+				: null;
+		});
 
 		payloadInput.value = JSON.stringify(entries);
 	};
@@ -234,11 +235,14 @@ try {
 		const row = document.createElement("div");
 		row.className = "nav-item-row";
 		row.setAttribute("role", "row");
+		row.dataset.navRow = "";
+		row.draggable = true;
 		row.innerHTML = `
-			<input type="text" value="${labelEn}" placeholder="Home" data-nav-label-en />
-			<input type="text" value="${labelVi}" placeholder="Trang chu" data-nav-label-vi />
-			<input type="text" value="${href}" placeholder="/about or https://example.com" data-nav-href />
-			<button class="admin-ghost-button nav-item-remove" type="button" data-nav-remove>${removeLabel}</button>
+			<span class="nav-drag-handle" data-drag-handle aria-label="Drag to reorder"></span>
+			<input type="text" value="${labelEn}" placeholder="Home" data-nav-label-en ${isReadOnly ? "disabled" : ""} />
+			<input type="text" value="${labelVi}" placeholder="Trang chu" data-nav-label-vi ${isReadOnly ? "disabled" : ""} />
+			<input type="text" value="${href}" placeholder="/about or https://example.com" data-nav-href ${isReadOnly ? "disabled" : ""} />
+			<button class="admin-ghost-button nav-item-remove" type="button" data-nav-remove ${isReadOnly ? "disabled" : ""}>${removeLabel}</button>
 		`;
 		return row;
 	};
@@ -255,7 +259,7 @@ try {
 	});
 
 	addButton?.addEventListener("click", () => {
-		if (!(rowsContainer instanceof HTMLElement)) {
+		if (isReadOnly || !(rowsContainer instanceof HTMLElement)) {
 			return;
 		}
 
@@ -266,6 +270,15 @@ try {
 			lastLabel.focus();
 		}
 	});
+
+	if (rowsContainer) {
+		enableDragSorting({
+			container: rowsContainer,
+			rowSelector: "[data-nav-row]",
+			handleSelector: "[data-drag-handle]",
+			onReorder: syncPayload,
+		});
+	}
 
 	syncPayload();
 </script>

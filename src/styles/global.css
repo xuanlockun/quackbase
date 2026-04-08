@@ -494,36 +494,50 @@ hr {
 }
 
 .admin-table-row {
-	display: grid;
-	grid-template-columns: 32px minmax(0, 1.5fr) minmax(0, 1fr) 80px;
-	gap: 0.75rem;
-	align-items: center;
-	padding: 0.35rem 0.5rem;
-	background: white;
-	border-radius: 10px;
-	box-shadow: inset 0 -1px 0 0 rgba(var(--gray), 0.16);
+		display: grid;
+		grid-template-columns: 32px minmax(0, 1.5fr) minmax(0, 1fr) 80px;
+		gap: 0.75rem;
+		align-items: center;
+		padding: 0.35rem 0.5rem;
+		background: white;
+		border-radius: 10px;
+		box-shadow: inset 0 -1px 0 0 rgba(var(--gray), 0.16);
 }
 
 .drag-handle {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 32px;
-	height: 32px;
-	border-radius: 50%;
-	border: 1px solid rgba(var(--gray), 0.35);
-	background: rgba(var(--gray-light), 0.5);
-	color: rgba(var(--gray-dark), 0.7);
-	cursor: grab;
-	font-size: 1.1rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		border: 1px solid rgba(var(--gray), 0.35);
+		background: rgba(var(--gray-light), 0.5);
+		color: rgba(var(--gray-dark), 0.7);
+		cursor: grab;
+		font-size: 1.1rem;
 }
 
 .drag-handle:active {
-	cursor: grabbing;
+		cursor: grabbing;
+}
+
+.admin-table-row.is-dragging,
+.contact-field-row.is-dragging,
+.nav-item-row.is-dragging {
+	opacity: 0.6;
+	outline: 2px dashed rgba(var(--gray), 0.8);
+}
+
+.admin-table-row[data-section-row] .drag-handle,
+.contact-field-row .drag-handle,
+.nav-item-row .nav-drag-handle {
+	border-radius: 6px;
+	background: rgba(var(--gray-light), 0.3);
 }
 
 .section-row {
-	padding: 0.5rem 0;
+		padding: 0.5rem 0;
 }
 
 .section-row strong {

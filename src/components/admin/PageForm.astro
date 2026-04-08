@@ -45,14 +45,42 @@ const bannerSection = sectionMap.get("banner_slider");
 const blogFeedSection = sectionMap.get("blog_feed");
 const contactSection = sectionMap.get("contact_form");
 const initialSections: PageSectionConfig[] = [
-	pageContentSection,
-	...(bannerSection ? [bannerSection] : []),
-	...(blogFeedSection ? [blogFeedSection] : []),
-	...(contactSection ? [contactSection] : []),
+		pageContentSection,
+		...(bannerSection ? [bannerSection] : []),
+		...(blogFeedSection ? [blogFeedSection] : []),
+		...(contactSection ? [contactSection] : []),
 ];
+const sectionCatalog = [
+	{
+		type: "page_content",
+		label: t("messages.pageContent") ?? "Page content",
+		description: t("messages.pageContentHelp") ?? "",
+		details: t("labels.localizedContent") ?? "Localized content",
+		removable: false,
+	},
+	{
+		type: "banner_slider",
+		label: t("messages.bannerSlider") ?? "Banner slider",
+		description: t("messages.bannerSlider") ?? "Display a rotating hero banner.",
+		details: t("labels.bannerImageUrls") ?? "Banner media",
+	},
+	{
+		type: "blog_feed",
+		label: t("messages.blogFeedGrid") ?? "Blog feed",
+		description: t("messages.latestPublishedPosts") ?? "Show the latest published posts.",
+		details: t("messages.latestPublishedPosts") ?? "Latest posts summary",
+	},
+	{
+		type: "contact_form",
+		label: t("messages.contactForm") ?? "Contact form",
+		description: t("messages.contactFormHelp") ?? "Render the shared contact form section.",
+		details: t("messages.contactFormSharedConfig") ?? "Shared contact fields",
+	},
+];
+const sectionCatalogJson = JSON.stringify(sectionCatalog);
 const initialContactFields = contactFormFields.map((field) => ({
-	id: field.id,
-	type: field.type,
+		id: field.id,
+		type: field.type,
 	label: field.label,
 	required: field.required,
 	order: field.order,
@@ -166,83 +194,96 @@ const initialContactFields = contactFormFields.map((field) => ({
 		}
 	</div>
 
-	<div class="admin-form-section">
-		<div class="page-sections-heading">
-			<div>
-				<span>{t("headings.pageSections")}</span>
-			</div>
-			<div class="page-sections-actions">
-				<select data-section-select>
-					<option value="" selected disabled>{t("actions.addSection")}</option>
-				</select>
-				<button
-					class="admin-ghost-button"
-					type="button"
-					data-section-add
-					disabled={isDisabled}
-				>
-					{t("actions.addSection")}
-				</button>
-			</div>
-		</div>
+        <div class="admin-form-section">
+                <div class="page-sections-heading">
+                        <div>
+                                <span>{t("headings.pageSections")}</span>
+                        </div>
+                        <div class="page-sections-actions">
+                                <select data-section-select data-section-add-label={t("actions.addSection")} disabled={isDisabled}></select>
+                                <button
+                                        class="admin-ghost-button"
+                                        type="button"
+                                        data-section-add
+                                        data-readonly={String(isDisabled)}
+                                        disabled={isDisabled}
+                                >
+                                        {t("actions.addSection")}
+                                </button>
+                        </div>
+                </div>
 
-		<input
-			type="hidden"
-			name="pageSectionsConfig"
-			data-page-sections-config
-			value={JSON.stringify(initialSections)}
-			disabled={isDisabled}
-		/>
-		<input
-			type="hidden"
-			name="contactFormFields"
-			data-contact-fields-payload
-			value={JSON.stringify(initialContactFields)}
-			disabled={isDisabled}
-		/>
+                <input
+                        type="hidden"
+                        name="pageSectionsConfig"
+                        data-page-sections-config
+                        value={JSON.stringify(initialSections)}
+                        disabled={isDisabled}
+                />
+                <input
+                        type="hidden"
+                        name="contactFormFields"
+                        data-contact-fields-payload
+                        value={JSON.stringify(initialContactFields)}
+                        disabled={isDisabled}
+                />
 
-		<div class="admin-table" aria-label={t("headings.pageSections")}>
-			<div class="admin-table-row admin-table-head" role="row">
-				<span></span>
-				<span>Section</span>
-				<span>Details</span>
-				<span>Actions</span>
-			</div>
-			<div class="admin-table-body" data-section-rows></div>
-		</div>
-	</div>
+                <div
+                        class="admin-table"
+                        aria-label={t("headings.pageSections")}
+                        data-page-sections-editor
+                        data-section-remove-label={t("actions.remove")}
+                        data-section-catalog={sectionCatalogJson}
+                >
+                        <div class="admin-table-row admin-table-head" role="row">
+                                <span></span>
+                                <span>Section</span>
+                                <span>Details</span>
+                                <span>Actions</span>
+                        </div>
+                        <div class="admin-table-body" data-section-rows></div>
+                </div>
+        </div>
 
-	<div class="admin-form-section contact-fields-wrapper" data-contact-fields-wrapper hidden>
-		<div
-			class="contact-fields-editor"
-			data-contact-fields-editor
-			data-disabled={String(isDisabled)}
-			data-remove-label={t("actions.remove")}
-			data-type-label={t("labels.fieldType")}
-			data-required-label={t("labels.required")}
-			data-label-en={`${t("labels.label")} (EN)`}
-			data-label-vi={`${t("labels.label")} (VI)`}
-			data-text-option={t("labels.textField")}
-			data-email-option={t("labels.emailField")}
-			data-textarea-option={t("labels.textareaField")}
-		>
-			<div class="contact-fields-toolbar">
-				<strong>{t("headings.contactFormFields")}</strong>
-				<button class="admin-ghost-button" type="button" data-contact-field-add disabled={isDisabled}>
-					{t("actions.addField")}
-				</button>
-			</div>
-			<p class="admin-muted">{t("messages.contactFormSharedConfig")}</p>
-			<div class="contact-fields-config">
-				<div class="contact-fields-table" role="table">
-					<div class="contact-fields-rows" data-contact-fields-rows></div>
-				</div>
-				<p class="admin-muted" data-contact-fields-empty hidden>
-					{t("messages.noContactFieldsConfigured")}
-				</p>
-			</div>
-		</div>
-	</div>
+        <div class="admin-form-section contact-fields-wrapper" data-contact-fields-wrapper hidden>
+                <div
+                        class="contact-fields-editor"
+                        data-contact-fields-editor
+                        data-disabled={String(isDisabled)}
+                        data-remove-label={t("actions.remove")}
+                        data-type-label={t("labels.fieldType")}
+                        data-required-label={t("labels.required")}
+                        data-label-en={`${t("labels.label")} (EN)`}
+                        data-label-vi={`${t("labels.label")} (VI)`}
+                        data-text-option={t("labels.textField")}
+                        data-email-option={t("labels.emailField")}
+                        data-textarea-option={t("labels.textareaField")}
+                >
+                        <div class="contact-fields-toolbar">
+                                <strong>{t("headings.contactFormFields")}</strong>
+                                <button class="admin-ghost-button" type="button" data-contact-field-add data-readonly={String(isDisabled)} disabled={isDisabled}>
+                                        {t("actions.addField")}
+                                </button>
+                        </div>
+                        <p class="admin-muted">{t("messages.contactFormSharedConfig")}</p>
+                        <div class="contact-fields-config">
+                                <div class="contact-fields-table" role="table">
+                                        <div class="contact-fields-header" role="row">
+                                                <span></span>
+                                                <span>{t("labels.fieldType")}</span>
+                                                <span>{t("labels.label")} (EN)</span>
+                                                <span>{t("labels.label")} (VI)</span>
+                                                <span>{t("labels.required")}</span>
+                                                <span>{t("labels.action")}</span>
+                                        </div>
+                                        <div class="contact-fields-rows" data-contact-fields-rows></div>
+                                </div>
+                                <p class="admin-muted" data-contact-fields-empty hidden>
+                                        {t("messages.noContactFieldsConfigured")}
+                                </p>
+                        </div>
+                </div>
+        </div>
 
 	<div class="admin-form-actions">
 		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
@@ -338,325 +379,280 @@ const initialContactFields = contactFormFields.map((field) => ({
 	}
 </style>
 
-<script>
-	const syncLocalizedEditor = (root) => {
-		if (!(root instanceof HTMLElement)) {
+<script type="module">
+	import { collectOrderedRowPayload, enableDragSorting } from "../../lib/ui-table-order";
+
+	const sectionInput = document.querySelector("[data-page-sections-config]");
+	const sectionRows = document.querySelector("[data-section-rows]");
+	const sectionSelect = document.querySelector("[data-section-select]");
+	const sectionAddButton = document.querySelector("[data-section-add]");
+	const sectionEditor = document.querySelector("[data-page-sections-editor]");
+	const sectionRemoveLabel = sectionEditor?.dataset.sectionRemoveLabel ?? "Remove";
+	const sectionAddLabel = sectionSelect?.dataset.sectionAddLabel ?? "Add section";
+	const SECTION_CATALOG = parseConfig(sectionEditor?.dataset.sectionCatalog);
+	const contactWrapper = document.querySelector("[data-contact-fields-wrapper]");
+	const contactRows = document.querySelector("[data-contact-fields-rows]");
+	const contactPayload = document.querySelector("[data-contact-fields-payload]");
+	const contactEmptyState = document.querySelector("[data-contact-fields-empty]");
+	const addContactButton = document.querySelector("[data-contact-field-add]");
+	const isSectionReadOnly = sectionAddButton?.dataset.readonly === "true";
+	const isContactReadOnly = addContactButton?.dataset.readonly === "true";
+	let nextFieldId = 0;
+
+	const initialSections = parseConfig(sectionInput?.value);
+	if (initialSections.length === 0 && SECTION_CATALOG.length > 0) {
+		const defaultSection = SECTION_CATALOG[0];
+		initialSections.push({ type: defaultSection.type });
+	}
+	initialSections.forEach((entry) => {
+		sectionRows?.appendChild(createSectionRow(entry.type));
+	});
+	updateSectionPicker();
+	toggleContactFields(initialSections.some((entry) => entry.type === "contact_form"));
+	syncSections();
+
+	const initialContactFields = parseConfig(contactPayload?.value);
+	nextFieldId = initialContactFields.reduce((max, field) => Math.max(max, Number(field.id ?? 0)), 0);
+	initialContactFields.forEach((entry) => {
+		contactRows?.append(createContactFieldRow(entry));
+	});
+	syncContactFields();
+
+	sectionAddButton?.addEventListener("click", () => {
+		const type = sectionSelect?.value;
+		if (!type) {
 			return;
 		}
-
-		const titleField = root.querySelector("[data-title-translations]");
-		const contentField = root.querySelector("[data-content-translations]");
-		if (!(titleField instanceof HTMLInputElement) || !(contentField instanceof HTMLInputElement)) {
-			return;
-		}
-
-		const titleTranslations = {};
-		root.querySelectorAll("[data-title-input]").forEach((input) => {
-			if (!(input instanceof HTMLInputElement)) {
-				return;
-			}
-			const code = input.dataset.titleInput;
-			if (code) {
-				titleTranslations[code] = input.value;
-			}
-		});
-
-		const contentTranslations = {};
-		root.querySelectorAll("[data-content-input]").forEach((input) => {
-			if (!(input instanceof HTMLTextAreaElement)) {
-				return;
-			}
-			const code = input.dataset.contentInput;
-			if (code) {
-				contentTranslations[code] = input.value;
-			}
-		});
-
-		titleField.value = JSON.stringify(titleTranslations);
-		contentField.value = JSON.stringify(contentTranslations);
-	};
-
-	document.querySelectorAll("[data-localized-editor]").forEach((root) => {
-		if (!(root instanceof HTMLElement)) {
-			return;
-		}
-
-		const setActiveLanguage = (nextLanguage) => {
-			root.dataset.activeLanguage = nextLanguage;
-			root.querySelectorAll("[data-language-tab]").forEach((button) => {
-				if (!(button instanceof HTMLButtonElement)) {
-					return;
-				}
-				const isActive = button.dataset.languageTab === nextLanguage;
-				button.classList.toggle("is-active", isActive);
-				button.setAttribute("aria-selected", isActive ? "true" : "false");
-			});
-			root.querySelectorAll("[data-language-panel]").forEach((panel) => {
-				if (!(panel instanceof HTMLElement)) {
-					return;
-				}
-				const isActive = panel.dataset.languagePanel === nextLanguage;
-				panel.hidden = !isActive;
-				panel.classList.toggle("is-active", isActive);
-			});
-		};
-
-		root.querySelectorAll("[data-language-tab]").forEach((button) => {
-			button.addEventListener("click", () => {
-				if (button instanceof HTMLButtonElement && button.dataset.languageTab) {
-					setActiveLanguage(button.dataset.languageTab);
-				}
-			});
-		});
-
-		root.addEventListener("input", () => syncLocalizedEditor(root));
-		syncLocalizedEditor(root);
-		setActiveLanguage(root.dataset.activeLanguage || root.dataset.defaultLanguage || "en");
+		sectionRows?.appendChild(createSectionRow(type));
+		sectionSelect.value = "";
+		syncSections();
 	});
 
-	const sectionsEditor = document.querySelector("[data-page-sections-editor]");
-	const sectionsPayload = document.querySelector("[data-page-sections-config]");
-
-	const syncSections = () => {
-		if (!(sectionsEditor instanceof HTMLElement) || !(sectionsPayload instanceof HTMLInputElement)) {
+	sectionRows?.addEventListener("click", (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLElement) || !target.matches("[data-section-remove]")) {
 			return;
 		}
-
-		const cards = Array.from(sectionsEditor.querySelectorAll("[data-section]"));
-		const sections = cards
-			.map((card) => {
-				if (!(card instanceof HTMLElement)) {
-					return null;
-				}
-
-				const type = card.dataset.section;
-				if (!type) {
-					return null;
-				}
-
-				const enabledInput = card.querySelector("[data-section-enabled]");
-				const enabled = enabledInput instanceof HTMLInputElement ? enabledInput.checked : true;
-				if (!enabled && type !== "page_content") {
-					return null;
-				}
-
-				const orderInput = card.querySelector("[data-section-order]");
-				const order =
-					orderInput instanceof HTMLInputElement
-						? Math.max(1, Number.parseInt(orderInput.value || "1", 10) || 1)
-						: 1;
-
-				if (type === "banner_slider") {
-					const urlsInput = card.querySelector("[data-banner-urls]");
-					const bannerUrls =
-						urlsInput instanceof HTMLTextAreaElement
-							? urlsInput.value
-									.split(/\r?\n/)
-									.map((entry) => entry.trim())
-									.filter(Boolean)
-							: [];
-
-					if (enabled && bannerUrls.length === 0) {
-						return null;
-					}
-
-					return { type, order, bannerUrls };
-				}
-
-				return { type, order };
-			})
-			.filter(Boolean)
-			.sort((left, right) => left.order - right.order);
-
-		sectionsPayload.value = JSON.stringify(sections);
-	};
-
-	const fieldsEditor = document.querySelector("[data-contact-fields-editor]");
-	const fieldsRows = fieldsEditor?.querySelector("[data-contact-fields-rows]");
-	const fieldsPayload = document.querySelector("[data-contact-fields-payload]");
-	const emptyState = fieldsEditor?.querySelector("[data-contact-fields-empty]");
-	const addFieldButton = fieldsEditor?.querySelector("[data-contact-field-add]");
-	let nextFieldId = Array.from(document.querySelectorAll("[data-contact-field]")).reduce((max, row) => {
-		if (!(row instanceof HTMLElement)) {
-			return max;
+		const row = target.closest("[data-section-row]");
+		if (!row) {
+			return;
 		}
-		const currentId = Number.parseInt(row.dataset.fieldId || "0", 10);
-		return Number.isFinite(currentId) ? Math.max(max, currentId) : max;
-	}, 0);
+		row.remove();
+		syncSections();
+	});
 
-	const buildFieldRow = (field = {}) => {
-		const row = document.createElement("div");
-		row.className = "contact-field-row";
-		row.dataset.contactField = "";
-		row.dataset.fieldId = String(field.id || ++nextFieldId);
-
-		const meta = document.createElement("div");
-		meta.className = "contact-field-meta";
-
-		const typeLabel = document.createElement("label");
-		const typeLabelText = document.createElement("span");
-		typeLabelText.textContent = fieldsEditor instanceof HTMLElement ? fieldsEditor.dataset.typeLabel || "Type" : "Type";
-		typeLabel.append(typeLabelText);
-		const typeSelect = document.createElement("select");
-		typeSelect.dataset.contactFieldType = "";
-		const optionLabels =
-			fieldsEditor instanceof HTMLElement
-				? {
-						text: fieldsEditor.dataset.textOption || "Text",
-						email: fieldsEditor.dataset.emailOption || "Email",
-						textarea: fieldsEditor.dataset.textareaOption || "Textarea",
-					}
-				: { text: "Text", email: "Email", textarea: "Textarea" };
-		["text", "email", "textarea"].forEach((value) => {
-			const option = document.createElement("option");
-			option.value = value;
-			option.textContent = optionLabels[value] || value;
-			option.selected = value === (field.type || "text");
-			typeSelect.append(option);
+	if (sectionRows) {
+		enableDragSorting({
+			container: sectionRows,
+			rowSelector: "[data-section-row]",
+			handleSelector: "[data-drag-handle]",
+			onReorder: syncSections,
 		});
-		typeLabel.append(typeSelect);
+	}
 
-		const orderLabel = document.createElement("label");
-		const orderLabelText = document.createElement("span");
-		orderLabelText.textContent = fieldsEditor instanceof HTMLElement ? fieldsEditor.dataset.orderLabel || "Order" : "Order";
-		orderLabel.append(orderLabelText);
-		const orderInput = document.createElement("input");
-		orderInput.type = "number";
-		orderInput.min = "1";
-		orderInput.value = String(field.order || (fieldsRows?.children.length || 0) + 1);
-		orderInput.dataset.contactFieldOrder = "";
-		orderLabel.append(orderInput);
-
-		const requiredLabel = document.createElement("label");
-		requiredLabel.className = "contact-field-required";
-		const requiredLabelText = document.createElement("span");
-		requiredLabelText.textContent =
-			fieldsEditor instanceof HTMLElement ? fieldsEditor.dataset.requiredLabel || "Required" : "Required";
-		requiredLabel.append(requiredLabelText);
-		const requiredInput = document.createElement("input");
-		requiredInput.type = "checkbox";
-		requiredInput.checked = Boolean(field.required);
-		requiredInput.dataset.contactFieldRequired = "";
-		requiredLabel.append(requiredInput);
-
-		const removeButton = document.createElement("button");
-		removeButton.className = "admin-ghost-button";
-		removeButton.type = "button";
-		removeButton.dataset.contactFieldRemove = "";
-		removeButton.textContent = fieldsEditor instanceof HTMLElement ? fieldsEditor.dataset.removeLabel || "Remove" : "Remove";
-
-		meta.append(typeLabel, orderLabel, requiredLabel, removeButton);
-
-		const labels = document.createElement("div");
-		labels.className = "contact-field-labels";
-
-		const enLabel = document.createElement("label");
-		const enLabelText = document.createElement("span");
-		enLabelText.textContent = fieldsEditor instanceof HTMLElement ? fieldsEditor.dataset.labelEn || "Label (EN)" : "Label (EN)";
-		enLabel.append(enLabelText);
-		const enInput = document.createElement("input");
-		enInput.type = "text";
-		enInput.placeholder = "Message";
-		enInput.value = field.label?.en || "";
-		enInput.dataset.contactFieldLabelEn = "";
-		enLabel.append(enInput);
-
-		const viLabel = document.createElement("label");
-		const viLabelText = document.createElement("span");
-		viLabelText.textContent = fieldsEditor instanceof HTMLElement ? fieldsEditor.dataset.labelVi || "Label (VI)" : "Label (VI)";
-		viLabel.append(viLabelText);
-		const viInput = document.createElement("input");
-		viInput.type = "text";
-		viInput.placeholder = "Tin nhan";
-		viInput.value = field.label?.vi || "";
-		viInput.dataset.contactFieldLabelVi = "";
-		viLabel.append(viInput);
-
-		labels.append(enLabel, viLabel);
-		row.append(meta, labels);
-		return row;
-	};
-
-	const syncContactFields = () => {
-		if (!(fieldsRows instanceof HTMLElement) || !(fieldsPayload instanceof HTMLInputElement)) {
+	addContactButton?.addEventListener("click", () => {
+		if (!contactRows) {
 			return;
 		}
-
-		const fields = Array.from(fieldsRows.querySelectorAll("[data-contact-field]"))
-			.map((row, index) => {
-				if (!(row instanceof HTMLElement)) {
-					return null;
-				}
-
-				const typeInput = row.querySelector("[data-contact-field-type]");
-				const orderInput = row.querySelector("[data-contact-field-order]");
-				const requiredInput = row.querySelector("[data-contact-field-required]");
-				const labelEnInput = row.querySelector("[data-contact-field-label-en]");
-				const labelViInput = row.querySelector("[data-contact-field-label-vi]");
-
-				if (
-					!(typeInput instanceof HTMLSelectElement) ||
-					!(orderInput instanceof HTMLInputElement) ||
-					!(requiredInput instanceof HTMLInputElement) ||
-					!(labelEnInput instanceof HTMLInputElement) ||
-					!(labelViInput instanceof HTMLInputElement)
-				) {
-					return null;
-				}
-
-				const labelEn = labelEnInput.value.trim();
-				if (!labelEn) {
-					return null;
-				}
-
-				const labelVi = labelViInput.value.trim();
-				return {
-					id: Number.parseInt(row.dataset.fieldId || String(index + 1), 10) || index + 1,
-					type: typeInput.value,
-					required: requiredInput.checked,
-					order: Math.max(1, Number.parseInt(orderInput.value || String(index + 1), 10) || index + 1),
-					label: {
-						en: labelEn,
-						...(labelVi ? { vi: labelVi } : {}),
-					},
-				};
-			})
-			.filter(Boolean)
-			.sort((left, right) => left.order - right.order);
-
-		fieldsPayload.value = JSON.stringify(fields);
-		if (emptyState instanceof HTMLElement) {
-			emptyState.hidden = fields.length > 0;
+		contactRows.append(createContactFieldRow());
+		const lastInput = contactRows.querySelector("[data-contact-field]:last-child [data-contact-field-label-en]");
+		if (lastInput instanceof HTMLInputElement) {
+			lastInput.focus();
 		}
-	};
+		syncContactFields();
+	});
 
-	fieldsRows?.addEventListener("input", syncContactFields);
-	fieldsRows?.addEventListener("change", syncContactFields);
-	fieldsRows?.addEventListener("click", (event) => {
+	contactRows?.addEventListener("click", (event) => {
 		const target = event.target;
 		if (!(target instanceof HTMLElement) || !target.matches("[data-contact-field-remove]")) {
 			return;
 		}
-
-		target.closest("[data-contact-field]")?.remove();
-		syncContactFields();
+		const row = target.closest("[data-contact-field]");
+		if (row) {
+			row.remove();
+			syncContactFields();
+		}
 	});
 
-	addFieldButton?.addEventListener("click", () => {
-		if (!(fieldsRows instanceof HTMLElement)) {
+	contactRows?.addEventListener("input", syncContactFields);
+
+	if (contactRows) {
+		enableDragSorting({
+			container: contactRows,
+			rowSelector: "[data-contact-field]",
+			handleSelector: "[data-drag-handle]",
+			onReorder: syncContactFields,
+		});
+	}
+
+	function parseConfig(value) {
+		try {
+			const parsed = JSON.parse(value ?? "[]");
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	}
+
+	function createSectionRow(type) {
+		const metadata = SECTION_CATALOG.find((entry) => entry.type === type) ?? SECTION_CATALOG[0];
+		const row = document.createElement("div");
+		row.className = "admin-table-row section-row";
+		row.draggable = true;
+		row.dataset.sectionRow = "";
+		row.dataset.sectionType = metadata.type;
+		const buttonMarkup =
+			metadata.removable === false
+				? `<button class="admin-ghost-button" type="button" disabled>${sectionRemoveLabel}</button>`
+				: `<button class="admin-ghost-button" type="button" data-section-remove>${sectionRemoveLabel}</button>`;
+		row.innerHTML = `
+        <span class="drag-handle" data-drag-handle aria-label="${metadata.label}"></span>
+        <span>
+            <strong>${metadata.label}</strong>
+            <p class="admin-compact-copy">${metadata.description}</p>
+        </span>
+        <span class="section-control">
+            <p class="admin-compact-copy">${metadata.details}</p>
+        </span>
+        <span class="section-actions">${buttonMarkup}</span>`;
+		return row;
+	}
+
+	function syncSections() {
+		if (!sectionInput || !sectionRows) {
 			return;
 		}
+		const payload = collectOrderedRowPayload(sectionRows.querySelectorAll("[data-section-row]"), (row) => {
+			const type = row.dataset.sectionType;
+			return type ? { type } : null;
+		});
+		sectionInput.value = JSON.stringify(payload);
+		updateSectionPicker();
+		toggleContactFields(payload.some((entry) => entry.type === "contact_form"));
+	}
 
-		fieldsRows.append(buildFieldRow());
-		syncContactFields();
-		const lastInput = fieldsRows.querySelector("[data-contact-field]:last-child [data-contact-field-label-en]");
-		if (lastInput instanceof HTMLInputElement) {
-			lastInput.focus();
+	function updateSectionPicker() {
+		if (!sectionSelect || !sectionRows) {
+			return;
 		}
-	});
+		const activeTypes = new Set(
+			Array.from(sectionRows.querySelectorAll("[data-section-row]")).map((row) => row.dataset.sectionType),
+		);
+		sectionSelect.innerHTML = `<option value="" disabled selected>${sectionAddLabel}</option>`;
+		SECTION_CATALOG.forEach((entry) => {
+			if (!activeTypes.has(entry.type)) {
+				const option = document.createElement("option");
+				option.value = entry.type;
+				option.textContent = entry.label;
+				sectionSelect.append(option);
+			}
+		});
+		const hasOptions = sectionSelect.querySelectorAll("option").length > 1;
+		sectionSelect.disabled = isSectionReadOnly || !hasOptions;
+		if (sectionAddButton) {
+			sectionAddButton.disabled = isSectionReadOnly || !hasOptions;
+		}
+	}
 
-	sectionsEditor?.addEventListener("input", syncSections);
-	sectionsEditor?.addEventListener("change", syncSections);
-	syncSections();
-	syncContactFields();
+	function toggleContactFields(visible) {
+		if (!contactWrapper) {
+			return;
+		}
+		contactWrapper.hidden = !visible;
+	}
+
+	function createContactFieldRow(field = {}) {
+		const metadata = contactRows?.dataset;
+		const metaType = metadata?.typeLabel ?? "Type";
+		const metaRequired = metadata?.requiredLabel ?? "Required";
+		const metaRemove = metadata?.removeLabel ?? "Remove";
+		const metaLabelEn = metadata?.labelEn ?? "Label (EN)";
+		const metaLabelVi = metadata?.labelVi ?? "Label (VI)";
+		const metaText = metadata?.textOption ?? "Text";
+		const metaEmail = metadata?.emailOption ?? "Email";
+		const metaTextarea = metadata?.textareaOption ?? "Textarea";
+		const row = document.createElement("div");
+		row.className = "contact-field-row";
+		row.draggable = true;
+		row.dataset.contactField = "";
+		const assignedId = Number(field.id ?? nextFieldId + 1);
+		row.dataset.fieldId = String(assignedId);
+		nextFieldId = Math.max(nextFieldId, assignedId);
+		const type = field.type ?? "text";
+		const labelEn = escapeAttribute(field.label?.en ?? "");
+		const labelVi = escapeAttribute(field.label?.vi ?? "");
+		row.innerHTML = `
+        <span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
+        <div class="contact-field-meta">
+            <label>
+                <span>${metaType}</span>
+                <select data-contact-field-type ${isContactReadOnly ? "disabled" : ""}>
+                    <option value="text" ${type === "text" ? "selected" : ""}>${metaText}</option>
+                    <option value="email" ${type === "email" ? "selected" : ""}>${metaEmail}</option>
+                    <option value="textarea" ${type === "textarea" ? "selected" : ""}>${metaTextarea}</option>
+                </select>
+            </label>
+            <label class="contact-field-required">
+                <span>${metaRequired}</span>
+                <input type="checkbox" data-contact-field-required ${field.required ? "checked" : ""} ${
+			isContactReadOnly ? "disabled" : ""
+		} />
+            </label>
+            <button class="admin-ghost-button" type="button" data-contact-field-remove ${isContactReadOnly ? "disabled" : ""}>
+                ${metaRemove}
+            </button>
+        </div>
+        <div class="contact-field-labels">
+            <label>
+                <span>${metaLabelEn}</span>
+                <input type="text" data-contact-field-label-en value="${labelEn}" ${
+			isContactReadOnly ? "disabled" : ""
+		} required />
+            </label>
+            <label>
+                <span>${metaLabelVi}</span>
+                <input type="text" data-contact-field-label-vi value="${labelVi}" ${
+			isContactReadOnly ? "disabled" : ""
+		} />
+            </label>
+        </div>`;
+		return row;
+	}
+
+	function syncContactFields() {
+		if (!contactPayload || !contactRows) {
+			return;
+		}
+		const fields = collectOrderedRowPayload(contactRows.querySelectorAll("[data-contact-field]"), (row) => {
+			const typeInput = row.querySelector("[data-contact-field-type]");
+			const requiredInput = row.querySelector("[data-contact-field-required]");
+			const labelEnInput = row.querySelector("[data-contact-field-label-en]");
+			const labelViInput = row.querySelector("[data-contact-field-label-vi]");
+			if (!(typeInput instanceof HTMLSelectElement) || !(labelEnInput instanceof HTMLInputElement)) {
+				return null;
+			}
+			const enValue = labelEnInput.value.trim();
+			if (!enValue) {
+				return null;
+			}
+			const viValue = labelViInput instanceof HTMLInputElement ? labelViInput.value.trim() : "";
+			return {
+				id: Number(row.dataset.fieldId) || undefined,
+				type: typeInput.value,
+				required: Boolean(requiredInput?.checked),
+				label: {
+					en: enValue,
+					...(viValue ? { vi: viValue } : {}),
+				},
+			};
+		});
+		contactPayload.value = JSON.stringify(fields);
+		if (contactEmptyState) {
+			contactEmptyState.hidden = fields.length > 0;
+		}
+	}
+
+	function escapeAttribute(value) {
+		return (value ?? "").replace(/"/g, "&quot;");
+	}
 </script>
