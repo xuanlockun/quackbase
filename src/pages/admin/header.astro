@@ -68,61 +68,91 @@ try {
 					name="navItems"
 					id="nav-items-payload"
 					value={JSON.stringify(
-						siteConfig.navItems.map((item) => ({
+						siteConfig.navItems.map((item, index) => ({
 							label: item.labelTranslations,
 							href: item.href,
+							order: index + 1,
 						})),
 					)}
 					disabled={Boolean(loadError)}
 				/>
-				<div class="nav-items-editor" data-nav-items-editor data-disabled={Boolean(loadError)} data-remove-label={t("actions.remove")}>
-					<div class="nav-items-table" role="table" data-nav-items-table>
-						<div class="nav-items-header" role="row">
-							<span></span>
-							<span>{t("labels.label")} (EN)</span>
-							<span>{t("labels.label")} (VI)</span>
-							<span>{t("labels.link")}</span>
-							<span>{t("labels.action")}</span>
-						</div>
-									<div class="nav-items-rows" data-nav-items-rows>
+				<div
+					class="nav-items-editor"
+					data-nav-items-editor
+					data-disabled={Boolean(loadError)}
+					data-remove-label={t("actions.remove")}
+				>
+					<table class="nav-items-table admin-table" role="table">
+						<thead>
+							<tr>
+								<th></th>
+								<th>{t("labels.label")} (EN)</th>
+								<th>{t("labels.label")} (VI)</th>
+								<th>{t("labels.link")}</th>
+								<th>{t("labels.action")}</th>
+							</tr>
+						</thead>
+						<tbody data-nav-items-rows>
+							<tr
+								class="admin-table-empty-row admin-muted"
+								data-nav-empty
+								hidden={siteConfig.navItems.length > 0}
+							>
+								<td colSpan="5">{t("messages.noNavigationItemsConfigured")}</td>
+							</tr>
 							{
 								siteConfig.navItems.map((item) => (
-									<div class="nav-item-row" role="row" draggable={!Boolean(loadError) ? "true" : "false"} data-nav-row>
-										<span class="nav-drag-handle" data-drag-handle aria-label="Drag to reorder"></span>
-										<input
-											type="text"
-											value={item.labelTranslations?.en ?? item.label}
-											placeholder="Home"
-											data-nav-label-en
-											disabled={Boolean(loadError)}
-										/>
-										<input
-											type="text"
-											value={item.labelTranslations?.vi ?? ""}
-											placeholder="Trang chu"
-											data-nav-label-vi
-											disabled={Boolean(loadError)}
-										/>
-										<input
-											type="text"
-											value={item.href}
-											placeholder="/about or https://example.com"
-											data-nav-href
-											disabled={Boolean(loadError)}
-										/>
-										<button
-											class="admin-ghost-button nav-item-remove"
-											type="button"
-											data-nav-remove
-											disabled={Boolean(loadError)}
-										>
-											{t("actions.remove")}
-										</button>
-									</div>
+									<tr
+										class="nav-item-row"
+										role="row"
+										data-nav-row
+										draggable={!Boolean(loadError) ? "true" : "false"}
+									>
+										<td class="drag-cell">
+											<span class="nav-drag-handle" data-drag-handle aria-label="Drag to reorder"></span>
+										</td>
+										<td>
+											<input
+												type="text"
+												value={item.labelTranslations?.en ?? item.label ?? ""}
+												placeholder="Home"
+												data-nav-label-en
+												disabled={Boolean(loadError)}
+											/>
+										</td>
+										<td>
+											<input
+												type="text"
+												value={item.labelTranslations?.vi ?? ""}
+												placeholder="Trang chu"
+												data-nav-label-vi
+												disabled={Boolean(loadError)}
+											/>
+										</td>
+										<td>
+											<input
+												type="text"
+												value={item.href}
+												placeholder="/about or https://example.com"
+												data-nav-href
+												disabled={Boolean(loadError)}
+											/>
+										</td>
+										<td class="nav-item-actions">
+											<button
+												class="admin-ghost-button nav-item-remove"
+												type="button"
+												data-nav-remove
+												disabled={Boolean(loadError)}
+											>
+												{t("actions.remove")}
+											</button>
+										</td>
+									</tr>
 								))
 							}
-						</div>
-					</div>
+						</tbody>
+					</table>
 					<button class="admin-ghost-button" type="button" data-nav-add disabled={Boolean(loadError)}>
 						{t("actions.addRow")}
 					</button>
@@ -144,56 +174,64 @@ try {
 <style>
 	.nav-items-editor {
 		display: grid;
-		gap: 0.9rem;
+		gap: 0.7rem;
 	}
 
 	.nav-items-table {
-		display: grid;
-		gap: 0.65rem;
+		width: 100%;
+		border-collapse: collapse;
 	}
 
-	.nav-items-header,
-	.nav-item-row {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) auto;
-		gap: 0.75rem;
-		align-items: center;
+	.nav-items-table th,
+	.nav-items-table td {
+		padding: 0.45rem 0.6rem;
+		border-bottom: 1px solid rgba(var(--gray), 0.18);
+		vertical-align: middle;
 	}
 
-	.nav-items-header {
-		font-size: 0.85rem;
-		font-weight: 700;
+	.nav-items-table thead th {
+		font-size: 0.72rem;
+		font-weight: 600;
+		text-transform: uppercase;
 		color: var(--admin-muted, #60739f);
+		letter-spacing: 0.04em;
 	}
 
-	.nav-items-rows {
-		display: grid;
-		gap: 0.65rem;
+	.nav-items-table tbody tr:last-child td {
+		border-bottom: none;
 	}
 
-	.nav-item-remove {
-		justify-self: start;
+	.nav-item-row input {
+		width: 100%;
+		border-radius: 6px;
+		border: 1px solid rgba(var(--gray), 0.3);
+		background: white;
+		font: inherit;
+		padding: 0.35rem 0.5rem;
 	}
 
-	@media (max-width: 720px) {
-		.nav-items-header {
-			display: none;
-		}
+	.nav-item-row td {
+		padding-top: 0.55rem;
+		padding-bottom: 0.55rem;
+	}
 
-		.nav-item-row {
-			grid-template-columns: 1fr;
-		}
+	.drag-cell {
+		width: 48px;
+	}
+
+	.nav-item-actions {
+		padding: 0;
 	}
 </style>
 
 <script type="module">
-
 	const editor = document.querySelector("[data-nav-items-editor]");
 	const rowsContainer = editor?.querySelector("[data-nav-items-rows]");
 	const payloadInput = document.getElementById("nav-items-payload");
 	const addButton = editor?.querySelector("[data-nav-add]");
-	const removeLabel = editor instanceof HTMLElement ? editor.dataset.removeLabel || "Remove" : "Remove";
-	const isReadOnly = editor instanceof HTMLElement && editor.dataset.disabled === "true";
+	const emptyStateRow = editor?.querySelector("[data-nav-empty]");
+	const removeLabel = editor?.dataset.removeLabel ?? "Remove";
+	const isReadOnly = editor?.dataset.disabled === "true";
 	let draggedNavRow = null;
 
 	const syncPayload = () => {
@@ -215,72 +253,43 @@ try {
 					return null;
 				}
 
-				const nextLabelEn = labelEn.value.trim();
-				const nextLabelVi = labelVi.value.trim();
-				const nextHref = href.value.trim();
-				return nextLabelEn && nextHref
-					? {
-							label: {
-								en: nextLabelEn,
-								...(nextLabelVi ? { vi: nextLabelVi } : {}),
-							},
-							href: nextHref,
-							order: index + 1,
-					  }
-					: null;
+				const trimmedHref = href.value.trim();
+				const trimmedEn = labelEn.value.trim();
+				const trimmedVi = labelVi.value.trim();
+				if (!trimmedEn || !trimmedHref) {
+					return null;
+				}
+
+				return {
+					label: {
+						en: trimmedEn,
+						...(trimmedVi ? { vi: trimmedVi } : {}),
+					},
+					href: trimmedHref,
+					order: index + 1,
+				};
 			})
 			.filter((entry) => Boolean(entry));
 
 		payloadInput.value = JSON.stringify(entries);
+		updateEmptyState();
 	};
 
-	const createRow = (labelEn = "", labelVi = "", href = "") => {
-		const row = document.createElement("div");
-		row.className = "nav-item-row";
-		row.setAttribute("role", "row");
-		row.dataset.navRow = "";
-		row.draggable = !isReadOnly;
-		row.innerHTML = `
-			<span class="nav-drag-handle" data-drag-handle aria-label="Drag to reorder"></span>
-			<input type="text" value="${labelEn}" placeholder="Home" data-nav-label-en ${isReadOnly ? "disabled" : ""} />
-			<input type="text" value="${labelVi}" placeholder="Trang chu" data-nav-label-vi ${isReadOnly ? "disabled" : ""} />
-			<input type="text" value="${href}" placeholder="/about or https://example.com" data-nav-href ${isReadOnly ? "disabled" : ""} />
-			<button class="admin-ghost-button nav-item-remove" type="button" data-nav-remove ${isReadOnly ? "disabled" : ""}>${removeLabel}</button>
-		`;
-		attachNavRow(row);
-		return row;
-	};
-
-	rowsContainer?.querySelectorAll(".nav-item-row").forEach((row) => {
-		if (row instanceof HTMLElement) {
-			attachNavRow(row);
-		}
-	});
-
-	rowsContainer?.addEventListener("input", syncPayload);
-	rowsContainer?.addEventListener("click", (event) => {
-		const target = event.target;
-		if (!(target instanceof HTMLElement) || !target.matches("[data-nav-remove]")) {
+	const attachNavRow = (row) => {
+		if (!(row instanceof HTMLElement) || row.dataset.navRowAttached === "true") {
 			return;
 		}
-
-		target.closest(".nav-item-row")?.remove();
-		syncPayload();
-	});
-
-	function attachNavRow(row) {
-		if (row.dataset.navRowDragAttached === "true") {
-			return;
-		}
-		row.dataset.navRowDragAttached = "true";
+		row.dataset.navRowAttached = "true";
 		row.draggable = !isReadOnly;
 		row.addEventListener("dragstart", onNavDragStart);
 		row.addEventListener("dragover", onNavDragOver);
 		row.addEventListener("drop", onNavDragDrop);
 		row.addEventListener("dragend", onNavDragEnd);
-	}
+	};
 
-	function onNavDragStart(event) {
+	const findNavRow = (target) => (target instanceof Element ? target.closest("[data-nav-row]") : null);
+
+	const onNavDragStart = (event) => {
 		if (isReadOnly) {
 			return;
 		}
@@ -292,9 +301,9 @@ try {
 		row.classList.add("is-dragging");
 		event.dataTransfer?.setData("text/plain", "");
 		event.dataTransfer?.setDragImage(row, 0, 0);
-	}
+	};
 
-	function onNavDragOver(event) {
+	const onNavDragOver = (event) => {
 		if (!draggedNavRow) {
 			return;
 		}
@@ -310,9 +319,9 @@ try {
 		} else {
 			row.before(draggedNavRow);
 		}
-	}
+	};
 
-	function onNavDragDrop(event) {
+	const onNavDragDrop = (event) => {
 		event.preventDefault();
 		if (!draggedNavRow) {
 			return;
@@ -320,27 +329,124 @@ try {
 		draggedNavRow.classList.remove("is-dragging");
 		draggedNavRow = null;
 		syncPayload();
-	}
+	};
 
-	function onNavDragEnd() {
+	const onNavDragEnd = () => {
 		if (draggedNavRow) {
 			draggedNavRow.classList.remove("is-dragging");
 			draggedNavRow = null;
 		}
-	}
+	};
+
+	const createNavRow = (entry = {}) => {
+		const labelTranslations = entry.label ?? entry.labelTranslations ?? {};
+		const labelEn = labelTranslations.en ?? entry.label ?? "";
+		const labelVi = labelTranslations.vi ?? "";
+
+		const row = document.createElement("tr");
+		row.className = "nav-item-row";
+		row.setAttribute("role", "row");
+		row.dataset.navRow = "";
+		row.draggable = !isReadOnly;
+
+		const dragCell = document.createElement("td");
+		dragCell.className = "drag-cell";
+		const handle = document.createElement("span");
+		handle.className = "nav-drag-handle";
+		handle.dataset.dragHandle = "";
+		handle.setAttribute("aria-label", "Drag to reorder");
+		dragCell.append(handle);
+		row.append(dragCell);
+
+		const enCell = document.createElement("td");
+		const enInput = document.createElement("input");
+		enInput.type = "text";
+		enInput.dataset.navLabelEn = "";
+		enInput.placeholder = "Home";
+		enInput.value = labelEn;
+		if (isReadOnly) {
+			enInput.disabled = true;
+		}
+		enCell.append(enInput);
+		row.append(enCell);
+
+		const viCell = document.createElement("td");
+		const viInput = document.createElement("input");
+		viInput.type = "text";
+		viInput.dataset.navLabelVi = "";
+		viInput.placeholder = "Trang chu";
+		viInput.value = labelVi;
+		if (isReadOnly) {
+			viInput.disabled = true;
+		}
+		viCell.append(viInput);
+		row.append(viCell);
+
+		const linkCell = document.createElement("td");
+		const hrefInput = document.createElement("input");
+		hrefInput.type = "text";
+		hrefInput.dataset.navHref = "";
+		hrefInput.placeholder = "/about or https://example.com";
+		hrefInput.value = entry.href ?? "";
+		if (isReadOnly) {
+			hrefInput.disabled = true;
+		}
+		linkCell.append(hrefInput);
+		row.append(linkCell);
+
+		const actionCell = document.createElement("td");
+		actionCell.className = "nav-item-actions";
+		const removeButton = document.createElement("button");
+		removeButton.type = "button";
+		removeButton.className = "admin-ghost-button nav-item-remove";
+		removeButton.dataset.navRemove = "";
+		removeButton.textContent = removeLabel;
+		if (isReadOnly) {
+			removeButton.disabled = true;
+		}
+		actionCell.append(removeButton);
+		row.append(actionCell);
+
+		attachNavRow(row);
+		return row;
+	};
+
+	Array.from(rowsContainer?.querySelectorAll("[data-nav-row]") ?? []).forEach((row) => attachNavRow(row));
+
+	rowsContainer?.addEventListener("input", syncPayload);
+	rowsContainer?.addEventListener("click", (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLElement) || !target.matches("[data-nav-remove]")) {
+			return;
+		}
+		const row = findNavRow(target);
+		if (row) {
+			row.remove();
+			syncPayload();
+		}
+	});
 
 	addButton?.addEventListener("click", () => {
 		if (isReadOnly || !(rowsContainer instanceof HTMLElement)) {
 			return;
 		}
-
-		rowsContainer.append(createRow());
-		syncPayload();
-		const lastLabel = rowsContainer.querySelector(".nav-item-row:last-child [data-nav-label-en]");
-		if (lastLabel instanceof HTMLInputElement) {
-			lastLabel.focus();
+		const newRow = createNavRow();
+		rowsContainer.append(newRow);
+		const focusInput = newRow.querySelector("[data-nav-label-en]");
+		if (focusInput instanceof HTMLInputElement) {
+			focusInput.focus();
 		}
+		syncPayload();
 	});
 
+	const updateEmptyState = () => {
+		if (!emptyStateRow || !rowsContainer) {
+			return;
+		}
+		const hasRows = Boolean(rowsContainer.querySelector("[data-nav-row]"));
+		emptyStateRow.hidden = hasRows;
+	};
+
+	updateEmptyState();
 	syncPayload();
 </script>

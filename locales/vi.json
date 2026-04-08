@@ -166,6 +166,7 @@
     "userRequestFailed": "Yêu cầu người dùng thất bại.",
     "headerSettingsSaved": "Đã lưu cài đặt đầu trang.",
     "headerSettingsFailed": "Không thể lưu cài đặt đầu trang.",
+    "noNavigationItemsConfigured": "Thêm mục điều hướng để hướng người truy cập.",
     "failedToLoadPosts": "Không thể tải bài viết.",
     "failedToLoadPages": "Không thể tải trang.",
     "failedToLoadSiteSettings": "Không thể tải cài đặt.",

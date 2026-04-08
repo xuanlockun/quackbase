@@ -166,6 +166,7 @@
     "userRequestFailed": "The user request failed.",
     "headerSettingsSaved": "Header settings saved.",
     "headerSettingsFailed": "Header settings could not be saved.",
+    "noNavigationItemsConfigured": "Add navigation rows to guide visitors through the site.",
     "failedToLoadPosts": "Failed to load posts.",
     "failedToLoadPages": "Failed to load pages.",
     "failedToLoadSiteSettings": "Failed to load site settings.",
