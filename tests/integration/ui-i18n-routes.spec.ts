@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-	getUiTranslations,
-	readUiLanguagePreference,
-	resolveUiLanguage,
-	writeUiLanguagePreference,
-} from "../../src/lib/i18n";
+import { getUiTranslations, readUiLanguagePreference, resolveUiLanguage, writeUiLanguagePreference } from "../../src/lib/i18n";
+import type { LocalizationPayload } from "../../src/lib/localization";
 
 function createCookieStore(initialValue?: string) {
 	let storedValue = initialValue;
@@ -33,6 +29,28 @@ function createCookieStore(initialValue?: string) {
 	};
 }
 
+const englishTranslations = {
+	"messages.pageNotFound": "Page not found",
+};
+
+const vietnameseTranslations = {
+	"messages.pageNotFound": "Không tìm thấy trang",
+};
+
+function createPayload(locale: "en" | "vi"): LocalizationPayload {
+	const translations = locale === "vi" ? vietnameseTranslations : englishTranslations;
+	return {
+		requestedLocale: locale,
+		servedLocale: locale,
+		fallbackLocale: "en",
+		translations,
+		fallbackTranslations: englishTranslations,
+		fallbackUsed: false,
+		lastUpdated: new Date(0).toISOString(),
+		namespace: null,
+	};
+}
+
 describe("UI i18n integration behavior", () => {
 	it("writes and reads the saved UI language preference", () => {
 		const cookies = createCookieStore();
@@ -43,7 +61,7 @@ describe("UI i18n integration behavior", () => {
 	it("uses English fallback when a non-default dictionary key is missing", () => {
 		const context = getUiTranslations({
 			url: new URL("https://example.com/vi/hello-world/"),
-			locals: { uiLanguage: "vi" } as App.Locals,
+			locals: { uiLanguage: "vi", localizationPayload: createPayload("vi") } as App.Locals,
 		});
 
 		expect(context.t("messages.pageNotFound")).toBe("Không tìm thấy trang");
@@ -53,7 +71,7 @@ describe("UI i18n integration behavior", () => {
 	it("keeps admin and frontend navigation language-aware from the same request context", () => {
 		const context = getUiTranslations({
 			url: new URL("https://example.com/admin/posts?lang=vi"),
-			locals: { uiLanguage: "vi" } as App.Locals,
+			locals: { uiLanguage: "vi", localizationPayload: createPayload("vi") } as App.Locals,
 		});
 
 		expect(context.language).toBe("vi");

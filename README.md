@@ -288,7 +288,7 @@ Có thể xem đây là lịch sử phát triển theo feature của sản phẩ
 ### 6.2 Nguồn sự thật của dữ liệu
 
 - Bài viết, page, cấu hình form và một số cấu hình site được lưu trong D1
-- Dictionary UI đa ngôn ngữ được lưu trong `locales/`
+- Dictionary UI đa ngôn ngữ được lưu trong Cloudflare D1 `translation_entries`. Dùng `scripts/import-localizations.ts` hoặc `docs/localization.md` để chạy migration và cập nhật copy mà không cần redeploy.
 - `src/content/blog/` không còn là nguồn nội dung live chính
 
 ## 7. Cài Đặt Dự Án

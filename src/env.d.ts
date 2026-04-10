@@ -1,4 +1,5 @@
 import type { LanguageCatalogState } from "./lib/languages";
+import type { LocalizationPayload } from "./lib/localization";
 
 interface Env {
 	DB: D1Database;
@@ -13,5 +14,6 @@ declare namespace App {
 		adminSession: AdminSession | null;
 		uiLanguage: string;
 		languageCatalog: LanguageCatalogState;
+		localizationPayload?: LocalizationPayload;
 	}
 }

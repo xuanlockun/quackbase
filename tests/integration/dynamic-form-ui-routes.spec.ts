@@ -6,12 +6,35 @@ import {
 	validateContactFormSubmission,
 } from "../../src/lib/forms";
 import { getUiTranslations } from "../../src/lib/i18n";
+import type { LocalizationPayload } from "../../src/lib/localization";
+
+const englishTranslations = {
+	"actions.createPost": "Create Post",
+};
+
+const vietnameseTranslations = {
+	"actions.createPost": "Tạo bài viết",
+};
+
+function createPayload(locale: "en" | "vi"): LocalizationPayload {
+	const translations = locale === "vi" ? vietnameseTranslations : englishTranslations;
+	return {
+		requestedLocale: locale,
+		servedLocale: locale,
+		fallbackLocale: "en",
+		translations,
+		fallbackTranslations: englishTranslations,
+		fallbackUsed: false,
+		lastUpdated: new Date(0).toISOString(),
+		namespace: null,
+	};
+}
 
 describe("dynamic form UI integration behavior", () => {
 	it("keeps the shared language switch language-aware from the same frontend context", () => {
 		const context = getUiTranslations({
 			url: new URL("https://example.com/vi/contact/"),
-			locals: { uiLanguage: "vi" } as App.Locals,
+			locals: { uiLanguage: "vi", localizationPayload: createPayload("vi") } as App.Locals,
 		});
 
 		expect(context.language).toBe("vi");

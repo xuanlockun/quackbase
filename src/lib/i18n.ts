@@ -1,6 +1,4 @@
 import type { AstroCookies } from "astro";
-import en from "../../locales/en.json";
-import vi from "../../locales/vi.json";
 import {
 	FALLBACK_LANGUAGE_CATALOG,
 	type LanguageCatalogState,
@@ -12,10 +10,6 @@ export interface SupportedLanguage {
 }
 
 export type LocalizedText = Record<string, string>;
-interface TranslationTree {
-	[key: string]: string | TranslationTree;
-}
-
 interface TranslationContextInput {
 	url: URL;
 	locals?: App.Locals;
@@ -37,15 +31,9 @@ export interface LanguageSwitchOption {
 	isActive: boolean;
 }
 
-/** Legacy constant for UI locale files (`locales/en.json`, `locales/vi.json`) and string fallbacks. */
 export const DEFAULT_LANGUAGE = "en";
 export const UI_LANGUAGE_COOKIE = "edge-ui-language";
 const UI_LANGUAGE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-
-const UI_TRANSLATIONS: Record<string, TranslationTree> = {
-	en: en as TranslationTree,
-	vi: vi as TranslationTree,
-};
 
 export function getLanguageCatalog(locals?: App.Locals | null): LanguageCatalogState {
 	return locals?.languageCatalog ?? FALLBACK_LANGUAGE_CATALOG;
@@ -250,10 +238,13 @@ export function getUiTranslations(context: TranslationContextInput): UiTranslati
 	const resolvedLanguage =
 		context.locals?.uiLanguage ??
 		resolveUiLanguage(context.url, readUiLanguagePreference(context.cookies, catalog), catalog).language;
+	const payload = context.locals?.localizationPayload;
+	const translations = payload?.translations ?? {};
+	const fallbackTranslations = payload?.fallbackTranslations ?? {};
 
 	return {
 		language: resolvedLanguage,
-		t: (key, fallback) => translateKey(key, resolvedLanguage, fallback),
+		t: (key, fallback) => translateKey(key, translations, fallbackTranslations, fallback),
 		localizeHref: (href) => localizeHref(href, resolvedLanguage, catalog),
 		localizeAdminHref: (href) => localizeAdminHref(href, resolvedLanguage, catalog),
 		switchLanguageHref: (language) => getLanguageSwitchHref(context.url, language, catalog),
@@ -336,7 +327,7 @@ export function switchLang(href: string, language: string, catalog?: LanguageCat
 export function getLanguageSwitchOptions(
 	currentUrl: URL,
 	activeLanguage: string,
-	catalog: LanguageCatalogState,
+	catalog: LanguageCatalogState = FALLBACK_LANGUAGE_CATALOG,
 ): LanguageSwitchOption[] {
 	const c = catalog;
 	const resolvedLanguage = resolveLanguage(activeLanguage, c);
@@ -348,32 +339,23 @@ export function getLanguageSwitchOptions(
 	}));
 }
 
-function translateKey(key: string, language: string, fallback?: string): string {
-	const value = resolveTreeValue(UI_TRANSLATIONS[resolveLanguage(language, FALLBACK_LANGUAGE_CATALOG)], key);
+function translateKey(
+	key: string,
+	translations: Record<string, string>,
+	fallbackTranslations: Record<string, string>,
+	fallback?: string,
+): string {
+	const value = translations[key];
 	if (typeof value === "string" && value.trim()) {
 		return value;
 	}
 
-	const defaultValue = resolveTreeValue(UI_TRANSLATIONS[DEFAULT_LANGUAGE], key);
+	const defaultValue = fallbackTranslations[key];
 	if (typeof defaultValue === "string" && defaultValue.trim()) {
 		return defaultValue;
 	}
 
 	return fallback ?? key;
-}
-
-function resolveTreeValue(tree: TranslationTree | undefined, key: string): string | TranslationTree | undefined {
-	if (!tree) {
-		return undefined;
-	}
-
-	return key.split(".").reduce<string | TranslationTree | undefined>((current, segment) => {
-		if (!current || typeof current === "string") {
-			return undefined;
-		}
-
-		return current[segment];
-	}, tree);
 }
 
 function withLanguagePrefix(pathname: string, language: string | undefined, catalog: LanguageCatalogState): string {
