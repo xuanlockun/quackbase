@@ -1,12 +1,12 @@
 ---
 export const prerender = false;
 
-import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { getDb } from "../../../lib/blog";
-import { getLanguageByCode } from "../../../../lib/languages";
-import { listTranslationEntriesByLocale } from "../../../../lib/translations";
-import { getUiTranslations } from "../../../../lib/i18n";
-import translationManagerScript from "../../../../components/admin/translation-manager.ts?url";
+import { getLanguageByCode } from "../../../lib/languages";
+import { listTranslationEntriesByLocale } from "../../../lib/translations";
+import { getUiTranslations } from "../../../lib/i18n";
+import translationManagerScript from "../../../components/admin/translation-manager.ts?url";
 
 const session = Astro.locals.adminSession;
 if (!session) {
