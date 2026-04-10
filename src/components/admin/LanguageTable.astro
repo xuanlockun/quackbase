@@ -60,6 +60,7 @@ const texts = {
 				<th scope="col">{t("labels.enabled")}</th>
 				<th scope="col">{t("labels.defaultLanguage")}</th>
 				<th scope="col">{t("status.active")}</th>
+				<th scope="col">{t("actions.editTranslations")}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -115,6 +116,14 @@ const texts = {
 								>
 									{language.isDefault ? texts.defaultLabel : language.enabled ? texts.active : texts.inactive}
 								</span>
+							</td>
+							<td>
+								<a
+									class="btn btn-sm btn-outline-secondary"
+									href={`/admin/languages/${language.code}`}
+								>
+									{t("actions.editTranslations")}
+								</a>
 							</td>
 						</tr>
 					))

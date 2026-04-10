@@ -1,0 +1,162 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { getDb } from "../../../lib/blog";
+import { getLanguageByCode } from "../../../lib/languages";
+import { listTranslationEntriesByLocale } from "../../../lib/translations";
+import { getUiTranslations } from "../../../lib/i18n";
+import translationManagerScript from "../../../components/admin/translation-manager.ts?url";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const requestedLocale = (Astro.params.locale ?? "").toLowerCase().trim();
+if (!requestedLocale) {
+	return Astro.redirect("/admin/languages");
+}
+
+const language = await getLanguageByCode(getDb(Astro.locals), requestedLocale);
+if (!language) {
+	return Astro.redirect("/admin/languages");
+}
+
+const { t } = getUiTranslations(Astro);
+
+let entries = [];
+let loadError = "";
+try {
+	entries = await listTranslationEntriesByLocale(getDb(Astro.locals), requestedLocale);
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.translationRequestFailed");
+}
+
+const entryCount = entries.length;
+const headingTitle = `${language.name} ${t("labels.translations") ?? "Translations"}`;
+const helpText = t("messages.manageTranslationsHelp");
+const emptyText = t("messages.translationListEmpty");
+const loadingText = t("messages.translationLoading");
+const createSuccess = t("messages.translationCreateSuccess");
+const updateSuccess = t("messages.translationUpdateSuccess");
+const deleteSuccess = t("messages.translationDeleteSuccess");
+const actionError = t("messages.translationRequestFailed");
+const tableColumns = 4;
+const addButtonLabel = t("actions.addTranslation");
+const keyLabel = t("labels.translationKey");
+const valueLabel = t("labels.translationValue");
+const updatedLabel = t("labels.updated");
+---
+
+<AdminLayout
+	title={headingTitle}
+	description={helpText}
+	session={session}
+	pageTitle={headingTitle}
+	pageDescription={helpText}
+>
+	<div slot="actions" class="admin-page-actions">
+		<a class="admin-ghost-button" href="/admin/languages">{t("actions.back")}</a>
+	</div>
+
+	<div class="admin-content-stack">
+		{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+		<div class="d-flex flex-wrap justify-content-between gap-3 align-items-center mb-4">
+			<div>
+				<h1 class="h3 mb-1">{headingTitle}</h1>
+				{helpText && <p class="text-muted mb-0">{helpText}</p>}
+			</div>
+			<div class="text-muted small">
+				{entryCount} {entryCount === 1 ? t("labels.translationEntry") : t("labels.translationEntries")}
+			</div>
+		</div>
+
+		<div class="card mb-4">
+			<div class="card-body">
+				<div data-translation-notice class="mb-3"></div>
+				<div class="table-responsive">
+					<table
+						class="table table-striped table-borderless mb-0 w-100"
+						data-translation-table
+						data-locale={language.code}
+						data-api-base={`/api/admin/languages/${language.code}/translations`}
+						data-text-empty={emptyText}
+						data-text-loading={loadingText}
+						data-message-create-success={createSuccess}
+						data-message-update-success={updateSuccess}
+						data-message-delete-success={deleteSuccess}
+						data-message-error={actionError}
+					>
+						<thead>
+							<tr>
+								<th scope="col">{t("labels.translationKey")}</th>
+								<th scope="col">{t("labels.translationValue")}</th>
+								<th scope="col">{updatedLabel}</th>
+								<th scope="col">{t("actions.edit")}/{t("actions.delete")}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{
+								entries.length === 0 ? (
+									<tr>
+										<td colspan={tableColumns} class="text-center text-muted py-4 small">
+											{emptyText}
+										</td>
+									</tr>
+								) : (
+									entries.map((entry) => (
+										<tr>
+											<td><code>{entry.translationKey}</code></td>
+											<td>{entry.translatedValue}</td>
+											<td>{entry.updatedAt}</td>
+											<td>
+												<button type="button"
+												    class="btn btn-outline-primary btn-sm me-2"
+												    data-action="edit"
+												    data-key={entry.translationKey}
+												>
+													{t("actions.edit")}
+												</button>
+												<button type="button"
+												    class="btn btn-outline-danger btn-sm"
+												    data-action="delete"
+												    data-key={entry.translationKey}
+												>
+													{t("actions.delete")}
+												</button>
+											</td>
+										</tr>
+									))
+								)
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<div class="card">
+			<div class="card-body">
+				<h2 class="h5 mb-3">{t("labels.translationEntries")}</h2>
+				<form data-translation-form class="row g-3">
+					<div class="col-md-6">
+						<label class="form-label" for="translation-key">{keyLabel}</label>
+						<input class="form-control" id="translation-key" name="key" required />
+					</div>
+					<div class="col-md-6">
+						<label class="form-label" for="translation-value">{valueLabel}</label>
+						<input class="form-control" id="translation-value" name="value" required />
+					</div>
+					<div class="col-12">
+						<button type="submit" class="btn btn-primary">
+							{addButtonLabel}
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<script type="module" src={translationManagerScript} client:load></script>
+</AdminLayout>

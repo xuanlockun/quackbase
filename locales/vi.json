@@ -43,7 +43,9 @@
     "switchToEnglish": "EN",
     "switchToVietnamese": "VI",
     "createLanguage": "Tạo ngôn ngữ",
-    "setDefaultLanguage": "Đặt làm ngôn ngữ mặc định"
+    "setDefaultLanguage": "Đặt làm ngôn ngữ mặc định",
+    "addTranslation": "Thêm bản dịch",
+    "editTranslations": "Chỉnh sửa bản dịch"
   },
   "labels": {
     "signedIn": "Đã đăng nhập",
@@ -88,6 +90,11 @@
     "enabled": "Đã bật",
     "defaultLanguage": "Ngôn ngữ mặc định",
     "message": "Tin nhắn",
+    "translations": "Bản dịch",
+    "translationEntry": "Bản dịch",
+    "translationEntries": "Các bản dịch",
+    "translationKey": "Khóa dịch",
+    "translationValue": "Giá trị bản dịch",
     "bannerImageUrls": "URL ảnh banner"
   },
   "headings": {
@@ -159,6 +166,16 @@
     "languageSaved": "Đã lưu ngôn ngữ.",
     "languageCreateFailed": "Không thể tạo ngôn ngữ.",
     "languageRequestFailed": "Không thể tải hoặc cập nhật ngôn ngữ.",
+    "translationListEmpty": "Ngôn ngữ này chưa có bản dịch.",
+    "translationLoading": "Đang tải bản dịch...",
+    "translationRequestFailed": "Không thể tải bản dịch.",
+    "translationCreateSuccess": "Đã thêm bản dịch.",
+    "translationUpdateSuccess": "Đã cập nhật bản dịch.",
+    "translationDeleteSuccess": "Đã xóa bản dịch.",
+    "translationCreateFailed": "Không thể thêm bản dịch.",
+    "translationUpdateFailed": "Không thể cập nhật bản dịch.",
+    "translationDeleteFailed": "Không thể xóa bản dịch.",
+    "manageTranslationsHelp": "Quản lý cặp khóa/giá trị bản dịch cho ngôn ngữ này.",
     "userCreated": "Đã tạo người dùng.",
     "userSaved": "Đã lưu người dùng.",
     "userRequestFailed": "Yêu cầu người dùng thất bại.",
