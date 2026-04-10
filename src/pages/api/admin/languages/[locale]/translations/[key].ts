@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
-import { getDb } from "../../../../../../../lib/blog";
-import { updateTranslationEntry, deleteTranslationEntry } from "../../../../../../../lib/translations";
-import { requireApiPermission } from "../../../../../../../lib/rbac/guards";
+import { getDb } from "../../../../../../lib/blog";
+import { updateTranslationEntry, deleteTranslationEntry } from "../../../../../../lib/translations";
+import { requireApiPermission } from "../../../../../../lib/rbac/guards";
 
 export const prerender = false;
 
