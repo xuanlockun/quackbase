@@ -2,11 +2,12 @@
 
 import { spawnSync } from "child_process";
 import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
 type FlattenedTranslations = Record<string, string>;
 
-const ROOT = resolve(__dirname, "..");
+const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
 const LOCALES_DIR = resolve(ROOT, "locales");
 const WRANGLER_PATH = resolve(ROOT, "wrangler.json");
 const DESCRIPTION_PATTERN = /description$/i;
@@ -70,8 +71,9 @@ function readDatabaseName(): string {
 
 function runWrangler(target: "local" | "remote", sql: string): void {
 	const databaseName = readDatabaseName();
+	const executable = process.platform === "win32" ? "npx.cmd" : "npx";
 	const args = ["d1", "execute", databaseName, `--${target}`, "--file", "-"];
-	const result = spawnSync("npx", args, {
+	const result = spawnSync(executable, args, {
 		input: Buffer.from(sql, "utf-8"),
 		stdio: "inherit",
 		cwd: ROOT,
