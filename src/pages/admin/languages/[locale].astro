@@ -6,6 +6,7 @@ import { getDb } from "../../../lib/blog";
 import { getLanguageByCode } from "../../../lib/languages";
 import { listTranslationEntriesByLocale } from "../../../lib/translations";
 import { getUiTranslations } from "../../../lib/i18n";
+import translationManagerScript from "../../../components/admin/translation-manager.ts?url";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -157,8 +158,5 @@ const updatedLabel = t("labels.updated");
 		</div>
 	</div>
 
-	<script type="module" client:load>
-		import { initTranslationManager } from "../../../components/admin/translation-manager.ts";
-		initTranslationManager();
-	</script>
+	<script type="module" src={translationManagerScript} client:load></script>
 </AdminLayout>

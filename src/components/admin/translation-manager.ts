@@ -257,3 +257,4 @@ export function initTranslationManager(): void {
 		return messages.error;
 	}
 }
+initTranslationManager();
