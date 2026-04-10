@@ -1,18 +1,12 @@
-type TranslationEntryPayload = {
-	key: string;
-	value: string;
-};
+/**
+ * @typedef {{ key: string; value: string }} TranslationEntryPayload
+ * @typedef {{ translationKey: string; translatedValue: string; updatedAt: string }} TranslationEntryRecord
+ */
 
-type TranslationEntryRecord = {
-	translationKey: string;
-	translatedValue: string;
-	updatedAt: string;
-};
-
-export function initTranslationManager(): void {
-	const table = document.querySelector<HTMLTableElement>("[data-translation-table]");
-	const form = document.querySelector<HTMLFormElement>("[data-translation-form]");
-	const notice = document.querySelector<HTMLElement>("[data-translation-notice]");
+(function initTranslationManager() {
+	const table = document.querySelector("[data-translation-table]");
+	const form = document.querySelector("[data-translation-form]");
+	const notice = document.querySelector("[data-translation-notice]");
 
 	if (!table || !form || !notice) {
 		throw new Error("Translation manager could not find required elements.");
@@ -26,7 +20,7 @@ export function initTranslationManager(): void {
 
 	const apiBase = dataset.apiBase ?? `/api/admin/languages/${locale}/translations`;
 	const columnCount = table.querySelectorAll("thead th").length || 4;
-	let cachedEntries: TranslationEntryRecord[] = [];
+	let cachedEntries = [];
 
 	const messages = {
 		createSuccess: dataset.messageCreateSuccess ?? "Translation added.",
@@ -48,22 +42,26 @@ export function initTranslationManager(): void {
 	form.addEventListener("submit", async (event) => {
 		event.preventDefault();
 		const data = new FormData(form);
-		const payload: TranslationEntryPayload = {
-			key: (data.get("key") as string)?.trim() ?? "",
-			value: (data.get("value") as string)?.trim() ?? "",
+		const payload = {
+			key: (data.get("key") ?? "").toString().trim(),
+			value: (data.get("value") ?? "").toString().trim(),
 		};
+		if (!payload.key || !payload.value) {
+			showNotice("Translation key and value are required.", "danger");
+			return;
+		}
 		try {
 			await createEntry(payload);
 			form.reset();
 			showNotice(messages.createSuccess, "success");
 			await refreshEntries();
 		} catch (error) {
-			showNotice(error instanceof Error ? error.message : messages.error, "danger");
+			showNotice(handleError(error), "danger");
 		}
 	});
 
 	table.addEventListener("click", (event) => {
-		const target = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-action]");
+		const target = event.target?.closest?.("[data-action]");
 		if (!target) {
 			return;
 		}
@@ -105,18 +103,18 @@ export function initTranslationManager(): void {
 
 	refreshEntries().catch((error) => showNotice(handleError(error), "danger"));
 
-	async function refreshEntries(): Promise<void> {
+	async function refreshEntries() {
 		setLoadingState(true);
 		try {
 			const response = await fetch(apiBase);
 			if (!response.ok) {
 				throw new Error(messages.error);
 			}
-			const body = (await response.json().catch(() => ({} as Record<string, unknown>))) ?? {};
+			const body = (await response.json().catch(() => ({}))) ?? {};
 			if (!Array.isArray(body.entries)) {
 				throw new Error(messages.error);
 			}
-			cachedEntries = body.entries.map((entry: Record<string, unknown>) => ({
+			cachedEntries = body.entries.map((entry) => ({
 				translationKey: String(entry.translationKey ?? entry.translation_key ?? ""),
 				translatedValue: String(entry.translatedValue ?? entry.translated_value ?? ""),
 				updatedAt: String(entry.updatedAt ?? entry.updated_at ?? ""),
@@ -132,11 +130,11 @@ export function initTranslationManager(): void {
 		}
 	}
 
-	function renderRows(entries: TranslationEntryRecord[]) {
+	function renderRows(entries) {
 		if (!tbody) {
 			return;
 		}
-		if (entries.length === 0) {
+		if (!entries.length) {
 			showMessageRow(texts.empty);
 			return;
 		}
@@ -146,7 +144,7 @@ export function initTranslationManager(): void {
 		}
 	}
 
-	function buildRow(entry: TranslationEntryRecord): HTMLTableRowElement {
+	function buildRow(entry) {
 		const row = document.createElement("tr");
 
 		const keyCell = document.createElement("td");
@@ -186,7 +184,7 @@ export function initTranslationManager(): void {
 		return row;
 	}
 
-	function showMessageRow(text: string) {
+	function showMessageRow(text) {
 		if (!tbody) {
 			return;
 		}
@@ -200,14 +198,14 @@ export function initTranslationManager(): void {
 		tbody.appendChild(row);
 	}
 
-	function setLoadingState(isLoading: boolean) {
+	function setLoadingState(isLoading) {
 		table.dataset.loading = isLoading ? "true" : "false";
 		if (isLoading && !cachedEntries.length) {
 			showMessageRow(texts.loading);
 		}
 	}
 
-	function showNotice(text: string, variant: "success" | "danger" = "success") {
+	function showNotice(text, variant = "success") {
 		notice.innerHTML = "";
 		const alert = document.createElement("div");
 		alert.className = `alert alert-${variant} mb-0`;
@@ -216,44 +214,44 @@ export function initTranslationManager(): void {
 		notice.appendChild(alert);
 	}
 
-	async function createEntry(payload: TranslationEntryPayload): Promise<void> {
+	async function createEntry(payload) {
 		const response = await fetch(apiBase, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ key: payload.key, value: payload.value }),
 		});
 		if (!response.ok) {
-			const body = (await response.json().catch(() => ({} as Record<string, unknown>))) ?? {};
+			const body = (await response.json().catch(() => ({}))) ?? {};
 			throw new Error(body?.error ?? messages.error);
 		}
 	}
 
-	async function updateEntry(key: string, nextValue: string): Promise<void> {
+	async function updateEntry(key, nextValue) {
 		const response = await fetch(`${apiBase}/${encodeURIComponent(key)}`, {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ value: nextValue }),
 		});
 		if (!response.ok) {
-			const body = (await response.json().catch(() => ({} as Record<string, unknown>))) ?? {};
+			const body = (await response.json().catch(() => ({}))) ?? {};
 			throw new Error(body?.error ?? messages.error);
 		}
 	}
 
-	async function deleteEntry(key: string): Promise<void> {
+	async function deleteEntry(key) {
 		const response = await fetch(`${apiBase}/${encodeURIComponent(key)}`, {
 			method: "DELETE",
 		});
 		if (!response.ok) {
-			const body = (await response.json().catch(() => ({} as Record<string, unknown>))) ?? {};
+			const body = (await response.json().catch(() => ({}))) ?? {};
 			throw new Error(body?.error ?? messages.error);
 		}
 	}
 
-	function handleError(error: unknown): string {
+	function handleError(error) {
 		if (error instanceof Error) {
 			return error.message;
 		}
 		return messages.error;
 	}
-}
+})();
