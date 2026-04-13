@@ -35,6 +35,8 @@ const profileInitials = profileName
 	.join("")
 	.toUpperCase() || "A";
 const toggleLabel = "Toggle sidebar navigation";
+const collapseLabel = "Collapse sidebar";
+const expandLabel = "Expand sidebar";
 
 ---
 
@@ -44,6 +46,16 @@ const toggleLabel = "Toggle sidebar navigation";
 		<BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
 	</head>
 	<body class="admin-app">
+		<script is:inline>
+			(() => {
+				try {
+					const collapsed = window.localStorage.getItem("admin-sidebar-collapsed") === "1";
+					document.body.classList.toggle("admin-sidebar-collapsed", collapsed);
+				} catch {
+					// Ignore storage access errors.
+				}
+			})();
+		</script>
 		<div class="admin-root">
 			<aside class="admin-sidebar d-none d-lg-flex">
 				<Sidebar session={session} />
@@ -61,15 +73,19 @@ const toggleLabel = "Toggle sidebar navigation";
 							<span class="admin-toggler-icon" aria-hidden="true"></span>
 							<span class="visually-hidden">{toggleLabel}</span>
 						</button>
-						<div class="d-flex align-items-center gap-2 admin-topbar-brand">
+						<button
+							class="btn btn-outline-secondary admin-sidebar-toggle d-none d-lg-inline-flex align-items-center gap-2"
+							type="button"
+							data-admin-sidebar-toggle
+							aria-controls="adminSidebar"
+							aria-expanded="true"
+							title={collapseLabel}
+						>
 							<span class="admin-topbar-mark" aria-hidden="true">
 								<span class="admin-topbar-mark-dash"></span>
 							</span>
-							<div class="d-grid lh-sm">
-								<strong class="small text-uppercase letter-spacing-wide">{t("app.brand")}</strong>
-								<span class="small text-muted">Admin workspace</span>
-							</div>
-						</div>
+							<span class="admin-sidebar-toggle-label">{collapseLabel}</span>
+						</button>
 						<div class="d-flex align-items-center gap-2 ms-auto admin-topbar-actions">
 							<a href="/" class="btn btn-sm btn-outline-secondary admin-view-site" target="_blank" rel="noopener noreferrer">
 								<svg aria-hidden="true" viewBox="0 0 24 24">
@@ -149,6 +165,31 @@ const toggleLabel = "Toggle sidebar navigation";
 			</div>
 		</div>
 		<script is:inline>
+			const sidebarToggle = document.querySelector("[data-admin-sidebar-toggle]");
+			const syncSidebarToggle = () => {
+				const isCollapsed = document.body.classList.contains("admin-sidebar-collapsed");
+				if (sidebarToggle instanceof HTMLButtonElement) {
+					sidebarToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+					sidebarToggle.title = isCollapsed ? {expandLabel} : {collapseLabel};
+					const label = sidebarToggle.querySelector(".admin-sidebar-toggle-label");
+					if (label) {
+						label.textContent = isCollapsed ? {expandLabel} : {collapseLabel};
+					}
+				}
+			};
+
+			sidebarToggle?.addEventListener("click", () => {
+				const isCollapsed = document.body.classList.toggle("admin-sidebar-collapsed");
+				try {
+					window.localStorage.setItem("admin-sidebar-collapsed", isCollapsed ? "1" : "0");
+				} catch {
+					// Ignore storage access errors.
+				}
+				syncSidebarToggle();
+			});
+
+			syncSidebarToggle();
+
 			document.querySelectorAll("[data-admin-sidebar-link]").forEach((link) => {
 				if (!(link instanceof HTMLAnchorElement)) {
 					return;
