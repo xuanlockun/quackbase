@@ -79,6 +79,19 @@ const navIconMap: Record<string, string> = {
 
 const navIconHtml = (key: string) => navIconMap[key] ?? navIconMap["default"];
 
+const sectionConfig = [
+	{ title: "CMS", labelKeys: ["nav.posts", "nav.pages"] },
+	{ title: "Management", labelKeys: ["nav.users", "nav.roles", "nav.permissions"] },
+	{ title: "Settings", labelKeys: ["nav.header", "nav.languages"] },
+];
+
+const sections = sectionConfig
+	.map((section) => ({
+		title: section.title,
+		links: links.filter((link) => section.labelKeys.includes(link.labelKey)),
+	}))
+	.filter((section) => section.links.length > 0);
+
 function isActiveLink(href: string, currentPath: string): boolean {
 	return currentPath === href || currentPath.startsWith(`${href}/`);
 }
@@ -86,30 +99,27 @@ function isActiveLink(href: string, currentPath: string): boolean {
 ---
 
 <nav class="admin-sidebar-nav" aria-label="Admin navigation" role="menu">
-	<div class="admin-sidebar-brand">
-		<div class="admin-sidebar-logo" aria-hidden="true">
-			<span>EC</span>
-		</div>
-		<div class="admin-sidebar-brand-copy">
-			<p class="admin-sidebar-kicker">{t("app.brand")}</p>
-			<h2 class="h5 mb-1">{t("app.admin")}</h2>
-			<p class="admin-sidebar-copy">{t("messages.contentAndAccessManagement")}</p>
-		</div>
-	</div>
-
-	<div class="admin-sidebar-links nav nav-pills flex-column gap-1" role="menubar">
-		{
-			links.map((link) => (
-				<a
-					role="menuitem"
-					aria-current={isActiveLink(link.href, pathname) ? "page" : undefined}
-					class:list={["admin-sidebar-link", isActiveLink(link.href, pathname) && "is-active"]}
-					href={localizeAdminHref(link.href)}
-				>
-					<span class="admin-sidebar-icon" aria-hidden="true" set:html={navIconHtml(link.labelKey)}></span>
-					<span class="admin-sidebar-link-text">{t(link.labelKey)}</span>
-				</a>
-			))
-		}
-	</div>
+	{
+		sections.map((section) => (
+			<section class="admin-sidebar-section-block" key={section.title}>
+				<p class="admin-sidebar-section-title">{section.title}</p>
+				<hr class="admin-sidebar-section-divider" aria-hidden="true" />
+				<div class="admin-sidebar-links nav nav-pills flex-column gap-1" role="menubar">
+					{
+						section.links.map((link) => (
+							<a
+								role="menuitem"
+								aria-current={isActiveLink(link.href, pathname) ? "page" : undefined}
+								class:list={["admin-sidebar-link", isActiveLink(link.href, pathname) && "is-active"]}
+								href={localizeAdminHref(link.href)}
+							>
+								<span class="admin-sidebar-icon" aria-hidden="true" set:html={navIconHtml(link.labelKey)}></span>
+								<span class="admin-sidebar-link-text">{t(link.labelKey)}</span>
+							</a>
+						))
+					}
+				</div>
+			</section>
+		))
+	}
 </nav>
