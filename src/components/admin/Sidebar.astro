@@ -99,8 +99,8 @@ function isActiveLink(href: string, currentPath: string): boolean {
 
 ---
 
-<nav aria-label="Admin navigation" class="d-flex flex-column h-100">
-	<header class="px-4 py-3 border-bottom">
+<nav aria-label="Admin navigation" class="admin-sidebar-nav d-flex flex-column h-100">
+	<header class="admin-sidebar-header">
 		<div class="d-flex align-items-center gap-2">
 			<span class="brand-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width:44px;height:44px;font-weight:700;">{SITE_TITLE.charAt(0)}</span>
 			<div>
@@ -109,12 +109,12 @@ function isActiveLink(href: string, currentPath: string): boolean {
 			</div>
 		</div>
 	</header>
-	<div class="p-3 overflow-auto">
+	<div class="admin-sidebar-body overflow-auto">
 		{
 			sections.map((section) => (
-				<section key={section.title} class="mb-4">
-					<p class="text-uppercase text-muted fs-7 mb-2">{section.title}</p>
-					<div class="nav nav-pills flex-column gap-2">
+				<section key={section.title} class="admin-sidebar-section mb-4">
+					<p class="text-uppercase text-muted fs-7 mb-2 admin-sidebar-section-label">{section.title}</p>
+					<div class="nav nav-pills admin-sidebar-links flex-column gap-2">
 						{
 							section.links.map((link) => (
 								<a
