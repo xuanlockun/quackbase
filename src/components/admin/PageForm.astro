@@ -89,48 +89,50 @@ const initialContactFields = contactFormFields.map((field) => ({
 }));
 ---
 
-<div class="admin-form-header">
+<div class="admin-surface-header">
 	<a class="btn btn-outline-secondary btn-sm" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
-	<p class="admin-muted">
+	<p class="admin-inline-muted mb-0">
 		{canSubmit ? t("messages.changesSavePageRoutes") : t("messages.cannotSavePage")}
 	</p>
 </div>
 
 {loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
 
-<form class="admin-form-stack" method="post" action={action}>
+<form class="admin-form-shell" method="post" action={action}>
 	{mode === "edit" && page && <input type="hidden" name="id" value={page.id} />}
-	<div class="admin-form-grid">
-		<label>
-			<span>{t("labels.slug")}</span>
-			<input
-				class="form-control"
-				name="slug"
-				required
-				pattern="[a-z0-9-]+"
-				value={page?.slug ?? ""}
-				placeholder="services"
-				disabled={isDisabled}
-			/>
-		</label>
-		<label>
-			<span>{t("labels.description")}</span>
-			<input
-				class="form-control"
-				name="description"
-				required
-				value={page?.description ?? ""}
-				placeholder="Page summary"
-				disabled={isDisabled}
-			/>
-		</label>
-		<label>
-			<span>{t("labels.status")}</span>
-			<select class="form-select" name="status" disabled={isDisabled}>
-				<option value="published" selected={page?.status !== "draft"}>{t("status.published")}</option>
-				<option value="draft" selected={page?.status === "draft"}>{t("status.draft")}</option>
-			</select>
-		</label>
+	<div class="admin-form-surface">
+		<div class="admin-form-grid">
+			<label>
+				<span>{t("labels.slug")}</span>
+				<input
+					class="form-control"
+					name="slug"
+					required
+					pattern="[a-z0-9-]+"
+					value={page?.slug ?? ""}
+					placeholder="services"
+					disabled={isDisabled}
+				/>
+			</label>
+			<label>
+				<span>{t("labels.description")}</span>
+				<input
+					class="form-control"
+					name="description"
+					required
+					value={page?.description ?? ""}
+					placeholder="Page summary"
+					disabled={isDisabled}
+				/>
+			</label>
+			<label>
+				<span>{t("labels.status")}</span>
+				<select class="form-select" name="status" disabled={isDisabled}>
+					<option value="published" selected={page?.status !== "draft"}>{t("status.published")}</option>
+					<option value="draft" selected={page?.status === "draft"}>{t("status.draft")}</option>
+				</select>
+			</label>
+		</div>
 	</div>
 
 	<div
@@ -142,7 +144,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 		<div class="localized-editor-header">
 			<div>
 				<h2>{t("headings.localizedContent")}</h2>
-				<p class="admin-muted">{t("messages.localizedPageHelp")}</p>
+				<p class="admin-inline-muted mb-0">{t("messages.localizedPageHelp")}</p>
 			</div>
 			<div class="nav nav-pills localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
 				{
@@ -196,99 +198,6 @@ const initialContactFields = contactFormFields.map((field) => ({
 		}
 	</div>
 
-	<div class="admin-form-section">
-		<div class="page-sections-heading">
-			<div>
-				<span>{t("headings.pageSections")}</span>
-			</div>
-			<div class="page-sections-actions">
-				<select class="form-select form-select-sm" data-section-select data-section-add-label={t("actions.addSection")} disabled={isDisabled}></select>
-				<button
-					class="btn btn-outline-secondary btn-sm"
-					type="button"
-					data-section-add
-					data-readonly={String(isDisabled)}
-					disabled={isDisabled}
-				>
-					{t("actions.addSection")}
-				</button>
-			</div>
-		</div>
-
-		<input
-			type="hidden"
-			name="pageSectionsConfig"
-			data-page-sections-config
-			value={JSON.stringify(initialSections)}
-			disabled={isDisabled}
-		/>
-		<input
-			type="hidden"
-			name="contactFormFields"
-			data-contact-fields-payload
-			value={JSON.stringify(initialContactFields)}
-			disabled={isDisabled}
-		/>
-
-		<div
-			class="admin-table"
-			aria-label={t("headings.pageSections")}
-			data-page-sections-editor
-			data-section-remove-label={t("actions.remove")}
-			data-section-catalog={sectionCatalogJson}
-		>
-			<table class="admin-sections-table" role="table">
-				<thead>
-					<tr>
-						<th></th>
-						<th>{t("headings.pageSections")}</th>
-						<th>{t("labels.details") ?? "Details"}</th>
-						<th>{t("labels.action")}</th>
-					</tr>
-				</thead>
-				<tbody data-section-rows>
-					<tr class="admin-table-empty-row admin-muted" data-section-empty hidden={initialSections.length > 0}>
-						<td colSpan="4">{t("messages.noPageSectionsConfigured")}</td>
-					</tr>
-					{
-						initialSections.map((section) => {
-							const metadata = sectionCatalogMap.get(section.type) ?? sectionCatalog[0];
-							return (
-								<tr
-									class="admin-table-row section-row"
-									data-section-row
-									data-section-type={metadata.type}
-									draggable={!isDisabled ? "true" : "false"}
-								>
-									<td class="drag-cell">
-										<span class="drag-handle" data-drag-handle aria-label={metadata.label}></span>
-									</td>
-									<td>
-										<strong>{metadata.label}</strong>
-										<p class="admin-compact-copy">{metadata.description}</p>
-									</td>
-									<td class="section-control">
-										<p class="admin-compact-copy">{metadata.details}</p>
-									</td>
-									<td class="section-actions">
-										<button
-											class="admin-ghost-button"
-											type="button"
-											data-section-remove={metadata.removable === false ? undefined : ""}
-											disabled={metadata.removable === false || isDisabled}
-										>
-											{sectionRemoveLabelText}
-										</button>
-									</td>
-								</tr>
-							);
-						})
-					}
-				</tbody>
-			</table>
-		</div>
-	</div>
-
 	<div class="admin-form-section contact-fields-wrapper" data-contact-fields-wrapper hidden>
 		<div
 			class="contact-fields-editor"
@@ -309,7 +218,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 					{t("actions.addField")}
 				</button>
 			</div>
-			<p class="admin-muted">{t("messages.contactFormSharedConfig")}</p>
+			<p class="admin-inline-muted mb-0">{t("messages.contactFormSharedConfig")}</p>
 			<div class="contact-fields-config">
 				<div class="contact-fields-table" role="table">
 					<div class="contact-fields-header" role="row">
@@ -322,7 +231,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 					</div>
 					<div class="contact-fields-rows" data-contact-fields-rows></div>
 				</div>
-				<p class="admin-muted" data-contact-fields-empty hidden>
+				<p class="admin-inline-muted mb-0" data-contact-fields-empty hidden>
 					{t("messages.noContactFieldsConfigured")}
 				</p>
 			</div>

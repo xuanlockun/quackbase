@@ -24,14 +24,14 @@ const { t } = getUiTranslations(Astro);
 	pageDescription={t("messages.manageRoleBundles")}
 >
 	<div slot="actions" class="admin-page-actions">
-		<a class="admin-primary-button" href="/admin/roles/new">{t("actions.createRole")}</a>
+		<a class="btn btn-primary" href="/admin/roles/new">{t("actions.createRole")}</a>
 	</div>
 
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("created") && <p class="admin-notice">{t("messages.roleCreated")}</p>}
-		{Astro.url.searchParams.get("saved") && <p class="admin-notice">{t("messages.roleSaved")}</p>}
-		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">{t("messages.roleDeleted")}</p>}
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.roleRequestFailed")}</p>}
+		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.roleCreated")}</p>}
+		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.roleSaved")}</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="alert alert-info mb-0">{t("messages.roleDeleted")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.roleRequestFailed")}</p>}
 		<RoleTable roles={roles} />
 	</div>
 </AdminLayout>

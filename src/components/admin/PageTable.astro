@@ -16,14 +16,14 @@ const catalog = getLanguageCatalog(Astro.locals);
 
 {
 	pages.length === 0 ? (
-		<div class="alert alert-secondary p-4">
-			<h2 class="h5">{t("messages.noPagesYet")}</h2>
-			<p class="mb-0">{t("messages.noPagesHelp")}</p>
+		<div class="admin-state-surface">
+			<h2 class="h5 mb-2">{t("messages.noPagesYet")}</h2>
+			<p class="mb-0 admin-muted">{t("messages.noPagesHelp")}</p>
 		</div>
 	) : (
-		<div class="table-responsive">
-			<table class="table table-striped table-hover align-middle mb-0">
-				<thead class="table-light">
+		<div class="admin-table-surface table-responsive">
+			<table class="table table-sm table-hover align-middle mb-0">
+				<thead>
 					<tr>
 						<th>{t("labels.title")}</th>
 						<th>{t("labels.status")}</th>
@@ -43,7 +43,9 @@ const catalog = getLanguageCatalog(Astro.locals);
 									</div>
 								</td>
 								<td>
-									<span class="badge bg-info text-uppercase">{t(`status.${page.status}`, page.status)}</span>
+									<span class={`badge text-uppercase ${page.status === "published" ? "bg-success" : "bg-secondary"}`}>
+										{t(`status.${page.status}`, page.status)}
+									</span>
 								</td>
 								<td>
 									<FormattedDate date={page.updatedAt} />

@@ -43,13 +43,13 @@ try {
 	pageDescription={t("messages.editPostDescription")}
 >
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.requestFailed")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.requestFailed")}</p>}
 		{
 			notFound ? (
 				<div class="admin-empty-state">
 					<h2>{t("messages.postNotFound")}</h2>
 					<p class="admin-muted">{t("messages.failedToLoadPosts")}</p>
-					<p><a class="admin-ghost-button" href={localizeAdminHref("/admin/posts", language)}>{t("messages.backToPosts")}</a></p>
+					<p><a class="btn btn-outline-secondary" href={localizeAdminHref("/admin/posts", language)}>{t("messages.backToPosts")}</a></p>
 				</div>
 			) : (
 				<PostForm

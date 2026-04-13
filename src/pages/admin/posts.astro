@@ -37,15 +37,15 @@ try {
 	pageDescription={t("messages.managePublishedArticles")}
 >
 	<div slot="actions" class="admin-page-actions">
-		{canCreate && <a class="admin-primary-button" href="/admin/posts/new">{t("actions.createPost")}</a>}
-		<a class="admin-ghost-button" href={localizeHref("/")}>{t("actions.viewBlog")}</a>
+		{canCreate && <a class="btn btn-primary" href="/admin/posts/new">{t("actions.createPost")}</a>}
+		<a class="btn btn-outline-secondary" href={localizeHref("/")}>{t("actions.viewBlog")}</a>
 	</div>
 
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("saved") && <p class="admin-notice">{t("messages.postSaved")}</p>}
-		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">{t("messages.postDeleted")}</p>}
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.requestFailed")}</p>}
-		{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.postSaved")}</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="alert alert-info mb-0">{t("messages.postDeleted")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.requestFailed")}</p>}
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 
 		<PostTable posts={posts} canUpdate={canUpdate} canDelete={canDelete} />
 	</div>

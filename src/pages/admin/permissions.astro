@@ -34,7 +34,12 @@ const { t } = getUiTranslations(Astro);
 		{
 			groupedPermissions.map(([resource, resourcePermissions]) => (
 				<article class="admin-resource-card">
-					<h2 class="h5 mb-3 text-capitalize">{resource}</h2>
+					<div class="admin-surface-header">
+						<div>
+							<h2 class="h5 text-capitalize mb-1">{resource}</h2>
+							<p class="admin-inline-muted mb-0">{t("messages.permissionCatalogDescription")}</p>
+						</div>
+					</div>
 					<div class="permission-badge-row">
 						{resourcePermissions.map((permission) => (
 							<div class="permission-entry">

@@ -28,41 +28,40 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 const selectedPermissionIds = new Set(role?.permissions.map((permission) => permission.id) ?? []);
 ---
 
-<div class="admin-form-header">
+<div class="admin-surface-header">
 	<a class="btn btn-outline-secondary btn-sm" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
-	<p class="admin-muted">
-		{canSubmit
-			? t("messages.manageRoleForm")
-			: t("messages.cannotSavePage")}
+	<p class="admin-inline-muted mb-0">
+		{canSubmit ? t("messages.manageRoleForm") : t("messages.cannotSavePage")}
 	</p>
 </div>
 
 {loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
 
-<form class="admin-form-stack" method="post" action={action}>
-	<div class="admin-form-grid">
+<form class="admin-form-shell" method="post" action={action}>
+	<div class="admin-form-surface">
+		<div class="admin-form-grid">
+			<label>
+				<span>{t("labels.roleName")}</span>
+				<input
+					class="form-control"
+					name="name"
+					required={mode === "create"}
+					pattern="[a-z0-9.-]+"
+					value={role?.name ?? ""}
+					readonly={mode === "edit"}
+					disabled={isDisabled || mode === "edit"}
+				/>
+			</label>
+			<label>
+				<span>{t("labels.displayName")}</span>
+				<input class="form-control" name="label" required value={role?.label ?? ""} disabled={isDisabled} />
+			</label>
+		</div>
 		<label>
-			<span>{t("labels.roleName")}</span>
-			<input
-				class="form-control"
-				name="name"
-				required={mode === "create"}
-				pattern="[a-z0-9.-]+"
-				value={role?.name ?? ""}
-				readonly={mode === "edit"}
-				disabled={isDisabled || mode === "edit"}
-			/>
-		</label>
-		<label>
-			<span>{t("labels.displayName")}</span>
-			<input class="form-control" name="label" required value={role?.label ?? ""} disabled={isDisabled} />
+			<span>{t("labels.description")}</span>
+			<textarea class="form-control" name="description" rows="4" disabled={isDisabled}>{role?.description ?? ""}</textarea>
 		</label>
 	</div>
-
-	<label>
-		<span>{t("labels.description")}</span>
-		<textarea class="form-control" name="description" rows="4" disabled={isDisabled}>{role?.description ?? ""}</textarea>
-	</label>
 
 	<div class="admin-form-section">
 		<span>{t("labels.permissions")}</span>

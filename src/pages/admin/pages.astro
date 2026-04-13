@@ -35,16 +35,16 @@ try {
 	pageDescription={t("messages.manageLandingPages")}
 >
 	<div slot="actions" class="admin-page-actions">
-		{canCreate && <a class="admin-primary-button" href="/admin/pages/new">{t("actions.createPage")}</a>}
-		<a class="admin-ghost-button" href={`/${language}/`}>{t("actions.viewSite")}</a>
+		{canCreate && <a class="btn btn-primary" href="/admin/pages/new">{t("actions.createPage")}</a>}
+		<a class="btn btn-outline-secondary" href={`/${language}/`}>{t("actions.viewSite")}</a>
 	</div>
 
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("created") && <p class="admin-notice">{t("messages.pageCreated")}</p>}
-		{Astro.url.searchParams.get("saved") && <p class="admin-notice">{t("messages.pageSaved")}</p>}
-		{Astro.url.searchParams.get("deleted") && <p class="admin-notice">{t("messages.pageDeleted")}</p>}
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.pageRequestFailed")}</p>}
-		{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.pageCreated")}</p>}
+		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.pageSaved")}</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="alert alert-info mb-0">{t("messages.pageDeleted")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.pageRequestFailed")}</p>}
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 
 		<PageTable pages={pages} canUpdate={canUpdate} canDelete={canDelete} />
 	</div>

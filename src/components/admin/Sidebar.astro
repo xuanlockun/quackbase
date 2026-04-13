@@ -101,20 +101,20 @@ function isActiveLink(href: string, currentPath: string): boolean {
 
 <nav aria-label="Admin navigation" class="admin-sidebar-nav d-flex flex-column h-100">
 	<header class="admin-sidebar-header">
-		<div class="d-flex align-items-center gap-2">
+		<div class="d-flex align-items-center gap-3">
 			<span class="brand-gradient rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px;font-weight:700;">{SITE_TITLE.charAt(0)}</span>
-			<div>
-				<p class="mb-0 fw-semibold">{t("app.brand")}</p>
-				<small class="text-muted text-uppercase letter-spacing-wide">{t("app.admin")}</small>
+			<div class="d-grid">
+				<p class="mb-0 fw-semibold text-white">{t("app.brand")}</p>
+				<small class="text-uppercase letter-spacing-wide">{t("app.admin")}</small>
 			</div>
 		</div>
 	</header>
 	<div class="admin-sidebar-body overflow-auto">
 		{
 			sections.map((section) => (
-				<section key={section.title} class="admin-sidebar-section mb-4">
-					<p class="text-uppercase text-muted fs-7 mb-2 admin-sidebar-section-label">{section.title}</p>
-					<div class="nav nav-pills flex-column gap-1 admin-sidebar-links">
+				<section key={section.title} class="admin-sidebar-section">
+					<p class="text-uppercase mb-2 admin-sidebar-section-label">{section.title}</p>
+					<div class="nav nav-pills flex-column admin-sidebar-links">
 						{
 							section.links.map((link) => (
 								<a

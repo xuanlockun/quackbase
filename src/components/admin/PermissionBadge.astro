@@ -8,6 +8,6 @@ const { label, resource } = Astro.props;
 const badgeTheme = resource === "roles" ? "success" : resource === "users" ? "info" : resource === "site" ? "warning" : "secondary";
 ---
 
-<span class={`badge bg-${badgeTheme} text-uppercase`} data-resource={resource ?? "generic"}>
+<span class={`badge rounded-pill bg-${badgeTheme} text-uppercase`} data-resource={resource ?? "generic"}>
 	{label}
 </span>

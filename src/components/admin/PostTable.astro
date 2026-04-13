@@ -15,14 +15,14 @@ const { t } = getUiTranslations(Astro);
 
 {
 	posts.length === 0 ? (
-		<div class="alert alert-secondary p-4">
-			<h2 class="h5">{t("messages.noPostsYet")}</h2>
-			<p class="mb-0">{t("messages.noPostsHelp")}</p>
+		<div class="admin-state-surface">
+			<h2 class="h5 mb-2">{t("messages.noPostsYet")}</h2>
+			<p class="mb-0 admin-muted">{t("messages.noPostsHelp")}</p>
 		</div>
 	) : (
-		<div class="table-responsive">
-			<table class="table table-striped table-hover align-middle mb-0">
-				<thead class="table-light">
+		<div class="admin-table-surface table-responsive">
+			<table class="table table-sm table-hover align-middle mb-0">
+				<thead>
 					<tr>
 						<th>{t("labels.title")}</th>
 						<th>{t("labels.status")}</th>
@@ -42,7 +42,9 @@ const { t } = getUiTranslations(Astro);
 									</div>
 								</td>
 								<td>
-									<span class="badge bg-primary text-uppercase">{t(`status.${post.status}`, post.status)}</span>
+									<span class={`badge text-uppercase ${post.status === "published" ? "bg-success" : "bg-secondary"}`}>
+										{t(`status.${post.status}`, post.status)}
+									</span>
 								</td>
 								<td>
 									<FormattedDate date={new Date(post.updatedAt)} />

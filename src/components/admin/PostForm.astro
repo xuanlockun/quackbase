@@ -49,37 +49,37 @@ const pubDateValue = post?.pubDate ? new Date(post.pubDate).toISOString().slice(
 const isDisabled = Boolean(loadError) || !canSubmit;
 ---
 
-<div class="admin-form-header">
+<div class="admin-surface-header">
 	<button class="btn btn-outline-secondary btn-sm" type="button" data-admin-back={localizeAdminHref(backHref, language)}>
 		{t("actions.back")}
 	</button>
-	<p class="admin-muted">
-		{canSubmit
-			? t("messages.changesSaveAdminApi")
-			: t("messages.cannotSaveForm")}
+	<p class="admin-inline-muted mb-0">
+		{canSubmit ? t("messages.changesSaveAdminApi") : t("messages.cannotSaveForm")}
 	</p>
 </div>
 
 {loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
 
-<form class="admin-form-stack" method="post" action={action}>
+<form class="admin-form-shell" method="post" action={action}>
 	{mode === "edit" && post && <input type="hidden" name="id" value={post.id} />}
-	<div class="admin-form-grid">
-		<label>
-			<span>{t("labels.heroImageUrl")}</span>
-			<input class="form-control" name="heroImage" value={heroImage} placeholder="/blog-placeholder-1.jpg" disabled={isDisabled} />
-		</label>
-		<label>
-			<span>{t("labels.status")}</span>
-			<select class="form-select" name="status" disabled={isDisabled}>
-				<option value="published" selected={status === "published"}>{t("status.published")}</option>
-				<option value="draft" selected={status === "draft"}>{t("status.draft")}</option>
-			</select>
-		</label>
-		<label>
-			<span>{t("labels.publishDate")}</span>
-			<input class="form-control" type="datetime-local" name="pubDate" value={pubDateValue} disabled={isDisabled} />
-		</label>
+	<div class="admin-form-surface">
+		<div class="admin-form-grid">
+			<label>
+				<span>{t("labels.heroImageUrl")}</span>
+				<input class="form-control" name="heroImage" value={heroImage} placeholder="/blog-placeholder-1.jpg" disabled={isDisabled} />
+			</label>
+			<label>
+				<span>{t("labels.status")}</span>
+				<select class="form-select" name="status" disabled={isDisabled}>
+					<option value="published" selected={status === "published"}>{t("status.published")}</option>
+					<option value="draft" selected={status === "draft"}>{t("status.draft")}</option>
+				</select>
+			</label>
+			<label>
+				<span>{t("labels.publishDate")}</span>
+				<input class="form-control" type="datetime-local" name="pubDate" value={pubDateValue} disabled={isDisabled} />
+			</label>
+		</div>
 	</div>
 
 	<div
@@ -91,7 +91,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 		<div class="localized-editor-header">
 			<div>
 				<h2>{t("headings.localizedContent")}</h2>
-				<p class="admin-muted">{t("messages.localizedPostHelp")}</p>
+				<p class="admin-inline-muted mb-0">{t("messages.localizedPostHelp")}</p>
 			</div>
 			<div class="nav nav-pills localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
 				{

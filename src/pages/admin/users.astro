@@ -24,13 +24,13 @@ const { t } = getUiTranslations(Astro);
 	pageDescription={t("messages.manageAdminUsers")}
 >
 	<div slot="actions" class="admin-page-actions">
-		<a class="admin-primary-button" href="/admin/users/new">{t("actions.createUser")}</a>
+		<a class="btn btn-primary" href="/admin/users/new">{t("actions.createUser")}</a>
 	</div>
 
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("created") && <p class="admin-notice">{t("messages.userCreated")}</p>}
-		{Astro.url.searchParams.get("saved") && <p class="admin-notice">{t("messages.userSaved")}</p>}
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.userRequestFailed")}</p>}
+		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.userCreated")}</p>}
+		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.userSaved")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.userRequestFailed")}</p>}
 		<UserTable users={users} />
 	</div>
 </AdminLayout>

@@ -33,9 +33,9 @@ try {
 	pageTitle={t("headings.languages")}
 	pageDescription={t("messages.manageLanguagesHelp")}
 >
-	<div class="admin-page-content d-grid gap-4">
+	<div class="admin-content-stack">
 		{loadError && <p class="alert alert-warning mb-0">{loadError}</p>}
-		<div>
+		<div class="admin-form-surface">
 			<LanguageTable
 				languages={languages}
 				tableMessages={{
@@ -45,7 +45,7 @@ try {
 				}}
 			/>
 		</div>
-		<div>
+		<div class="admin-form-surface">
 			<LanguageForm
 				formMessages={{
 					success: t("messages.languageCreated"),

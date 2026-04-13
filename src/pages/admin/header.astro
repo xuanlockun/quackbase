@@ -63,7 +63,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 		{Astro.url.searchParams.get("siteSaved") && <p class="alert alert-success mb-0">{t("messages.headerSettingsSaved")}</p>}
 		{Astro.url.searchParams.get("siteError") && <p class="alert alert-danger mb-0">{t("messages.headerSettingsFailed")}</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
-		<form method="post" action="/api/admin/site" class="admin-form-stack">
+		<form method="post" action="/api/admin/site" class="admin-form-shell">
 			<div class="admin-grid-two">
 				<label><span>{t("labels.siteTitle")}</span><input class="form-control" name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
 				<label><span>{t("labels.homePageSlug")}</span><input class="form-control" name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
@@ -92,8 +92,8 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 					data-indent-label={t("actions.indent")}
 					data-outdent-label={t("actions.outdent")}
 				>
-					<div class="table-responsive">
-						<table class="table table-striped table-hover align-middle nav-items-table mb-0" role="table">
+					<div class="table-responsive admin-table-surface">
+						<table class="table table-sm table-hover align-middle nav-items-table mb-0" role="table">
 						<thead>
 							<tr>
 								<th></th>

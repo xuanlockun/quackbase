@@ -12,14 +12,14 @@ const { t } = getUiTranslations(Astro);
 
 {
 	users.length === 0 ? (
-		<div class="alert alert-secondary p-4">
-			<h2 class="h5">{t("messages.noUsersYet")}</h2>
-			<p class="mb-0">{t("messages.noUsersHelp")}</p>
+		<div class="admin-state-surface">
+			<h2 class="h5 mb-2">{t("messages.noUsersYet")}</h2>
+			<p class="mb-0 admin-muted">{t("messages.noUsersHelp")}</p>
 		</div>
 	) : (
-		<div class="table-responsive">
-			<table class="table table-striped table-hover align-middle mb-0">
-				<thead class="table-light">
+		<div class="admin-table-surface table-responsive">
+			<table class="table table-sm table-hover align-middle mb-0">
+				<thead>
 					<tr>
 						<th>{t("labels.user")}</th>
 						<th>{t("labels.status")}</th>

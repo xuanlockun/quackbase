@@ -22,7 +22,7 @@ const { t } = getUiTranslations(Astro);
 	pageDescription={t("messages.createPostDescription")}
 >
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("error") && <p class="admin-notice admin-notice-error">{t("messages.requestFailed")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.requestFailed")}</p>}
 		<PostForm mode="create" action="/api/admin/posts" canSubmit={canCreate} />
 	</div>
 </AdminLayout>

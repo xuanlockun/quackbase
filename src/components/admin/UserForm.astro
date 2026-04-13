@@ -28,51 +28,51 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
 ---
 
-<div class="admin-form-header">
+<div class="admin-surface-header">
 	<a class="btn btn-outline-secondary btn-sm" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
-	<p class="admin-muted">
-		{canSubmit
-			? t("messages.manageUserForm")
-			: t("messages.cannotSavePage")}
+	<p class="admin-inline-muted mb-0">
+		{canSubmit ? t("messages.manageUserForm") : t("messages.cannotSavePage")}
 	</p>
 </div>
 
 {loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
 
-<form class="admin-form-stack" method="post" action={action}>
-	<div class="admin-form-grid">
-		<label>
-			<span>{t("labels.email")}</span>
-			<input
-				class="form-control"
-				name="email"
-				type="email"
-				required={mode === "create"}
-				value={user?.email ?? ""}
-				readonly={mode === "edit"}
-				disabled={isDisabled || mode === "edit"}
-			/>
-		</label>
-		<label>
-			<span>{t("labels.displayName")}</span>
-			<input class="form-control" name="displayName" required value={user?.displayName ?? ""} disabled={isDisabled} />
-		</label>
-		<label>
-			<span>{mode === "edit" ? t("labels.newPassword") : t("labels.password")}</span>
-			<input
-				class="form-control"
-				name="password"
-				type="password"
-				minlength="8"
-				required={mode === "create"}
-				placeholder={mode === "edit" ? t("labels.newPassword") : ""}
-				disabled={isDisabled}
-			/>
-		</label>
-		<label class="admin-check-row">
-			<input type="checkbox" name="isActive" checked={user?.isActive ?? true} disabled={isDisabled} />
-			{t("labels.active")}
-		</label>
+<form class="admin-form-shell" method="post" action={action}>
+	<div class="admin-form-surface">
+		<div class="admin-form-grid">
+			<label>
+				<span>{t("labels.email")}</span>
+				<input
+					class="form-control"
+					name="email"
+					type="email"
+					required={mode === "create"}
+					value={user?.email ?? ""}
+					readonly={mode === "edit"}
+					disabled={isDisabled || mode === "edit"}
+				/>
+			</label>
+			<label>
+				<span>{t("labels.displayName")}</span>
+				<input class="form-control" name="displayName" required value={user?.displayName ?? ""} disabled={isDisabled} />
+			</label>
+			<label>
+				<span>{mode === "edit" ? t("labels.newPassword") : t("labels.password")}</span>
+				<input
+					class="form-control"
+					name="password"
+					type="password"
+					minlength="8"
+					required={mode === "create"}
+					placeholder={mode === "edit" ? t("labels.newPassword") : ""}
+					disabled={isDisabled}
+				/>
+			</label>
+			<label class="admin-check-row">
+				<input type="checkbox" name="isActive" checked={user?.isActive ?? true} disabled={isDisabled} />
+				{t("labels.active")}
+			</label>
+		</div>
 	</div>
 
 	<div class="admin-form-section">

@@ -57,98 +57,94 @@ const updatedLabel = t("labels.updated");
 	pageDescription={helpText}
 >
 	<div slot="actions" class="admin-page-actions">
-		<a class="admin-ghost-button" href="/admin/languages">{t("actions.back")}</a>
+		<a class="btn btn-outline-secondary" href="/admin/languages">{t("actions.back")}</a>
 	</div>
 
 	<div class="admin-content-stack">
-		{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
-		<div class="d-flex flex-wrap justify-content-between gap-3 align-items-center">
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
+		<div class="admin-surface-header">
 			<div>
 				<h1 class="h3 mb-1">{headingTitle}</h1>
-				{helpText && <p class="text-muted mb-0">{helpText}</p>}
+				{helpText && <p class="admin-inline-muted mb-0">{helpText}</p>}
 			</div>
-			<div class="text-muted small">
+			<div class="admin-inline-muted small">
 				{entryCount} {entryCount === 1 ? t("labels.translationEntry") : t("labels.translationEntries")}
 			</div>
 		</div>
 
-		<div class="card mb-4">
-			<div class="card-body">
-				<div data-translation-notice class="mb-3"></div>
-				<div class="table-responsive">
-					<table
-						class="table table-striped table-hover align-middle mb-0 w-100"
-						data-translation-table
-						data-locale={language.code}
-						data-api-base={`/api/admin/languages/${language.code}/translations`}
-						data-text-empty={emptyText}
-						data-text-loading={loadingText}
-						data-message-create-success={createSuccess}
-						data-message-update-success={updateSuccess}
-						data-message-delete-success={deleteSuccess}
-						data-message-error={actionError}
-					>
-						<thead>
-							<tr>
-								<th scope="col">{t("labels.translationKey")}</th>
-								<th scope="col">{t("labels.translationValue")}</th>
-								<th scope="col">{updatedLabel}</th>
-								<th scope="col">{t("actions.edit")}/{t("actions.delete")}</th>
-							</tr>
-						</thead>
-						<tbody>
-							{
-								entries.length === 0 ? (
+		<div class="admin-form-surface">
+			<div class="mb-3" data-translation-notice aria-live="polite"></div>
+			<div class="table-responsive admin-table-surface">
+				<table
+					class="table table-sm table-hover align-middle mb-0 w-100"
+					data-translation-table
+					data-locale={language.code}
+					data-api-base={`/api/admin/languages/${language.code}/translations`}
+					data-text-empty={emptyText}
+					data-text-loading={loadingText}
+					data-message-create-success={createSuccess}
+					data-message-update-success={updateSuccess}
+					data-message-delete-success={deleteSuccess}
+					data-message-error={actionError}
+				>
+					<thead>
+						<tr>
+							<th scope="col">{t("labels.translationKey")}</th>
+							<th scope="col">{t("labels.translationValue")}</th>
+							<th scope="col">{updatedLabel}</th>
+							<th scope="col">{t("actions.edit")}/{t("actions.delete")}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{
+							entries.length === 0 ? (
+								<tr>
+									<td colspan={tableColumns} class="text-center text-muted py-4 small">
+										{emptyText}
+									</td>
+								</tr>
+							) : (
+								entries.map((entry) => (
 									<tr>
-										<td colspan={tableColumns} class="text-center text-muted py-4 small">
-											{emptyText}
+										<td><code>{entry.translationKey}</code></td>
+										<td>{entry.translatedValue}</td>
+										<td>{entry.updatedAt}</td>
+										<td>
+											<div class="d-flex flex-wrap gap-2">
+												<button type="button" class="btn btn-outline-primary btn-sm" data-action="edit" data-key={entry.translationKey}>
+													{t("actions.edit")}
+												</button>
+												<button type="button" class="btn btn-outline-danger btn-sm" data-action="delete" data-key={entry.translationKey}>
+													{t("actions.delete")}
+												</button>
+											</div>
 										</td>
 									</tr>
-								) : (
-									entries.map((entry) => (
-										<tr>
-											<td><code>{entry.translationKey}</code></td>
-											<td>{entry.translatedValue}</td>
-											<td>{entry.updatedAt}</td>
-											<td>
-												<div class="d-flex flex-wrap gap-2">
-													<button type="button" class="btn btn-outline-primary btn-sm" data-action="edit" data-key={entry.translationKey}>
-														{t("actions.edit")}
-													</button>
-													<button type="button" class="btn btn-outline-danger btn-sm" data-action="delete" data-key={entry.translationKey}>
-														{t("actions.delete")}
-													</button>
-												</div>
-											</td>
-										</tr>
-									))
-								)
-							}
-						</tbody>
-					</table>
-				</div>
+								))
+							)
+						}
+					</tbody>
+				</table>
 			</div>
 		</div>
 
-		<div class="card">
-			<div class="card-body">
-				<h2 class="h5 mb-3">{t("labels.translationEntries")}</h2>
-				<form data-translation-form class="row g-3">
-					<div class="col-md-6">
-						<label class="form-label" for="translation-key">{keyLabel}</label>
-						<input class="form-control" id="translation-key" name="key" required />
-					</div>
-					<div class="col-md-6">
-						<label class="form-label" for="translation-value">{valueLabel}</label>
-						<input class="form-control" id="translation-value" name="value" required />
-					</div>
-					<div class="col-12">
-						<button type="submit" class="btn btn-primary">
-							{addButtonLabel}
-						</button>
-					</div>
-				</form>
-			</div>
+		<div class="admin-form-surface">
+			<h2 class="h5 mb-3">{t("labels.translationEntries")}</h2>
+			<form data-translation-form class="row g-3">
+				<div class="col-md-6">
+					<label class="form-label" for="translation-key">{keyLabel}</label>
+					<input class="form-control" id="translation-key" name="key" required />
+				</div>
+				<div class="col-md-6">
+					<label class="form-label" for="translation-value">{valueLabel}</label>
+					<input class="form-control" id="translation-value" name="value" required />
+				</div>
+				<div class="col-12">
+					<button type="submit" class="btn btn-primary">
+						{addButtonLabel}
+					</button>
+				</div>
+			</form>
 		</div>
 	</div>
 

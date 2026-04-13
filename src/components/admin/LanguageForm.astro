@@ -19,42 +19,46 @@ const messages = {
 <form
 	action="/api/admin/languages"
 	method="post"
-	class="card shadow-sm border-0"
+	class="admin-form-surface admin-form-shell"
 	data-language-form
 	data-message-success={messages.success}
 	data-message-error={messages.error}
 >
-	<div class="card-body">
-		<h3 class="h5 mb-3">{t("headings.languages")}</h3>
-		<div class="mb-3">
-		<label class="form-label" for="language-code">{t("labels.code")}</label>
-		<input
-			class="form-control"
-			id="language-code"
-			name="code"
-			type="text"
-			required
-			placeholder="en"
-			pattern="[a-z]{2}(?:-[a-z]{2})?"
-		/>
-		<div class="form-text">{t("messages.languageCodeHelp")}</div>
+	<div class="admin-surface-header">
+		<div>
+			<h3 class="h5 mb-1">{t("headings.languages")}</h3>
+			<p class="admin-inline-muted mb-0">{t("messages.languageCodeHelp")}</p>
+		</div>
 	</div>
-	<div class="mb-3">
-		<label class="form-label" for="language-name">{t("labels.name")}</label>
-		<input class="form-control" id="language-name" name="name" type="text" required />
+	<div class="admin-form-grid">
+		<label>
+			<span>{t("labels.code")}</span>
+			<input
+				class="form-control"
+				id="language-code"
+				name="code"
+				type="text"
+				required
+				placeholder="en"
+				pattern="[a-z]{2}(?:-[a-z]{2})?"
+			/>
+		</label>
+		<label>
+			<span>{t("labels.name")}</span>
+			<input class="form-control" id="language-name" name="name" type="text" required />
+		</label>
 	</div>
-	<div class="form-check mb-2">
+	<div class="admin-check-row">
 		<input class="form-check-input" type="checkbox" id="language-enabled" name="enabled" checked />
 		<label class="form-check-label" for="language-enabled">
 			{t("labels.enabled")}
 		</label>
 	</div>
-	<div class="form-check mb-3">
+	<div class="admin-check-row">
 		<input class="form-check-input" type="checkbox" id="language-default" name="isDefault" />
 		<label class="form-check-label" for="language-default">
 			{t("actions.setDefaultLanguage")}
 		</label>
 	</div>
 	<button type="submit" class="btn btn-primary w-100">{t("actions.createLanguage")}</button>
-	</div>
 </form>

@@ -25,6 +25,8 @@ Auto-generated from all feature plans. Last updated: 2026-04-13
 - [if applicable, e.g., PostgreSQL, CoreData, files or N/A] (012-admin-builder-refactor)
 - TypeScript 5.9, Astro 5, Node.js 22 (Cloudflare Workers compatible) + Astro 5, `@astrojs/cloudflare`, Wrangler 4.x, Cloudflare Workers runtime, Cloudflare D1 helpers in `src/lib/blog.ts` (016-bootstrap-ui-refactor)
 - Cloudflare D1 (SQLite) tables for posts, pages, languages, permissions, sessions, forms (016-bootstrap-ui-refactor)
+- TypeScript 5.9, Astro 5, Node.js 22 + Bootstrap 5, `@astrojs/cloudflare`, Wrangler, existing admin Astro layouts/components, shared i18n and RBAC helpers (017-emdash-admin-ui)
+- Cloudflare D1 SQLite for existing admin data; no schema changes required for the UI refactor (017-emdash-admin-ui)
 
 - TypeScript 5.9, Astro 5, Node.js 22 compatibility in the Cloudflare Workers runtime + Astro, `@astrojs/cloudflare`, Wrangler, D1, a Worker-compatible JWT library, `bcryptjs`, and shared cookie utilities (001-admin-auth-rbac)
 
@@ -45,9 +47,9 @@ npm test; npm run lint
 TypeScript 5.9, Astro 5, Node.js 22 compatibility in the Cloudflare Workers runtime: Follow standard conventions
 
 ## Recent Changes
+- 017-emdash-admin-ui: Added TypeScript 5.9, Astro 5, Node.js 22 + Bootstrap 5, `@astrojs/cloudflare`, Wrangler, existing admin Astro layouts/components, shared i18n and RBAC helpers
 - 016-bootstrap-ui-refactor: Added TypeScript 5.9, Astro 5, Node.js 22 (Cloudflare Workers compatible) + Astro 5, `@astrojs/cloudflare`, Wrangler 4.x, Cloudflare Workers runtime, Cloudflare D1 helpers in `src/lib/blog.ts`
 - 015-manage-language-translations: Added [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
-- 012-admin-builder-refactor: Added [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
 
 
 <!-- MANUAL ADDITIONS START -->
