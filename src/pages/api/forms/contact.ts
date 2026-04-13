@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { getDb } from "../../../lib/blog";
+import { getContactFormById, listContactForms } from "../../../lib/contact-forms";
 import {
 	createFormSubmission,
 	listFormFields,
@@ -20,7 +21,10 @@ export const POST: APIRoute = async ({ locals, request }) => {
 
 		const db = getDb(locals);
 		const catalog = getLanguageCatalog(locals);
-		const fields = await listFormFields(db);
+		const contactForms = await listContactForms(db, true);
+		const selectedForm =
+			typeof input.contactFormId === "number" ? await getContactFormById(db, input.contactFormId) : null;
+		const fields = selectedForm?.fields ?? contactForms[0]?.fields ?? (await listFormFields(db));
 		const validatedInput = validateContactFormSubmission(fields, input, catalog);
 		const submissionId = await createFormSubmission(db, validatedInput);
 

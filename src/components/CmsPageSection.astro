@@ -1,0 +1,132 @@
+---
+import { getLocalizedPostPath, type PageSectionConfig } from "../lib/blog";
+import type { BannerRecord } from "../lib/banners";
+import type { ContactFormField } from "../lib/forms";
+import type { ContactFormRecord } from "../lib/contact-forms";
+import BannerSection from "./BannerSection.astro";
+import DynamicForm from "./DynamicForm.astro";
+import { getLanguageCatalog, getUiTranslations } from "../lib/i18n";
+
+interface Props {
+	section: PageSectionConfig;
+	contentHtml: string;
+	currentLanguage: string;
+	currentPath: string;
+	posts: Array<{
+		slugTranslations: Record<string, string>;
+		heroImage?: string | null;
+		title: string;
+		description: string;
+	}>;
+	banners: BannerRecord[];
+	contactForms: ContactFormRecord[];
+	legacyContactFields: ContactFormField[];
+}
+
+interface BannerSlide {
+	imageUrl: string;
+	title: string;
+	altText?: string;
+	linkUrl?: string;
+}
+
+const { section, contentHtml, currentLanguage, currentPath, posts, banners, contactForms, legacyContactFields } =
+	Astro.props;
+const catalog = getLanguageCatalog(Astro.locals);
+const { t } = getUiTranslations(Astro);
+const bannerSlides = resolveBannerSlides(section, banners);
+const resolvedContactForm = resolveContactForm(section, contactForms);
+const resolvedContactFields = resolvedContactForm?.fields ?? legacyContactFields;
+const resolvedContactFormTitle = resolvedContactForm?.title ?? t("headings.contactFormTitle");
+const resolvedContactFormId = resolvedContactForm?.id ?? 0;
+
+function resolveBannerSlides(section: PageSectionConfig, banners: BannerRecord[]): BannerSlide[] {
+	if (Array.isArray(section.bannerIds) && section.bannerIds.length > 0) {
+		const bannerMap = new Map(banners.map((banner) => [banner.id, banner] as const));
+		return section.bannerIds
+			.map((id) => bannerMap.get(id))
+			.filter((banner): banner is BannerRecord => Boolean(banner && banner.isActive))
+			.map((banner) => ({
+				imageUrl: banner.imageUrl,
+				title: banner.title,
+				altText: banner.altText || banner.title,
+				linkUrl: banner.linkUrl || undefined,
+			}));
+	}
+
+	if (Array.isArray(section.bannerUrls) && section.bannerUrls.length > 0) {
+		return section.bannerUrls.map((url, index) => ({
+			imageUrl: url,
+			title: `Banner ${index + 1}`,
+			altText: `Banner ${index + 1}`,
+		}));
+	}
+
+	return [];
+}
+
+function resolveContactForm(section: PageSectionConfig, forms: ContactFormRecord[]): ContactFormRecord | null {
+	if (typeof section.contactFormId === "number" && section.contactFormId > 0) {
+		return forms.find((form) => form.id === section.contactFormId) ?? null;
+	}
+
+	return forms[0] ?? null;
+}
+---
+
+{section.type === "page_content" && <div class="page-rich-content" set:html={contentHtml} />}
+
+{section.type === "banner_slider" && bannerSlides.length > 0 && <BannerSection slides={bannerSlides} />}
+
+{
+	section.type === "blog_feed" && posts.length > 0 && (
+		<section class="mb-5">
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<h2 class="h4 mb-0">{t("headings.latestPosts")}</h2>
+				<a class="btn btn-sm btn-outline-primary" href="/blog">{t("actions.viewAll")}</a>
+			</div>
+			<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+				{
+					posts.slice(0, 6).map((post) => (
+						<a class="col" href={getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog)}>
+							<div class="card h-100 shadow-sm border-0">
+								<img
+									src={post.heroImage || "/blog-placeholder-1.jpg"}
+									class="card-img-top rounded-top"
+									alt=""
+									loading="lazy"
+								/>
+								<div class="card-body">
+									<h3 class="h5">{post.title}</h3>
+									<p class="text-muted small mb-0">{post.description}</p>
+								</div>
+							</div>
+						</a>
+					))
+				}
+			</div>
+		</section>
+	)
+}
+
+{
+	section.type === "contact_form" && (
+		<section class="mb-5">
+			<div class="row align-items-center g-4">
+				<div class="col-lg-5">
+					<p class="text-uppercase text-muted small mb-2">{t("headings.contactUs")}</p>
+					<h2 class="h3">{resolvedContactFormTitle}</h2>
+					<p class="text-muted">{t("messages.contactFormIntro")}</p>
+				</div>
+				<div class="col-lg-7">
+					<DynamicForm
+						fields={resolvedContactFields}
+						currentLanguage={currentLanguage}
+						sourcePath={currentPath}
+						contactFormId={resolvedContactFormId}
+					/>
+				</div>
+			</div>
+		</section>
+	)
+}

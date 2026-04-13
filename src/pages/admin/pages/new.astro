@@ -4,7 +4,8 @@ export const prerender = false;
 import PageForm from "../../../components/admin/PageForm.astro";
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { getDb } from "../../../lib/blog";
-import { listFormFields } from "../../../lib/forms";
+import { listBanners } from "../../../lib/banners";
+import { listContactForms } from "../../../lib/contact-forms";
 import { getUiTranslations } from "../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
@@ -15,12 +16,16 @@ if (!session) {
 const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
 const hasError = Astro.url.searchParams.get("error");
 const { t } = getUiTranslations(Astro);
-let contactFormFields = [];
+let bannerCatalog = [];
+let contactFormCatalog = [];
 
 try {
-	contactFormFields = await listFormFields(getDb(Astro.locals));
+	const db = getDb(Astro.locals);
+	bannerCatalog = await listBanners(db);
+	contactFormCatalog = await listContactForms(db);
 } catch {
-	contactFormFields = [];
+	bannerCatalog = [];
+	contactFormCatalog = [];
 }
 ---
 
@@ -37,7 +42,8 @@ try {
 			action="/api/admin/pages"
 			canSubmit={canCreate}
 			loadError={hasError ? t("messages.pageRequestFailed") : ""}
-			contactFormFields={contactFormFields}
+			bannerCatalog={bannerCatalog}
+			contactFormCatalog={contactFormCatalog}
 		/>
 	</div>
 </AdminLayout>

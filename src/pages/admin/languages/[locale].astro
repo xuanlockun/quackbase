@@ -3,7 +3,7 @@ export const prerender = false;
 
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { getDb } from "../../../lib/blog";
-import { getLanguageByCode } from "../../../lib/languages";
+import { getLanguageByCode, listEnabledLanguages } from "../../../lib/languages";
 import { listTranslationEntriesByLocale } from "../../../lib/translations";
 import { getUiTranslations } from "../../../lib/i18n";
 import translationManagerScript from "../../../components/admin/translation-manager.js?url";
@@ -22,6 +22,14 @@ const language = await getLanguageByCode(getDb(Astro.locals), requestedLocale);
 if (!language) {
 	return Astro.redirect("/admin/languages");
 }
+
+const enabledLanguages = await listEnabledLanguages(getDb(Astro.locals));
+const editorLanguages = [
+	{ code: language.code, label: language.name, isActive: true },
+	...enabledLanguages
+		.filter((entry) => entry.code !== language.code)
+		.map((entry) => ({ code: entry.code, label: entry.name, isActive: false })),
+];
 
 const { t } = getUiTranslations(Astro);
 
@@ -44,9 +52,16 @@ const deleteSuccess = t("messages.translationDeleteSuccess");
 const actionError = t("messages.translationRequestFailed");
 const tableColumns = 4;
 const addButtonLabel = t("actions.addTranslation");
+const saveButtonLabel = t("actions.saveChanges", "Save changes");
+const cancelEditLabel = t("actions.cancel", "Cancel");
 const keyLabel = t("labels.translationKey");
 const valueLabel = t("labels.translationValue");
 const updatedLabel = t("labels.updated");
+const translationTabsLabel = t("labels.languages", "Languages");
+const translationHelpText = t(
+	"messages.manageTranslationsHelp",
+	"Edit one translation key across all enabled languages in a single shared form.",
+);
 ---
 
 <AdminLayout
@@ -129,19 +144,75 @@ const updatedLabel = t("labels.updated");
 		</div>
 
 		<div class="admin-form-surface">
-			<h2 class="h5 mb-3">{t("labels.translationEntries")}</h2>
-			<form data-translation-form class="row g-3">
-				<div class="col-md-6">
+			<div class="admin-surface-header mb-3">
+				<div>
+					<h2 class="h5 mb-1">{t("labels.translationEntries")}</h2>
+					<p class="admin-inline-muted mb-0">{translationHelpText}</p>
+				</div>
+			</div>
+			<form
+				data-translation-form
+				class="row g-3"
+				data-current-locale={language.code}
+				data-language-tabs={JSON.stringify(editorLanguages)}
+				data-text-add-button={addButtonLabel}
+				data-text-save-button={saveButtonLabel}
+				data-text-cancel-button={cancelEditLabel}
+				data-text-tablist={translationTabsLabel}
+			>
+				<div class="col-12 col-lg-4">
 					<label class="form-label" for="translation-key">{keyLabel}</label>
 					<input class="form-control" id="translation-key" name="key" required />
 				</div>
-				<div class="col-md-6">
-					<label class="form-label" for="translation-value">{valueLabel}</label>
-					<input class="form-control" id="translation-value" name="value" required />
-				</div>
 				<div class="col-12">
-					<button type="submit" class="btn btn-primary">
+					<div class="admin-card-surface border rounded-3 p-3">
+						<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+							<strong class="small text-uppercase text-muted">{translationTabsLabel}</strong>
+							<span class="small text-muted">{valueLabel}</span>
+						</div>
+						<ul class="nav nav-tabs flex-wrap gap-1" role="tablist" data-translation-tablist>
+							{
+								editorLanguages.map((entry, index) => (
+									<li class="nav-item" role="presentation">
+										<button
+											type="button"
+											class:list={["nav-link", index === 0 && "active"]}
+											data-translation-tab={entry.code}
+											aria-selected={index === 0 ? "true" : "false"}
+										>
+											{entry.label}
+										</button>
+									</li>
+								))
+							}
+						</ul>
+						<div class="border border-top-0 rounded-bottom p-3" data-translation-panels>
+							{
+								editorLanguages.map((entry, index) => (
+									<section
+										class:list={["translation-pane", index === 0 ? "" : "d-none"]}
+										data-translation-panel={entry.code}
+									>
+										<label class="form-label" for={`translation-value-${entry.code}`}>{entry.label}</label>
+										<textarea
+											class="form-control"
+											id={`translation-value-${entry.code}`}
+											name={`value-${entry.code}`}
+											rows="4"
+											placeholder={`${entry.label} ${valueLabel.toLowerCase()}`}
+										></textarea>
+									</section>
+								))
+							}
+						</div>
+					</div>
+				</div>
+				<div class="col-12 d-flex flex-wrap gap-2">
+					<button type="submit" class="btn btn-primary" data-translation-submit>
 						{addButtonLabel}
+					</button>
+					<button type="button" class="btn btn-outline-secondary" data-translation-cancel hidden>
+						{cancelEditLabel}
 					</button>
 				</div>
 			</form>

@@ -1,6 +1,6 @@
 /**
- * @typedef {{ key: string; value: string }} TranslationEntryPayload
- * @typedef {{ translationKey: string; translatedValue: string; updatedAt: string }} TranslationEntryRecord
+ * @typedef {{ code: string; label: string; isActive?: boolean }} TranslationLanguage
+ * @typedef {{ translationKey: string; translations: Record<string, string>; updatedAt: string | null }} TranslationBundleRecord
  */
 
 (function initTranslationManager() {
@@ -13,6 +13,7 @@
 	}
 
 	const dataset = table.dataset;
+	const formDataset = form.dataset;
 	const locale = dataset.locale ?? "";
 	if (!locale) {
 		throw new Error("Locale context is missing.");
@@ -20,11 +21,51 @@
 
 	const apiBase = dataset.apiBase ?? `/api/admin/languages/${locale}/translations`;
 	const columnCount = table.querySelectorAll("thead th").length || 4;
-	let cachedEntries = [];
+	const tbody = table.querySelector("tbody");
+	const keyInput = form.querySelector("[name='key']");
+	const submitButton = form.querySelector("[data-translation-submit]");
+	const cancelButton = form.querySelector("[data-translation-cancel]");
+	const tabButtons = Array.from(form.querySelectorAll("[data-translation-tab]"));
+	const tabPanels = new Map(
+		Array.from(form.querySelectorAll("[data-translation-panel]")).map((panel) => [
+			panel.dataset.translationPanel,
+			panel,
+		]),
+	);
+
+	if (!tbody || !keyInput || !submitButton || !cancelButton || tabButtons.length === 0 || tabPanels.size === 0) {
+		throw new Error("Translation manager is missing form controls.");
+	}
+
+	/** @type {TranslationLanguage[]} */
+	let languages = [];
+	try {
+		const parsed = JSON.parse(formDataset.languageTabs ?? "[]");
+		if (Array.isArray(parsed)) {
+			languages = parsed
+				.map((entry) => ({
+					code: String(entry?.code ?? "").trim().toLowerCase(),
+					label: String(entry?.label ?? "").trim() || String(entry?.code ?? "").trim().toUpperCase(),
+					isActive: Boolean(entry?.isActive),
+				}))
+				.filter((entry) => entry.code);
+		}
+	} catch {
+		languages = [];
+	}
+
+	if (!languages.length) {
+		languages = tabButtons
+			.map((button) => ({
+				code: String(button.dataset.translationTab ?? "").trim().toLowerCase(),
+				label: button.textContent?.trim() || button.dataset.translationTab || "",
+			}))
+			.filter((entry) => entry.code);
+	}
 
 	const messages = {
-		createSuccess: dataset.messageCreateSuccess ?? "Translation added.",
-		updateSuccess: dataset.messageUpdateSuccess ?? "Translation updated.",
+		createSuccess: dataset.messageCreateSuccess ?? "Translations added.",
+		updateSuccess: dataset.messageUpdateSuccess ?? "Translations updated.",
 		deleteSuccess: dataset.messageDeleteSuccess ?? "Translation deleted.",
 		error: dataset.messageError ?? "Unable to process the request.",
 	};
@@ -32,33 +73,58 @@
 	const texts = {
 		empty: dataset.textEmpty ?? "No translations yet for this locale.",
 		loading: dataset.textLoading ?? "Loading translations...",
+		addButton: formDataset.textAddButton ?? "Add translations",
+		saveButton: formDataset.textSaveButton ?? "Save changes",
+		cancelButton: formDataset.textCancelButton ?? "Cancel",
 	};
 
-	const tbody = table.querySelector("tbody");
-	if (!tbody) {
-		throw new Error("Translation table body is missing.");
+	let cachedEntries = [];
+	let editingKey = "";
+
+	const initialTab = tabButtons.find((button) => button.classList.contains("active"))?.dataset.translationTab ?? languages[0]?.code;
+	if (initialTab) {
+		setActiveTab(initialTab);
 	}
+	resetEditorState();
 
 	form.addEventListener("submit", async (event) => {
 		event.preventDefault();
-		const data = new FormData(form);
-		const payload = {
-			key: (data.get("key") ?? "").toString().trim(),
-			value: (data.get("value") ?? "").toString().trim(),
-		};
-		if (!payload.key || !payload.value) {
-			showNotice("Translation key and value are required.", "danger");
+
+		const payload = readFormPayload();
+		const wasEditing = Boolean(editingKey);
+		if (!payload.key) {
+			showNotice("Translation key is required.", "danger");
 			return;
 		}
+
+		if (!hasAnyTranslation(payload.translations)) {
+			showNotice("Enter at least one translation value.", "danger");
+			return;
+		}
+
 		try {
-			await createEntry(payload);
-			form.reset();
-			showNotice(messages.createSuccess, "success");
+			await saveBundle(payload);
+			resetEditorState();
+			showNotice(wasEditing ? messages.updateSuccess : messages.createSuccess, "success");
 			await refreshEntries();
 		} catch (error) {
 			showNotice(handleError(error), "danger");
 		}
 	});
+
+	cancelButton.addEventListener("click", () => {
+		resetEditorState();
+		showNotice("Edit cancelled.", "success");
+	});
+
+	for (const button of tabButtons) {
+		button.addEventListener("click", () => {
+			const code = button.dataset.translationTab;
+			if (code) {
+				setActiveTab(code);
+			}
+		});
+	}
 
 	table.addEventListener("click", (event) => {
 		const target = event.target?.closest?.("[data-action]");
@@ -74,16 +140,7 @@
 		}
 
 		if (action === "edit" && entry) {
-			const nextValue = window.prompt("Enter the new translation value", entry.translatedValue);
-			if (nextValue === null) {
-				return;
-			}
-			updateEntry(key, nextValue.trim())
-				.then(() => {
-					showNotice(messages.updateSuccess, "success");
-					refreshEntries().catch((error) => showNotice(handleError(error), "danger"));
-				})
-				.catch((error) => showNotice(handleError(error), "danger"));
+			loadEntryIntoEditor(key).catch((error) => showNotice(handleError(error), "danger"));
 			return;
 		}
 
@@ -94,6 +151,9 @@
 			}
 			deleteEntry(key)
 				.then(() => {
+					if (editingKey === key) {
+						resetEditorState();
+					}
 					showNotice(messages.deleteSuccess, "success");
 					refreshEntries().catch((error) => showNotice(handleError(error), "danger"));
 				})
@@ -131,13 +191,11 @@
 	}
 
 	function renderRows(entries) {
-		if (!tbody) {
-			return;
-		}
 		if (!entries.length) {
 			showMessageRow(texts.empty);
 			return;
 		}
+
 		tbody.innerHTML = "";
 		for (const entry of entries) {
 			tbody.appendChild(buildRow(entry));
@@ -148,7 +206,7 @@
 		const row = document.createElement("tr");
 
 		const keyCell = document.createElement("td");
-		keyCell.innerHTML = `<code>${entry.translationKey}</code>`;
+		keyCell.innerHTML = `<code>${escapeHtml(entry.translationKey)}</code>`;
 
 		const valueCell = document.createElement("td");
 		valueCell.textContent = entry.translatedValue;
@@ -185,9 +243,6 @@
 	}
 
 	function showMessageRow(text) {
-		if (!tbody) {
-			return;
-		}
 		const row = document.createElement("tr");
 		const cell = document.createElement("td");
 		cell.colSpan = columnCount;
@@ -214,11 +269,33 @@
 		notice.appendChild(alert);
 	}
 
-	async function createEntry(payload) {
-		const response = await fetch(apiBase, {
-			method: "POST",
+	function readFormPayload() {
+		const key = String(keyInput.value ?? "").trim();
+		/** @type {Record<string, string>} */
+		const translations = {};
+
+		for (const language of languages) {
+			const input = form.querySelector(`[name="value-${cssEscape(language.code)}"]`);
+			if (!input) {
+				continue;
+			}
+			translations[language.code] = String(input.value ?? "").trim();
+		}
+
+		return { key, translations };
+	}
+
+	function hasAnyTranslation(translations) {
+		return Object.values(translations).some((value) => value.trim().length > 0);
+	}
+
+	async function saveBundle(payload) {
+		const endpoint = editingKey ? `${apiBase}/${encodeURIComponent(editingKey)}` : apiBase;
+		const method = editingKey ? "PATCH" : "POST";
+		const response = await fetch(endpoint, {
+			method,
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ key: payload.key, value: payload.value }),
+			body: JSON.stringify({ key: payload.key, translations: payload.translations }),
 		});
 		if (!response.ok) {
 			const body = (await response.json().catch(() => ({}))) ?? {};
@@ -226,15 +303,44 @@
 		}
 	}
 
-	async function updateEntry(key, nextValue) {
-		const response = await fetch(`${apiBase}/${encodeURIComponent(key)}`, {
-			method: "PATCH",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ value: nextValue }),
-		});
-		if (!response.ok) {
+	async function loadEntryIntoEditor(key) {
+		setLoadingState(true);
+		try {
+			const response = await fetch(`${apiBase}/${encodeURIComponent(key)}`);
+			if (!response.ok) {
+				throw new Error(messages.error);
+			}
 			const body = (await response.json().catch(() => ({}))) ?? {};
-			throw new Error(body?.error ?? messages.error);
+			const entry = body.entry;
+			if (!entry || typeof entry !== "object") {
+				throw new Error(messages.error);
+			}
+
+			editingKey = String(entry.translationKey ?? key).trim();
+			keyInput.value = editingKey;
+			keyInput.readOnly = true;
+			setSubmitButtonMode("edit");
+
+			for (const language of languages) {
+				const input = form.querySelector(`[name="value-${cssEscape(language.code)}"]`);
+				if (!input) {
+					continue;
+				}
+				input.value = String(entry.translations?.[language.code] ?? "");
+			}
+
+			const preferredTab =
+				locale && languages.some((language) => language.code === locale)
+					? locale
+					: languages.find((language) => String(entry.translations?.[language.code] ?? "").trim())?.code ??
+						languages[0]?.code;
+			if (preferredTab) {
+				setActiveTab(preferredTab);
+			}
+			cancelButton.hidden = false;
+			showNotice(`Editing ${editingKey}.`, "success");
+		} finally {
+			setLoadingState(false);
 		}
 	}
 
@@ -248,10 +354,60 @@
 		}
 	}
 
+	function resetEditorState() {
+		editingKey = "";
+		form.reset();
+		keyInput.readOnly = false;
+		setSubmitButtonMode("create");
+		cancelButton.hidden = true;
+		for (const language of languages) {
+			const input = form.querySelector(`[name="value-${cssEscape(language.code)}"]`);
+			if (input) {
+				input.value = "";
+			}
+		}
+		if (languages[0]?.code) {
+			setActiveTab(languages[0].code);
+		}
+	}
+
+	function setSubmitButtonMode(mode) {
+		submitButton.textContent = mode === "edit" ? texts.saveButton : texts.addButton;
+	}
+
+	function setActiveTab(code) {
+		for (const button of tabButtons) {
+			const isActive = button.dataset.translationTab === code;
+			button.classList.toggle("active", isActive);
+			button.setAttribute("aria-selected", isActive ? "true" : "false");
+		}
+
+		for (const [panelCode, panel] of tabPanels.entries()) {
+			const isActive = panelCode === code;
+			panel.classList.toggle("d-none", !isActive);
+		}
+	}
+
 	function handleError(error) {
 		if (error instanceof Error) {
 			return error.message;
 		}
 		return messages.error;
+	}
+
+	function cssEscape(value) {
+		if (window.CSS?.escape) {
+			return window.CSS.escape(value);
+		}
+		return value.replace(/["\\]/g, "\\$&");
+	}
+
+	function escapeHtml(value) {
+		return value
+			.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll('"', "&quot;")
+			.replaceAll("'", "&#39;");
 	}
 })();

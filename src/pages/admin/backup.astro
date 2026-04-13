@@ -1,0 +1,77 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { getUiTranslations } from "../../lib/i18n";
+import { getD1BackupConfig, isD1BackupConfigured } from "../../lib/backup";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const { t } = getUiTranslations(Astro);
+const env = Astro.locals.runtime.env as Record<string, string | undefined>;
+const backupConfigured = isD1BackupConfigured(env);
+const backupConfig = getD1BackupConfig(env);
+const pageTitle = t("nav.backup", "Backup");
+const description = t(
+	"messages.backupHelp",
+	"Export the live D1 database as an SQL file for recovery, migration, or archival backups.",
+);
+---
+
+<AdminLayout
+	title={pageTitle}
+	description={description}
+	session={session}
+	pageTitle={pageTitle}
+	pageDescription={description}
+>
+	<div class="admin-content-stack">
+		<div class="admin-form-surface">
+			<div class="admin-surface-header mb-3">
+				<div>
+					<h1 class="h4 mb-1">{pageTitle}</h1>
+					<p class="admin-inline-muted mb-0">{description}</p>
+				</div>
+			</div>
+
+			<div class="alert alert-warning">
+				{t(
+					"messages.backupWarning",
+					"Exports can take a while on larger databases and D1 may be briefly unavailable while the backup is generated.",
+				)}
+			</div>
+
+			{!backupConfigured && (
+				<div class="alert alert-danger mb-3">
+					{t(
+						"messages.backupUnavailable",
+						"Backup export is not configured. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN as secrets, and optionally D1_DATABASE_ID.",
+					)}
+				</div>
+			)}
+
+			<div class="d-flex flex-wrap gap-2 align-items-center">
+				<form action="/api/admin/backup/export" method="post" class="d-inline">
+					<button type="submit" class="btn btn-primary" disabled={!backupConfigured}>
+						{t("actions.downloadBackup", "Download SQL backup")}
+					</button>
+				</form>
+				<a class="btn btn-outline-secondary" href="/admin/settings">
+					{t("actions.back", "Back")}
+				</a>
+			</div>
+		</div>
+
+		<div class="admin-form-surface">
+			<h2 class="h5 mb-3">{t("labels.details", "Details")}</h2>
+			<ul class="mb-0 text-muted">
+				<li>{t("messages.backupIncludesSchema", "The export includes the current D1 schema and data as SQL.")}</li>
+				<li>{t("messages.backupDownloadHint", "When the backup is ready, your browser will download a .sql file directly.")}</li>
+				<li>{t("messages.backupConfigHint", `Current database ID: ${backupConfig?.databaseId ?? "not set"}`)}</li>
+			</ul>
+		</div>
+	</div>
+</AdminLayout>

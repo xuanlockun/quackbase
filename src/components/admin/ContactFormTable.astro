@@ -1,0 +1,75 @@
+---
+import FormattedDate from "../FormattedDate.astro";
+import type { ContactFormRecord } from "../../lib/contact-forms";
+import { getUiTranslations } from "../../lib/i18n";
+
+interface Props {
+	forms: ContactFormRecord[];
+	canUpdate: boolean;
+	canDelete: boolean;
+}
+
+const { forms, canUpdate, canDelete } = Astro.props;
+const { t } = getUiTranslations(Astro);
+---
+
+{
+	forms.length === 0 ? (
+		<div class="admin-state-surface">
+			<h2 class="h5 mb-2">{t("messages.noContactFormsYet")}</h2>
+			<p class="mb-0 admin-muted">{t("messages.manageContactForms")}</p>
+		</div>
+	) : (
+		<div class="admin-table-surface table-responsive">
+			<table class="table table-sm table-hover align-middle mb-0">
+				<thead>
+					<tr>
+						<th>{t("labels.title")}</th>
+						<th>{t("labels.fieldType")}</th>
+						<th>{t("labels.status")}</th>
+						<th>{t("labels.updated")}</th>
+						<th>{t("labels.action")}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{
+						forms.map((form) => (
+							<tr>
+								<td>
+									<div class="d-grid">
+										<strong>{form.title}</strong>
+										<span class="text-muted small">{form.fields.length} fields</span>
+									</div>
+								</td>
+								<td><code>{form.fields.length}</code></td>
+								<td>
+									<span class={`badge text-uppercase ${form.isActive ? "bg-success" : "bg-secondary"}`}>
+										{form.isActive ? t("status.active") : t("status.inactive")}
+									</span>
+								</td>
+								<td><FormattedDate date={form.updatedAt} /></td>
+								<td>
+									<div class="d-flex flex-wrap gap-2">
+										{canUpdate && (
+											<a class="btn btn-sm btn-outline-primary" href={`/admin/contact-forms/${form.id}/edit`}>
+												{t("actions.edit")}
+											</a>
+										)}
+										{canDelete && (
+											<form class="d-inline" method="post" action="/api/admin/contact-forms/delete">
+												<input type="hidden" name="id" value={form.id} />
+												<button class="btn btn-sm btn-outline-danger" type="submit">
+													{t("actions.delete")}
+												</button>
+											</form>
+										)}
+									</div>
+								</td>
+							</tr>
+						))
+					}
+				</tbody>
+			</table>
+		</div>
+	)
+}

@@ -1,7 +1,8 @@
 ---
 import type { PageSectionConfig, SitePage } from "../../lib/blog";
 import { getSupportedLanguages, getLocalizedPagePath } from "../../lib/blog";
-import type { ContactFormField } from "../../lib/forms";
+import type { BannerRecord } from "../../lib/banners";
+import type { ContactFormRecord } from "../../lib/contact-forms";
 import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
@@ -11,7 +12,8 @@ interface Props {
 	canSubmit: boolean;
 	backHref?: string;
 	loadError?: string;
-	contactFormFields?: ContactFormField[];
+	bannerCatalog?: BannerRecord[];
+	contactFormCatalog?: ContactFormRecord[];
 }
 
 const {
@@ -21,7 +23,8 @@ const {
 	canSubmit,
 	backHref = "/admin/pages",
 	loadError = "",
-	contactFormFields = [],
+	bannerCatalog = [],
+	contactFormCatalog = [],
 } = Astro.props;
 
 const { t, language } = getUiTranslations(Astro);
@@ -45,6 +48,8 @@ const initialSections: PageSectionConfig[] = [...(page?.pageSections ?? [])]
 if (!initialSections.some((section) => section.type === "page_content")) {
 	initialSections.unshift({ type: "page_content", order: 1 });
 }
+const bannerCatalogJson = JSON.stringify(bannerCatalog);
+const contactFormCatalogJson = JSON.stringify(contactFormCatalog);
 const addSectionLabel = t("actions.addSection") ?? "Add section";
 const sectionDetailsLabel = t("labels.details") ?? "Details";
 const sectionCatalog = [
@@ -70,20 +75,14 @@ const sectionCatalog = [
 	{
 		type: "contact_form",
 		label: t("messages.contactForm") ?? "Contact form",
-		description: t("messages.contactFormHelp") ?? "Render the shared contact form section.",
-		details: t("messages.contactFormSharedConfig") ?? "Shared contact fields",
+		description: t("messages.contactFormSectionHelp") ?? "Select a saved contact form.",
+		details: t("messages.contactFormSectionHelp") ?? "Select a saved contact form.",
 	},
 ];
 const sectionCatalogJson = JSON.stringify(sectionCatalog);
 const sectionCatalogMap = new Map(sectionCatalog.map((entry) => [entry.type, entry]));
 const sectionRemoveLabelText = t("actions.remove");
-const initialContactFields = contactFormFields.map((field) => ({
-		id: field.id,
-		type: field.type,
-	label: field.label,
-	required: field.required,
-	order: field.order,
-}));
+const initialContactFields = [];
 ---
 
 <div class="admin-surface-header">
@@ -197,10 +196,21 @@ const initialContactFields = contactFormFields.map((field) => ({
 
 	<div
 		class="admin-form-section page-sections-editor"
-		data-page-sections-editor
-		data-section-catalog={sectionCatalogJson}
-		data-banner-urls-label={t("labels.bannerImageUrls")}
-		data-section-remove-label={sectionRemoveLabelText}
+	data-page-sections-editor
+	data-section-catalog={sectionCatalogJson}
+	data-banner-catalog={bannerCatalogJson}
+	data-contact-form-catalog={contactFormCatalogJson}
+	data-manage-banners-href="/admin/banners"
+	data-manage-contact-forms-href="/admin/contact-forms"
+	data-banner-section-label={t("labels.banners") ?? "Banners"}
+	data-banner-manage-label={t("actions.manage") ?? "Manage"}
+	data-banner-empty-label={t("messages.noBannersYet")}
+	data-banner-create-label={t("actions.createBanner") ?? "Create banner"}
+	data-contact-form-section-label={t("labels.contactForms") ?? "Contact forms"}
+	data-contact-form-manage-label={t("actions.manage") ?? "Manage"}
+	data-contact-form-empty-label={t("messages.noContactFormsYet") ?? "No contact forms yet"}
+	data-contact-form-create-label={t("actions.createContactForm") ?? "Create contact form"}
+	data-section-remove-label={sectionRemoveLabelText}
 	>
 		<div class="page-sections-heading">
 			<div>
@@ -234,7 +244,8 @@ const initialContactFields = contactFormFields.map((field) => ({
 						initialSections.map((section) => {
 							const metadata = sectionCatalogMap.get(section.type) ?? sectionCatalog[0];
 							const isRemovable = metadata.removable !== false;
-							const bannerUrlsValue = section.type === "banner_slider" ? (section.bannerUrls ?? []).join("\n") : "";
+							const selectedBannerIds = new Set(section.bannerIds ?? []);
+							const selectedContactFormId = section.contactFormId ?? 0;
 							return (
 								<tr class="admin-table-row section-row" draggable={!isDisabled} data-section-row data-section-type={section.type}>
 									<td class="drag-cell">
@@ -247,16 +258,67 @@ const initialContactFields = contactFormFields.map((field) => ({
 									<td class="section-control">
 										{
 											section.type === "banner_slider" ? (
-												<label class="d-grid gap-2 mb-0">
-													<span class="small text-uppercase text-muted">{t("labels.bannerImageUrls")}</span>
-													<textarea
-														class="form-control form-control-sm"
-														rows="4"
-														placeholder="https://example.com/banner-1.jpg"
-														data-banner-urls
-														disabled={isDisabled}
-													>{bannerUrlsValue}</textarea>
-												</label>
+												<div class="banner-picker" data-banner-picker>
+													<div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+														<strong>{t("labels.banners")}</strong>
+														<a class="btn btn-outline-secondary btn-sm" href="/admin/banners">{t("actions.manage") ?? "Manage"}</a>
+													</div>
+													{
+														bannerCatalog.length > 0 ? (
+															<div class="banner-picker-grid">
+																{bannerCatalog.map((banner) => (
+																	<label class:list={["banner-picker-card", !banner.isActive && "is-inactive"]}>
+																		<input
+																			type="checkbox"
+																			value={banner.id}
+																			data-banner-choice
+																			checked={selectedBannerIds.has(banner.id)}
+																			disabled={isDisabled}
+																		/>
+																		<span class="banner-picker-preview">
+																			<img src={banner.imageUrl} alt={banner.altText || banner.title} loading="lazy" />
+																		</span>
+																		<span class="banner-picker-copy">
+																			<strong>{banner.title}</strong>
+																			<small class="text-muted">{banner.imageUrl}</small>
+																		</span>
+																	</label>
+																))}
+															</div>
+														) : (
+															<p class="admin-inline-muted mb-0">
+																{t("messages.noBannersYet")}
+																{" "}
+																<a href="/admin/banners/new">{t("actions.createBanner") ?? "Create banner"}</a>
+															</p>
+														)
+													}
+												</div>
+											) : section.type === "contact_form" ? (
+												<div class="contact-form-picker" data-contact-form-picker>
+													<div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+														<strong>{t("labels.contactForms")}</strong>
+														<a class="btn btn-outline-secondary btn-sm" href="/admin/contact-forms">{t("actions.manage") ?? "Manage"}</a>
+													</div>
+													{
+														contactFormCatalog.length > 0 ? (
+															<select class="form-select" data-contact-form-choice disabled={isDisabled}>
+																<option value="">{t("messages.selectContactForm") ?? "Choose a contact form"}</option>
+																{contactFormCatalog.map((form) => (
+																	<option value={form.id} selected={selectedContactFormId === form.id}>
+																		{form.title}
+																	</option>
+																))}
+															</select>
+														) : (
+															<p class="admin-inline-muted mb-0">
+																{t("messages.noContactFormsYet")}
+																{" "}
+																<a href="/admin/contact-forms/new">{t("actions.createContactForm") ?? "Create contact form"}</a>
+															</p>
+														)
+													}
+												</div>
 											) : (
 												<p class="admin-compact-copy">{metadata.details}</p>
 											)
@@ -471,10 +533,21 @@ const initialContactFields = contactFormFields.map((field) => ({
 	const sectionAddButton = document.querySelector("[data-section-add]");
 	const sectionEditor = document.querySelector("[data-page-sections-editor]");
 	const sectionRemoveLabel = sectionEditor?.dataset.sectionRemoveLabel ?? "Remove";
-	const bannerUrlsLabel = sectionEditor?.dataset.bannerUrlsLabel ?? "Banner image URLs";
+	const bannerManageHref = sectionEditor?.dataset.manageBannersHref ?? "/admin/banners";
+	const contactManageHref = sectionEditor?.dataset.manageContactFormsHref ?? "/admin/contact-forms";
+	const bannerSectionLabel = sectionEditor?.dataset.bannerSectionLabel ?? "Banners";
+	const bannerManageLabel = sectionEditor?.dataset.bannerManageLabel ?? "Manage";
+	const bannerEmptyLabel = sectionEditor?.dataset.bannerEmptyLabel ?? "No banners yet.";
+	const bannerCreateLabel = sectionEditor?.dataset.bannerCreateLabel ?? "Create banner";
+	const contactFormSectionLabel = sectionEditor?.dataset.contactFormSectionLabel ?? "Contact forms";
+	const contactFormManageLabel = sectionEditor?.dataset.contactFormManageLabel ?? "Manage";
+	const contactFormEmptyLabel = sectionEditor?.dataset.contactFormEmptyLabel ?? "No contact forms yet.";
+	const contactFormCreateLabel = sectionEditor?.dataset.contactFormCreateLabel ?? "Create contact form";
 	const sectionEmptyState = sectionEditor?.querySelector("[data-section-empty]");
 	const sectionAddLabel = sectionSelect?.dataset.sectionAddLabel ?? "Add section";
 	const SECTION_CATALOG = parseConfig(sectionEditor?.dataset.sectionCatalog);
+	const BANNER_CATALOG = parseConfig(sectionEditor?.dataset.bannerCatalog);
+	const CONTACT_FORM_CATALOG = parseConfig(sectionEditor?.dataset.contactFormCatalog);
 	const contactWrapper = document.querySelector("[data-contact-fields-wrapper]");
 	const contactRows = document.querySelector("[data-contact-fields-rows]");
 	const contactPayload = document.querySelector("[data-contact-fields-payload]");
@@ -512,6 +585,14 @@ const initialContactFields = contactFormFields.map((field) => ({
 			return;
 		}
 		row.remove();
+		syncSections();
+	});
+
+	sectionRows?.addEventListener("change", (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLElement) || (!target.matches("[data-banner-choice]") && !target.matches("[data-contact-form-choice]"))) {
+			return;
+		}
 		syncSections();
 	});
 
@@ -649,9 +730,62 @@ const initialContactFields = contactFormFields.map((field) => ({
 		}
 	}
 
+	function renderBannerPickerHtml(selectedIds) {
+		if (!Array.isArray(BANNER_CATALOG) || BANNER_CATALOG.length === 0) {
+			return `<p class="admin-inline-muted mb-0">${escapeHtml(bannerEmptyLabel)} <a href="${escapeAttribute(bannerManageHref)}">${escapeHtml(bannerCreateLabel)}</a></p>`;
+		}
+
+		const selectedSet = new Set((selectedIds ?? []).map((id) => Number(id)));
+		return `
+			<div class="banner-picker" data-banner-picker>
+				<div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+					<strong>${escapeHtml(bannerSectionLabel)}</strong>
+					<a class="btn btn-outline-secondary btn-sm" href="${escapeAttribute(bannerManageHref)}">${escapeHtml(bannerManageLabel)}</a>
+				</div>
+				<div class="banner-picker-grid">
+					${BANNER_CATALOG.map((banner) => `
+						<label class="banner-picker-card${banner.isActive ? "" : " is-inactive"}">
+							<input type="checkbox" value="${banner.id}" data-banner-choice ${selectedSet.has(banner.id) ? "checked" : ""} ${isDisabled ? "disabled" : ""} />
+							<span class="banner-picker-preview">
+								<img src="${escapeAttribute(banner.imageUrl)}" alt="${escapeAttribute(banner.altText || banner.title)}" loading="lazy" />
+							</span>
+							<span class="banner-picker-copy">
+								<strong>${escapeHtml(banner.title)}</strong>
+								<small class="text-muted">${escapeHtml(banner.imageUrl)}</small>
+							</span>
+						</label>
+					`).join("")}
+				</div>
+			</div>
+		`;
+	}
+
+	function renderContactFormPickerHtml(selectedId) {
+		if (!Array.isArray(CONTACT_FORM_CATALOG) || CONTACT_FORM_CATALOG.length === 0) {
+			return `<p class="admin-inline-muted mb-0">${escapeHtml(contactFormEmptyLabel)} <a href="${escapeAttribute(contactManageHref)}">${escapeHtml(contactFormCreateLabel)}</a></p>`;
+		}
+
+		const current = Number(selectedId ?? CONTACT_FORM_CATALOG[0]?.id ?? 0);
+		return `
+			<div class="contact-form-picker" data-contact-form-picker>
+				<div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+					<strong>${escapeHtml(contactFormSectionLabel)}</strong>
+					<a class="btn btn-outline-secondary btn-sm" href="${escapeAttribute(contactManageHref)}">${escapeHtml(contactFormManageLabel)}</a>
+				</div>
+				<select class="form-select" data-contact-form-choice ${isDisabled ? "disabled" : ""}>
+					<option value="">${escapeHtml(contactFormSectionLabel)}</option>
+					${CONTACT_FORM_CATALOG.map((form) => `
+						<option value="${form.id}" ${current === form.id ? "selected" : ""}>${escapeHtml(form.title)}</option>
+					`).join("")}
+				</select>
+			</div>
+		`;
+	}
+
 	function createSectionRow(type) {
 		const metadata = SECTION_CATALOG.find((entry) => entry.type === type) ?? SECTION_CATALOG[0];
-		const hasBannerUrls = metadata.type === "banner_slider";
+		const hasBanners = metadata.type === "banner_slider";
+		const hasContactForms = metadata.type === "contact_form";
 		const row = document.createElement("tr");
 		row.className = "admin-table-row section-row";
 		row.draggable = !isDisabled;
@@ -669,13 +803,12 @@ const initialContactFields = contactFormFields.map((field) => ({
             <strong>${metadata.label}</strong>
             <p class="admin-compact-copy">${metadata.description}</p>
         </td>
-			<td class="section-control">
+        <td class="section-control">
             ${
-				hasBannerUrls
-					? `<label class="d-grid gap-2 mb-0">
-						<span class="small text-uppercase text-muted">${bannerUrlsLabel}</span>
-						<textarea class="form-control form-control-sm" rows="4" placeholder="https://example.com/banner-1.jpg" data-banner-urls ${isDisabled ? "disabled" : ""}></textarea>
-					</label>`
+				hasBanners
+					? renderBannerPickerHtml([])
+					: hasContactForms
+						? renderContactFormPickerHtml(null)
 					: `<p class="admin-compact-copy">${metadata.details}</p>`
 			}
         </td>
@@ -696,15 +829,19 @@ const initialContactFields = contactFormFields.map((field) => ({
 				}
 				const entry = { type, order: index + 1 };
 				if (type === "banner_slider") {
-					const urlsInput = row.querySelector("[data-banner-urls]");
-					if (urlsInput instanceof HTMLTextAreaElement) {
-						const bannerUrls = urlsInput.value
-							.split(/\r?\n/)
-							.map((value) => value.trim())
-							.filter(Boolean);
-						if (bannerUrls.length > 0) {
-							entry.bannerUrls = bannerUrls;
-						}
+					const selectedBannerIds = Array.from(row.querySelectorAll("[data-banner-choice]:checked"))
+						.map((choice) => Number(choice.value))
+						.filter((value) => Number.isFinite(value) && value > 0);
+					if (selectedBannerIds.length > 0) {
+						entry.bannerIds = selectedBannerIds;
+					}
+				}
+				if (type === "contact_form") {
+					const selectedContactForm = row.querySelector("[data-contact-form-choice]");
+					const selectedContactFormId =
+						selectedContactForm instanceof HTMLSelectElement ? Number(selectedContactForm.value) : 0;
+					if (Number.isFinite(selectedContactFormId) && selectedContactFormId > 0) {
+						entry.contactFormId = selectedContactFormId;
 					}
 				}
 				return entry;
@@ -712,7 +849,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 			.filter((entry) => Boolean(entry));
 		sectionInput.value = JSON.stringify(payload);
 		updateSectionPicker();
-		toggleContactFields(payload.some((entry) => entry.type === "contact_form"));
+		toggleContactFields(false);
 		updateSectionEmptyState();
 	}
 
@@ -751,7 +888,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 		if (!contactWrapper) {
 			return;
 		}
-		contactWrapper.hidden = !visible;
+		contactWrapper.hidden = true;
 	}
 
 	function updateSectionEmptyState() {
@@ -858,5 +995,14 @@ const initialContactFields = contactFormFields.map((field) => ({
 
 	function escapeAttribute(value) {
 		return (value ?? "").replace(/"/g, "&quot;");
+	}
+
+	function escapeHtml(value) {
+		return String(value ?? "")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#39;");
 	}
 </script>

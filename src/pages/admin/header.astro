@@ -124,6 +124,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 											<span class="nav-drag-handle" data-drag-handle aria-label="Drag to reorder"></span>
 										</td>
 										<td class="nav-label-cell">
+											<span class="nav-depth-badge" aria-hidden="true">{depth === 0 ? "Parent" : `Child ${depth}`}</span>
 											<input
 												class="form-control form-control-sm"
 												type="text"
@@ -134,6 +135,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 											/>
 										</td>
 										<td class="nav-label-cell">
+											<span class="nav-depth-badge" aria-hidden="true">{depth === 0 ? "Parent" : `Child ${depth}`}</span>
 											<input
 												class="form-control form-control-sm"
 												type="text"
@@ -211,7 +213,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 		<div class="admin-form-section">
 			<strong>{t("headings.contactFormFields")}</strong>
 			<p class="admin-muted">{t("messages.contactFormSharedConfig")}</p>
-			<p><a class="btn btn-outline-secondary" href="/admin/pages">{t("actions.manageContactForm")}</a></p>
+			<p><a class="btn btn-outline-secondary" href="/admin/contact-forms">{t("messages.manageContactForms")}</a></p>
 		</div>
 	</div>
 </AdminLayout>
@@ -251,13 +253,85 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 	}
 
 	.nav-item-row .nav-label-cell {
-		padding-left: calc(0.5rem + var(--nav-depth, 0) * 1.5rem);
+		padding-left: calc(0.5rem + var(--nav-depth, 0) * 1.15rem);
+		position: relative;
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.nav-item-row[data-depth="0"] {
+		background: rgba(var(--gray-light), 0.25);
+	}
+
+	.nav-item-row[data-depth="1"] {
+		background: linear-gradient(90deg, rgba(35, 55, 255, 0.06), rgba(35, 55, 255, 0.02));
+		box-shadow: inset 3px 0 0 rgba(35, 55, 255, 0.35);
+	}
+
+	.nav-item-row[data-depth="2"] {
+		background: linear-gradient(90deg, rgba(35, 55, 255, 0.04), rgba(35, 55, 255, 0.015));
+		box-shadow: inset 6px 0 0 rgba(35, 55, 255, 0.25);
+	}
+
+	.nav-item-row[data-depth="3"],
+	.nav-item-row[data-depth="4"] {
+		background: linear-gradient(90deg, rgba(35, 55, 255, 0.03), rgba(35, 55, 255, 0.01));
+		box-shadow: inset 9px 0 0 rgba(35, 55, 255, 0.2);
+	}
+
+	.nav-depth-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		margin-bottom: 0.35rem;
+		padding: 0.15rem 0.5rem;
+		border-radius: 999px;
+		background: rgba(35, 55, 255, 0.08);
+		color: rgba(35, 55, 255, 0.95);
+		font-size: 0.68rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+
+	.nav-item-row[data-depth="0"] .nav-depth-badge {
+		background: rgba(var(--gray), 0.16);
+		color: rgba(15, 23, 42, 0.72);
+	}
+
+	.nav-item-row .nav-label-cell input {
+		background: #fff;
 	}
 
 	.nav-action-buttons {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.35rem;
+	}
+
+	.nav-action-buttons .nav-action {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.25rem;
+	}
+
+	.nav-action-buttons .nav-action[data-nav-add-child]::before {
+		content: "+";
+		font-weight: 700;
+		line-height: 1;
+	}
+
+	.nav-action-buttons .nav-action[data-nav-indent]::before {
+		content: "↳";
+		font-size: 0.95em;
+		line-height: 1;
+	}
+
+	.nav-action-buttons .nav-action[data-nav-outdent]::before {
+		content: "↰";
+		font-size: 0.95em;
+		line-height: 1;
 	}
 
 	.nav-action-buttons .nav-action.mini {
@@ -437,6 +511,11 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 
 		const enCell = document.createElement("td");
 		enCell.className = "nav-label-cell";
+		const enBadge = document.createElement("span");
+		enBadge.className = "nav-depth-badge";
+		enBadge.textContent = depth === 0 ? "Parent" : `Child ${depth}`;
+		enBadge.setAttribute("aria-hidden", "true");
+		enCell.append(enBadge);
 		const enInput = document.createElement("input");
 		enInput.type = "text";
 		enInput.dataset.navLabelEn = "";
@@ -450,6 +529,11 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 
 		const viCell = document.createElement("td");
 		viCell.className = "nav-label-cell";
+		const viBadge = document.createElement("span");
+		viBadge.className = "nav-depth-badge";
+		viBadge.textContent = depth === 0 ? "Parent" : `Child ${depth}`;
+		viBadge.setAttribute("aria-hidden", "true");
+		viCell.append(viBadge);
 		const viInput = document.createElement("input");
 		viInput.type = "text";
 		viInput.dataset.navLabelVi = "";

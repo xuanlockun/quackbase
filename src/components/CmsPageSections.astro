@@ -1,14 +1,14 @@
 ---
 import {
-	getLocalizedPostPath,
 	getDb,
 	type PageSectionConfig,
 	listPublishedPosts,
 } from "../lib/blog";
-import BannerSection from "./BannerSection.astro";
-import DynamicForm from "./DynamicForm.astro";
-import { listFormFields } from "../lib/forms";
-import { getLanguageCatalog, getUiTranslations } from "../lib/i18n";
+import { listBanners, type BannerRecord } from "../lib/banners";
+import { listFormFields, type ContactFormField } from "../lib/forms";
+import { listContactForms, type ContactFormRecord } from "../lib/contact-forms";
+import CmsPageSection from "./CmsPageSection.astro";
+import { getLanguageCatalog } from "../lib/i18n";
 
 interface Props {
 	pageSections: PageSectionConfig[];
@@ -17,90 +17,56 @@ interface Props {
 	currentPath?: string;
 }
 
+interface BannerSlide {
+	imageUrl: string;
+	title: string;
+	altText?: string;
+	linkUrl?: string;
+}
+
 const catalog = getLanguageCatalog(Astro.locals);
 const { pageSections, contentHtml, currentLanguage = catalog.defaultLanguageCode, currentPath = "/" } = Astro.props;
-const { t } = getUiTranslations(Astro);
 
 let posts = [];
-let contactFields = [];
+let legacyContactFields = [];
+let banners = [];
+let contactForms = [];
 
 try {
 	const db = getDb(Astro.locals);
 	if (pageSections.some((section) => section.type === "blog_feed")) {
 		posts = await listPublishedPosts(db, currentLanguage, catalog);
 	}
+	if (pageSections.some((section) => section.type === "banner_slider")) {
+		banners = await listBanners(db, true);
+	}
 	if (pageSections.some((section) => section.type === "contact_form")) {
-		contactFields = await listFormFields(db);
+		contactForms = await listContactForms(db, true);
+		if (contactForms.length === 0) {
+			legacyContactFields = await listFormFields(db);
+		}
 	}
 } catch {
 	posts = [];
-	contactFields = [];
+	legacyContactFields = [];
+	banners = [];
+	contactForms = [];
 }
 
 const orderedSections = [...pageSections].sort((left, right) => left.order - right.order);
 ---
 
 {
-	orderedSections.map((section) => {
-		if (section.type === "page_content") {
-			return <div class="page-rich-content" set:html={contentHtml} />;
-		}
-
-		if (section.type === "banner_slider" && section.bannerUrls && section.bannerUrls.length > 0) {
-			return <BannerSection bannerUrls={section.bannerUrls} />;
-		}
-
-		if (section.type === "blog_feed" && posts.length > 0) {
-			return (
-				<section class="mb-5">
-					<div class="d-flex justify-content-between align-items-center mb-3">
-						<h2 class="h4 mb-0">{t("headings.latestPosts")}</h2>
-						<a class="btn btn-sm btn-outline-primary" href="/blog">{t("actions.viewAll")}</a>
-					</div>
-					<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-						{
-							posts.slice(0, 6).map((post) => (
-								<a
-									class="col"
-									href={getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog)}
-								>
-									<div class="card h-100 shadow-sm border-0">
-										<img
-											src={post.heroImage || "/blog-placeholder-1.jpg"}
-											class="card-img-top rounded-top"
-											alt=""
-											loading="lazy"
-										/>
-										<div class="card-body">
-											<h3 class="h5">{post.title}</h3>
-											<p class="text-muted small mb-0">{post.description}</p>
-										</div>
-									</div>
-								</a>
-							))
-						}
-					</div>
-				</section>
-			);
-		}
-
-		if (section.type === "contact_form") {
-			return (
-				<section class="mb-5">
-					<div class="row align-items-center g-4">
-						<div class="col-lg-5">
-							<p class="text-uppercase text-muted small mb-2">{t("headings.contactUs")}</p>
-							<h2 class="h3">{t("headings.contactFormTitle")}</h2>
-							<p class="text-muted">{t("messages.contactFormIntro")}</p>
-						</div>
-						<div class="col-lg-7">
-							<DynamicForm fields={contactFields} currentLanguage={currentLanguage} sourcePath={currentPath} />
-						</div>
-					</div>
-				</section>
-			);
-		}
-
-		return null;
-	})
+	orderedSections.map((section) => (
+		<CmsPageSection
+			section={section}
+			contentHtml={contentHtml}
+			currentLanguage={currentLanguage}
+			currentPath={currentPath}
+			posts={posts}
+			banners={banners}
+			contactForms={contactForms}
+			legacyContactFields={legacyContactFields}
+		/>
+	))
 }

@@ -224,7 +224,9 @@ export type PageSectionType = "page_content" | "blog_feed" | "banner_slider" | "
 export interface PageSectionConfig {
 	type: PageSectionType;
 	order: number;
+	bannerIds?: number[];
 	bannerUrls?: string[];
+	contactFormId?: number;
 }
 
 export interface SitePageInput {
@@ -1370,7 +1372,9 @@ function normalizePageSections(input: unknown[]): PageSectionConfig[] {
 			const record = item as {
 				type?: unknown;
 				order?: unknown;
+				bannerIds?: unknown;
 				bannerUrls?: unknown;
+				contactFormId?: unknown;
 			};
 
 			const rawType = record.type;
@@ -1380,6 +1384,12 @@ function normalizePageSections(input: unknown[]): PageSectionConfig[] {
 
 			const rawOrder = record.order !== undefined ? Number(record.order) : index + 1;
 			const order = Number.isFinite(rawOrder) ? Math.max(1, Math.floor(rawOrder)) : index + 1;
+			const bannerIds =
+				rawType === "banner_slider" && Array.isArray(record.bannerIds)
+					? record.bannerIds
+							.map((entry) => Number(entry))
+							.filter((entry): entry is number => Number.isFinite(entry) && entry > 0)
+					: undefined;
 			const bannerUrls =
 				rawType === "banner_slider" && Array.isArray(record.bannerUrls)
 					? record.bannerUrls
@@ -1387,11 +1397,17 @@ function normalizePageSections(input: unknown[]): PageSectionConfig[] {
 							.map((entry) => entry.trim())
 							.filter(Boolean)
 					: undefined;
+			const contactFormId =
+				rawType === "contact_form" && record.contactFormId !== undefined
+					? Number(record.contactFormId)
+					: undefined;
 
 			return {
 				type: rawType as PageSectionType,
 				order,
+				...(bannerIds && bannerIds.length ? { bannerIds } : {}),
 				...(bannerUrls ? { bannerUrls } : {}),
+				...(Number.isFinite(contactFormId) && contactFormId && contactFormId > 0 ? { contactFormId } : {}),
 			} satisfies PageSectionConfig;
 		})
 		.filter((item): item is PageSectionConfig => Boolean(item));

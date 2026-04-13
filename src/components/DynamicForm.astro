@@ -9,10 +9,11 @@ interface Props {
 	fields: ContactFormField[];
 	currentLanguage?: string;
 	sourcePath?: string;
+	contactFormId?: number;
 }
 
 const catalog = getLanguageCatalog(Astro.locals);
-const { fields, currentLanguage = catalog.defaultLanguageCode, sourcePath = "/" } = Astro.props;
+const { fields, currentLanguage = catalog.defaultLanguageCode, sourcePath = "/", contactFormId = 0 } = Astro.props;
 const { t } = getUiTranslations(Astro);
 const renderableFields = getRenderableFormFields(fields, currentLanguage, catalog);
 ---
@@ -34,6 +35,7 @@ const renderableFields = getRenderableFormFields(fields, currentLanguage, catalo
 		>
 			<input type="hidden" name="language" value={currentLanguage} />
 			<input type="hidden" name="sourcePath" value={sourcePath} />
+			{contactFormId > 0 && <input type="hidden" name="contactFormId" value={String(contactFormId)} />}
 
 			<div class="row g-3">
 				{

@@ -1,0 +1,50 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { getDb } from "../../lib/blog";
+import { listContactForms } from "../../lib/contact-forms";
+import ContactFormTable from "../../components/admin/ContactFormTable.astro";
+import { getUiTranslations } from "../../lib/i18n";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
+const canUpdate = session.isSuperadmin || session.permissions.includes("pages.update");
+const canDelete = session.isSuperadmin || session.permissions.includes("pages.delete");
+const { t } = getUiTranslations(Astro);
+
+let forms = [];
+let loadError = "";
+
+try {
+	forms = await listContactForms(getDb(Astro.locals));
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadContactForms");
+}
+---
+
+<AdminLayout
+	title={t("nav.contactForms")}
+	description={t("messages.manageContactForms")}
+	session={session}
+	pageTitle={t("nav.contactForms")}
+	pageDescription={t("messages.manageContactFormsHelp")}
+>
+	<div slot="actions" class="admin-page-actions">
+		{canCreate && <a class="btn btn-primary" href="/admin/contact-forms/new">{t("actions.createContactForm")}</a>}
+	</div>
+
+	<div class="admin-content-stack">
+		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.contactFormCreated")}</p>}
+		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.contactFormSaved")}</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="alert alert-info mb-0">{t("messages.contactFormDeleted")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.contactFormRequestFailed")}</p>}
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
+
+		<ContactFormTable forms={forms} canUpdate={canUpdate} canDelete={canDelete} />
+	</div>
+</AdminLayout>

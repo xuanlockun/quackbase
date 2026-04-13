@@ -132,7 +132,7 @@ img {
 	background: linear-gradient(180deg, #101a2a 0%, #0c1623 100%);
 	color: #cfd9e7;
 	border-right: 1px solid rgba(255, 255, 255, 0.05);
-	width: 18rem;
+	width: var(--admin-sidebar-width, 17.5rem);
 	max-width: 86vw;
 }
 
@@ -149,9 +149,9 @@ img {
 }
 
 .admin-sidebar {
-	width: 18rem;
-	min-width: 18rem;
-	flex: 0 0 18rem;
+	width: var(--admin-sidebar-width, 17.5rem);
+	min-width: var(--admin-sidebar-width, 17.5rem);
+	flex: 0 0 var(--admin-sidebar-width, 17.5rem);
 	background: linear-gradient(180deg, #101a2a 0%, #0c1623 100%);
 	color: #d0d7e5;
 	border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -750,12 +750,13 @@ body.admin-app .admin-root {
 	display: flex;
 	min-height: 100dvh;
 	background: #f3f5f8;
+	--admin-sidebar-width: 17.5rem;
 }
 
 body.admin-app .admin-sidebar {
-	width: 16rem;
-	min-width: 16rem;
-	flex: 0 0 16rem;
+	width: var(--admin-sidebar-width);
+	min-width: var(--admin-sidebar-width);
+	flex: 0 0 var(--admin-sidebar-width);
 	background: #1d2327;
 	color: #fff;
 	border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -998,7 +999,7 @@ body.admin-app .admin-user-labels small {
 }
 
 body.admin-app .admin-offcanvas {
-	width: 16rem;
+	width: var(--admin-sidebar-width);
 	max-width: 86vw;
 	background: #1d2327;
 	color: #fff;

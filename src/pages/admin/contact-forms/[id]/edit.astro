@@ -1,0 +1,60 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import ContactFormForm from "../../../../components/admin/ContactFormForm.astro";
+import { getDb } from "../../../../lib/blog";
+import { getContactFormById } from "../../../../lib/contact-forms";
+import { getUiTranslations } from "../../../../lib/i18n";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const canUpdate = session.isSuperadmin || session.permissions.includes("pages.update");
+const { id } = Astro.params;
+const { t } = getUiTranslations(Astro);
+
+let form = null;
+let loadError = "";
+let notFound = false;
+
+try {
+	const formId = Number(id);
+	if (!Number.isInteger(formId) || formId <= 0) {
+		notFound = true;
+	} else {
+		form = await getContactFormById(getDb(Astro.locals), formId);
+		notFound = !form;
+	}
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadContactForms");
+}
+
+if (Astro.url.searchParams.get("error")) {
+	loadError = t("messages.contactFormRequestFailed");
+}
+---
+
+<AdminLayout
+	title={t("actions.editContactForm")}
+	description={t("messages.editContactFormHelp")}
+	session={session}
+	pageTitle={t("actions.editContactForm")}
+	pageDescription={t("messages.editContactFormHelp")}
+>
+	<div class="admin-content-stack">
+		{
+			notFound ? (
+				<div class="admin-empty-state">
+					<h2>{t("messages.contactFormNotFound")}</h2>
+					<p class="admin-muted">{t("messages.failedToLoadContactForms")}</p>
+					<p><a class="btn btn-outline-secondary" href="/admin/contact-forms">{t("messages.backToContactForms")}</a></p>
+				</div>
+			) : (
+				<ContactFormForm mode="edit" action="/api/admin/contact-forms" form={form} canSubmit={canUpdate} loadError={loadError} />
+			)
+		}
+	</div>
+</AdminLayout>

@@ -1,0 +1,78 @@
+---
+import FormattedDate from "../FormattedDate.astro";
+import type { BannerRecord } from "../../lib/banners";
+import { getUiTranslations } from "../../lib/i18n";
+
+interface Props {
+	banners: BannerRecord[];
+	canUpdate: boolean;
+	canDelete: boolean;
+}
+
+const { banners, canUpdate, canDelete } = Astro.props;
+const { t } = getUiTranslations(Astro);
+---
+
+{
+	banners.length === 0 ? (
+		<div class="admin-state-surface">
+			<h2 class="h5 mb-2">{t("messages.noBannersYet")}</h2>
+			<p class="mb-0 admin-muted">{t("messages.manageBanners")}</p>
+		</div>
+	) : (
+		<div class="admin-table-surface table-responsive">
+			<table class="table table-sm table-hover align-middle mb-0">
+				<thead>
+					<tr>
+						<th>{t("labels.title")}</th>
+						<th>{t("labels.imageUrl")}</th>
+						<th>{t("labels.status")}</th>
+						<th>{t("labels.updated")}</th>
+						<th>{t("labels.action")}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{
+						banners.map((banner) => (
+							<tr>
+								<td>
+									<div class="d-flex align-items-center gap-3">
+										<img src={banner.imageUrl} alt={banner.altText || banner.title} class="rounded-2" style="width:72px;height:40px;object-fit:cover;" loading="lazy" />
+										<div class="d-grid">
+											<strong>{banner.title}</strong>
+											<span class="text-muted small">{banner.altText || banner.linkUrl || banner.imageUrl}</span>
+										</div>
+									</div>
+								</td>
+								<td><code>{banner.imageUrl}</code></td>
+								<td>
+									<span class={`badge text-uppercase ${banner.isActive ? "bg-success" : "bg-secondary"}`}>
+										{banner.isActive ? t("status.active") : t("status.inactive")}
+									</span>
+								</td>
+								<td><FormattedDate date={banner.updatedAt} /></td>
+								<td>
+									<div class="d-flex flex-wrap gap-2">
+										{canUpdate && (
+											<a class="btn btn-sm btn-outline-primary" href={`/admin/banners/${banner.id}/edit`}>
+												{t("actions.edit")}
+											</a>
+										)}
+										{canDelete && (
+											<form class="d-inline" method="post" action="/api/admin/banners/delete">
+												<input type="hidden" name="id" value={banner.id} />
+												<button class="btn btn-sm btn-outline-danger" type="submit">
+													{t("actions.delete")}
+												</button>
+											</form>
+										)}
+									</div>
+								</td>
+							</tr>
+						))
+					}
+				</tbody>
+			</table>
+		</div>
+	)
+}

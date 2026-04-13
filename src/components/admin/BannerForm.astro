@@ -1,0 +1,70 @@
+---
+import type { BannerRecord } from "../../lib/banners";
+import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
+
+interface Props {
+	mode: "create" | "edit";
+	action: string;
+	banner?: BannerRecord | null;
+	canSubmit: boolean;
+	backHref?: string;
+	loadError?: string;
+}
+
+const {
+	mode,
+	action,
+	banner = null,
+	canSubmit,
+	backHref = "/admin/banners",
+	loadError = "",
+} = Astro.props;
+
+const { t, language } = getUiTranslations(Astro);
+const submitLabel = mode === "edit" ? t("actions.saveBanner") : t("actions.createBanner");
+const isDisabled = Boolean(loadError) || !canSubmit;
+const isActive = banner?.isActive ?? true;
+---
+
+<div class="admin-surface-header">
+	<a class="btn btn-outline-secondary btn-sm" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
+	<p class="admin-inline-muted mb-0">{canSubmit ? t("messages.changesSaveAdminApi") : t("messages.cannotSaveForm")}</p>
+</div>
+
+{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+
+<form class="admin-form-shell" method="post" action={action}>
+	{mode === "edit" && banner && <input type="hidden" name="id" value={banner.id} />}
+	<div class="admin-form-surface">
+		<div class="admin-form-grid">
+			<label>
+				<span>{t("labels.title")}</span>
+				<input class="form-control" name="title" required value={banner?.title ?? ""} placeholder={t("labels.bannerTitlePlaceholder", "Homepage hero") ?? "Homepage hero"} disabled={isDisabled} />
+			</label>
+			<label>
+				<span>{t("labels.imageUrl")}</span>
+				<input class="form-control" name="imageUrl" required value={banner?.imageUrl ?? ""} placeholder="/images/banner-1.jpg" disabled={isDisabled} />
+			</label>
+			<label>
+				<span>{t("labels.altText")}</span>
+				<input class="form-control" name="altText" value={banner?.altText ?? ""} placeholder={t("labels.altTextPlaceholder", "Describe the image") ?? "Describe the image"} disabled={isDisabled} />
+			</label>
+			<label>
+				<span>{t("labels.linkUrl")}</span>
+				<input class="form-control" name="linkUrl" value={banner?.linkUrl ?? ""} placeholder="/about or https://example.com" disabled={isDisabled} />
+			</label>
+			<label>
+				<span>{t("labels.order")}</span>
+				<input class="form-control" type="number" min="0" name="sortOrder" value={String(banner?.sortOrder ?? 0)} disabled={isDisabled} />
+			</label>
+			<label class="d-flex align-items-center gap-2 mb-0">
+				<input type="checkbox" name="isActive" checked={isActive} disabled={isDisabled} />
+				<span>{t("labels.enabled")}</span>
+			</label>
+		</div>
+	</div>
+
+	<div class="admin-form-actions">
+		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+	</div>
+</form>

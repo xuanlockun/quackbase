@@ -42,6 +42,7 @@ export interface RenderableContactFormField extends ContactFormField {
 export interface ContactFormSubmissionInput {
 	language: string;
 	sourcePath?: string;
+	contactFormId?: number;
 	values: Record<string, string>;
 }
 
@@ -167,6 +168,7 @@ export function parseContactFormSubmissionForm(formData: FormData): ContactFormS
 		language:
 			typeof formData.get("language") === "string" ? String(formData.get("language")) : DEFAULT_LANGUAGE,
 		sourcePath: typeof formData.get("sourcePath") === "string" ? String(formData.get("sourcePath")) : undefined,
+		contactFormId: parsePositiveInteger(formData.get("contactFormId")),
 		values,
 	};
 }
@@ -197,6 +199,7 @@ export function parseContactFormSubmissionPayload(payload: unknown): ContactForm
 	return {
 		language: typeof record.language === "string" ? record.language : DEFAULT_LANGUAGE,
 		sourcePath,
+		contactFormId: parsePositiveInteger(record.contactFormId),
 		values,
 	};
 }
@@ -340,6 +343,19 @@ function normalizeBoolean(value: unknown): boolean {
 	}
 
 	return false;
+}
+
+function parsePositiveInteger(value: FormDataEntryValue | unknown): number | undefined {
+	if (typeof value === "number") {
+		return Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined;
+	}
+
+	if (typeof value === "string" && value.trim() !== "") {
+		const parsed = Number.parseInt(value, 10);
+		return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+	}
+
+	return undefined;
 }
 
 function normalizeOptionalString(value?: string | null): string | null {

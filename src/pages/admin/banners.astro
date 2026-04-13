@@ -1,0 +1,50 @@
+---
+export const prerender = false;
+
+import BannerTable from "../../components/admin/BannerTable.astro";
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { getDb } from "../../lib/blog";
+import { listBanners } from "../../lib/banners";
+import { getUiTranslations } from "../../lib/i18n";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
+const canUpdate = session.isSuperadmin || session.permissions.includes("pages.update");
+const canDelete = session.isSuperadmin || session.permissions.includes("pages.delete");
+const { t } = getUiTranslations(Astro);
+
+let banners = [];
+let loadError = "";
+
+try {
+	banners = await listBanners(getDb(Astro.locals));
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadBanners");
+}
+---
+
+<AdminLayout
+	title={t("nav.banners")}
+	description={t("messages.manageBanners")}
+	session={session}
+	pageTitle={t("nav.banners")}
+	pageDescription={t("messages.manageBannersHelp")}
+>
+	<div slot="actions" class="admin-page-actions">
+		{canCreate && <a class="btn btn-primary" href="/admin/banners/new">{t("actions.createBanner")}</a>}
+	</div>
+
+	<div class="admin-content-stack">
+		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.bannerCreated")}</p>}
+		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.bannerSaved")}</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="alert alert-info mb-0">{t("messages.bannerDeleted")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.bannerRequestFailed")}</p>}
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
+
+		<BannerTable banners={banners} canUpdate={canUpdate} canDelete={canDelete} />
+	</div>
+</AdminLayout>

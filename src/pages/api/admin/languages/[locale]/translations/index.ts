@@ -1,6 +1,10 @@
 import type { APIRoute } from "astro";
 import { getDb } from "../../../../../../lib/blog";
-import { listTranslationEntriesByLocale, insertTranslationEntry } from "../../../../../../lib/translations";
+import {
+	listTranslationEntriesByLocale,
+	insertTranslationEntry,
+	saveTranslationBundle,
+} from "../../../../../../lib/translations";
 import { requireApiPermission } from "../../../../../../lib/rbac/guards";
 
 export const prerender = false;
@@ -49,9 +53,22 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 	const payload = await parsePayload(request);
 	const translationKey = typeof payload.key === "string" ? payload.key.trim() : "";
 	const translatedValue = typeof payload.value === "string" ? payload.value.trim() : "";
+	const translations = parseTranslations(payload.translations);
 
 	if (!translationKey) {
 		return Response.json({ error: "Translation key is required." }, { status: 400 });
+	}
+
+	if (translations) {
+		try {
+			const entry = await saveTranslationBundle(getDb(locals), translationKey, translations);
+			return Response.json({ entry }, { status: 201 });
+		} catch (error) {
+			return Response.json(
+				{ error: error instanceof Error ? error.message : "Unable to create translation." },
+				{ status: 400 },
+			);
+		}
 	}
 
 	if (!translatedValue) {
@@ -81,4 +98,25 @@ async function parsePayload(request: Request): Promise<Record<string, unknown>> 
 		result[key] = value;
 	}
 	return result;
+}
+
+function parseTranslations(value: unknown): Record<string, string> | null {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return null;
+	}
+
+	const entries = Object.entries(value as Record<string, unknown>);
+	if (entries.length === 0) {
+		return null;
+	}
+
+	const translations: Record<string, string> = {};
+	for (const [locale, translatedValue] of entries) {
+		if (typeof translatedValue !== "string") {
+			continue;
+		}
+		translations[locale] = translatedValue;
+	}
+
+	return Object.keys(translations).length > 0 ? translations : null;
 }

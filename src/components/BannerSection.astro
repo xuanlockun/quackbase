@@ -1,9 +1,23 @@
 ---
-interface Props {
-	bannerUrls: string[];
+interface BannerSlide {
+	imageUrl: string;
+	title: string;
+	altText?: string;
+	linkUrl?: string;
 }
 
-const { bannerUrls } = Astro.props;
+interface Props {
+	slides?: BannerSlide[];
+	bannerUrls?: string[];
+}
+
+const slides =
+	Astro.props.slides ??
+	(Astro.props.bannerUrls ?? []).map((url, index) => ({
+		imageUrl: url,
+		title: `Banner ${index + 1}`,
+		altText: `Banner ${index + 1}`,
+	}));
 ---
 
 <section class="banner-section">
@@ -16,15 +30,21 @@ const { bannerUrls } = Astro.props;
 		>
 			<div class="carousel-inner">
 				{
-					bannerUrls.map((url, index) => (
-						<div class:list={["carousel-item", index === 0 && "active"]} key={url}>
-							<img src={url} alt={`Banner ${index + 1}`} loading="lazy" class="d-block w-100 rounded-3" />
+					slides.map((slide, index) => (
+						<div class:list={["carousel-item", index === 0 && "active"]} key={`${slide.imageUrl}-${index}`}>
+							{slide.linkUrl ? (
+								<a href={slide.linkUrl}>
+									<img src={slide.imageUrl} alt={slide.altText ?? slide.title} loading="lazy" class="d-block w-100 rounded-3" />
+								</a>
+							) : (
+								<img src={slide.imageUrl} alt={slide.altText ?? slide.title} loading="lazy" class="d-block w-100 rounded-3" />
+							)}
 						</div>
 					))
 				}
 			</div>
 			{
-				bannerUrls.length > 1 && (
+				slides.length > 1 && (
 					<>
 						<button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
 							<span class="carousel-control-prev-icon" aria-hidden="true"></span>
@@ -36,7 +56,7 @@ const { bannerUrls } = Astro.props;
 						</button>
 						<div class="carousel-indicators">
 							{
-								bannerUrls.map((_, index) => (
+								slides.map((_, index) => (
 									<button
 										type="button"
 										key={`dot-${index}`}

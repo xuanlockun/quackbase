@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 import { createPage, getDb, parsePageForm, parsePagePayload, updatePage } from "../../../lib/blog";
-import { parseFormFieldsForm, parseFormFieldsPayload, saveFormFields } from "../../../lib/forms";
 import { getLanguageCatalog } from "../../../lib/i18n";
 import { requireApiPermission } from "../../../lib/rbac/guards";
 
@@ -27,25 +26,9 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		const defLang = getLanguageCatalog(locals).defaultLanguageCode;
 		const input = isJsonRequest ? parsePagePayload(payload, defLang) : parsePageForm(formData as FormData, defLang);
 		const db = getDb(locals);
-		const shouldSaveFormFields = isJsonRequest
-			? Boolean(
-					payload &&
-					typeof payload === "object" &&
-					!Array.isArray(payload) &&
-					Object.prototype.hasOwnProperty.call(payload, "fields"),
-				)
-			: (formData as FormData).has("contactFormFields");
-		const contactFormFields = shouldSaveFormFields
-			? isJsonRequest
-				? parseFormFieldsPayload(payload, "fields")
-				: parseFormFieldsForm(formData as FormData)
-			: null;
 
 		if (typeof idValue === "string" && idValue.trim() !== "") {
 			await updatePage(db, Number(idValue), input);
-			if (contactFormFields) {
-				await saveFormFields(db, contactFormFields);
-			}
 			if (isJsonRequest) {
 				return Response.json({
 					pageId: Number(idValue),
@@ -57,9 +40,6 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		}
 
 		const pageId = await createPage(db, input);
-		if (contactFormFields) {
-			await saveFormFields(db, contactFormFields);
-		}
 		if (isJsonRequest) {
 			return Response.json({
 				pageId,

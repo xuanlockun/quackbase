@@ -4,7 +4,8 @@ export const prerender = false;
 import PageForm from "../../../../components/admin/PageForm.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { getDb, getPageById } from "../../../../lib/blog";
-import { listFormFields } from "../../../../lib/forms";
+import { listBanners } from "../../../../lib/banners";
+import { listContactForms } from "../../../../lib/contact-forms";
 import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
@@ -18,7 +19,8 @@ const { t, language } = getUiTranslations(Astro);
 const catalog = getLanguageCatalog(Astro.locals);
 
 let page = null;
-let contactFormFields = [];
+let bannerCatalog = [];
+let contactFormCatalog = [];
 let loadError = "";
 let notFound = false;
 
@@ -29,7 +31,8 @@ try {
 	} else {
 		const db = getDb(Astro.locals);
 		page = await getPageById(db, pageId, language, catalog);
-		contactFormFields = await listFormFields(db);
+		bannerCatalog = await listBanners(db);
+		contactFormCatalog = await listContactForms(db);
 		notFound = !page;
 	}
 } catch (error) {
@@ -63,7 +66,8 @@ if (Astro.url.searchParams.get("error")) {
 					page={page}
 					canSubmit={canUpdate}
 					loadError={loadError}
-					contactFormFields={contactFormFields}
+					bannerCatalog={bannerCatalog}
+					contactFormCatalog={contactFormCatalog}
 				/>
 			)
 		}

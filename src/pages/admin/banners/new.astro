@@ -1,0 +1,28 @@
+---
+export const prerender = false;
+
+import BannerForm from "../../../components/admin/BannerForm.astro";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { getUiTranslations } from "../../../lib/i18n";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
+const { t } = getUiTranslations(Astro);
+---
+
+<AdminLayout
+	title={t("actions.createBanner")}
+	description={t("messages.saveCreateBanner")}
+	session={session}
+	pageTitle={t("actions.createBanner")}
+	pageDescription={t("messages.saveCreateBanner")}
+>
+	<div class="admin-content-stack">
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.bannerRequestFailed")}</p>}
+		<BannerForm mode="create" action="/api/admin/banners" canSubmit={canCreate} />
+	</div>
+</AdminLayout>
