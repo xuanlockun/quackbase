@@ -104,38 +104,51 @@ img {
 }
 
 .admin-sidebar {
-	width: 280px;
-	background: #111c2e;
-	color: #cfd9e7;
-	border-right: 1px solid rgba(255, 255, 255, 0.05);
+	width: 240px;
+	min-width: 240px;
+	flex: 0 0 240px;
+	background: #0c1726;
+	color: #d0d7e5;
+	border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .admin-sidebar nav {
-	padding: 1rem;
+	padding: 0.75rem 0.75rem 1rem;
 }
 
 .admin-sidebar header {
-	padding-block: 1.25rem;
-	padding-inline: 1.25rem;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	padding: 1rem 1rem 0.75rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-sidebar .nav {
+	gap: 0.25rem;
 }
 
 .admin-sidebar .nav-link {
-	color: #cfd9e7;
+	color: #d0d7e5;
 	background: transparent;
 	border-radius: 0.35rem;
-	padding: 0.65rem 0.85rem;
+	padding: 0.55rem 0.85rem;
 	transition: background-color 0.2s ease, color 0.2s ease;
+	align-items: center;
+	display: flex;
+	gap: 0.75rem;
+	font-size: 0.95rem;
 }
 
-.admin-sidebar .nav-link:hover,
 .admin-sidebar .nav-link.active {
-	background: #0d1323;
+	background: #0b1220;
 	color: #fff;
 }
 
-.admin-sidebar .nav-link.active span {
+.admin-sidebar .nav-link:hover {
+	background: rgba(255, 255, 255, 0.05);
 	color: #fff;
+}
+
+.admin-sidebar .nav-link span {
+	color: inherit;
 }
 
 .admin-content {
