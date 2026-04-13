@@ -39,107 +39,109 @@ const toggleLabel = "Toggle sidebar navigation";
 ---
 
 <!doctype html>
-<html lang={language}>
+<html lang={language} data-theme="classic" data-mode="dark">
 	<head>
 		<BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
 	</head>
 	<body class="admin-app">
-		<div class="admin-shell">
-			<header class="admin-topbar border-bottom">
-				<div class="container-fluid d-flex align-items-center gap-3 px-3 px-lg-4">
-					<button
-						class="btn btn-outline-secondary admin-topbar-toggler d-lg-none"
-						type="button"
-						data-bs-toggle="offcanvas"
-						data-bs-target="#adminSidebar"
-						aria-controls="adminSidebar"
-					>
-						<span class="admin-toggler-icon" aria-hidden="true"></span>
-						<span class="visually-hidden">{toggleLabel}</span>
-					</button>
-					<div class="d-flex align-items-center gap-2 admin-topbar-brand">
-						<span class="brand-gradient rounded-pill px-3 py-2">{t("app.brand")}</span>
-						<div class="d-none d-sm-flex flex-column lh-sm">
-							<strong class="small text-uppercase letter-spacing-wide">{t("app.admin")}</strong>
-							<span class="small text-muted">Workspace</span>
+		<div class="admin-root">
+			<aside class="admin-sidebar d-none d-lg-flex">
+				<Sidebar session={session} />
+			</aside>
+			<div class="admin-workspace">
+				<header class="admin-topbar">
+					<div class="container-fluid d-flex align-items-center gap-3 px-3 px-lg-4">
+						<button
+							class="btn btn-outline-secondary admin-topbar-toggler d-lg-none"
+							type="button"
+							data-bs-toggle="offcanvas"
+							data-bs-target="#adminSidebar"
+							aria-controls="adminSidebar"
+						>
+							<span class="admin-toggler-icon" aria-hidden="true"></span>
+							<span class="visually-hidden">{toggleLabel}</span>
+						</button>
+						<div class="d-flex align-items-center gap-2 admin-topbar-brand">
+							<span class="admin-topbar-mark" aria-hidden="true">
+								<span class="admin-topbar-mark-dash"></span>
+							</span>
+							<div class="d-grid lh-sm">
+								<strong class="small text-uppercase letter-spacing-wide">{t("app.brand")}</strong>
+								<span class="small text-muted">Admin workspace</span>
+							</div>
 						</div>
-					</div>
-					<div class="d-flex align-items-center gap-3 ms-auto admin-topbar-actions">
-						<div class="d-none d-lg-flex align-items-center">
-							<LanguageSwitch />
-						</div>
-						<div class="dropdown">
-							<button
-								class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2 admin-user-button"
-								type="button"
-								data-bs-toggle="dropdown"
-								aria-expanded="false"
-							>
-								<span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:38px;height:38px;font-weight:700;">
-									{profileInitials}
-								</span>
-								<span class="text-start admin-user-labels">
-									<strong class="d-block">{profileName}</strong>
-									{profileEmail && <small class="text-muted">{profileEmail}</small>}
-								</span>
+						<div class="d-flex align-items-center gap-2 ms-auto admin-topbar-actions">
+							<a href="/" class="btn btn-sm btn-outline-secondary admin-view-site" target="_blank" rel="noopener noreferrer">
+								<svg aria-hidden="true" viewBox="0 0 24 24">
+									<path
+										d="M14 3h7v7h-2V6.41l-8.29 8.3-1.42-1.42 8.3-8.29H14V3ZM5 5h6V3H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6h-2v6H5V5Z"
+									/>
+								</svg>
+								<span>View site</span>
+							</a>
+							<div class="d-none d-lg-flex align-items-center">
+								<LanguageSwitch />
+							</div>
+							<div class="dropdown">
+								<button
+									class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2 admin-user-button"
+									type="button"
+									data-bs-toggle="dropdown"
+									aria-expanded="false"
+								>
+									<span class="admin-user-avatar" aria-hidden="true">{profileInitials}</span>
+									<span class="text-start admin-user-labels">
+										<strong class="d-block">{profileName}</strong>
+										{profileEmail && <small class="text-muted">{profileEmail}</small>}
+									</span>
 								</button>
-							<ul class="dropdown-menu dropdown-menu-end shadow">
-								<li><h6 class="dropdown-header">{t("labels.user")}</h6></li>
-								{profileEmail && <li><span class="dropdown-item-text text-truncate px-3">{profileEmail}</span></li>}
-								<li><hr class="dropdown-divider" /></li>
-								<li>
-									<form method="post" action="/api/admin/auth/logout">
-										<button type="submit" class="dropdown-item text-danger">
-											{t("actions.logOut")}
-										</button>
-									</form>
-								</li>
-							</ul>
+								<ul class="dropdown-menu dropdown-menu-end shadow">
+									<li><h6 class="dropdown-header">{t("labels.user")}</h6></li>
+									{profileEmail && <li><span class="dropdown-item-text text-truncate px-3">{profileEmail}</span></li>}
+									<li><hr class="dropdown-divider" /></li>
+									<li>
+										<form method="post" action="/api/admin/auth/logout">
+											<button type="submit" class="dropdown-item text-danger">
+												{t("actions.logOut")}
+											</button>
+										</form>
+									</li>
+								</ul>
+							</div>
 						</div>
 					</div>
-				</div>
-			</header>
+				</header>
 
-			<div
-				class="offcanvas offcanvas-start admin-offcanvas d-lg-none"
-				tabindex="-1"
-				id="adminSidebar"
-				aria-labelledby="adminSidebarLabel"
-			>
-				<div class="offcanvas-header d-lg-none">
-					<h5 class="offcanvas-title" id="adminSidebarLabel">{t("app.admin")}</h5>
-					<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+				<div
+					class="offcanvas offcanvas-start admin-offcanvas d-lg-none"
+					tabindex="-1"
+					id="adminSidebar"
+					aria-labelledby="adminSidebarLabel"
+				>
+					<div class="offcanvas-header d-lg-none">
+						<h5 class="offcanvas-title" id="adminSidebarLabel">{t("app.admin")}</h5>
+						<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+					</div>
+					<div class="offcanvas-body p-0 d-flex flex-column">
+						<Sidebar session={session} />
+					</div>
 				</div>
-				<div class="offcanvas-body p-0 d-flex flex-column">
-					<Sidebar session={session} />
-				</div>
-			</div>
 
-			<div class="admin-content d-flex flex-grow-1 align-items-stretch">
-				<aside class="admin-sidebar d-none d-lg-flex flex-column h-100">
-					<Sidebar session={session} />
-				</aside>
-				<main class="admin-main flex-grow-1">
+				<main class="admin-main">
 					<div class="container-fluid px-3 px-lg-4 py-4 py-lg-4">
-						<div class="row justify-content-center">
-							<div class="col-12 col-xxl-11">
-								<section class="card admin-page-shell">
-									<header class="card-header border-0">
-										<div class="d-flex flex-column flex-xl-row justify-content-between align-items-start align-items-xl-center gap-3">
-											<div class="admin-header-title">
-												<p class="eyebrow mb-0">{pageEyebrow}</p>
-												<h1 class="h4">{pageTitle}</h1>
-												{pageDescription && <p>{pageDescription}</p>}
-											</div>
-											<div class="admin-page-actions">
-												<slot name="actions" />
-											</div>
-										</div>
-									</header>
-									<div class="card-body">
-										<slot />
-									</div>
-								</section>
+						<div class="admin-page-frame">
+							<header class="admin-page-header">
+								<div class="admin-page-title">
+									<p class="admin-page-eyebrow">{pageEyebrow}</p>
+									<h1 class="admin-page-heading">{pageTitle}</h1>
+									{pageDescription && <p class="admin-page-description">{pageDescription}</p>}
+								</div>
+								<div class="admin-page-actions">
+									<slot name="actions" />
+								</div>
+							</header>
+							<div class="admin-page-content">
+								<slot />
 							</div>
 						</div>
 					</div>

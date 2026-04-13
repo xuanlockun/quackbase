@@ -2,7 +2,6 @@
 import { getVisibleAdminNavItems } from "../../lib/rbac/policies";
 import type { AdminSession } from "../../lib/auth/types";
 import { getUiTranslations } from "../../lib/i18n";
-import { SITE_TITLE } from "../../consts";
 
 interface Props {
 	session: AdminSession | null;
@@ -101,13 +100,15 @@ function isActiveLink(href: string, currentPath: string): boolean {
 
 <nav aria-label="Admin navigation" class="admin-sidebar-nav d-flex flex-column h-100">
 	<header class="admin-sidebar-header">
-		<div class="d-flex align-items-center gap-3">
-			<span class="brand-gradient rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px;font-weight:700;">{SITE_TITLE.charAt(0)}</span>
-			<div class="d-grid">
+		<a href={localizeAdminHref("/admin")} class="admin-sidebar-brand text-decoration-none">
+			<span class="admin-sidebar-mark" aria-hidden="true">
+				<span class="admin-sidebar-mark-dash"></span>
+			</span>
+			<div class="admin-sidebar-brand-copy">
 				<p class="mb-0 fw-semibold text-white">{t("app.brand")}</p>
-				<small class="text-uppercase letter-spacing-wide">{t("app.admin")}</small>
+				<small class="text-uppercase letter-spacing-wide">Admin</small>
 			</div>
-		</div>
+		</a>
 	</header>
 	<div class="admin-sidebar-body overflow-auto">
 		{
@@ -124,7 +125,7 @@ function isActiveLink(href: string, currentPath: string): boolean {
 									href={localizeAdminHref(link.href)}
 									data-admin-sidebar-link
 								>
-									<span class="d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:24px;height:24px;">
+									<span class="d-inline-flex align-items-center justify-content-center flex-shrink-0 admin-sidebar-icon-wrap">
 										<span aria-hidden="true" set:html={navIconHtml(link.labelKey)}></span>
 									</span>
 									<span>{t(link.labelKey)}</span>
