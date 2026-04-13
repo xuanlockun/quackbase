@@ -164,16 +164,16 @@ const expandLabel = "Expand sidebar";
 				</main>
 			</div>
 		</div>
-		<script is:inline>
+		<script is:inline define:vars={{ collapseLabel, expandLabel }}>
 			const sidebarToggle = document.querySelector("[data-admin-sidebar-toggle]");
 			const syncSidebarToggle = () => {
 				const isCollapsed = document.body.classList.contains("admin-sidebar-collapsed");
 				if (sidebarToggle instanceof HTMLButtonElement) {
 					sidebarToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
-					sidebarToggle.title = isCollapsed ? {expandLabel} : {collapseLabel};
+					sidebarToggle.title = isCollapsed ? expandLabel : collapseLabel;
 					const label = sidebarToggle.querySelector(".admin-sidebar-toggle-label");
 					if (label) {
-						label.textContent = isCollapsed ? {expandLabel} : {collapseLabel};
+						label.textContent = isCollapsed ? expandLabel : collapseLabel;
 					}
 				}
 			};

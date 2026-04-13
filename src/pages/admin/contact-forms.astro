@@ -12,9 +12,7 @@ if (!session) {
 	return Astro.redirect("/admin/login");
 }
 
-const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
-const canUpdate = session.isSuperadmin || session.permissions.includes("pages.update");
-const canDelete = session.isSuperadmin || session.permissions.includes("pages.delete");
+const canManage = session.isSuperadmin || session.permissions.includes("contactForms.manage");
 const { t } = getUiTranslations(Astro);
 
 let forms = [];
@@ -35,7 +33,7 @@ try {
 	pageDescription={t("messages.manageContactFormsHelp")}
 >
 	<div slot="actions" class="admin-page-actions">
-		{canCreate && <a class="btn btn-primary" href="/admin/contact-forms/new">{t("actions.createContactForm")}</a>}
+		{canManage && <a class="btn btn-primary" href="/admin/contact-forms/new">{t("actions.createContactForm")}</a>}
 	</div>
 
 	<div class="admin-content-stack">
@@ -45,6 +43,6 @@ try {
 		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.contactFormRequestFailed")}</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 
-		<ContactFormTable forms={forms} canUpdate={canUpdate} canDelete={canDelete} />
+		<ContactFormTable forms={forms} canUpdate={canManage} canDelete={canManage} />
 	</div>
 </AdminLayout>

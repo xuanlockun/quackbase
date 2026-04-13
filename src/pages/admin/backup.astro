@@ -37,13 +37,6 @@ const description = t(
 				</div>
 			</div>
 
-			<div class="alert alert-warning">
-				{t(
-					"messages.backupWarning",
-					"Exports can take a while on larger databases and D1 may be briefly unavailable while the backup is generated.",
-				)}
-			</div>
-
 			{!backupConfigured && (
 				<div class="alert alert-danger mb-3">
 					{t(

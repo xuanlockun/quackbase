@@ -11,7 +11,7 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 
 	try {
 		const requiredPermission =
-			typeof idValue === "string" && idValue.trim() !== "" ? "pages.update" : "pages.create";
+			"contactForms.manage";
 		const session = await requireApiPermission(
 			{ locals, request, redirect },
 			[requiredPermission],

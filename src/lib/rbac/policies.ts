@@ -10,7 +10,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 	{ href: "/admin/posts", labelKey: "nav.posts", permissions: ["posts.read"] },
 	{ href: "/admin/pages", labelKey: "nav.pages", permissions: ["pages.read"] },
 	{ href: "/admin/banners", labelKey: "nav.banners", permissions: ["pages.read"] },
-	{ href: "/admin/contact-forms", labelKey: "nav.contactForms", permissions: ["pages.read"] },
+	{ href: "/admin/contact-forms", labelKey: "nav.contactForms", permissions: ["contactForms.manage"] },
 	{ href: "/admin/backup", labelKey: "nav.backup", permissions: ["site.manage"] },
 	{ href: "/admin/settings", labelKey: "nav.settings", permissions: ["site.manage"] },
 	{ href: "/admin/users", labelKey: "nav.users", permissions: ["users.manage"] },
@@ -24,7 +24,7 @@ const ADMIN_PAGE_POLICIES = new Map<string, string[]>([
 	["/admin/posts", ["posts.read"]],
 	["/admin/pages", ["pages.read"]],
 	["/admin/banners", ["pages.read"]],
-	["/admin/contact-forms", ["pages.read"]],
+	["/admin/contact-forms", ["contactForms.manage"]],
 	["/admin/backup", ["site.manage"]],
 	["/admin/header", ["site.manage"]],
 	["/admin/settings", ["site.manage"]],
@@ -64,11 +64,11 @@ export function getRequiredAdminPagePermissions(pathname: string): string[] | nu
 	}
 
 	if (pathname === "/admin/contact-forms/new") {
-		return ["pages.create"];
+		return ["contactForms.manage"];
 	}
 
 	if (/^\/admin\/contact-forms\/[^/]+\/edit$/.test(pathname)) {
-		return ["pages.update"];
+		return ["contactForms.manage"];
 	}
 
 	if (pathname === "/admin/users/new" || /^\/admin\/users\/[^/]+\/edit$/.test(pathname)) {

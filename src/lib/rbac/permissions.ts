@@ -10,6 +10,13 @@ export const ADMIN_PERMISSIONS: ReadonlyArray<Omit<AdminPermission, "id">> = [
 	{ name: "pages.update", label: "Edit pages", description: "Edit site pages.", resource: "pages", action: "update" },
 	{ name: "pages.delete", label: "Delete pages", description: "Delete site pages.", resource: "pages", action: "delete" },
 	{
+		name: "contactForms.manage",
+		label: "Manage contact forms",
+		description: "Create and edit contact forms and their fields.",
+		resource: "contact_forms",
+		action: "manage",
+	},
+	{
 		name: "site.manage",
 		label: "Manage site settings",
 		description: "Update header, footer, and navigation settings.",
