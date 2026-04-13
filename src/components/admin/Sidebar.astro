@@ -122,7 +122,7 @@ function isActiveLink(href: string, currentPath: string): boolean {
 									aria-current={isActiveLink(link.href, pathname) ? "page" : undefined}
 									class:list={["nav-link", "w-100 text-start", isActiveLink(link.href, pathname) && "active"]}
 									href={localizeAdminHref(link.href)}
-									data-bs-dismiss="offcanvas"
+									data-admin-sidebar-link
 								>
 									<span class="d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:24px;height:24px;">
 										<span aria-hidden="true" set:html={navIconHtml(link.labelKey)}></span>

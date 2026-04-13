@@ -141,5 +141,27 @@ const toggleLabel = "Toggle sidebar navigation";
 				</main>
 			</div>
 		</div>
+		<script is:inline>
+			document.querySelectorAll("[data-admin-sidebar-link]").forEach((link) => {
+				if (!(link instanceof HTMLAnchorElement)) {
+					return;
+				}
+
+				link.addEventListener("click", () => {
+					const offcanvas = link.closest(".offcanvas");
+					if (!(offcanvas instanceof HTMLElement)) {
+						return;
+					}
+
+					const bootstrap = window.bootstrap;
+					if (bootstrap?.Offcanvas) {
+						const instance =
+							bootstrap.Offcanvas.getInstance(offcanvas) ??
+							bootstrap.Offcanvas.getOrCreateInstance(offcanvas);
+						instance.hide();
+					}
+				});
+			});
+		</script>
 	</body>
 </html>
