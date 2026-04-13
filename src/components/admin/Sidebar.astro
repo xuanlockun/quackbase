@@ -29,21 +29,6 @@ const navIconMap: Record<string, string> = {
 			<line x1="8" y1="16" x2="14" y2="16" />
 		</svg>
 	`,
-	"nav.banner": `
-		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-			<rect x="4" y="6" width="16" height="12" rx="2" />
-			<path d="M4 10h16" />
-			<path d="M8 6v12" />
-		</svg>
-	`,
-	"nav.contactForm": `
-		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-			<rect x="4" y="5" width="16" height="14" rx="2" />
-			<path d="M7 9h10" />
-			<path d="M7 13h6" />
-			<path d="M7 17h8" />
-		</svg>
-	`,
 	"nav.settings": `
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 			<circle cx="12" cy="12" r="3" />
@@ -95,7 +80,7 @@ const navIconMap: Record<string, string> = {
 const navIconHtml = (key: string) => navIconMap[key] ?? navIconMap["default"];
 
 const sectionConfig = [
-	{ title: "CMS", labelKeys: ["nav.posts", "nav.pages", "nav.banner", "nav.contactForm"] },
+	{ title: "CMS", labelKeys: ["nav.posts", "nav.pages"] },
 	{ title: "Management", labelKeys: ["nav.users", "nav.roles", "nav.permissions"] },
 	{ title: "Settings", labelKeys: ["nav.settings", "nav.languages"] },
 ];

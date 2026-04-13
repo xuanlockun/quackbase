@@ -199,6 +199,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 		class="admin-form-section page-sections-editor"
 		data-page-sections-editor
 		data-section-catalog={sectionCatalogJson}
+		data-banner-urls-label={t("labels.bannerImageUrls")}
 		data-section-remove-label={sectionRemoveLabelText}
 	>
 		<div class="page-sections-heading">
@@ -233,6 +234,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 						initialSections.map((section) => {
 							const metadata = sectionCatalogMap.get(section.type) ?? sectionCatalog[0];
 							const isRemovable = metadata.removable !== false;
+							const bannerUrlsValue = section.type === "banner_slider" ? (section.bannerUrls ?? []).join("\n") : "";
 							return (
 								<tr class="admin-table-row section-row" draggable={!isDisabled} data-section-row data-section-type={section.type}>
 									<td class="drag-cell">
@@ -243,7 +245,22 @@ const initialContactFields = contactFormFields.map((field) => ({
 										<p class="admin-compact-copy">{metadata.description}</p>
 									</td>
 									<td class="section-control">
-										<p class="admin-compact-copy">{metadata.details}</p>
+										{
+											section.type === "banner_slider" ? (
+												<label class="d-grid gap-2 mb-0">
+													<span class="small text-uppercase text-muted">{t("labels.bannerImageUrls")}</span>
+													<textarea
+														class="form-control form-control-sm"
+														rows="4"
+														placeholder="https://example.com/banner-1.jpg"
+														data-banner-urls
+														disabled={isDisabled}
+													>{bannerUrlsValue}</textarea>
+												</label>
+											) : (
+												<p class="admin-compact-copy">{metadata.details}</p>
+											)
+										}
 									</td>
 									<td class="section-actions">
 										{
@@ -454,6 +471,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 	const sectionAddButton = document.querySelector("[data-section-add]");
 	const sectionEditor = document.querySelector("[data-page-sections-editor]");
 	const sectionRemoveLabel = sectionEditor?.dataset.sectionRemoveLabel ?? "Remove";
+	const bannerUrlsLabel = sectionEditor?.dataset.bannerUrlsLabel ?? "Banner image URLs";
 	const sectionEmptyState = sectionEditor?.querySelector("[data-section-empty]");
 	const sectionAddLabel = sectionSelect?.dataset.sectionAddLabel ?? "Add section";
 	const SECTION_CATALOG = parseConfig(sectionEditor?.dataset.sectionCatalog);
@@ -633,6 +651,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 
 	function createSectionRow(type) {
 		const metadata = SECTION_CATALOG.find((entry) => entry.type === type) ?? SECTION_CATALOG[0];
+		const hasBannerUrls = metadata.type === "banner_slider";
 		const row = document.createElement("tr");
 		row.className = "admin-table-row section-row";
 		row.draggable = !isDisabled;
@@ -650,8 +669,15 @@ const initialContactFields = contactFormFields.map((field) => ({
             <strong>${metadata.label}</strong>
             <p class="admin-compact-copy">${metadata.description}</p>
         </td>
-        <td class="section-control">
-            <p class="admin-compact-copy">${metadata.details}</p>
+			<td class="section-control">
+            ${
+				hasBannerUrls
+					? `<label class="d-grid gap-2 mb-0">
+						<span class="small text-uppercase text-muted">${bannerUrlsLabel}</span>
+						<textarea class="form-control form-control-sm" rows="4" placeholder="https://example.com/banner-1.jpg" data-banner-urls ${isDisabled ? "disabled" : ""}></textarea>
+					</label>`
+					: `<p class="admin-compact-copy">${metadata.details}</p>`
+			}
         </td>
         <td class="section-actions">${buttonMarkup}</td>`;
 		return row;
@@ -665,7 +691,23 @@ const initialContactFields = contactFormFields.map((field) => ({
 		const payload = rows
 			.map((row, index) => {
 				const type = row.dataset.sectionType;
-				return type ? { type, order: index + 1 } : null;
+				if (!type) {
+					return null;
+				}
+				const entry = { type, order: index + 1 };
+				if (type === "banner_slider") {
+					const urlsInput = row.querySelector("[data-banner-urls]");
+					if (urlsInput instanceof HTMLTextAreaElement) {
+						const bannerUrls = urlsInput.value
+							.split(/\r?\n/)
+							.map((value) => value.trim())
+							.filter(Boolean);
+						if (bannerUrls.length > 0) {
+							entry.bannerUrls = bannerUrls;
+						}
+					}
+				}
+				return entry;
 			})
 			.filter((entry) => Boolean(entry));
 		sectionInput.value = JSON.stringify(payload);

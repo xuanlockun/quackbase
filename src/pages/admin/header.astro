@@ -54,11 +54,11 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 --- 
 
 <AdminLayout
-	title={t("nav.header")}
+	title={t("nav.settings")}
 	description={t("messages.manageSiteSettings")}
 	session={session}
-	pageTitle={t("headings.headerFooter")}
-	pageDescription={t("messages.headerFooterDescription")}
+	pageTitle={t("nav.settings")}
+	pageDescription={t("messages.settingsHub")}
 >
 	<div class="admin-content-stack">
 		{Astro.url.searchParams.get("siteSaved") && <p class="alert alert-success mb-0">{t("messages.headerSettingsSaved")}</p>}

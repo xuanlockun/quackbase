@@ -9,8 +9,6 @@ export interface AdminNavItem {
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 	{ href: "/admin/posts", labelKey: "nav.posts", permissions: ["posts.read"] },
 	{ href: "/admin/pages", labelKey: "nav.pages", permissions: ["pages.read"] },
-	{ href: "/admin/banner", labelKey: "nav.banner", permissions: ["pages.read"] },
-	{ href: "/admin/contact-form", labelKey: "nav.contactForm", permissions: ["pages.read"] },
 	{ href: "/admin/settings", labelKey: "nav.settings", permissions: ["site.manage"] },
 	{ href: "/admin/users", labelKey: "nav.users", permissions: ["users.manage"] },
 	{ href: "/admin/roles", labelKey: "nav.roles", permissions: ["roles.manage"] },
@@ -22,8 +20,6 @@ const ADMIN_PAGE_POLICIES = new Map<string, string[]>([
 	["/admin", []],
 	["/admin/posts", ["posts.read"]],
 	["/admin/pages", ["pages.read"]],
-	["/admin/banner", ["pages.read"]],
-	["/admin/contact-form", ["pages.read"]],
 	["/admin/header", ["site.manage"]],
 	["/admin/settings", ["site.manage"]],
 	["/admin/users", ["users.manage"]],
