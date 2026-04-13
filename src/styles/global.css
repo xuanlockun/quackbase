@@ -212,6 +212,43 @@ hr {
 	z-index: 2;
 }
 
+.admin-sidebar-nav {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	gap: 0.5rem;
+	padding: 0;
+}
+
+.admin-sidebar-brand {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 1.25rem 1.25rem 1rem;
+	border-bottom: 1px solid rgba(var(--gray-light), 1);
+}
+
+.admin-sidebar-logo {
+	width: 48px;
+	height: 48px;
+	border-radius: 14px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, var(--accent), rgba(var(--gray), 0.15));
+	color: white;
+	font-weight: 700;
+	font-size: 1rem;
+	letter-spacing: 0.05em;
+}
+
+.admin-sidebar-brand-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	overflow: hidden;
+}
+
 .admin-sidebar-kicker,
 .admin-sidebar-label,
 .admin-page-eyebrow {
@@ -295,12 +332,28 @@ hr {
 	color: #0f172a;
 }
 
+#adminSidebarToggle:checked ~ .admin-shell .admin-sidebar-column {
+	width: 96px;
+}
+
+#adminSidebarToggle:checked ~ .admin-shell .admin-sidebar-brand-copy {
+	opacity: 0;
+	height: 0;
+	margin: 0;
+	visibility: hidden;
+}
+
 #adminSidebarToggle:checked ~ .admin-shell .admin-sidebar-link {
 	justify-content: center;
 }
 
 #adminSidebarToggle:checked ~ .admin-shell .admin-sidebar-link-text {
 	display: none;
+}
+
+#adminSidebarToggle:checked ~ .admin-shell .admin-sidebar-logo {
+	width: 36px;
+	height: 36px;
 }
 
 #adminSidebarToggle:checked ~ .admin-shell .admin-sidebar-section-title {
@@ -367,15 +420,22 @@ hr {
 
 .admin-topbar-title {
 	display: flex;
-	align-items: center;
+	flex-direction: column;
+	gap: 0.15rem;
 }
 
-.admin-topbar-title-text {
+.admin-topbar-brand {
 	margin: 0;
-	font-size: 1.3rem;
-	font-weight: 700;
+	font-size: 0.9rem;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
+	color: rgba(var(--gray-dark), 0.7);
+}
+
+.admin-topbar-subtitle {
+	margin: 0;
+	font-size: 1.4rem;
+	font-weight: 700;
 	color: rgb(var(--gray-dark));
 }
 
