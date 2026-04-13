@@ -39,17 +39,14 @@ const contentTranslations = {
 	[def]: "# New page",
 	...(page?.contentTranslations ?? {}),
 };
-const sectionMap = new Map((page?.pageSections ?? []).map((section) => [section.type, section]));
-const pageContentSection = sectionMap.get("page_content") ?? { type: "page_content", order: 1 };
-const bannerSection = sectionMap.get("banner_slider");
-const blogFeedSection = sectionMap.get("blog_feed");
-const contactSection = sectionMap.get("contact_form");
-const initialSections: PageSectionConfig[] = [
-		pageContentSection,
-		...(bannerSection ? [bannerSection] : []),
-		...(blogFeedSection ? [blogFeedSection] : []),
-		...(contactSection ? [contactSection] : []),
-];
+const initialSections: PageSectionConfig[] = [...(page?.pageSections ?? [])]
+	.sort((left, right) => left.order - right.order)
+	.filter((section, index, sections) => sections.findIndex((entry) => entry.type === section.type) === index);
+if (!initialSections.some((section) => section.type === "page_content")) {
+	initialSections.unshift({ type: "page_content", order: 1 });
+}
+const addSectionLabel = t("actions.addSection") ?? "Add section";
+const sectionDetailsLabel = t("labels.details") ?? "Details";
 const sectionCatalog = [
 	{
 		type: "page_content",
@@ -196,6 +193,81 @@ const initialContactFields = contactFormFields.map((field) => ({
 				</section>
 			))
 		}
+	</div>
+
+	<div
+		class="admin-form-section page-sections-editor"
+		data-page-sections-editor
+		data-section-catalog={sectionCatalogJson}
+		data-section-remove-label={sectionRemoveLabelText}
+	>
+		<div class="page-sections-heading">
+			<div>
+				<h2>{t("headings.pageSections")}</h2>
+				<p class="admin-inline-muted mb-0">{t("messages.pageSectionsHelp")}</p>
+			</div>
+			<div class="page-sections-actions">
+				<select class="form-select" data-section-select data-section-add-label={addSectionLabel} disabled={isDisabled}>
+					<option value="" selected disabled>{addSectionLabel}</option>
+				</select>
+				<button class="btn btn-outline-secondary btn-sm" type="button" data-section-add data-readonly={String(isDisabled)} disabled={isDisabled}>
+					{addSectionLabel}
+				</button>
+			</div>
+		</div>
+
+		<input type="hidden" name="pageSectionsConfig" data-page-sections-config value={JSON.stringify(initialSections)} />
+
+		<div class="table-responsive">
+			<table class="table admin-sections-table mb-0">
+				<thead>
+					<tr>
+						<th></th>
+						<th>{t("headings.pageSections")}</th>
+						<th>{sectionDetailsLabel}</th>
+						<th>{t("labels.action")}</th>
+					</tr>
+				</thead>
+				<tbody data-section-rows>
+					{
+						initialSections.map((section) => {
+							const metadata = sectionCatalogMap.get(section.type) ?? sectionCatalog[0];
+							const isRemovable = metadata.removable !== false;
+							return (
+								<tr class="admin-table-row section-row" draggable={!isDisabled} data-section-row data-section-type={section.type}>
+									<td class="drag-cell">
+										<span class="drag-handle" data-drag-handle aria-label={metadata.label}></span>
+									</td>
+									<td>
+										<strong>{metadata.label}</strong>
+										<p class="admin-compact-copy">{metadata.description}</p>
+									</td>
+									<td class="section-control">
+										<p class="admin-compact-copy">{metadata.details}</p>
+									</td>
+									<td class="section-actions">
+										{
+											isRemovable ? (
+												<button class="admin-ghost-button" type="button" data-section-remove disabled={isDisabled}>
+													{sectionRemoveLabelText}
+												</button>
+											) : (
+												<button class="admin-ghost-button" type="button" disabled>
+													{sectionRemoveLabelText}
+												</button>
+											)
+										}
+									</td>
+								</tr>
+							);
+						})
+					}
+				</tbody>
+			</table>
+		</div>
+		<p class="admin-inline-muted mb-0" data-section-empty hidden>
+			{t("messages.noPageSectionsConfigured")}
+		</p>
 	</div>
 
 	<div class="admin-form-section contact-fields-wrapper" data-contact-fields-wrapper hidden>
