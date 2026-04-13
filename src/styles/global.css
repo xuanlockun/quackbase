@@ -53,8 +53,23 @@ img {
 	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
-.language-switch select {
+.language-switch {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.language-switch-select {
+	min-width: 11.5rem;
+}
+
+.language-switch-full {
 	width: 100%;
+}
+
+.language-switch-full .language-switch-select {
+	width: 100%;
+	min-width: 0;
 }
 
 .admin-app {
@@ -860,7 +875,7 @@ body.admin-app .admin-sidebar-icon-wrap {
 }
 
 body.admin-app .admin-sidebar-links .nav-link {
-	display: flex;
+	display: block;
 	align-items: center;
 	gap: 0.75rem;
 	min-height: 36px;

@@ -7,6 +7,7 @@
 	const table = document.querySelector("[data-translation-table]");
 	const form = document.querySelector("[data-translation-form]");
 	const notice = document.querySelector("[data-translation-notice]");
+	const localeSelect = document.querySelector("[data-translation-locale-select]");
 
 	if (!table || !form || !notice) {
 		throw new Error("Translation manager could not find required elements.");
@@ -14,12 +15,12 @@
 
 	const dataset = table.dataset;
 	const formDataset = form.dataset;
-	const locale = dataset.locale ?? "";
+	let locale = (localeSelect instanceof HTMLSelectElement && localeSelect.value) || dataset.locale || "";
 	if (!locale) {
 		throw new Error("Locale context is missing.");
 	}
 
-	const apiBase = dataset.apiBase ?? `/api/admin/languages/${locale}/translations`;
+	const apiBaseTemplate = dataset.apiBaseTemplate ?? dataset.apiBase ?? "/api/admin/languages/__locale__/translations";
 	const columnCount = table.querySelectorAll("thead th").length || 4;
 	const tbody = table.querySelector("tbody");
 	const keyInput = form.querySelector("[name='key']");
@@ -35,6 +36,10 @@
 
 	if (!tbody || !keyInput || !submitButton || !cancelButton || tabButtons.length === 0 || tabPanels.size === 0) {
 		throw new Error("Translation manager is missing form controls.");
+	}
+
+	if (localeSelect instanceof HTMLSelectElement && !localeSelect.value && locale) {
+		localeSelect.value = locale;
 	}
 
 	/** @type {TranslationLanguage[]} */
@@ -80,12 +85,30 @@
 
 	let cachedEntries = [];
 	let editingKey = "";
+	let isChangingLocale = false;
 
 	const initialTab = tabButtons.find((button) => button.classList.contains("active"))?.dataset.translationTab ?? languages[0]?.code;
 	if (initialTab) {
 		setActiveTab(initialTab);
 	}
 	resetEditorState();
+
+	localeSelect?.addEventListener("change", () => {
+		if (!(localeSelect instanceof HTMLSelectElement) || !localeSelect.value || localeSelect.value === locale) {
+			return;
+		}
+		locale = localeSelect.value;
+		isChangingLocale = true;
+		refreshEntries()
+			.then(() => {
+				resetEditorState();
+				updateLocaleUrl(locale);
+			})
+			.catch((error) => showNotice(handleError(error), "danger"))
+			.finally(() => {
+				isChangingLocale = false;
+			});
+	});
 
 	form.addEventListener("submit", async (event) => {
 		event.preventDefault();
@@ -166,7 +189,7 @@
 	async function refreshEntries() {
 		setLoadingState(true);
 		try {
-			const response = await fetch(apiBase);
+			const response = await fetch(getApiBase(locale));
 			if (!response.ok) {
 				throw new Error(messages.error);
 			}
@@ -290,7 +313,7 @@
 	}
 
 	async function saveBundle(payload) {
-		const endpoint = editingKey ? `${apiBase}/${encodeURIComponent(editingKey)}` : apiBase;
+		const endpoint = editingKey ? `${getApiBase(locale)}/${encodeURIComponent(editingKey)}` : getApiBase(locale);
 		const method = editingKey ? "PATCH" : "POST";
 		const response = await fetch(endpoint, {
 			method,
@@ -306,7 +329,7 @@
 	async function loadEntryIntoEditor(key) {
 		setLoadingState(true);
 		try {
-			const response = await fetch(`${apiBase}/${encodeURIComponent(key)}`);
+			const response = await fetch(`${getApiBase(locale)}/${encodeURIComponent(key)}`);
 			if (!response.ok) {
 				throw new Error(messages.error);
 			}
@@ -345,7 +368,7 @@
 	}
 
 	async function deleteEntry(key) {
-		const response = await fetch(`${apiBase}/${encodeURIComponent(key)}`, {
+		const response = await fetch(`${getApiBase(locale)}/${encodeURIComponent(key)}`, {
 			method: "DELETE",
 		});
 		if (!response.ok) {
@@ -386,6 +409,17 @@
 			const isActive = panelCode === code;
 			panel.classList.toggle("d-none", !isActive);
 		}
+	}
+
+	function getApiBase(nextLocale) {
+		return apiBaseTemplate.replace("__locale__", encodeURIComponent(nextLocale || locale));
+	}
+
+	function updateLocaleUrl(nextLocale) {
+		const url = new URL(window.location.href);
+		url.searchParams.set("locale", nextLocale);
+		url.hash = "translations";
+		window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 	}
 
 	function handleError(error) {

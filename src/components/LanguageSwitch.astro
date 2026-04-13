@@ -11,20 +11,33 @@ const catalog = getLanguageCatalog(Astro.locals);
 const options = getLanguageSwitchOptions(Astro.url, language, catalog);
 ---
 
-<div class="d-flex flex-wrap gap-2">
-	{
-		options.map((option) => (
-			<a
-				key={option.code}
-				href={option.href}
-				class:list={[
-					"btn btn-sm",
-					option.isActive ? "btn-primary" : "btn-outline-primary",
-				]}
-				aria-current={option.isActive ? "true" : undefined}
-			>
-				{option.code.toUpperCase()}
-			</a>
-		))
-	}
-</div>
+<label class:list={["language-switch", fullWidth && "language-switch-full"]}>
+	<span class="visually-hidden">{t("labels.language")}</span>
+	<select
+		class:list={["form-select form-select-sm language-switch-select", fullWidth ? "w-100" : "w-auto"]}
+		aria-label={t("labels.language")}
+		data-language-switch
+	>
+		{
+			options.map((option) => (
+				<option value={option.href} selected={option.isActive}>
+					{option.label}
+				</option>
+			))
+		}
+	</select>
+</label>
+
+<script is:inline>
+	document.querySelectorAll("[data-language-switch]").forEach((select) => {
+		if (!(select instanceof HTMLSelectElement)) {
+			return;
+		}
+
+		select.addEventListener("change", () => {
+			if (select.value) {
+				window.location.href = select.value;
+			}
+		});
+	});
+</script>
