@@ -74,17 +74,29 @@ const expandLabel = "Expand sidebar";
 							<span class="visually-hidden">{toggleLabel}</span>
 						</button>
 						<button
-							class="btn btn-outline-secondary admin-sidebar-toggle d-none d-lg-inline-flex align-items-center gap-2"
+							class="btn btn-outline-secondary admin-sidebar-toggle d-none d-lg-inline-flex align-items-center justify-content-center"
 							type="button"
 							data-admin-sidebar-toggle
 							aria-controls="adminSidebar"
 							aria-expanded="true"
+							aria-label={collapseLabel}
 							title={collapseLabel}
 						>
-							<span class="admin-topbar-mark" aria-hidden="true">
-								<span class="admin-topbar-mark-dash"></span>
+							<span class="admin-sidebar-toggle-icon admin-sidebar-toggle-icon-collapse" aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M15 18l-6-6 6-6" />
+									<path d="M20 4v16" />
+									<path d="M9 12H4" />
+								</svg>
 							</span>
-							<span class="admin-sidebar-toggle-label">{collapseLabel}</span>
+							<span class="admin-sidebar-toggle-icon admin-sidebar-toggle-icon-expand" aria-hidden="true" hidden>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M9 18l6-6-6-6" />
+									<path d="M4 4v16" />
+									<path d="M15 12h5" />
+								</svg>
+							</span>
+							<span class="visually-hidden admin-sidebar-toggle-label">{collapseLabel}</span>
 						</button>
 						<div class="d-flex align-items-center gap-2 ms-auto admin-topbar-actions">
 							<a href="/" class="btn btn-sm btn-outline-secondary admin-view-site" target="_blank" rel="noopener noreferrer">
@@ -171,7 +183,16 @@ const expandLabel = "Expand sidebar";
 				if (sidebarToggle instanceof HTMLButtonElement) {
 					sidebarToggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
 					sidebarToggle.title = isCollapsed ? expandLabel : collapseLabel;
+					sidebarToggle.setAttribute("aria-label", isCollapsed ? expandLabel : collapseLabel);
+					const collapseIcon = sidebarToggle.querySelector(".admin-sidebar-toggle-icon-collapse");
+					const expandIcon = sidebarToggle.querySelector(".admin-sidebar-toggle-icon-expand");
 					const label = sidebarToggle.querySelector(".admin-sidebar-toggle-label");
+					if (collapseIcon instanceof HTMLElement) {
+						collapseIcon.hidden = isCollapsed;
+					}
+					if (expandIcon instanceof HTMLElement) {
+						expandIcon.hidden = !isCollapsed;
+					}
 					if (label) {
 						label.textContent = isCollapsed ? expandLabel : collapseLabel;
 					}

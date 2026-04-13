@@ -814,6 +814,7 @@ body.admin-app .admin-sidebar-nav {
 	width: 100%;
 	min-width: 0;
 	flex: 1 1 auto;
+	justify-content: space-between;
 }
 
 body.admin-app.admin-sidebar-collapsed .admin-sidebar {
@@ -836,6 +837,15 @@ body.admin-app.admin-sidebar-collapsed .admin-sidebar-links .nav-link span:last-
 
 body.admin-app.admin-sidebar-collapsed .admin-sidebar-body {
 	padding-inline: 0.5rem;
+}
+
+body.admin-app.admin-sidebar-collapsed .admin-sidebar-footer {
+	padding-inline: 0.5rem;
+	text-align: center;
+}
+
+body.admin-app.admin-sidebar-collapsed .admin-sidebar-footer small {
+	display: none;
 }
 
 body.admin-app.admin-sidebar-collapsed .admin-sidebar-links .nav-link {
@@ -964,14 +974,43 @@ body.admin-app .admin-sidebar-links .nav-link span:last-child {
 	min-width: 0;
 }
 
+body.admin-app .admin-sidebar-footer {
+	padding: 0.9rem 1rem 1rem;
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+	display: grid;
+	gap: 0.15rem;
+	color: rgba(208, 215, 229, 0.66);
+}
+
+body.admin-app .admin-sidebar-footer p {
+	font-size: 0.64rem;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+}
+
+body.admin-app .admin-sidebar-footer small {
+	font-size: 0.72rem;
+}
+
 body.admin-app .admin-sidebar-toggle {
 	min-width: 0;
+	width: 2.75rem;
+	height: 2.75rem;
+	padding: 0;
 	white-space: nowrap;
 }
 
-body.admin-app .admin-sidebar-toggle .admin-topbar-mark {
-	width: 34px;
-	height: 34px;
+body.admin-app .admin-sidebar-toggle-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.3rem;
+	height: 1.3rem;
+}
+
+body.admin-app .admin-sidebar-toggle-icon svg {
+	width: 100%;
+	height: 100%;
 }
 
 body.admin-app .admin-sidebar-toggle-label {
