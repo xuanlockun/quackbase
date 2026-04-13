@@ -2,6 +2,7 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import BaseHead from "../components/BaseHead.astro";
 import Sidebar from "../components/admin/Sidebar.astro";
+import LanguageSwitch from "../components/LanguageSwitch.astro";
 import { SITE_TITLE } from "../consts";
 import type { AdminSession } from "../lib/auth/types";
 import { getUiTranslations } from "../lib/i18n";
@@ -23,7 +24,19 @@ const {
 	pageDescription,
 	pageEyebrow = "Admin",
 } = Astro.props;
-const { language } = getUiTranslations(Astro);
+const { t, language } = getUiTranslations(Astro);
+
+const profileName = session?.displayName ?? t("messages.adminUserFallback");
+const profileEmail = session?.email ?? "";
+const profileInitials = profileName
+	.split(/\s+/)
+	.filter(Boolean)
+	.map((part) => part.charAt(0))
+	.slice(0, 2)
+	.join("")
+	.toUpperCase() || "A";
+const toggleLabel = "Toggle sidebar navigation";
+
 ---
 
 <!doctype html>
@@ -32,12 +45,75 @@ const { language } = getUiTranslations(Astro);
 		<BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
 	</head>
 	<body class="admin-body">
-		<main class="admin-shell d-flex min-vh-100 align-items-stretch">
-			<aside class="admin-sidebar-column flex-shrink-0">
+		<input
+			type="checkbox"
+			id="adminSidebarToggle"
+			class="admin-sidebar-toggle-input"
+			aria-hidden="true"
+		/>
+		<main class="admin-shell">
+			<aside class="admin-sidebar-column" id="adminSidebar">
 				<Sidebar session={session} />
 			</aside>
 
-			<div class="admin-content-column flex-grow-1 min-vw-0 p-2 p-lg-3">
+			<div class="admin-content-column">
+				<header class="admin-topbar">
+					<div class="admin-topbar-start">
+						<label
+							for="adminSidebarToggle"
+							class="admin-topbar-toggle"
+							aria-controls="adminSidebar"
+							aria-label={toggleLabel}
+						>
+							<span class="admin-topbar-toggle-icon" aria-hidden="true">
+								<svg viewBox="0 0 24 24" role="presentation" focusable="false">
+									<path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+								</svg>
+							</span>
+						</label>
+						<div class="admin-topbar-title">
+							<p class="admin-topbar-brand">{t("app.brand")}</p>
+							<p class="admin-topbar-subtitle">{t("app.admin")}</p>
+						</div>
+					</div>
+
+					<div class="admin-topbar-actions">
+						<div class="admin-topbar-language">
+							<LanguageSwitch />
+						</div>
+
+						<details class="admin-profile-dropdown">
+							<summary class="admin-profile-toggle">
+								<span class="admin-profile-avatar">{profileInitials}</span>
+								<span class="admin-profile-info">
+									<strong>{profileName}</strong>
+									{profileEmail && <span class="admin-profile-email">{profileEmail}</span>}
+								</span>
+								<span class="admin-profile-caret" aria-hidden="true">
+									<svg viewBox="0 0 24 24" role="presentation" focusable="false">
+										<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+									</svg>
+								</span>
+							</summary>
+
+							<div class="admin-profile-menu">
+								<p class="admin-profile-menu-label">{t("labels.user")}</p>
+								{profileEmail && (
+									<p class="admin-profile-menu-copy">{profileEmail}</p>
+								)}
+								<form method="post" action="/api/admin/auth/logout">
+									<button
+										type="submit"
+										class="admin-ghost-button admin-profile-logout-button"
+									>
+										{t("actions.logOut")}
+									</button>
+								</form>
+							</div>
+						</details>
+					</div>
+				</header>
+
 				<section class="admin-panel admin-panel-main h-100">
 					<header class="admin-page-header">
 						<div class="admin-page-copy">
