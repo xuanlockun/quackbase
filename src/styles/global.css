@@ -312,9 +312,6 @@ img {
 	min-height: 2.85rem;
 }
 
-.admin-sidebar-links .nav-link span {
-	flex: 1;
-}
 
 .admin-sidebar-links .nav-link svg {
 	width: 20px;
