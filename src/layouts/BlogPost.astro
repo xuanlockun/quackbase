@@ -14,6 +14,7 @@ interface Props {
 	contentHtml?: string;
 	showDate?: boolean;
 	wideContent?: boolean;
+	showTitle?: boolean;
 	lang?: string;
 	faviconHref?: string;
 }
@@ -27,6 +28,7 @@ const {
 	contentHtml,
 	showDate = true,
 	wideContent = false,
+	showTitle = true,
 	lang = "en",
 	faviconHref,
 } = Astro.props;
@@ -109,8 +111,12 @@ const { t } = getUiTranslations(Astro);
 										)}
 									</div>
 								)}
-								<h1 class="display-5">{title}</h1>
-								<hr />
+								{showTitle && (
+									<>
+										<h1 class="display-5">{title}</h1>
+										<hr />
+									</>
+								)}
 								<div class="prose" set:html={contentHtml} />
 								<slot />
 							</div>

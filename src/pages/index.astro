@@ -31,6 +31,7 @@ if (!page) {
 			pubDate={page.updatedAt}
 			showDate={false}
 			wideContent={true}
+			showTitle={page.showTitle}
 			lang={language}
 			faviconHref={config?.faviconUrl}
 		>
@@ -44,6 +45,7 @@ if (!page) {
 			contentHtml={`<p>${t("messages.configureHomePageBody")}</p>`}
 			showDate={false}
 			wideContent={true}
+			showTitle={true}
 			lang={language}
 			faviconHref={config?.faviconUrl}
 		/>

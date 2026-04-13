@@ -88,6 +88,7 @@
     "roles": "Vai trò",
     "permissions": "Quyền",
     "siteTitle": "Tiêu đề trang",
+    "logoUrl": "URL logo",
     "homePageSlug": "Slug trang chủ",
     "headerBackground": "Nền đầu trang",
     "headerTextColor": "Màu chữ đầu trang",
@@ -119,6 +120,8 @@
     "translationEntries": "Các bản dịch",
     "translationKey": "Khóa dịch",
     "translationValue": "Giá trị bản dịch",
+    "showPageTitle": "Hiển thị tiêu đề trang",
+    "showPageTitleHelp": "Hiển thị tiêu đề trang phía trên nội dung.",
     "bannerImageUrls": "URL ảnh banner"
   },
   "headings": {

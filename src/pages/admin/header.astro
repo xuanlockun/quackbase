@@ -28,6 +28,7 @@ let siteConfig = {
 	siteTitle: SITE_TITLE,
 	homePageSlug: "home",
 	faviconUrl: "/favicon.svg",
+	logoUrl: "",
 	headerBackground: "#ffffff",
 	headerTextColor: "#0f1219",
 	headerAccentColor: "#2337ff",
@@ -69,6 +70,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 				<label><span>{t("labels.siteTitle")}</span><input class="form-control" name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
 				<label><span>{t("labels.homePageSlug")}</span><input class="form-control" name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
 				<label><span>{t("labels.faviconUrl")}</span><input class="form-control" name="faviconUrl" value={siteConfig.faviconUrl} placeholder="/favicon.svg" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.logoUrl")}</span><input class="form-control" name="logoUrl" value={siteConfig.logoUrl} placeholder="/logo.svg" disabled={Boolean(loadError)} /></label>
 				<label><span>{t("labels.headerBackground")}</span><input class="form-control" name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
 				<label><span>{t("labels.headerTextColor")}</span><input class="form-control" name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
 				<label><span>{t("labels.headerAccentColor")}</span><input class="form-control" name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>

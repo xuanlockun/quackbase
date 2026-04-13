@@ -88,6 +88,7 @@
     "roles": "Roles",
     "permissions": "Permissions",
     "siteTitle": "Site title",
+    "logoUrl": "Logo URL",
     "homePageSlug": "Home page slug",
     "headerBackground": "Header background",
     "headerTextColor": "Header text color",
@@ -119,6 +120,8 @@
     "translationEntries": "Translation entries",
     "translationKey": "Translation key",
     "translationValue": "Translation value",
+    "showPageTitle": "Show page title",
+    "showPageTitleHelp": "Display the page title above the content.",
     "bannerImageUrls": "Banner image URLs"
   },
   "headings": {

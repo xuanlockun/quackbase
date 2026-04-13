@@ -421,6 +421,7 @@ img {
 }
 
 .admin-form-grid > label,
+.admin-form-grid > .admin-checkbox-field,
 .admin-form-section > label,
 .localized-editor-panel > label {
 	display: grid;
@@ -428,6 +429,7 @@ img {
 }
 
 .admin-form-grid label span,
+.admin-checkbox-field > span,
 .admin-form-section label span,
 .localized-editor-panel label span {
 	display: block;
@@ -456,6 +458,20 @@ img {
 .localized-editor-panel .form-control,
 .localized-editor-panel .form-select {
 	min-height: calc(1.5em + 0.85rem + 2px);
+}
+
+.admin-checkbox-field .form-check {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+}
+
+.admin-checkbox-field .form-check-label {
+	margin-top: -0.1rem;
+	text-transform: none;
+	letter-spacing: normal;
+	font-size: 0.92rem;
+	color: inherit;
 }
 
 .admin-form-section {

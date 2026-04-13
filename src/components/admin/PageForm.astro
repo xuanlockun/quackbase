@@ -34,6 +34,7 @@ const submitLabel = mode === "edit" ? t("actions.savePage") : t("actions.createP
 const isDisabled = Boolean(loadError) || !canSubmit;
 const languages = getSupportedLanguages(catalog);
 const initialLanguage = page?.requestedLanguage ?? language;
+const initialShowTitle = page?.showTitle ?? true;
 const titleTranslations = {
 	[def]: "",
 	...(page?.titleTranslations ?? {}),
@@ -121,6 +122,13 @@ const initialContactFields = [];
 					disabled={isDisabled}
 				/>
 			</label>
+			<div class="admin-checkbox-field">
+				<span>{t("labels.showPageTitle", "Show page title")}</span>
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" name="showTitle" value="1" checked={initialShowTitle} disabled={isDisabled} />
+					<label class="form-check-label">{t("labels.showPageTitleHelp", "Display the page title above the content.")}</label>
+				</div>
+			</div>
 			<label>
 				<span>{t("labels.status")}</span>
 				<select class="form-select" name="status" disabled={isDisabled}>

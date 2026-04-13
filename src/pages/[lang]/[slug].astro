@@ -50,6 +50,7 @@ if (!page && !post && !loadError) {
 			pubDate={page.updatedAt}
 			showDate={false}
 			wideContent={true}
+			showTitle={page.showTitle}
 			lang={page.resolvedLanguage}
 			faviconHref={config?.faviconUrl}
 		>
@@ -68,6 +69,7 @@ if (!page && !post && !loadError) {
 			updatedDate={post.updatedDate}
 			heroImage={post.heroImage}
 			contentHtml={post.contentHtml}
+			showTitle={true}
 			lang={post.resolvedLanguage}
 			faviconHref={config?.faviconUrl}
 		/>
@@ -85,6 +87,7 @@ if (!page && !post && !loadError) {
 			}
 			showDate={false}
 			wideContent={true}
+			showTitle={true}
 			lang={lang}
 			faviconHref={config?.faviconUrl}
 		/>

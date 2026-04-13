@@ -182,6 +182,7 @@ export interface SiteConfig {
 	siteTitle: string;
 	homePageSlug: string;
 	faviconUrl: string;
+	logoUrl: string;
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
@@ -197,6 +198,7 @@ export interface SitePageRecord {
 	slug: string;
 	description: string;
 	content: string;
+	show_title: number;
 	show_posts_section: number;
 	page_sections?: string | null;
 	status: string;
@@ -207,6 +209,7 @@ export interface SitePage {
 	id: number;
 	title: string;
 	titleTranslations: LocalizedText;
+	showTitle: boolean;
 	slug: string;
 	description: string;
 	content: string;
@@ -231,6 +234,7 @@ export interface PageSectionConfig {
 
 export interface SitePageInput {
 	titleTranslations: LocalizedText;
+	showTitle: boolean;
 	slug: string;
 	description: string;
 	contentTranslations: LocalizedText;
@@ -340,7 +344,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const settings = await db
 		.prepare(
-			`SELECT site_title, home_page_slug, favicon_url, header_background, header_text_color, header_accent_color, nav_items
+			`SELECT site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color, nav_items
 			FROM site_settings
 			WHERE id = 1`,
 		)
@@ -348,6 +352,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			site_title: string;
 			home_page_slug: string;
 			favicon_url: string;
+			logo_url: string;
 			header_background: string;
 			header_text_color: string;
 			header_accent_color: string;
@@ -406,6 +411,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 		siteTitle: settings?.site_title ?? "Edge CMS",
 		homePageSlug: settings?.home_page_slug ?? "home",
 		faviconUrl: settings?.favicon_url ?? "/favicon.svg",
+		logoUrl: settings?.logo_url ?? "",
 		headerBackground: settings?.header_background ?? "#ffffff",
 		headerTextColor: settings?.header_text_color ?? "#0f1219",
 		headerAccentColor: settings?.header_accent_color ?? "#2337ff",
@@ -422,6 +428,7 @@ export async function saveSiteConfig(
 		siteTitle: string;
 		homePageSlug: string;
 		faviconUrl: string;
+		logoUrl: string;
 		headerBackground: string;
 		headerTextColor: string;
 		headerAccentColor: string;
@@ -441,12 +448,13 @@ export async function saveSiteConfig(
 	const statements = [
 		db
 			.prepare(
-				`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, header_background, header_text_color, header_accent_color, nav_items, updated_at)
-				VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)
+				`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color, nav_items, updated_at)
+				VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, CURRENT_TIMESTAMP)
 				ON CONFLICT(id) DO UPDATE SET
 					site_title = excluded.site_title,
 					home_page_slug = excluded.home_page_slug,
 					favicon_url = excluded.favicon_url,
+					logo_url = excluded.logo_url,
 					header_background = excluded.header_background,
 					header_text_color = excluded.header_text_color,
 					header_accent_color = excluded.header_accent_color,
@@ -457,6 +465,7 @@ export async function saveSiteConfig(
 				input.siteTitle.trim(),
 				normalizeHomePageSlug(input.homePageSlug),
 				normalizeFaviconUrl(input.faviconUrl),
+				normalizeLogoUrl(input.logoUrl),
 				sanitizeHexColor(input.headerBackground, "#ffffff"),
 				sanitizeHexColor(input.headerTextColor, "#0f1219"),
 				sanitizeHexColor(input.headerAccentColor, "#2337ff"),
@@ -501,7 +510,7 @@ export async function listAllPages(
 
 	const result = await db
 		.prepare(
-			`SELECT id, title, slug, description, content, show_posts_section, page_sections, status, updated_at
+			`SELECT id, title, slug, description, content, show_title, show_posts_section, page_sections, status, updated_at
 			FROM site_pages
 			ORDER BY datetime(updated_at) DESC, id DESC`,
 		)
@@ -520,7 +529,7 @@ export async function listPublishedPages(
 
 	const result = await db
 		.prepare(
-			`SELECT id, title, slug, description, content, show_posts_section, page_sections, status, updated_at
+			`SELECT id, title, slug, description, content, show_title, show_posts_section, page_sections, status, updated_at
 			FROM site_pages
 			WHERE status = 'published'
 			ORDER BY datetime(updated_at) DESC, id DESC`,
@@ -541,7 +550,7 @@ export async function getPageById(
 
 	const result = await db
 		.prepare(
-			`SELECT id, title, slug, description, content, show_posts_section, page_sections, status, updated_at
+			`SELECT id, title, slug, description, content, show_title, show_posts_section, page_sections, status, updated_at
 			FROM site_pages
 			WHERE id = ?1
 			LIMIT 1`,
@@ -563,7 +572,7 @@ export async function getPublishedPageBySlug(
 
 	const result = await db
 		.prepare(
-			`SELECT id, title, slug, description, content, show_posts_section, status, updated_at
+			`SELECT id, title, slug, description, content, show_title, show_posts_section, status, updated_at
 			, page_sections
 			FROM site_pages
 			WHERE slug = ?1 AND status = 'published'
@@ -581,14 +590,15 @@ export async function createPage(db: D1Database, input: SitePageInput): Promise<
 
 	const result = await db
 		.prepare(
-			`INSERT INTO site_pages (title, slug, description, content, show_posts_section, status, updated_at, page_sections)
-			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP, ?7)`,
+			`INSERT INTO site_pages (title, slug, description, content, show_title, show_posts_section, status, updated_at, page_sections)
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP, ?8)`,
 		)
 		.bind(
 			stringifyLocalizedText(input.titleTranslations, catalog),
 			input.slug,
 			input.description,
 			stringifyLocalizedText(input.contentTranslations, catalog),
+			input.showTitle ? 1 : 0,
 			input.pageSections.some((section) => section.type === "blog_feed") ? 1 : 0,
 			input.status,
 			JSON.stringify(input.pageSections),
@@ -613,17 +623,19 @@ export async function updatePage(
 				slug = ?2,
 				description = ?3,
 				content = ?4,
-				show_posts_section = ?5,
-				status = ?6,
+				show_title = ?5,
+				show_posts_section = ?6,
+				status = ?7,
 				updated_at = CURRENT_TIMESTAMP,
-				page_sections = ?7
-			WHERE id = ?8`,
+				page_sections = ?8
+			WHERE id = ?9`,
 		)
 		.bind(
 			stringifyLocalizedText(input.titleTranslations, catalog),
 			input.slug,
 			input.description,
 			stringifyLocalizedText(input.contentTranslations, catalog),
+			input.showTitle ? 1 : 0,
 			input.pageSections.some((section) => section.type === "blog_feed") ? 1 : 0,
 			input.status,
 			JSON.stringify(input.pageSections),
@@ -841,6 +853,7 @@ export function parseSiteForm(formData: FormData): {
 	siteTitle: string;
 	homePageSlug: string;
 	faviconUrl: string;
+	logoUrl: string;
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
@@ -852,6 +865,7 @@ export function parseSiteForm(formData: FormData): {
 	const siteTitle = requiredString(formData, "siteTitle");
 	const homePageSlug = requiredString(formData, "homePageSlug");
 	const faviconUrl = optionalString(formData, "faviconUrl") || "/favicon.svg";
+	const logoUrl = optionalString(formData, "logoUrl");
 	const headerBackground = optionalString(formData, "headerBackground") || "#ffffff";
 	const headerTextColor = optionalString(formData, "headerTextColor") || "#0f1219";
 	const headerAccentColor = optionalString(formData, "headerAccentColor") || "#2337ff";
@@ -901,6 +915,7 @@ export function parseSiteForm(formData: FormData): {
 		siteTitle,
 		homePageSlug,
 		faviconUrl,
+		logoUrl,
 		headerBackground,
 		headerTextColor,
 		headerAccentColor,
@@ -917,6 +932,7 @@ export function parsePageForm(formData: FormData, defaultLanguageCode?: string):
 
 	return {
 		titleTranslations: parseLocalizedFieldFromForm(formData, "title", "title_en", def),
+		showTitle: formData.get("showTitle") === "1",
 		slug: slugify(requiredString(formData, "slug")),
 		description: requiredString(formData, "description"),
 		contentTranslations: parseLocalizedFieldFromForm(formData, "content", "content_en", def),
@@ -938,6 +954,13 @@ export function parsePagePayload(payload: unknown, defaultLanguageCode?: string)
 	const def = defaultLanguageCode ?? DEFAULT_LANGUAGE;
 	return {
 		titleTranslations: parseLocalizedFieldValue(record.title, "title", def),
+		showTitle:
+			record.showTitle === undefined
+				? true
+				: record.showTitle === true ||
+					record.showTitle === 1 ||
+					record.showTitle === "1" ||
+					record.showTitle === "true",
 		slug: slugify(requiredPayloadString(payload, "slug")),
 		description: requiredPayloadString(payload, "description"),
 		contentTranslations: parseLocalizedFieldValue(record.content, "content", def),
@@ -1100,6 +1123,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				site_title TEXT NOT NULL DEFAULT 'Edge CMS',
 				home_page_slug TEXT NOT NULL DEFAULT 'home',
 				favicon_url TEXT NOT NULL DEFAULT '/favicon.svg',
+		logo_url TEXT NOT NULL DEFAULT '',
 				header_background TEXT NOT NULL DEFAULT '#ffffff',
 				header_text_color TEXT NOT NULL DEFAULT '#0f1219',
 				header_accent_color TEXT NOT NULL DEFAULT '#2337ff',
@@ -1122,6 +1146,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				slug TEXT NOT NULL UNIQUE,
 				description TEXT NOT NULL,
 				content TEXT NOT NULL,
+				show_title INTEGER NOT NULL DEFAULT 1,
 				show_posts_section INTEGER NOT NULL DEFAULT 0,
 				page_sections TEXT NOT NULL DEFAULT '[]',
 				status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
@@ -1152,6 +1177,10 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN favicon_url TEXT NOT NULL DEFAULT '/favicon.svg'`).run();
 	}
 
+	if (!settingsColumnNames.has("logo_url")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN logo_url TEXT NOT NULL DEFAULT ''`).run();
+	}
+
 	if (!columnNames.has("page_sections")) {
 		await db.prepare(`ALTER TABLE site_pages ADD COLUMN page_sections TEXT NOT NULL DEFAULT '[]'`).run();
 		await db
@@ -1167,6 +1196,10 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	if (!columnNames.has("content") && columnNames.has("content_markdown")) {
 		await db.prepare(`ALTER TABLE site_pages RENAME COLUMN content_markdown TO content`).run();
+	}
+
+	if (!columnNames.has("show_title")) {
+		await db.prepare(`ALTER TABLE site_pages ADD COLUMN show_title INTEGER NOT NULL DEFAULT 1`).run();
 	}
 
 	await db
@@ -1189,8 +1222,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	await db.batch([
 		db.prepare(
-			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, header_background, header_text_color, header_accent_color)
-			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '#ffffff', '#0f1219', '#2337ff')
+			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color)
+			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '', '#ffffff', '#0f1219', '#2337ff')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(
@@ -1283,6 +1316,7 @@ function toSitePage(row: SitePageRecord, requestedLanguage = DEFAULT_LANGUAGE, c
 		id: row.id,
 		title,
 		titleTranslations,
+		showTitle: row.show_title !== 0,
 		slug: row.slug,
 		description: row.description,
 		content,
@@ -1506,4 +1540,9 @@ function normalizeHomePageSlug(value: string): string {
 function normalizeFaviconUrl(value: string): string {
 	const trimmed = value.trim();
 	return trimmed || "/favicon.svg";
+}
+
+function normalizeLogoUrl(value: string): string {
+	const trimmed = value.trim();
+	return trimmed || "/logo.svg";
 }
