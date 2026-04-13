@@ -56,3 +56,103 @@ img {
 .language-switch select {
 	width: 100%;
 }
+
+.admin-app {
+	background: #f3f6fb;
+	min-height: 100vh;
+}
+
+.admin-shell {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.admin-topbar {
+	background: #fff;
+	box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+	z-index: 10;
+	padding-block: 0.75rem;
+}
+
+.admin-topbar .admin-topbar-brand {
+	gap: 0.35rem;
+	align-items: center;
+	font-weight: 600;
+}
+
+.admin-topbar-toggler {
+	border-color: rgba(15, 23, 42, 0.2);
+}
+
+.admin-offcanvas {
+	background: #111c2e;
+	color: #cfd9e7;
+	border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-offcanvas .offcanvas-header {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-user-button {
+	padding: 0.4rem 0.7rem;
+}
+
+.admin-user-labels small {
+	font-size: 0.7rem;
+}
+
+.admin-sidebar {
+	width: 280px;
+	background: #111c2e;
+	color: #cfd9e7;
+	border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-sidebar nav {
+	padding: 1rem;
+}
+
+.admin-sidebar header {
+	padding-block: 1.25rem;
+	padding-inline: 1.25rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-sidebar .nav-link {
+	color: #cfd9e7;
+	background: transparent;
+	border-radius: 0.35rem;
+	padding: 0.65rem 0.85rem;
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-sidebar .nav-link:hover,
+.admin-sidebar .nav-link.active {
+	background: #0d1323;
+	color: #fff;
+}
+
+.admin-sidebar .nav-link.active span {
+	color: #fff;
+}
+
+.admin-content {
+	flex: 1;
+	display: flex;
+	min-height: 0;
+}
+
+.admin-main {
+	flex-grow: 1;
+	background: #f3f6fb;
+}
+
+.admin-main section.card {
+	border-radius: 0.6rem;
+}
+
+.admin-main .card-header {
+	border-radius: 0.4rem 0.4rem 0 0;
+}
