@@ -19,8 +19,10 @@ try {
 ---
 
 <footer style={`--footer-bg:${footerBackground}; --footer-text:${footerTextColor};`}>
-	&copy; {today.getFullYear()} {footerText}
-	<div class="social-links">
+	<div class="container">
+		<div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+			<div>&copy; {today.getFullYear()} {footerText}</div>
+			<div class="social-links">
 		<a href="https://m.webtoo.ls/@astro" target="_blank">
 			<span class="sr-only">{t("messages.followAstroMastodon")}</span>
 			<svg
@@ -53,6 +55,8 @@ try {
 				></path></svg
 			>
 		</a>
+			</div>
+		</div>
 	</div>
 </footer>
 <style>
@@ -66,7 +70,7 @@ try {
 		display: flex;
 		justify-content: center;
 		gap: 1em;
-		margin-top: 1em;
+		flex-wrap: wrap;
 	}
 	.social-links a {
 		text-decoration: none;

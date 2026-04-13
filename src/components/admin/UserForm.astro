@@ -29,7 +29,7 @@ const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
 ---
 
 <div class="admin-form-header">
-	<a class="admin-ghost-button" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
+	<a class="btn btn-outline-secondary btn-sm" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
 	<p class="admin-muted">
 		{canSubmit
 			? t("messages.manageUserForm")
@@ -44,6 +44,7 @@ const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
 		<label>
 			<span>{t("labels.email")}</span>
 			<input
+				class="form-control"
 				name="email"
 				type="email"
 				required={mode === "create"}
@@ -54,11 +55,12 @@ const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
 		</label>
 		<label>
 			<span>{t("labels.displayName")}</span>
-			<input name="displayName" required value={user?.displayName ?? ""} disabled={isDisabled} />
+			<input class="form-control" name="displayName" required value={user?.displayName ?? ""} disabled={isDisabled} />
 		</label>
 		<label>
 			<span>{mode === "edit" ? t("labels.newPassword") : t("labels.password")}</span>
 			<input
+				class="form-control"
 				name="password"
 				type="password"
 				minlength="8"
@@ -80,13 +82,14 @@ const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
 				roles.map((role) => (
 					<label class="admin-check-row">
 						<input
+							class="form-check-input"
 							type="checkbox"
 							name="roleIds"
 							value={role.id}
 							checked={selectedRoleIds.has(role.id)}
 							disabled={isDisabled}
 						/>
-						{role.label}
+						<span>{role.label}</span>
 					</label>
 				))
 			}
@@ -94,6 +97,6 @@ const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
 	</div>
 
 	<div class="admin-form-actions">
-		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
 	</div>
 </form>

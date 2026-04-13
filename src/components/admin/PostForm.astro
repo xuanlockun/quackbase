@@ -50,7 +50,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 ---
 
 <div class="admin-form-header">
-	<button class="admin-ghost-button" type="button" data-admin-back={localizeAdminHref(backHref, language)}>
+	<button class="btn btn-outline-secondary btn-sm" type="button" data-admin-back={localizeAdminHref(backHref, language)}>
 		{t("actions.back")}
 	</button>
 	<p class="admin-muted">
@@ -67,18 +67,18 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 	<div class="admin-form-grid">
 		<label>
 			<span>{t("labels.heroImageUrl")}</span>
-			<input name="heroImage" value={heroImage} placeholder="/blog-placeholder-1.jpg" disabled={isDisabled} />
+			<input class="form-control" name="heroImage" value={heroImage} placeholder="/blog-placeholder-1.jpg" disabled={isDisabled} />
 		</label>
 		<label>
 			<span>{t("labels.status")}</span>
-			<select name="status" disabled={isDisabled}>
+			<select class="form-select" name="status" disabled={isDisabled}>
 				<option value="published" selected={status === "published"}>{t("status.published")}</option>
 				<option value="draft" selected={status === "draft"}>{t("status.draft")}</option>
 			</select>
 		</label>
 		<label>
 			<span>{t("labels.publishDate")}</span>
-			<input type="datetime-local" name="pubDate" value={pubDateValue} disabled={isDisabled} />
+			<input class="form-control" type="datetime-local" name="pubDate" value={pubDateValue} disabled={isDisabled} />
 		</label>
 	</div>
 
@@ -93,12 +93,12 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 				<h2>{t("headings.localizedContent")}</h2>
 				<p class="admin-muted">{t("messages.localizedPostHelp")}</p>
 			</div>
-			<div class="localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
+			<div class="nav nav-pills localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
 				{
 					languages.map((language) => (
 						<button
 							type="button"
-							class:list={["localized-editor-tab", initialLanguage === language.code && "is-active"]}
+							class:list={["nav-link localized-editor-tab", initialLanguage === language.code && "active"]}
 							data-language-tab={language.code}
 							role="tab"
 							aria-selected={initialLanguage === language.code ? "true" : "false"}
@@ -126,6 +126,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 					<label>
 						<span>{t("labels.title")} ({language.label})</span>
 						<input
+							class="form-control"
 							data-title-input={language.code}
 							value={titleTranslations[language.code] ?? ""}
 							placeholder={language.code === def ? "Hello world" : language.code === "vi" ? "Xin chao" : ""}
@@ -136,6 +137,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 						<span>{t("labels.slug")} ({language.label})</span>
 						<div class="localized-slug-row">
 							<input
+								class="form-control"
 								data-slug-input={language.code}
 								value={slugTranslations[language.code] ?? ""}
 								placeholder={language.code === def ? "hello-world" : language.code === "vi" ? "xin-chao" : ""}
@@ -144,7 +146,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 							/>
 							<button
 								type="button"
-								class="admin-ghost-button"
+								class="btn btn-outline-secondary"
 								data-generate-slug={language.code}
 								disabled={isDisabled}
 							>
@@ -155,6 +157,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 					<label>
 						<span>{t("labels.description")} ({language.label})</span>
 						<input
+							class="form-control"
 							data-description-input={language.code}
 							value={descriptionTranslations[language.code] ?? ""}
 							placeholder={language.code === def ? "Short summary" : language.code === "vi" ? "Tom tat ngan" : ""}
@@ -163,7 +166,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 					</label>
 					<label>
 						<span>{t("labels.content")} ({language.label})</span>
-						<textarea data-content-input={language.code} rows="14" disabled={isDisabled}
+						<textarea class="form-control" data-content-input={language.code} rows="14" disabled={isDisabled}
 							>{contentTranslations[language.code] ?? (language.code === def ? "# New post" : "")}</textarea
 						>
 					</label>
@@ -173,8 +176,8 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 	</div>
 
 	<div class="admin-form-actions">
-		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
-		{mode === "edit" && post && <a href={post.viewHref}>{t("actions.openPost")}</a>}
+		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		{mode === "edit" && post && <a class="btn btn-outline-secondary" href={post.viewHref}>{t("actions.openPost")}</a>}
 	</div>
 </form>
 
@@ -196,10 +199,6 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 		font-size: 1.1rem;
 	}
 
-	.localized-editor-header p {
-		margin: 0.35rem 0 0;
-	}
-
 	.localized-editor-tabs {
 		display: flex;
 		flex-wrap: wrap;
@@ -207,26 +206,18 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 	}
 
 	.localized-editor-tab {
-		border: 1px solid rgba(var(--gray), 0.25);
 		border-radius: 999px;
-		padding: 0.4rem 0.8rem;
-		background: white;
-		font: inherit;
-		cursor: pointer;
-	}
-
-	.localized-editor-tab.is-active {
-		background: rgb(var(--accent));
-		border-color: rgb(var(--accent));
-		color: white;
+		padding: 0.45rem 0.85rem;
+		font-size: 0.85rem;
 	}
 
 	.localized-editor-panel {
 		display: grid;
 		gap: 1rem;
 		padding: 1rem;
-		border-radius: 18px;
-		background: rgba(var(--gray-light), 0.2);
+		border-radius: 1rem;
+		background: rgba(var(--gray-light), 0.3);
+		border: 1px solid rgba(var(--gray), 0.12);
 	}
 
 	.localized-editor-panel textarea {

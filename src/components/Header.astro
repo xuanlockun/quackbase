@@ -37,41 +37,13 @@ const getNavLabel = (item: SiteNavItem) => item.labelTranslations?.[language] ??
 const isActivePath = (href: string) => href === currentPathname;
 const hasActiveDescendant = (item: SiteNavItem): boolean =>
 	(item.children ?? []).some((child) => isActivePath(child.href) || hasActiveDescendant(child));
-
-const renderDropdownChild = (item: SiteNavItem, depth = 1) => {
-	const hasChildren = Boolean(item.children?.length);
-	const href = resolveNavHref(item.href);
-	const siblingActive = isActivePath(item.href);
-	return (
-		<li class:list={["dropdown-submenu", { "has-children": hasChildren }]}>
-			<a
-				class:list={["dropdown-item", { active: siblingActive }]}
-				href={href}
-				{...(hasChildren
-					? {
-							"data-bs-toggle": "dropdown",
-							"aria-expanded": "false",
-					  }
-					: {})}
-			>
-				{getNavLabel(item)}
-			</a>
-			{hasChildren && renderDropdownItems(item.children!, depth)}
-		</li>
-	);
-};
-
-const renderDropdownItems = (children: SiteNavItem[], depth = 0) => (
-	<ul class:list={["dropdown-menu", { "dropdown-submenu-menu": depth > 0 }]}>
-		{children.map((child) => renderDropdownChild(child, depth + 1))}
-	</ul>
-);
+const buildClass = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(" ");
 ---
 
-<header class="bg-white border-bottom">
-	<div class="container-fluid">
-		<nav class="navbar navbar-expand-lg">
-			<div class="container-fluid px-3">
+<header class="bg-white border-bottom shadow-sm">
+	<div class="container-fluid px-3 px-lg-4">
+		<nav class="navbar navbar-expand-lg py-2">
+			<div class="container-fluid px-0">
 				<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold" href={localizeHref("/")}>
 					<span class="border border-2 border-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px;">{siteTitle.charAt(0)}</span>
 					<span>{siteTitle}</span>
@@ -88,17 +60,17 @@ const renderDropdownItems = (children: SiteNavItem[], depth = 0) => (
 					<span class="navbar-toggler-icon"></span>
 				</button>
 				<div class="collapse navbar-collapse" id="mainNavbar">
-					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
-						{
-							navItems.map((item) => {
+					<ul class="navbar-nav me-auto mb-3 mb-lg-0 gap-lg-1">
+						{(() => {
+							const renderItem = (item: SiteNavItem) => {
 								const hasChildren = Boolean(item.children?.length);
 								const linkHref = resolveNavHref(item.href);
 								const active = isActivePath(item.href) || (hasChildren && hasActiveDescendant(item));
 
 								if (!hasChildren) {
 									return (
-										<li class="nav-item">
-											<a class:list={["nav-link", { active }]} href={linkHref}>
+										<li class={buildClass("nav-item")}>
+											<a class={buildClass("nav-link", active && "active")} href={linkHref}>
 												{getNavLabel(item)}
 											</a>
 										</li>
@@ -106,7 +78,7 @@ const renderDropdownItems = (children: SiteNavItem[], depth = 0) => (
 								}
 
 								return (
-									<li class:list={["nav-item", "dropdown", { active }]}>
+									<li class={buildClass("nav-item", "dropdown", active && "active")}>
 										<a
 											class="nav-link dropdown-toggle"
 											href={linkHref}
@@ -115,13 +87,17 @@ const renderDropdownItems = (children: SiteNavItem[], depth = 0) => (
 										>
 											{getNavLabel(item)}
 										</a>
-										{renderDropdownItems(item.children)}
+										<ul class={buildClass("dropdown-menu", "dropdown-submenu-menu")}>
+											{item.children!.map((child) => renderItem(child))}
+										</ul>
 									</li>
 								);
-							})
-						}
+							};
+
+							return navItems.map((item) => renderItem(item));
+						})()}
 					</ul>
-					<div class="d-flex align-items-center">
+					<div class="d-flex align-items-center mt-3 mt-lg-0">
 						<LanguageSwitch fullWidth={false} />
 					</div>
 				</div>

@@ -40,7 +40,7 @@ const texts = {
 
 <div class="table-responsive w-100">
 	<table
-		class="table table-striped table-borderless mb-0 w-100"
+		class="table table-striped table-hover align-middle mb-0 w-100"
 		data-language-table
 		data-api-base="/api/admin/languages"
 		data-text-empty={texts.emptyState}
@@ -67,7 +67,7 @@ const texts = {
 			{
 				languages.length === 0 ? (
 					<tr>
-						<td colspan="5" class="text-center text-muted py-4 small">
+						<td colspan="6" class="text-center text-muted py-4 small">
 							{texts.emptyState}
 						</td>
 					</tr>
@@ -92,12 +92,7 @@ const texts = {
 							<td>
 								<button
 									type="button"
-									class:list={[
-										"btn",
-										"btn-sm",
-										"btn-outline-secondary",
-										language.isDefault && "active",
-									]}
+									class:list={["btn", "btn-sm", "btn-outline-secondary", language.isDefault && "active"]}
 									aria-pressed={language.isDefault ? "true" : "false"}
 									data-action="set-default"
 									data-code={language.code}

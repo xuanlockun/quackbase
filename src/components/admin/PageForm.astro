@@ -90,7 +90,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 ---
 
 <div class="admin-form-header">
-	<a class="admin-ghost-button" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
+	<a class="btn btn-outline-secondary btn-sm" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
 	<p class="admin-muted">
 		{canSubmit ? t("messages.changesSavePageRoutes") : t("messages.cannotSavePage")}
 	</p>
@@ -104,6 +104,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 		<label>
 			<span>{t("labels.slug")}</span>
 			<input
+				class="form-control"
 				name="slug"
 				required
 				pattern="[a-z0-9-]+"
@@ -115,6 +116,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 		<label>
 			<span>{t("labels.description")}</span>
 			<input
+				class="form-control"
 				name="description"
 				required
 				value={page?.description ?? ""}
@@ -124,7 +126,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 		</label>
 		<label>
 			<span>{t("labels.status")}</span>
-			<select name="status" disabled={isDisabled}>
+			<select class="form-select" name="status" disabled={isDisabled}>
 				<option value="published" selected={page?.status !== "draft"}>{t("status.published")}</option>
 				<option value="draft" selected={page?.status === "draft"}>{t("status.draft")}</option>
 			</select>
@@ -142,15 +144,12 @@ const initialContactFields = contactFormFields.map((field) => ({
 				<h2>{t("headings.localizedContent")}</h2>
 				<p class="admin-muted">{t("messages.localizedPageHelp")}</p>
 			</div>
-			<div class="localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
+			<div class="nav nav-pills localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
 				{
 					languages.map((languageOption) => (
 						<button
 							type="button"
-							class:list={[
-								"localized-editor-tab",
-								initialLanguage === languageOption.code && "is-active",
-							]}
+							class:list={["nav-link localized-editor-tab", initialLanguage === languageOption.code && "active"]}
 							data-language-tab={languageOption.code}
 							role="tab"
 							aria-selected={initialLanguage === languageOption.code ? "true" : "false"}
@@ -179,6 +178,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 					<label>
 						<span>{t("labels.title")} ({languageOption.label})</span>
 						<input
+							class="form-control"
 							data-title-input={languageOption.code}
 							value={titleTranslations[languageOption.code] ?? ""}
 							placeholder={languageOption.code === def ? "About us" : languageOption.code === "vi" ? "Gioi thieu" : ""}
@@ -187,7 +187,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 					</label>
 					<label>
 						<span>{t("labels.content")} ({languageOption.label})</span>
-						<textarea data-content-input={languageOption.code} rows="14" disabled={isDisabled}
+						<textarea class="form-control" data-content-input={languageOption.code} rows="14" disabled={isDisabled}
 							>{contentTranslations[languageOption.code] ?? (languageOption.code === def ? "# New page" : "")}</textarea
 						>
 					</label>
@@ -196,39 +196,39 @@ const initialContactFields = contactFormFields.map((field) => ({
 		}
 	</div>
 
-        <div class="admin-form-section">
-                <div class="page-sections-heading">
-                        <div>
-                                <span>{t("headings.pageSections")}</span>
-                        </div>
-                        <div class="page-sections-actions">
-                                <select data-section-select data-section-add-label={t("actions.addSection")} disabled={isDisabled}></select>
-                                <button
-                                        class="admin-ghost-button"
-                                        type="button"
-                                        data-section-add
-                                        data-readonly={String(isDisabled)}
-                                        disabled={isDisabled}
-                                >
-                                        {t("actions.addSection")}
-                                </button>
-                        </div>
-                </div>
+	<div class="admin-form-section">
+		<div class="page-sections-heading">
+			<div>
+				<span>{t("headings.pageSections")}</span>
+			</div>
+			<div class="page-sections-actions">
+				<select class="form-select form-select-sm" data-section-select data-section-add-label={t("actions.addSection")} disabled={isDisabled}></select>
+				<button
+					class="btn btn-outline-secondary btn-sm"
+					type="button"
+					data-section-add
+					data-readonly={String(isDisabled)}
+					disabled={isDisabled}
+				>
+					{t("actions.addSection")}
+				</button>
+			</div>
+		</div>
 
-                <input
-                        type="hidden"
-                        name="pageSectionsConfig"
-                        data-page-sections-config
-                        value={JSON.stringify(initialSections)}
-                        disabled={isDisabled}
-                />
-                <input
-                        type="hidden"
-                        name="contactFormFields"
-                        data-contact-fields-payload
-                        value={JSON.stringify(initialContactFields)}
-                        disabled={isDisabled}
-                />
+		<input
+			type="hidden"
+			name="pageSectionsConfig"
+			data-page-sections-config
+			value={JSON.stringify(initialSections)}
+			disabled={isDisabled}
+		/>
+		<input
+			type="hidden"
+			name="contactFormFields"
+			data-contact-fields-payload
+			value={JSON.stringify(initialContactFields)}
+			disabled={isDisabled}
+		/>
 
 		<div
 			class="admin-table"
@@ -289,49 +289,49 @@ const initialContactFields = contactFormFields.map((field) => ({
 		</div>
 	</div>
 
-        <div class="admin-form-section contact-fields-wrapper" data-contact-fields-wrapper hidden>
-                <div
-                        class="contact-fields-editor"
-                        data-contact-fields-editor
-                        data-disabled={String(isDisabled)}
-                        data-remove-label={t("actions.remove")}
-                        data-type-label={t("labels.fieldType")}
-                        data-required-label={t("labels.required")}
-                        data-label-en={`${t("labels.label")} (EN)`}
-                        data-label-vi={`${t("labels.label")} (VI)`}
-                        data-text-option={t("labels.textField")}
-                        data-email-option={t("labels.emailField")}
-                        data-textarea-option={t("labels.textareaField")}
-                >
-                        <div class="contact-fields-toolbar">
-                                <strong>{t("headings.contactFormFields")}</strong>
-                                <button class="admin-ghost-button" type="button" data-contact-field-add data-readonly={String(isDisabled)} disabled={isDisabled}>
-                                        {t("actions.addField")}
-                                </button>
-                        </div>
-                        <p class="admin-muted">{t("messages.contactFormSharedConfig")}</p>
-                        <div class="contact-fields-config">
-                                <div class="contact-fields-table" role="table">
-                                        <div class="contact-fields-header" role="row">
-                                                <span></span>
-                                                <span>{t("labels.fieldType")}</span>
-                                                <span>{t("labels.label")} (EN)</span>
-                                                <span>{t("labels.label")} (VI)</span>
-                                                <span>{t("labels.required")}</span>
-                                                <span>{t("labels.action")}</span>
-                                        </div>
-                                        <div class="contact-fields-rows" data-contact-fields-rows></div>
-                                </div>
-                                <p class="admin-muted" data-contact-fields-empty hidden>
-                                        {t("messages.noContactFieldsConfigured")}
-                                </p>
-                        </div>
-                </div>
-        </div>
+	<div class="admin-form-section contact-fields-wrapper" data-contact-fields-wrapper hidden>
+		<div
+			class="contact-fields-editor"
+			data-contact-fields-editor
+			data-disabled={String(isDisabled)}
+			data-remove-label={t("actions.remove")}
+			data-type-label={t("labels.fieldType")}
+			data-required-label={t("labels.required")}
+			data-label-en={`${t("labels.label")} (EN)`}
+			data-label-vi={`${t("labels.label")} (VI)`}
+			data-text-option={t("labels.textField")}
+			data-email-option={t("labels.emailField")}
+			data-textarea-option={t("labels.textareaField")}
+		>
+			<div class="contact-fields-toolbar">
+				<strong>{t("headings.contactFormFields")}</strong>
+				<button class="btn btn-outline-secondary btn-sm" type="button" data-contact-field-add data-readonly={String(isDisabled)} disabled={isDisabled}>
+					{t("actions.addField")}
+				</button>
+			</div>
+			<p class="admin-muted">{t("messages.contactFormSharedConfig")}</p>
+			<div class="contact-fields-config">
+				<div class="contact-fields-table" role="table">
+					<div class="contact-fields-header" role="row">
+						<span></span>
+						<span>{t("labels.fieldType")}</span>
+						<span>{t("labels.label")} (EN)</span>
+						<span>{t("labels.label")} (VI)</span>
+						<span>{t("labels.required")}</span>
+						<span>{t("labels.action")}</span>
+					</div>
+					<div class="contact-fields-rows" data-contact-fields-rows></div>
+				</div>
+				<p class="admin-muted" data-contact-fields-empty hidden>
+					{t("messages.noContactFieldsConfigured")}
+				</p>
+			</div>
+		</div>
+	</div>
 
 	<div class="admin-form-actions">
-		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
-		{mode === "edit" && page && <a href={getLocalizedPagePath(page.slug, language, catalog)}>{t("actions.openPage")}</a>}
+		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		{mode === "edit" && page && <a class="btn btn-outline-secondary" href={getLocalizedPagePath(page.slug, language, catalog)}>{t("actions.openPage")}</a>}
 	</div>
 </form>
 
@@ -357,12 +357,6 @@ const initialContactFields = contactFormFields.map((field) => ({
 
 	.localized-editor-header p {
 		margin: 0.35rem 0 0;
-	}
-
-	.localized-editor-tabs {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
 	}
 
 	.admin-sections-table {
@@ -413,23 +407,18 @@ const initialContactFields = contactFormFields.map((field) => ({
 	}
 
 	.localized-editor-tab {
-		border: 1px solid rgba(var(--gray), 0.25);
 		border-radius: 999px;
-		padding: 0.4rem 0.8rem;
-		background: white;
-		font: inherit;
-		cursor: pointer;
-	}
-
-	.localized-editor-tab.is-active {
-		background: rgb(var(--accent));
-		border-color: rgb(var(--accent));
-		color: white;
+		padding: 0.45rem 0.85rem;
+		font-size: 0.85rem;
 	}
 
 	.localized-editor-panel {
 		display: grid;
 		gap: 0.8rem;
+		padding: 1rem;
+		border: 1px solid rgba(var(--gray), 0.12);
+		border-radius: 1rem;
+		background: rgba(var(--gray-light), 0.3);
 	}
 
 	.localized-editor-panel textarea {
@@ -439,7 +428,7 @@ const initialContactFields = contactFormFields.map((field) => ({
 	.page-sections-heading {
 		display: flex;
 		justify-content: space-between;
-		align-items: baseline;
+		align-items: center;
 		gap: 1rem;
 	}
 
@@ -451,10 +440,6 @@ const initialContactFields = contactFormFields.map((field) => ({
 
 	.page-sections-actions select {
 		min-width: 200px;
-		border-radius: 8px;
-		border: 1px solid rgba(var(--gray), 0.35);
-		padding: 0.4rem 0.6rem;
-		background: white;
 	}
 
 	.contact-fields-toolbar strong {
@@ -466,6 +451,17 @@ const initialContactFields = contactFormFields.map((field) => ({
 		.contact-fields-toolbar {
 			flex-direction: column;
 			align-items: stretch;
+		}
+
+		.page-sections-heading,
+		.page-sections-actions {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.page-sections-actions select {
+			min-width: 0;
+			width: 100%;
 		}
 	}
 </style>

@@ -29,7 +29,7 @@ const selectedPermissionIds = new Set(role?.permissions.map((permission) => perm
 ---
 
 <div class="admin-form-header">
-	<a class="admin-ghost-button" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
+	<a class="btn btn-outline-secondary btn-sm" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
 	<p class="admin-muted">
 		{canSubmit
 			? t("messages.manageRoleForm")
@@ -44,6 +44,7 @@ const selectedPermissionIds = new Set(role?.permissions.map((permission) => perm
 		<label>
 			<span>{t("labels.roleName")}</span>
 			<input
+				class="form-control"
 				name="name"
 				required={mode === "create"}
 				pattern="[a-z0-9.-]+"
@@ -54,13 +55,13 @@ const selectedPermissionIds = new Set(role?.permissions.map((permission) => perm
 		</label>
 		<label>
 			<span>{t("labels.displayName")}</span>
-			<input name="label" required value={role?.label ?? ""} disabled={isDisabled} />
+			<input class="form-control" name="label" required value={role?.label ?? ""} disabled={isDisabled} />
 		</label>
 	</div>
 
 	<label>
 		<span>{t("labels.description")}</span>
-		<textarea name="description" disabled={isDisabled}>{role?.description ?? ""}</textarea>
+		<textarea class="form-control" name="description" rows="4" disabled={isDisabled}>{role?.description ?? ""}</textarea>
 	</label>
 
 	<div class="admin-form-section">
@@ -70,13 +71,14 @@ const selectedPermissionIds = new Set(role?.permissions.map((permission) => perm
 				permissions.map((permission) => (
 					<label class="admin-check-row">
 						<input
+							class="form-check-input"
 							type="checkbox"
 							name="permissionIds"
 							value={permission.id}
 							checked={selectedPermissionIds.has(permission.id)}
 							disabled={isDisabled}
 						/>
-						{permission.label}
+						<span>{permission.label}</span>
 					</label>
 				))
 			}
@@ -84,6 +86,6 @@ const selectedPermissionIds = new Set(role?.permissions.map((permission) => perm
 	</div>
 
 	<div class="admin-form-actions">
-		<button class="admin-primary-button" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
 	</div>
 </form>

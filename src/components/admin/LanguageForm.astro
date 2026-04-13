@@ -19,13 +19,14 @@ const messages = {
 <form
 	action="/api/admin/languages"
 	method="post"
-	class="card card-body"
+	class="card shadow-sm border-0"
 	data-language-form
 	data-message-success={messages.success}
 	data-message-error={messages.error}
 >
-	<h3 class="h5 mb-3">{t("headings.languages")}</h3>
-	<div class="mb-3">
+	<div class="card-body">
+		<h3 class="h5 mb-3">{t("headings.languages")}</h3>
+		<div class="mb-3">
 		<label class="form-label" for="language-code">{t("labels.code")}</label>
 		<input
 			class="form-control"
@@ -54,7 +55,6 @@ const messages = {
 			{t("actions.setDefaultLanguage")}
 		</label>
 	</div>
-	<button type="submit" class="btn btn-primary w-100">
-		{t("actions.createLanguage")}
-	</button>
+	<button type="submit" class="btn btn-primary w-100">{t("actions.createLanguage")}</button>
+	</div>
 </form>

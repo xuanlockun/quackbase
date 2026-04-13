@@ -34,7 +34,7 @@ const { t } = getUiTranslations(Astro);
 		{
 			groupedPermissions.map(([resource, resourcePermissions]) => (
 				<article class="admin-resource-card">
-					<h2>{resource}</h2>
+					<h2 class="h5 mb-3 text-capitalize">{resource}</h2>
 					<div class="permission-badge-row">
 						{resourcePermissions.map((permission) => (
 							<div class="permission-entry">
@@ -53,16 +53,17 @@ const { t } = getUiTranslations(Astro);
 <style>
 	.permission-badge-row {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-		gap: 0.5rem;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.75rem;
 	}
 
 	.permission-entry {
 		display: grid;
-		gap: 0.2rem;
-		padding: 0.4rem;
-		border: 1px solid rgb(var(--gray-light));
+		gap: 0.35rem;
+		padding: 0.85rem;
+		border: 1px solid rgba(var(--gray), 0.16);
 		background: #f7f8fa;
+		border-radius: 0.75rem;
 	}
 
 	.permission-entry p {

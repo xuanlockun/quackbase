@@ -33,15 +33,15 @@ let siteConfig = {
 	footerText: "Edge CMS. Content updates go live straight from D1.",
 	footerBackground: "#eef2f7",
 	footerTextColor: "#60739f",
-		navItems: [
-			{
-				label: t("nav.home"),
-				labelTranslations: { en: "Home", vi: "Trang chu" },
-				href: "/",
-				sortOrder: 0,
-			},
-		],
-	};
+	navItems: [
+		{
+			label: t("nav.home"),
+			labelTranslations: { en: "Home", vi: "Trang chu" },
+			href: "/",
+			sortOrder: 0,
+		},
+	],
+};
 
 try {
 	siteConfig = await getSiteConfig(getDb(Astro.locals));
@@ -60,19 +60,19 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 	pageDescription={t("messages.headerFooterDescription")}
 >
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("siteSaved") && <p class="admin-notice">{t("messages.headerSettingsSaved")}</p>}
-		{Astro.url.searchParams.get("siteError") && <p class="admin-notice admin-notice-error">{t("messages.headerSettingsFailed")}</p>}
-		{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+		{Astro.url.searchParams.get("siteSaved") && <p class="alert alert-success mb-0">{t("messages.headerSettingsSaved")}</p>}
+		{Astro.url.searchParams.get("siteError") && <p class="alert alert-danger mb-0">{t("messages.headerSettingsFailed")}</p>}
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 		<form method="post" action="/api/admin/site" class="admin-form-stack">
 			<div class="admin-grid-two">
-				<label><span>{t("labels.siteTitle")}</span><input name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
-				<label><span>{t("labels.homePageSlug")}</span><input name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
-				<label><span>{t("labels.headerBackground")}</span><input name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
-				<label><span>{t("labels.headerTextColor")}</span><input name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
-				<label><span>{t("labels.headerAccentColor")}</span><input name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
-				<label><span>{t("labels.footerBackground")}</span><input name="footerBackground" value={siteConfig.footerBackground} placeholder="#eef2f7" disabled={Boolean(loadError)} /></label>
-				<label><span>{t("labels.footerTextColor")}</span><input name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
-				<label style="grid-column: 1 / -1;"><span>{t("labels.footerText")}</span><input name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.siteTitle")}</span><input class="form-control" name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.homePageSlug")}</span><input class="form-control" name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.headerBackground")}</span><input class="form-control" name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.headerTextColor")}</span><input class="form-control" name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.headerAccentColor")}</span><input class="form-control" name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.footerBackground")}</span><input class="form-control" name="footerBackground" value={siteConfig.footerBackground} placeholder="#eef2f7" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.footerTextColor")}</span><input class="form-control" name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
+				<label style="grid-column: 1 / -1;"><span>{t("labels.footerText")}</span><input class="form-control" name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
 			</div>
 			<div class="admin-form-section">
 				<span>{t("labels.navigationItems")}</span>
@@ -92,7 +92,8 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 					data-indent-label={t("actions.indent")}
 					data-outdent-label={t("actions.outdent")}
 				>
-					<table class="nav-items-table admin-table" role="table">
+					<div class="table-responsive">
+						<table class="table table-striped table-hover align-middle nav-items-table mb-0" role="table">
 						<thead>
 							<tr>
 								<th></th>
@@ -103,11 +104,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 							</tr>
 						</thead>
 						<tbody data-nav-items-rows>
-							<tr
-								class="admin-table-empty-row admin-muted"
-								data-nav-empty
-								hidden={navRows.length > 0}
-							>
+							<tr class="admin-table-empty-row admin-muted" data-nav-empty hidden={navRows.length > 0}>
 								<td colSpan="5">{t("messages.noNavigationItemsConfigured")}</td>
 							</tr>
 							{
@@ -126,6 +123,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 										</td>
 										<td class="nav-label-cell">
 											<input
+												class="form-control form-control-sm"
 												type="text"
 												value={item.labelTranslations?.en ?? item.label ?? ""}
 												placeholder="Home"
@@ -135,6 +133,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 										</td>
 										<td class="nav-label-cell">
 											<input
+												class="form-control form-control-sm"
 												type="text"
 												value={item.labelTranslations?.vi ?? ""}
 												placeholder="Trang chu"
@@ -144,6 +143,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 										</td>
 										<td>
 											<input
+												class="form-control form-control-sm"
 												type="text"
 												value={item.href}
 												placeholder="/about or https://example.com"
@@ -154,7 +154,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 										<td class="nav-item-actions">
 											<div class="nav-action-buttons">
 												<button
-													class="admin-ghost-button nav-action mini"
+													class="btn btn-sm btn-outline-secondary nav-action mini"
 													type="button"
 													data-nav-add-child
 													disabled={Boolean(loadError)}
@@ -163,7 +163,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 													+ Child
 												</button>
 												<button
-													class="admin-ghost-button nav-action mini"
+													class="btn btn-sm btn-outline-secondary nav-action mini"
 													type="button"
 													data-nav-indent
 													disabled={Boolean(loadError)}
@@ -172,7 +172,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 													↳
 												</button>
 												<button
-													class="admin-ghost-button nav-action mini"
+													class="btn btn-sm btn-outline-secondary nav-action mini"
 													type="button"
 													data-nav-outdent
 													disabled={Boolean(loadError)}
@@ -181,7 +181,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 													↰
 												</button>
 												<button
-													class="admin-ghost-button nav-item-remove"
+													class="btn btn-sm btn-outline-danger nav-item-remove"
 													type="button"
 													data-nav-remove
 													disabled={Boolean(loadError)}
@@ -194,21 +194,22 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 								))
 							}
 						</tbody>
-					</table>
-					<button class="admin-ghost-button" type="button" data-nav-add disabled={Boolean(loadError)}>
+						</table>
+					</div>
+					<button class="btn btn-outline-secondary" type="button" data-nav-add disabled={Boolean(loadError)}>
 						{t("actions.addRow")}
 					</button>
 				</div>
 			</div>
 			<div class="admin-form-section">
 				<p class="admin-muted">{t("messages.navStorageHelp")}</p>
-				<button class="admin-primary-button" type="submit" disabled={Boolean(loadError)}>{t("actions.saveHeader")}</button>
+				<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>{t("actions.saveHeader")}</button>
 			</div>
 		</form>
 		<div class="admin-form-section">
 			<strong>{t("headings.contactFormFields")}</strong>
 			<p class="admin-muted">{t("messages.contactFormSharedConfig")}</p>
-			<p><a class="admin-ghost-button" href="/admin/pages">{t("actions.manageContactForm")}</a></p>
+			<p><a class="btn btn-outline-secondary" href="/admin/pages">{t("actions.manageContactForm")}</a></p>
 		</div>
 	</div>
 </AdminLayout>
@@ -512,7 +513,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 
 		const childButton = document.createElement("button");
 		childButton.type = "button";
-		childButton.className = "admin-ghost-button nav-action mini";
+		childButton.className = "btn btn-sm btn-outline-secondary nav-action mini";
 		childButton.dataset.navAddChild = "";
 		childButton.textContent = "+ Child";
 		childButton.setAttribute("aria-label", addChildLabel);
@@ -523,7 +524,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 
 		const indentButton = document.createElement("button");
 		indentButton.type = "button";
-		indentButton.className = "admin-ghost-button nav-action mini";
+		indentButton.className = "btn btn-sm btn-outline-secondary nav-action mini";
 		indentButton.dataset.navIndent = "";
 		indentButton.textContent = "↳";
 		indentButton.setAttribute("aria-label", indentLabel);
@@ -534,7 +535,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 
 		const outdentButton = document.createElement("button");
 		outdentButton.type = "button";
-		outdentButton.className = "admin-ghost-button nav-action mini";
+		outdentButton.className = "btn btn-sm btn-outline-secondary nav-action mini";
 		outdentButton.dataset.navOutdent = "";
 		outdentButton.textContent = "↰";
 		outdentButton.setAttribute("aria-label", outdentLabel);
@@ -545,7 +546,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 
 		const removeButton = document.createElement("button");
 		removeButton.type = "button";
-		removeButton.className = "admin-ghost-button nav-item-remove";
+		removeButton.className = "btn btn-sm btn-outline-danger nav-item-remove";
 		removeButton.dataset.navRemove = "";
 		removeButton.textContent = removeLabel;
 		if (isReadOnly) {
