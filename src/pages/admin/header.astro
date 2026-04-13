@@ -217,19 +217,11 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 <style>
 	.nav-items-editor {
 		display: grid;
-		gap: 0.7rem;
+		gap: 0.85rem;
 	}
 
 	.nav-items-table {
 		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.nav-items-table th,
-	.nav-items-table td {
-		padding: 0.45rem 0.6rem;
-		border-bottom: 1px solid rgba(var(--gray), 0.18);
-		vertical-align: middle;
 	}
 
 	.nav-items-table thead th {
@@ -240,22 +232,8 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 		letter-spacing: 0.04em;
 	}
 
-	.nav-items-table tbody tr:last-child td {
-		border-bottom: none;
-	}
-
-	.nav-item-row input {
-		width: 100%;
-		border-radius: 6px;
-		border: 1px solid rgba(var(--gray), 0.3);
-		background: white;
-		font: inherit;
-		padding: 0.35rem 0.5rem;
-	}
-
 	.nav-item-row td {
-		padding-top: 0.55rem;
-		padding-bottom: 0.55rem;
+		vertical-align: middle;
 	}
 
 	.drag-cell {
@@ -267,18 +245,6 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 	}
 
 	.nav-items-table .nav-item-row {
-		display: table-row;
-		background: transparent;
-		box-shadow: none;
-		border-radius: 0;
-		padding: 0;
-	}
-
-	.nav-items-table .nav-item-row td {
-		padding: 0.35rem 0.45rem;
-	}
-
-	.nav-item-row {
 		--nav-depth: 0;
 	}
 
@@ -293,8 +259,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 	}
 
 	.nav-action-buttons .nav-action.mini {
-		padding: 0.25rem 0.45rem;
-		font-size: 0.75rem;
+		padding-inline: 0.55rem;
 		min-width: 2.5rem;
 	}
 </style>
@@ -526,7 +491,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 		indentButton.type = "button";
 		indentButton.className = "btn btn-sm btn-outline-secondary nav-action mini";
 		indentButton.dataset.navIndent = "";
-		indentButton.textContent = "↳";
+		indentButton.textContent = ">";
 		indentButton.setAttribute("aria-label", indentLabel);
 		if (isReadOnly) {
 			indentButton.disabled = true;
@@ -537,7 +502,7 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 		outdentButton.type = "button";
 		outdentButton.className = "btn btn-sm btn-outline-secondary nav-action mini";
 		outdentButton.dataset.navOutdent = "";
-		outdentButton.textContent = "↰";
+		outdentButton.textContent = "<";
 		outdentButton.setAttribute("aria-label", outdentLabel);
 		if (isReadOnly) {
 			outdentButton.disabled = true;

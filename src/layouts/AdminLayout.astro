@@ -98,7 +98,7 @@ const toggleLabel = "Toggle sidebar navigation";
 			</header>
 
 			<div
-				class="offcanvas offcanvas-start offcanvas-lg admin-offcanvas"
+				class="offcanvas offcanvas-start admin-offcanvas d-lg-none"
 				tabindex="-1"
 				id="adminSidebar"
 				aria-labelledby="adminSidebarLabel"
@@ -112,7 +112,7 @@ const toggleLabel = "Toggle sidebar navigation";
 				</div>
 			</div>
 
-			<div class="admin-content d-flex flex-grow-1">
+			<div class="admin-content d-flex flex-grow-1 align-items-stretch">
 				<aside class="admin-sidebar d-none d-lg-flex flex-column h-100 bg-dark text-white shadow-sm">
 					<Sidebar session={session} />
 				</aside>
