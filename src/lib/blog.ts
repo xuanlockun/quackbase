@@ -85,6 +85,97 @@ export interface SiteNavItem {
 	labelTranslations: LocalizedText;
 	href: string;
 	sortOrder: number;
+	children?: SiteNavItem[];
+}
+
+type SiteNavTreePayload = {
+	label?: string;
+	labelTranslations?: LocalizedText;
+	href?: string;
+	children?: SiteNavTreePayload[];
+};
+
+function normalizeNavTreePayload(
+	payload: unknown,
+	catalog: LanguageCatalogState,
+): SiteNavItem[] {
+	if (!Array.isArray(payload)) {
+		return [];
+	}
+
+	return payload
+		.map((node) => normalizeNavTreeNode(node, catalog))
+		.filter((entry): entry is SiteNavItem => Boolean(entry));
+}
+
+function normalizeNavTreeNode(
+	payload: unknown,
+	catalog: LanguageCatalogState,
+): SiteNavItem | null {
+	if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+		return null;
+	}
+
+	const record = payload as Record<string, unknown>;
+	const href = typeof record.href === "string" ? record.href.trim() : "";
+	if (!href) {
+		return null;
+	}
+
+	const labelTranslations = normalizeLocalizedText(record.label ?? record.labelTranslations, {
+		fallbackValue: typeof record.label === "string" ? record.label : undefined,
+		requireDefault: true,
+	});
+
+	if (!labelTranslations) {
+		return null;
+	}
+
+	const children = normalizeNavTreePayload(record.children ?? [], catalog);
+	return {
+		label: resolveLocalizedValue(labelTranslations, catalog.defaultLanguageCode, catalog),
+		labelTranslations,
+		href,
+		sortOrder: 0,
+		children: children.length ? children : undefined,
+	};
+}
+
+function assignNavSortOrders(items: SiteNavItem[]): void {
+	let nextOrder = 0;
+	const walk = (nodes: SiteNavItem[]) => {
+		for (const node of nodes) {
+			node.sortOrder = nextOrder++;
+			if (node.children?.length) {
+				walk(node.children);
+			}
+		}
+	};
+	walk(items);
+}
+
+function flattenNavTree(items: SiteNavItem[]): SiteNavItem[] {
+	const flattened: SiteNavItem[] = [];
+	const walk = (nodes: SiteNavItem[]) => {
+		for (const node of nodes) {
+			const { children, ...base } = node;
+			flattened.push({ ...base, children: undefined });
+			if (children?.length) {
+				walk(children);
+			}
+		}
+	};
+	walk(items);
+	return flattened;
+}
+
+function serializeNavTree(items: SiteNavItem[]): SiteNavTreePayload[] {
+	return items.map((node) => ({
+		label: node.label,
+		labelTranslations: node.labelTranslations,
+		href: node.href,
+		children: node.children?.length ? serializeNavTree(node.children) : undefined,
+	}));
 }
 
 export interface SiteConfig {
@@ -246,7 +337,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const settings = await db
 		.prepare(
-			`SELECT site_title, home_page_slug, header_background, header_text_color, header_accent_color
+			`SELECT site_title, home_page_slug, header_background, header_text_color, header_accent_color, nav_items
 			FROM site_settings
 			WHERE id = 1`,
 		)
@@ -256,6 +347,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			header_background: string;
 			header_text_color: string;
 			header_accent_color: string;
+			nav_items: string | null;
 		}>();
 
 	const footerSettings = await db
@@ -279,16 +371,18 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 		)
 		.all<{ label: string; href: string; sort_order: number }>();
 
-	return {
-		siteTitle: settings?.site_title ?? "Edge CMS",
-		homePageSlug: settings?.home_page_slug ?? "home",
-		headerBackground: settings?.header_background ?? "#ffffff",
-		headerTextColor: settings?.header_text_color ?? "#0f1219",
-		headerAccentColor: settings?.header_accent_color ?? "#2337ff",
-		footerText: footerSettings?.footer_text ?? "Edge CMS. Content updates go live straight from D1.",
-		footerBackground: footerSettings?.footer_background ?? "#eef2f7",
-		footerTextColor: footerSettings?.footer_text_color ?? "#60739f",
-		navItems: (navResult.results ?? []).map((item) => {
+	let navItems: SiteNavItem[] = [];
+	if (settings?.nav_items) {
+		try {
+			const parsedNav = JSON.parse(settings.nav_items);
+			navItems = normalizeNavTreePayload(parsedNav, catalog);
+		} catch {
+			navItems = [];
+		}
+	}
+
+	if (!navItems.length) {
+		navItems = (navResult.results ?? []).map((item) => {
 			const labelTranslations = normalizeLocalizedText(item.label, {
 				fallbackValue: item.label,
 				defaultLanguageCode: catalog.defaultLanguageCode,
@@ -299,7 +393,21 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 				href: item.href,
 				sortOrder: item.sort_order,
 			};
-		}),
+		});
+	}
+
+	assignNavSortOrders(navItems);
+
+	return {
+		siteTitle: settings?.site_title ?? "Edge CMS",
+		homePageSlug: settings?.home_page_slug ?? "home",
+		headerBackground: settings?.header_background ?? "#ffffff",
+		headerTextColor: settings?.header_text_color ?? "#0f1219",
+		headerAccentColor: settings?.header_accent_color ?? "#2337ff",
+		footerText: footerSettings?.footer_text ?? "Edge CMS. Content updates go live straight from D1.",
+		footerBackground: footerSettings?.footer_background ?? "#eef2f7",
+		footerTextColor: footerSettings?.footer_text_color ?? "#60739f",
+		navItems,
 	};
 }
 
@@ -319,18 +427,23 @@ export async function saveSiteConfig(
 ): Promise<void> {
 	await ensureSiteTables(db);
 	const catalog = await loadLanguageCatalog(db);
+	const navTree = input.navItems ?? [];
+	assignNavSortOrders(navTree);
+	const navPayload = JSON.stringify(serializeNavTree(navTree));
+	const flatNavItems = flattenNavTree(navTree);
 
 	const statements = [
 		db
 			.prepare(
-				`INSERT INTO site_settings (id, site_title, home_page_slug, header_background, header_text_color, header_accent_color, updated_at)
-				VALUES (1, ?1, ?2, ?3, ?4, ?5, CURRENT_TIMESTAMP)
+				`INSERT INTO site_settings (id, site_title, home_page_slug, header_background, header_text_color, header_accent_color, nav_items, updated_at)
+				VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP)
 				ON CONFLICT(id) DO UPDATE SET
 					site_title = excluded.site_title,
 					home_page_slug = excluded.home_page_slug,
 					header_background = excluded.header_background,
 					header_text_color = excluded.header_text_color,
 					header_accent_color = excluded.header_accent_color,
+					nav_items = excluded.nav_items,
 					updated_at = CURRENT_TIMESTAMP`,
 			)
 			.bind(
@@ -339,6 +452,7 @@ export async function saveSiteConfig(
 				sanitizeHexColor(input.headerBackground, "#ffffff"),
 				sanitizeHexColor(input.headerTextColor, "#0f1219"),
 				sanitizeHexColor(input.headerAccentColor, "#2337ff"),
+				navPayload,
 			),
 		db
 			.prepare(
@@ -356,13 +470,13 @@ export async function saveSiteConfig(
 				sanitizeHexColor(input.footerTextColor, "#60739f"),
 			),
 		db.prepare(`DELETE FROM navigation_items`),
-		...input.navItems.map((item, index) =>
+		...flatNavItems.map((item) =>
 			db
 				.prepare(
 					`INSERT INTO navigation_items (label, href, sort_order, is_visible)
 					VALUES (?1, ?2, ?3, 1)`,
 				)
-				.bind(stringifyLocalizedText(item.labelTranslations, catalog), normalizeHref(item.href), index),
+				.bind(stringifyLocalizedText(item.labelTranslations, catalog), normalizeHref(item.href), item.sortOrder),
 		),
 	];
 
@@ -736,49 +850,42 @@ export function parseSiteForm(formData: FormData): {
 	const footerBackground = optionalString(formData, "footerBackground") || "#eef2f7";
 	const footerTextColor = optionalString(formData, "footerTextColor") || "#60739f";
 	const navRaw = optionalString(formData, "navItems");
-
 	let navItems: SiteNavItem[] = [];
-	try {
-		const parsed = JSON.parse(navRaw);
-		if (Array.isArray(parsed)) {
-			navItems = parsed.map((item, index) => {
-				const record = item as Record<string, unknown>;
-				const href = typeof record.href === "string" ? record.href.trim() : "";
-				const labelTranslations = normalizeLocalizedText(record.label ?? record.labelTranslations, {
-					requireDefault: true,
-				});
-				if (!href) {
-					throw new Error("Navigation items must include a link.");
-				}
-				return {
-					label: resolveLocalizedValue(labelTranslations, DEFAULT_LANGUAGE),
-					labelTranslations,
-					href,
-					sortOrder: index,
-				};
-			});
+	const catalog = catalogOrFallback();
+	if (navRaw) {
+		let parsed: unknown;
+		try {
+			parsed = JSON.parse(navRaw);
+		} catch {
+			parsed = null;
 		}
-	} catch {
-		navItems = navRaw
-			.split(/\r?\n/)
-			.map((line) => line.trim())
-			.filter(Boolean)
-			.map((line, index) => {
-				const [labelPart, hrefPart] = line.split("|");
-				const label = labelPart?.trim();
-				const href = hrefPart?.trim();
-				if (!label || !href) {
-					throw new Error("Navigation items must use the format Label|/path");
-				}
-				const labelTranslations = normalizeLocalizedText({ en: label }, { requireDefault: true });
-				return {
-					label,
-					labelTranslations,
-					href,
-					sortOrder: index,
-				};
-			});
+
+		if (Array.isArray(parsed)) {
+			navItems = normalizeNavTreePayload(parsed, catalog);
+		} else {
+			navItems = navRaw
+				.split(/\r?\n/)
+				.map((line) => line.trim())
+				.filter(Boolean)
+				.map((line, index) => {
+					const [labelPart, hrefPart] = line.split("|");
+					const label = labelPart?.trim();
+					const href = hrefPart?.trim();
+					if (!label || !href) {
+						throw new Error("Navigation items must use the format Label|/path");
+					}
+					const labelTranslations = normalizeLocalizedText({ en: label }, { requireDefault: true });
+					return {
+						label,
+						labelTranslations,
+						href,
+						sortOrder: index,
+					};
+				});
+		}
 	}
+
+	assignNavSortOrders(navItems);
 
 	return {
 		siteTitle,
@@ -1024,6 +1131,10 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 	const columnNames = new Set((pageColumns.results ?? []).map((column) => column.name));
 	const settingsColumns = await db.prepare(`PRAGMA table_info(site_settings)`).all<{ name: string }>();
 	const settingsColumnNames = new Set((settingsColumns.results ?? []).map((column) => column.name));
+
+	if (!settingsColumnNames.has("nav_items")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN nav_items TEXT NOT NULL DEFAULT '[]'`).run();
+	}
 
 	if (!columnNames.has("page_sections")) {
 		await db.prepare(`ALTER TABLE site_pages ADD COLUMN page_sections TEXT NOT NULL DEFAULT '[]'`).run();

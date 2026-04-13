@@ -3,7 +3,7 @@ export const prerender = false;
 
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { SITE_TITLE } from "../../consts";
-import { getDb, getSiteConfig } from "../../lib/blog";
+import { getDb, getSiteConfig, type SiteNavItem } from "../../lib/blog";
 import { getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
@@ -11,6 +11,17 @@ if (!session) {
 	return Astro.redirect("/admin/login");
 }
 const { t } = getUiTranslations(Astro);
+
+const flattenNavItems = (items: SiteNavItem[] = [], depth = 0): { item: SiteNavItem; depth: number }[] => {
+	const rows: { item: SiteNavItem; depth: number }[] = [];
+	for (const entry of items) {
+		rows.push({ item: entry, depth });
+		if (entry.children?.length) {
+			rows.push(...flattenNavItems(entry.children, depth + 1));
+		}
+	}
+	return rows;
+};
 
 let loadError = "";
 let siteConfig = {
@@ -22,22 +33,24 @@ let siteConfig = {
 	footerText: "Edge CMS. Content updates go live straight from D1.",
 	footerBackground: "#eef2f7",
 	footerTextColor: "#60739f",
-	navItems: [
-		{
-			label: t("nav.home"),
-			labelTranslations: { en: "Home", vi: "Trang chu" },
-			href: "/",
-			sortOrder: 0,
-		},
-	],
-};
+		navItems: [
+			{
+				label: t("nav.home"),
+				labelTranslations: { en: "Home", vi: "Trang chu" },
+				href: "/",
+				sortOrder: 0,
+			},
+		],
+	};
 
 try {
 	siteConfig = await getSiteConfig(getDb(Astro.locals));
 } catch (error) {
 	loadError = error instanceof Error ? error.message : t("messages.failedToLoadSiteSettings");
 }
----
+
+const navRows = flattenNavItems(siteConfig.navItems ?? []);
+--- 
 
 <AdminLayout
 	title={t("nav.header")}
@@ -67,13 +80,7 @@ try {
 					type="hidden"
 					name="navItems"
 					id="nav-items-payload"
-					value={JSON.stringify(
-						siteConfig.navItems.map((item, index) => ({
-							label: item.labelTranslations,
-							href: item.href,
-							order: index + 1,
-						})),
-					)}
+					value={JSON.stringify(siteConfig.navItems ?? [])}
 					disabled={Boolean(loadError)}
 				/>
 				<div
@@ -81,6 +88,9 @@ try {
 					data-nav-items-editor
 					data-disabled={Boolean(loadError)}
 					data-remove-label={t("actions.remove")}
+					data-add-child-label={t("actions.addChild")}
+					data-indent-label={t("actions.indent")}
+					data-outdent-label={t("actions.outdent")}
 				>
 					<table class="nav-items-table admin-table" role="table">
 						<thead>
@@ -96,22 +106,25 @@ try {
 							<tr
 								class="admin-table-empty-row admin-muted"
 								data-nav-empty
-								hidden={siteConfig.navItems.length > 0}
+								hidden={navRows.length > 0}
 							>
 								<td colSpan="5">{t("messages.noNavigationItemsConfigured")}</td>
 							</tr>
 							{
-								siteConfig.navItems.map((item) => (
+								navRows.map(({ item, depth }, index) => (
 									<tr
 										class="nav-item-row"
 										role="row"
 										data-nav-row
+										data-depth={depth}
+										style={`--nav-depth: ${depth}`}
 										draggable={!Boolean(loadError) ? "true" : "false"}
+										data-row-index={index}
 									>
 										<td class="drag-cell">
 											<span class="nav-drag-handle" data-drag-handle aria-label="Drag to reorder"></span>
 										</td>
-										<td>
+										<td class="nav-label-cell">
 											<input
 												type="text"
 												value={item.labelTranslations?.en ?? item.label ?? ""}
@@ -120,7 +133,7 @@ try {
 												disabled={Boolean(loadError)}
 											/>
 										</td>
-										<td>
+										<td class="nav-label-cell">
 											<input
 												type="text"
 												value={item.labelTranslations?.vi ?? ""}
@@ -139,14 +152,43 @@ try {
 											/>
 										</td>
 										<td class="nav-item-actions">
-											<button
-												class="admin-ghost-button nav-item-remove"
-												type="button"
-												data-nav-remove
-												disabled={Boolean(loadError)}
-											>
-												{t("actions.remove")}
-											</button>
+											<div class="nav-action-buttons">
+												<button
+													class="admin-ghost-button nav-action mini"
+													type="button"
+													data-nav-add-child
+													disabled={Boolean(loadError)}
+													aria-label={t("actions.addChild")}
+												>
+													+ Child
+												</button>
+												<button
+													class="admin-ghost-button nav-action mini"
+													type="button"
+													data-nav-indent
+													disabled={Boolean(loadError)}
+													aria-label={t("actions.indent")}
+												>
+													↳
+												</button>
+												<button
+													class="admin-ghost-button nav-action mini"
+													type="button"
+													data-nav-outdent
+													disabled={Boolean(loadError)}
+													aria-label={t("actions.outdent")}
+												>
+													↰
+												</button>
+												<button
+													class="admin-ghost-button nav-item-remove"
+													type="button"
+													data-nav-remove
+													disabled={Boolean(loadError)}
+												>
+													{t("actions.remove")}
+												</button>
+											</div>
 										</td>
 									</tr>
 								))
@@ -234,6 +276,26 @@ try {
 	.nav-items-table .nav-item-row td {
 		padding: 0.35rem 0.45rem;
 	}
+
+	.nav-item-row {
+		--nav-depth: 0;
+	}
+
+	.nav-item-row .nav-label-cell {
+		padding-left: calc(0.5rem + var(--nav-depth, 0) * 1.5rem);
+	}
+
+	.nav-action-buttons {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.nav-action-buttons .nav-action.mini {
+		padding: 0.25rem 0.45rem;
+		font-size: 0.75rem;
+		min-width: 2.5rem;
+	}
 </style>
 
 <script type="module">
@@ -243,47 +305,80 @@ try {
 	const addButton = editor?.querySelector("[data-nav-add]");
 	const emptyStateRow = editor?.querySelector("[data-nav-empty]");
 	const removeLabel = editor?.dataset.removeLabel ?? "Remove";
+	const addChildLabel = editor?.dataset.addChildLabel ?? "Add child";
+	const indentLabel = editor?.dataset.indentLabel ?? "Indent";
+	const outdentLabel = editor?.dataset.outdentLabel ?? "Outdent";
 	const isReadOnly = editor?.dataset.disabled === "true";
 	let draggedNavRow = null;
+	const MAX_NAV_DEPTH = 4;
+
+	const clampDepth = (value) => {
+		const depth = Number.isFinite(value) ? value : 0;
+		return Math.max(0, Math.min(MAX_NAV_DEPTH, Math.floor(depth)));
+	};
+
+	const setRowDepth = (row, depth) => {
+		const normalized = clampDepth(depth);
+		row.dataset.depth = String(normalized);
+		row.style.setProperty("--nav-depth", String(normalized));
+		return normalized;
+	};
+
+	const buildNodeFromRow = (row) => {
+		const labelEn = row.querySelector("[data-nav-label-en]");
+		const labelVi = row.querySelector("[data-nav-label-vi]");
+		const href = row.querySelector("[data-nav-href]");
+
+		if (
+			!(labelEn instanceof HTMLInputElement) ||
+			!(labelVi instanceof HTMLInputElement) ||
+			!(href instanceof HTMLInputElement)
+		) {
+			return null;
+		}
+
+		const trimmedHref = href.value.trim();
+		const trimmedEn = labelEn.value.trim();
+		const trimmedVi = labelVi.value.trim();
+		if (!trimmedEn || !trimmedHref) {
+			return null;
+		}
+
+		return {
+			label: trimmedEn,
+			labelTranslations: {
+				en: trimmedEn,
+				...(trimmedVi ? { vi: trimmedVi } : {}),
+			},
+			href: trimmedHref,
+			children: [],
+		};
+	};
 
 	const syncPayload = () => {
 		if (!(rowsContainer instanceof HTMLElement) || !(payloadInput instanceof HTMLInputElement)) {
 			return;
 		}
 
-		const entries = Array.from(rowsContainer.querySelectorAll("[data-nav-row]"))
-			.map((row, index) => {
-				const labelEn = row.querySelector("[data-nav-label-en]");
-				const labelVi = row.querySelector("[data-nav-label-vi]");
-				const href = row.querySelector("[data-nav-href]");
+		const tree = [];
+		const stack = [{ depth: -1, children: tree }];
+		for (const row of rowsContainer.querySelectorAll("[data-nav-row]")) {
+			const currentDepth = clampDepth(Number(row.dataset.depth ?? "0"));
+			setRowDepth(row, currentDepth);
+			const node = buildNodeFromRow(row);
+			if (!node) {
+				continue;
+			}
 
-				if (
-					!(labelEn instanceof HTMLInputElement) ||
-					!(labelVi instanceof HTMLInputElement) ||
-					!(href instanceof HTMLInputElement)
-				) {
-					return null;
-				}
+			while (stack[stack.length - 1].depth >= currentDepth) {
+				stack.pop();
+			}
 
-				const trimmedHref = href.value.trim();
-				const trimmedEn = labelEn.value.trim();
-				const trimmedVi = labelVi.value.trim();
-				if (!trimmedEn || !trimmedHref) {
-					return null;
-				}
+			stack[stack.length - 1].children.push(node);
+			stack.push({ depth: currentDepth, children: node.children });
+		}
 
-				return {
-					label: {
-						en: trimmedEn,
-						...(trimmedVi ? { vi: trimmedVi } : {}),
-					},
-					href: trimmedHref,
-					order: index + 1,
-				};
-			})
-			.filter((entry) => Boolean(entry));
-
-		payloadInput.value = JSON.stringify(entries);
+		payloadInput.value = JSON.stringify(tree);
 		updateEmptyState();
 	};
 
@@ -292,6 +387,7 @@ try {
 			return;
 		}
 		row.dataset.navRowAttached = "true";
+		setRowDepth(row, Number(row.dataset.depth ?? "0"));
 		row.draggable = !isReadOnly;
 		row.addEventListener("dragstart", onNavDragStart);
 		row.addEventListener("dragover", onNavDragOver);
@@ -350,7 +446,7 @@ try {
 		}
 	};
 
-	const createNavRow = (entry = {}) => {
+	const createNavRow = (entry = {}, depth = 0) => {
 		const labelTranslations = entry.label ?? entry.labelTranslations ?? {};
 		const labelEn = labelTranslations.en ?? entry.label ?? "";
 		const labelVi = labelTranslations.vi ?? "";
@@ -359,6 +455,7 @@ try {
 		row.className = "nav-item-row";
 		row.setAttribute("role", "row");
 		row.dataset.navRow = "";
+		setRowDepth(row, depth);
 		row.draggable = !isReadOnly;
 
 		const dragCell = document.createElement("td");
@@ -371,6 +468,7 @@ try {
 		row.append(dragCell);
 
 		const enCell = document.createElement("td");
+		enCell.className = "nav-label-cell";
 		const enInput = document.createElement("input");
 		enInput.type = "text";
 		enInput.dataset.navLabelEn = "";
@@ -383,6 +481,7 @@ try {
 		row.append(enCell);
 
 		const viCell = document.createElement("td");
+		viCell.className = "nav-label-cell";
 		const viInput = document.createElement("input");
 		viInput.type = "text";
 		viInput.dataset.navLabelVi = "";
@@ -408,6 +507,42 @@ try {
 
 		const actionCell = document.createElement("td");
 		actionCell.className = "nav-item-actions";
+		const buttonGroup = document.createElement("div");
+		buttonGroup.className = "nav-action-buttons";
+
+		const childButton = document.createElement("button");
+		childButton.type = "button";
+		childButton.className = "admin-ghost-button nav-action mini";
+		childButton.dataset.navAddChild = "";
+		childButton.textContent = "+ Child";
+		childButton.setAttribute("aria-label", addChildLabel);
+		if (isReadOnly) {
+			childButton.disabled = true;
+		}
+		buttonGroup.append(childButton);
+
+		const indentButton = document.createElement("button");
+		indentButton.type = "button";
+		indentButton.className = "admin-ghost-button nav-action mini";
+		indentButton.dataset.navIndent = "";
+		indentButton.textContent = "↳";
+		indentButton.setAttribute("aria-label", indentLabel);
+		if (isReadOnly) {
+			indentButton.disabled = true;
+		}
+		buttonGroup.append(indentButton);
+
+		const outdentButton = document.createElement("button");
+		outdentButton.type = "button";
+		outdentButton.className = "admin-ghost-button nav-action mini";
+		outdentButton.dataset.navOutdent = "";
+		outdentButton.textContent = "↰";
+		outdentButton.setAttribute("aria-label", outdentLabel);
+		if (isReadOnly) {
+			outdentButton.disabled = true;
+		}
+		buttonGroup.append(outdentButton);
+
 		const removeButton = document.createElement("button");
 		removeButton.type = "button";
 		removeButton.className = "admin-ghost-button nav-item-remove";
@@ -416,11 +551,47 @@ try {
 		if (isReadOnly) {
 			removeButton.disabled = true;
 		}
-		actionCell.append(removeButton);
+		buttonGroup.append(removeButton);
+
+		actionCell.append(buttonGroup);
 		row.append(actionCell);
 
 		attachNavRow(row);
 		return row;
+	};
+
+	const findInsertPositionForChild = (row) => {
+		let reference = row;
+		const parentDepth = clampDepth(Number(row.dataset.depth ?? "0"));
+		while (reference.nextElementSibling instanceof HTMLElement) {
+			const nextDepth = clampDepth(Number(reference.nextElementSibling.dataset.depth ?? "0"));
+			if (nextDepth <= parentDepth) {
+				break;
+			}
+			reference = reference.nextElementSibling;
+		}
+		return reference;
+	};
+
+	const changeDepth = (row, delta) => {
+		const current = Number(row.dataset.depth ?? "0");
+		setRowDepth(row, current + delta);
+		syncPayload();
+	};
+
+	const addChildRow = (parentRow) => {
+		if (isReadOnly || !(rowsContainer instanceof HTMLElement)) {
+			return;
+		}
+		const depth = clampDepth(Number(parentRow.dataset.depth ?? "0") + 1);
+		const newRow = createNavRow({}, depth);
+		const insertAfter = findInsertPositionForChild(parentRow);
+		insertAfter.after(newRow);
+		const focusInput = newRow.querySelector("[data-nav-label-en]");
+		if (focusInput instanceof HTMLInputElement) {
+			focusInput.focus();
+		}
+		syncPayload();
 	};
 
 	Array.from(rowsContainer?.querySelectorAll("[data-nav-row]") ?? []).forEach((row) => attachNavRow(row));
@@ -428,13 +599,33 @@ try {
 	rowsContainer?.addEventListener("input", syncPayload);
 	rowsContainer?.addEventListener("click", (event) => {
 		const target = event.target;
-		if (!(target instanceof HTMLElement) || !target.matches("[data-nav-remove]")) {
+		if (!(target instanceof HTMLElement)) {
 			return;
 		}
 		const row = findNavRow(target);
-		if (row) {
+		if (!row) {
+			return;
+		}
+
+		if (target.matches("[data-nav-remove]")) {
 			row.remove();
 			syncPayload();
+			return;
+		}
+
+		if (target.matches("[data-nav-add-child]")) {
+			addChildRow(row);
+			return;
+		}
+
+		if (target.matches("[data-nav-indent]")) {
+			changeDepth(row, 1);
+			return;
+		}
+
+		if (target.matches("[data-nav-outdent]")) {
+			changeDepth(row, -1);
+			return;
 		}
 	});
 
@@ -442,7 +633,7 @@ try {
 		if (isReadOnly || !(rowsContainer instanceof HTMLElement)) {
 			return;
 		}
-		const newRow = createNavRow();
+		const newRow = createNavRow({}, 0);
 		rowsContainer.append(newRow);
 		const focusInput = newRow.querySelector("[data-nav-label-en]");
 		if (focusInput instanceof HTMLInputElement) {

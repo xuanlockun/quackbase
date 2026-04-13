@@ -1,5 +1,4 @@
 ---
-import HeaderLink from './HeaderLink.astro';
 import LanguageSwitch from './LanguageSwitch.astro';
 import { SITE_TITLE } from '../consts';
 import { getDb, getSiteConfig, type SiteNavItem } from '../lib/blog';
@@ -31,6 +30,42 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 		{ label: t("nav.cms"), labelTranslations: { en: "CMS", vi: "CMS" }, href: '/admin', sortOrder: 999 },
 	];
 }
+
+const currentPathname = Astro.url.pathname;
+const resolveNavHref = (href = "/") => (href.startsWith('/admin') ? localizeAdminHref(href) : localizeHref(href));
+const getNavLabel = (item: SiteNavItem) => item.labelTranslations?.[language] ?? item.labelTranslations?.en ?? item.label;
+const isActivePath = (href: string) => href === currentPathname;
+const hasActiveDescendant = (item: SiteNavItem): boolean =>
+	(item.children ?? []).some((child) => isActivePath(child.href) || hasActiveDescendant(child));
+
+const renderDropdownChild = (item: SiteNavItem, depth = 1) => {
+	const hasChildren = Boolean(item.children?.length);
+	const href = resolveNavHref(item.href);
+	const siblingActive = isActivePath(item.href);
+	return (
+		<li class:list={["dropdown-submenu", { "has-children": hasChildren }]}>
+			<a
+				class:list={["dropdown-item", { active: siblingActive }]}
+				href={href}
+				{...(hasChildren
+					? {
+							"data-bs-toggle": "dropdown",
+							"aria-expanded": "false",
+					  }
+					: {})}
+			>
+				{getNavLabel(item)}
+			</a>
+			{hasChildren && renderDropdownItems(item.children!, depth)}
+		</li>
+	);
+};
+
+const renderDropdownItems = (children: SiteNavItem[], depth = 0) => (
+	<ul class:list={["dropdown-menu", { "dropdown-submenu-menu": depth > 0 }]}>
+		{children.map((child) => renderDropdownChild(child, depth + 1))}
+	</ul>
+);
 ---
 
 <header class="bg-white border-bottom">
@@ -55,16 +90,35 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 				<div class="collapse navbar-collapse" id="mainNavbar">
 					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 						{
-							navItems.map((item) => (
-								<li class="nav-item" key={item.label}>
-									<a
-										class:list={["nav-link", { active: item.href === Astro.url.pathname }]}
-										href={item.href.startsWith('/admin') ? localizeAdminHref(item.href) : localizeHref(item.href)}
-									>
-										{item.labelTranslations?.[language] || item.labelTranslations?.en || item.label}
-									</a>
-								</li>
-							))
+							navItems.map((item) => {
+								const hasChildren = Boolean(item.children?.length);
+								const linkHref = resolveNavHref(item.href);
+								const active = isActivePath(item.href) || (hasChildren && hasActiveDescendant(item));
+
+								if (!hasChildren) {
+									return (
+										<li class="nav-item">
+											<a class:list={["nav-link", { active }]} href={linkHref}>
+												{getNavLabel(item)}
+											</a>
+										</li>
+									);
+								}
+
+								return (
+									<li class:list={["nav-item", "dropdown", { active }]}>
+										<a
+											class="nav-link dropdown-toggle"
+											href={linkHref}
+											data-bs-toggle="dropdown"
+											aria-expanded="false"
+										>
+											{getNavLabel(item)}
+										</a>
+										{renderDropdownItems(item.children)}
+									</li>
+								);
+							})
 						}
 					</ul>
 					<div class="d-flex align-items-center">
@@ -75,3 +129,39 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 		</nav>
 	</div>
 </header>
+<style>
+	.navbar-nav .dropdown-menu {
+		display: none;
+		position: absolute;
+		top: 100%;
+	}
+
+	.navbar-nav .dropdown-menu.show {
+		display: block;
+	}
+
+	.navbar-nav .nav-item.dropdown:hover > .dropdown-menu,
+	.navbar-nav .dropdown-submenu:hover > .dropdown-menu {
+		display: block;
+	}
+
+	.navbar-nav .dropdown-submenu {
+		position: relative;
+	}
+
+	.navbar-nav .dropdown-submenu .dropdown-menu {
+		top: 0;
+		left: 100%;
+		margin-left: 0.25rem;
+	}
+
+	.dropdown-submenu-menu {
+		min-width: 12rem;
+	}
+
+	@media (max-width: 992px) {
+		.navbar-nav .dropdown-menu {
+			position: static;
+		}
+	}
+</style>
