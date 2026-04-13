@@ -98,7 +98,7 @@ const toggleLabel = "Toggle sidebar navigation";
 			</nav>
 
 			<div
-				class="offcanvas offcanvas-start offcanvas-lg bg-white border-end"
+				class="offcanvas offcanvas-start bg-white border-end"
 				tabindex="-1"
 				id="adminSidebar"
 				aria-labelledby="adminSidebarLabel"
@@ -112,26 +112,33 @@ const toggleLabel = "Toggle sidebar navigation";
 				</div>
 			</div>
 
-			<div class="container-fluid px-4 py-4">
-				<div class="row justify-content-center">
-					<div class="col-12">
-						<section class="card shadow-sm border-0">
-							<header class="card-header bg-white border-0 px-4 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-								<div>
-									<p class="text-uppercase text-muted fs-7 mb-1">{pageEyebrow}</p>
-									<h1 class="h4 mb-1">{pageTitle}</h1>
-									{pageDescription && <p class="text-muted mb-0">{pageDescription}</p>}
-								</div>
-								<div class="d-flex align-items-center gap-2">
-									<slot name="actions" />
-								</div>
-							</header>
-							<div class="card-body p-4">
-								<slot />
+			<div class="d-flex flex-grow-1">
+				<aside class="d-none d-lg-flex flex-column h-100 bg-white border-end" style="width: 280px;">
+					<Sidebar session={session} />
+				</aside>
+				<main class="flex-grow-1">
+					<div class="container-fluid px-4 py-4">
+						<div class="row justify-content-center">
+							<div class="col-12">
+								<section class="card shadow-sm border-0">
+									<header class="card-header bg-white border-0 px-4 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+										<div>
+											<p class="text-uppercase text-muted fs-7 mb-1">{pageEyebrow}</p>
+											<h1 class="h4 mb-1">{pageTitle}</h1>
+											{pageDescription && <p class="text-muted mb-0">{pageDescription}</p>}
+										</div>
+										<div class="d-flex align-items-center gap-2">
+											<slot name="actions" />
+										</div>
+									</header>
+									<div class="card-body p-4">
+										<slot />
+									</div>
+								</section>
 							</div>
-						</section>
+						</div>
 					</div>
-				</div>
+				</main>
 			</div>
 		</div>
 	</body>
