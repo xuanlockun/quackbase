@@ -5,31 +5,9 @@ interface Props {
 }
 
 const { label, resource } = Astro.props;
+const badgeTheme = resource === "roles" ? "success" : resource === "users" ? "info" : resource === "site" ? "warning" : "secondary";
 ---
 
-<span class="permission-badge" data-resource={resource ?? "generic"}>{label}</span>
-
-<style>
-	.permission-badge {
-		display: inline-flex;
-		align-items: center;
-		padding: 0.12rem 0.35rem;
-		border-radius: 0;
-		background: #eef3ff;
-		color: var(--accent-dark);
-		font-size: 0.72rem;
-		font-weight: 700;
-		border: 1px solid #cad7ff;
-	}
-	.permission-badge[data-resource="roles"],
-	.permission-badge[data-resource="users"] {
-		background: #eaf7f0;
-		color: #0f6b50;
-		border-color: #bfe3d1;
-	}
-	.permission-badge[data-resource="site"] {
-		background: #fff1e6;
-		color: #9a3412;
-		border-color: #f2d0b0;
-	}
-</style>
+<span class={`badge bg-${badgeTheme} text-uppercase`} data-resource={resource ?? "generic"}>
+	{label}
+</span>

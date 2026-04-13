@@ -1,5 +1,4 @@
 ---
-import "bootstrap/dist/css/bootstrap.min.css";
 import BaseHead from "../components/BaseHead.astro";
 import Sidebar from "../components/admin/Sidebar.astro";
 import LanguageSwitch from "../components/LanguageSwitch.astro";
@@ -44,90 +43,96 @@ const toggleLabel = "Toggle sidebar navigation";
 	<head>
 		<BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
 	</head>
-	<body class="admin-body">
-		<input
-			type="checkbox"
-			id="adminSidebarToggle"
-			class="admin-sidebar-toggle-input"
-			aria-hidden="true"
-		/>
-		<main class="admin-shell">
-			<aside class="admin-sidebar-column" id="adminSidebar">
-				<Sidebar session={session} />
-			</aside>
-
-			<div class="admin-content-column">
-				<header class="admin-topbar">
-					<div class="admin-topbar-start">
-						<label
-							for="adminSidebarToggle"
-							class="admin-topbar-toggle"
-							aria-controls="adminSidebar"
-							aria-label={toggleLabel}
-						>
-							<span class="admin-topbar-toggle-icon" aria-hidden="true">
-								<svg viewBox="0 0 24 24" role="presentation" focusable="false">
-									<path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-								</svg>
-							</span>
-						</label>
-						<div class="admin-topbar-title">
-							<p class="admin-topbar-brand">{t("app.brand")}</p>
-							<p class="admin-topbar-subtitle">{t("app.admin")}</p>
-						</div>
+<body class="bg-light">
+		<div class="min-vh-100 d-flex flex-column">
+			<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3 px-4">
+				<div class="container-fluid">
+					<button
+						class="btn btn-outline-secondary d-lg-none me-3"
+						type="button"
+						data-bs-toggle="offcanvas"
+						data-bs-target="#adminSidebar"
+						aria-controls="adminSidebar"
+					>
+						<span class="navbar-toggler-icon"></span>
+						<span class="visually-hidden">{toggleLabel}</span>
+					</button>
+					<div class="d-flex align-items-center gap-2">
+						<span class="badge bg-primary rounded-pill px-3 py-2">{t("app.brand")}</span>
+						<span class="text-muted">{t("app.admin")}</span>
 					</div>
-
-					<div class="admin-topbar-actions">
-						<div class="admin-topbar-language">
+					<div class="d-flex align-items-center gap-3 ms-auto">
+						<div class="d-none d-lg-flex align-items-center">
 							<LanguageSwitch />
 						</div>
-
-						<details class="admin-profile-dropdown">
-							<summary class="admin-profile-toggle">
-								<span class="admin-profile-avatar">{profileInitials}</span>
-								<span class="admin-profile-info">
-									<strong>{profileName}</strong>
-									{profileEmail && <span class="admin-profile-email">{profileEmail}</span>}
+						<div class="dropdown">
+							<button
+								class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2"
+								type="button"
+								data-bs-toggle="dropdown"
+								aria-expanded="false"
+							>
+								<span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width:38px;height:38px;font-weight:700;">
+									{profileInitials}
 								</span>
-								<span class="admin-profile-caret" aria-hidden="true">
-									<svg viewBox="0 0 24 24" role="presentation" focusable="false">
-										<path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-									</svg>
+								<span class="text-start">
+									<strong class="d-block">{profileName}</strong>
+									{profileEmail && <small class="text-muted">{profileEmail}</small>}
 								</span>
-							</summary>
-
-							<div class="admin-profile-menu">
-								<p class="admin-profile-menu-label">{t("labels.user")}</p>
-								{profileEmail && (
-									<p class="admin-profile-menu-copy">{profileEmail}</p>
-								)}
-								<form method="post" action="/api/admin/auth/logout">
-									<button
-										type="submit"
-										class="admin-ghost-button admin-profile-logout-button"
-									>
-										{t("actions.logOut")}
-									</button>
-								</form>
-							</div>
-						</details>
+							</button>
+							<ul class="dropdown-menu dropdown-menu-end shadow">
+								<li><h6 class="dropdown-header">{t("labels.user")}</h6></li>
+								{profileEmail && <li><span class="dropdown-item-text text-truncate px-3">{profileEmail}</span></li>}
+								<li><hr class="dropdown-divider" /></li>
+								<li>
+									<form method="post" action="/api/admin/auth/logout">
+										<button type="submit" class="dropdown-item text-danger">
+											{t("actions.logOut")}
+										</button>
+									</form>
+								</li>
+							</ul>
+						</div>
 					</div>
-				</header>
+				</div>
+			</nav>
 
-				<section class="admin-panel admin-panel-main h-100">
-					<header class="admin-page-header">
-						<div class="admin-page-copy">
-							<p class="admin-page-eyebrow">{pageEyebrow}</p>
-							<h1>{pageTitle}</h1>
-							{pageDescription && <p class="admin-page-description">{pageDescription}</p>}
-						</div>
-						<div class="admin-page-actions">
-							<slot name="actions" />
-						</div>
-					</header>
-					<slot />
-				</section>
+			<div
+				class="offcanvas offcanvas-start offcanvas-lg bg-white border-end"
+				tabindex="-1"
+				id="adminSidebar"
+				aria-labelledby="adminSidebarLabel"
+			>
+				<div class="offcanvas-header d-lg-none">
+					<h5 class="offcanvas-title" id="adminSidebarLabel">{t("app.admin")}</h5>
+					<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+				</div>
+				<div class="offcanvas-body p-0 d-flex flex-column">
+					<Sidebar session={session} />
+				</div>
 			</div>
-		</main>
+
+			<div class="container-fluid px-4 py-4">
+				<div class="row justify-content-center">
+					<div class="col-12">
+						<section class="card shadow-sm border-0">
+							<header class="card-header bg-white border-0 px-4 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+								<div>
+									<p class="text-uppercase text-muted fs-7 mb-1">{pageEyebrow}</p>
+									<h1 class="h4 mb-1">{pageTitle}</h1>
+									{pageDescription && <p class="text-muted mb-0">{pageDescription}</p>}
+								</div>
+								<div class="d-flex align-items-center gap-2">
+									<slot name="actions" />
+								</div>
+							</header>
+							<div class="card-body p-4">
+								<slot />
+							</div>
+						</section>
+					</div>
+				</div>
+			</div>
+		</div>
 	</body>
 </html>

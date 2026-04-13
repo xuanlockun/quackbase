@@ -78,36 +78,44 @@ const { t } = getUiTranslations(Astro);
 		</style>
 	</head>
 
-	<body>
+	<body class="bg-body">
 		<Header />
-		<main>
-			<article>
-				<div class="hero-image">
-					{heroImage && <img width={1020} height={510} src={heroImage} alt="" />}
-				</div>
-				<div class:list={["prose", wideContent && "prose-wide"]}>
-					<div class="title">
+		<main class="py-5">
+			<div class="container">
+				<article class="card shadow-sm border-0">
+					<div class="row g-0">
 						{
-							showDate && (
-								<div class="date">
-									<FormattedDate date={pubDate} />
-									{
-										updatedDate && (
-											<div class="last-updated-on">
-												{t("messages.lastUpdatedOn")} <FormattedDate date={updatedDate} />
-											</div>
-										)
-									}
+							heroImage && (
+								<div class="col-12">
+									<img src={heroImage} alt="" class="img-fluid rounded-top" />
 								</div>
 							)
 						}
-						<h1>{title}</h1>
-						<hr />
+						<div class="col-12">
+							<div class="card-body">
+								{showDate && (
+									<div class="d-flex flex-column flex-md-row justify-content-between mb-3 text-muted small">
+										<div>
+											<span>{t("messages.publishedOn")} </span>
+											<FormattedDate date={pubDate} />
+										</div>
+										{updatedDate && (
+											<div>
+												<span>{t("messages.lastUpdatedOn")} </span>
+												<FormattedDate date={updatedDate} />
+											</div>
+										)}
+									</div>
+								)}
+								<h1 class="display-5">{title}</h1>
+								<hr />
+								<div class="prose" set:html={contentHtml} />
+								<slot />
+							</div>
+						</div>
 					</div>
-					{contentHtml && <div class="post-content" set:html={contentHtml} />}
-					<slot />
-				</div>
-			</article>
+				</article>
+			</div>
 		</main>
 		<Footer />
 	</body>

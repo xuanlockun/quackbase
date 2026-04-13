@@ -1,6 +1,6 @@
 ﻿# astro-blog-starter-template Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-10
+Auto-generated from all feature plans. Last updated: 2026-04-13
 
 ## Active Technologies
 - TypeScript 5.9, Astro 5, Node.js 22 compatibility in the Cloudflare Workers runtime + Astro, `@astrojs/cloudflare`, Wrangler, D1-backed content helpers in `src/lib/blog.ts`, existing RBAC guards and policies, and shared admin UI styles/components (002-admin-ui-refactor)
@@ -23,6 +23,8 @@ Auto-generated from all feature plans. Last updated: 2026-04-10
 - Cloudflare D1 SQLite (current `posts`, `site_pages`, `languages` tables) (010-language-management)
 - [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION] (012-admin-builder-refactor)
 - [if applicable, e.g., PostgreSQL, CoreData, files or N/A] (012-admin-builder-refactor)
+- TypeScript 5.9, Astro 5, Node.js 22 (Cloudflare Workers compatible) + Astro 5, `@astrojs/cloudflare`, Wrangler 4.x, Cloudflare Workers runtime, Cloudflare D1 helpers in `src/lib/blog.ts` (016-bootstrap-ui-refactor)
+- Cloudflare D1 (SQLite) tables for posts, pages, languages, permissions, sessions, forms (016-bootstrap-ui-refactor)
 
 - TypeScript 5.9, Astro 5, Node.js 22 compatibility in the Cloudflare Workers runtime + Astro, `@astrojs/cloudflare`, Wrangler, D1, a Worker-compatible JWT library, `bcryptjs`, and shared cookie utilities (001-admin-auth-rbac)
 
@@ -43,10 +45,9 @@ npm test; npm run lint
 TypeScript 5.9, Astro 5, Node.js 22 compatibility in the Cloudflare Workers runtime: Follow standard conventions
 
 ## Recent Changes
+- 016-bootstrap-ui-refactor: Added TypeScript 5.9, Astro 5, Node.js 22 (Cloudflare Workers compatible) + Astro 5, `@astrojs/cloudflare`, Wrangler 4.x, Cloudflare Workers runtime, Cloudflare D1 helpers in `src/lib/blog.ts`
 - 015-manage-language-translations: Added [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
 - 012-admin-builder-refactor: Added [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION] + [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
-- 010-language-management: Added TypeScript 5.9 running inside Astro 5 + Node.js 22 on Cloudflare Workers + Astro 5 renderer, `@astrojs/cloudflare`, Cloudflare D1 (SQLite), existing admin UI components/styles (shared Astro layouts), RBAC guards from `src/lib/auth`, `micromark` for rendering any markdown-rich copy
-- 009-dynamic-multilang-i18n: Added TypeScript 5.9, Node.js 22 + Astro 5.16.x, `@astrojs/cloudflare`, Wrangler 4.x
 
 
 <!-- MANUAL ADDITIONS START -->

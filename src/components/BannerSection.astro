@@ -6,50 +6,52 @@ interface Props {
 const { bannerUrls } = Astro.props;
 ---
 
-<section class="banner-section" data-banner-slider>
+<section class="banner-section">
 	<div class="banner-section-frame">
-		<div class="banner-section-track">
+		<div
+			id="bannerCarousel"
+			class="carousel slide"
+			data-bs-ride="carousel"
+			data-bs-interval="5000"
+		>
+			<div class="carousel-inner">
+				{
+					bannerUrls.map((url, index) => (
+						<div class:list={["carousel-item", index === 0 && "active"]} key={url}>
+							<img src={url} alt={`Banner ${index + 1}`} loading="lazy" class="d-block w-100 rounded-3" />
+						</div>
+					))
+				}
+			</div>
 			{
-				bannerUrls.map((url, index) => (
-					<div class="banner-section-slide" data-banner-slide>
-						<img src={url} alt={`Banner ${index + 1}`} loading="lazy" />
-					</div>
-				))
+				bannerUrls.length > 1 && (
+					<>
+						<button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
+							<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+							<span class="visually-hidden">Previous</span>
+						</button>
+						<button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
+							<span class="carousel-control-next-icon" aria-hidden="true"></span>
+							<span class="visually-hidden">Next</span>
+						</button>
+						<div class="carousel-indicators">
+							{
+								bannerUrls.map((_, index) => (
+									<button
+										type="button"
+										key={`dot-${index}`}
+										data-bs-target="#bannerCarousel"
+										data-bs-slide-to={index}
+										class:list={[index === 0 && "active"]}
+										aria-current={index === 0 ? "true" : undefined}
+										aria-label={`Slide ${index + 1}`}
+									/>
+								))
+							}
+						</div>
+					</>
+				)
 			}
 		</div>
 	</div>
-	{bannerUrls.length > 1 && (
-		<div class="banner-section-dots">
-			{
-				bannerUrls.map((_, index) => (
-					<button type="button" class="banner-section-dot" data-banner-dot data-slide-index={index} aria-label={`Show banner ${index + 1}`} />
-				))
-			}
-		</div>
-	)}
 </section>
-
-<script>
-	document.querySelectorAll("[data-banner-slider]").forEach((slider) => {
-		const track = slider.querySelector(".banner-section-track");
-		const slides = Array.from(slider.querySelectorAll("[data-banner-slide]"));
-		const dots = Array.from(slider.querySelectorAll("[data-banner-dot]"));
-		if (!(track instanceof HTMLElement) || slides.length <= 1) {
-			return;
-		}
-
-		let activeIndex = 0;
-		const update = (index) => {
-			activeIndex = index;
-			track.style.transform = `translateX(-${index * 100}%)`;
-			dots.forEach((dot, dotIndex) => dot.classList.toggle("is-active", dotIndex === index));
-		};
-
-		dots.forEach((dot, index) => {
-			dot.addEventListener("click", () => update(index));
-		});
-
-		update(0);
-		window.setInterval(() => update((activeIndex + 1) % slides.length), 5000);
-	});
-</script>

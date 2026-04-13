@@ -1,0 +1,7 @@
+# Quickstart: Bootstrap UI Standardization
+
+1. **Review the spec and audit inventory** (`specs/016-bootstrap-ui-refactor/spec.md`) to understand the full list of components/layouts that must adopt Bootstrap. Keep the audit checklist handy to ensure coverage.
+2. **Wire Bootstrap assets** into `BaseHead.astro` so the CDN `<link>` and `<script>` (with integrity/crossorigin) load before any custom CSS. Validate that both `src/layouts/AdminLayout.astro` and public page layouts include this head so the bundle is available everywhere.
+3. **Replace global CSS** by stripping most of the `.admin-*`, `.dynamic-*`, and `.prose` selectors from `src/styles/global.css`, leaving only brand overrides (colors, gradients) and necessary utility tweaks. Use Bootstrap’s containers, rows, columns, spacing, and utility classes inside the components instead of custom selectors.
+4. **Migrate components** iteratively: start with shared layout parts (`Header`, `BlogPost`, `CmsPageSections`, `DynamicForm`), then update admin surfaces (`AdminLayout`, `Sidebar`, tables/forms in `src/components/admin/*`). For each component, switch to relevant Bootstrap classes (`navbar`, `table`, `form-control`, `badge`, `card`, etc.) while preserving data bindings and scripts.
+5. **Validate interactions** (sidebar toggle, dropdown, language switch, contact form AJAX) to ensure Bootstrap markup works with existing event listeners and still respects translations, RBAC, and API routes.

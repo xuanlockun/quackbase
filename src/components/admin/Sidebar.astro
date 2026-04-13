@@ -2,6 +2,7 @@
 import { getVisibleAdminNavItems } from "../../lib/rbac/policies";
 import type { AdminSession } from "../../lib/auth/types";
 import { getUiTranslations } from "../../lib/i18n";
+import { SITE_TITLE } from "../../consts";
 
 interface Props {
 	session: AdminSession | null;
@@ -98,28 +99,40 @@ function isActiveLink(href: string, currentPath: string): boolean {
 
 ---
 
-<nav class="admin-sidebar-nav" aria-label="Admin navigation" role="menu">
-	{
-		sections.map((section) => (
-			<section class="admin-sidebar-section-block" key={section.title}>
-				<p class="admin-sidebar-section-title">{section.title}</p>
-				<hr class="admin-sidebar-section-divider" aria-hidden="true" />
-				<div class="admin-sidebar-links nav nav-pills flex-column gap-1" role="menubar">
-					{
-						section.links.map((link) => (
-							<a
-								role="menuitem"
-								aria-current={isActiveLink(link.href, pathname) ? "page" : undefined}
-								class:list={["admin-sidebar-link", isActiveLink(link.href, pathname) && "is-active"]}
-								href={localizeAdminHref(link.href)}
-							>
-								<span class="admin-sidebar-icon" aria-hidden="true" set:html={navIconHtml(link.labelKey)}></span>
-								<span class="admin-sidebar-link-text">{t(link.labelKey)}</span>
-							</a>
-						))
-					}
-				</div>
-			</section>
-		))
-	}
+<nav aria-label="Admin navigation" class="d-flex flex-column h-100">
+	<header class="px-4 py-3 border-bottom">
+		<div class="d-flex align-items-center gap-2">
+			<span class="brand-gradient rounded-circle d-inline-flex align-items-center justify-content-center" style="width:44px;height:44px;font-weight:700;">{SITE_TITLE.charAt(0)}</span>
+			<div>
+				<p class="mb-0 fw-bold">{t("app.brand")}</p>
+				<small class="text-muted">{t("app.admin")}</small>
+			</div>
+		</div>
+	</header>
+	<div class="p-3 overflow-auto">
+		{
+			sections.map((section) => (
+				<section key={section.title} class="mb-4">
+					<p class="text-uppercase text-muted fs-7 mb-2">{section.title}</p>
+					<div class="nav nav-pills flex-column gap-2">
+						{
+							section.links.map((link) => (
+								<a
+									role="menuitem"
+									aria-current={isActiveLink(link.href, pathname) ? "page" : undefined}
+									class:list={["nav-link rounded-3", isActiveLink(link.href, pathname) && "active"]}
+									href={localizeAdminHref(link.href)}
+								>
+									<span class="me-2 d-inline-flex align-items-center justify-content-center" style="width:24px;height:24px;">
+										<span aria-hidden="true" set:html={navIconHtml(link.labelKey)}></span>
+									</span>
+									<span>{t(link.labelKey)}</span>
+								</a>
+							))
+						}
+					</div>
+				</section>
+			))
+		}
+	</div>
 </nav>

@@ -52,15 +52,30 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 
 		if (section.type === "blog_feed" && posts.length > 0) {
 			return (
-				<section class="page-section">
-					<h2>{t("headings.latestPosts")}</h2>
-					<div class="card-grid">
+				<section class="mb-5">
+					<div class="d-flex justify-content-between align-items-center mb-3">
+						<h2 class="h4 mb-0">{t("headings.latestPosts")}</h2>
+						<a class="btn btn-sm btn-outline-primary" href="/blog">{t("actions.viewAll")}</a>
+					</div>
+					<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
 						{
 							posts.slice(0, 6).map((post) => (
-								<a class="mini-card" href={getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog)}>
-									<img src={post.heroImage || "/blog-placeholder-1.jpg"} alt="" width={520} height={292} />
-									<h3>{post.title}</h3>
-									<p>{post.description}</p>
+								<a
+									class="col"
+									href={getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog)}
+								>
+									<div class="card h-100 shadow-sm border-0">
+										<img
+											src={post.heroImage || "/blog-placeholder-1.jpg"}
+											class="card-img-top rounded-top"
+											alt=""
+											loading="lazy"
+										/>
+										<div class="card-body">
+											<h3 class="h5">{post.title}</h3>
+											<p class="text-muted small mb-0">{post.description}</p>
+										</div>
+									</div>
 								</a>
 							))
 						}
@@ -71,13 +86,17 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 
 		if (section.type === "contact_form") {
 			return (
-				<section class="page-section contact-section-shell">
-					<div class="contact-section-copy">
-						<p class="contact-section-kicker">{t("headings.contactUs")}</p>
-						<h2>{t("headings.contactFormTitle")}</h2>
-						<p>{t("messages.contactFormIntro")}</p>
+				<section class="mb-5">
+					<div class="row align-items-center g-4">
+						<div class="col-lg-5">
+							<p class="text-uppercase text-muted small mb-2">{t("headings.contactUs")}</p>
+							<h2 class="h3">{t("headings.contactFormTitle")}</h2>
+							<p class="text-muted">{t("messages.contactFormIntro")}</p>
+						</div>
+						<div class="col-lg-7">
+							<DynamicForm fields={contactFields} currentLanguage={currentLanguage} sourcePath={currentPath} />
+						</div>
 					</div>
-					<DynamicForm fields={contactFields} currentLanguage={currentLanguage} sourcePath={currentPath} />
 				</section>
 			);
 		}
@@ -85,87 +104,3 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 		return null;
 	})
 }
-
-<style>
-	.page-section {
-		margin-top: 1.75rem;
-	}
-
-	.page-rich-content :global(:first-child) {
-		margin-top: 0;
-	}
-
-	.card-grid {
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 1rem;
-	}
-
-	.mini-card,
-	.contact-section-shell {
-		display: block;
-		padding: 1rem;
-		border-radius: 18px;
-		background: white;
-		box-shadow: var(--box-shadow);
-		text-decoration: none;
-		color: inherit;
-	}
-
-	.mini-card img,
-	.banner-slide img {
-		width: 100%;
-		aspect-ratio: 16 / 9;
-		object-fit: cover;
-		margin-bottom: 0.8rem;
-		border-radius: 14px;
-	}
-
-	.mini-card h3 {
-		margin: 0 0 0.45rem 0;
-		font-size: 1.15rem;
-	}
-
-	.mini-card p,
-	.contact-section-copy p {
-		margin: 0;
-		color: rgb(var(--gray));
-	}
-
-	.page-section h2 {
-		margin-bottom: 0.85rem;
-	}
-
-	.contact-section-shell {
-		display: grid;
-		gap: 1rem;
-		padding: clamp(1.25rem, 3vw, 2rem);
-	}
-
-	.contact-section-kicker {
-		margin: 0 0 0.5rem;
-		font-size: 0.82rem;
-		font-weight: 700;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: rgb(var(--gray));
-	}
-
-	.contact-section-copy {
-		display: grid;
-		gap: 0.55rem;
-		max-width: 42rem;
-	}
-
-	@media (max-width: 1024px) {
-		.card-grid {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-	}
-
-	@media (max-width: 720px) {
-		.card-grid {
-			grid-template-columns: 1fr;
-		}
-	}
-</style>

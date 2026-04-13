@@ -13,45 +13,57 @@ const { t } = getUiTranslations(Astro);
 
 {
 	roles.length === 0 ? (
-		<div class="admin-empty-state">
-			<h2>{t("messages.noRolesYet")}</h2>
-			<p>{t("messages.noRolesHelp")}</p>
+		<div class="alert alert-secondary p-4">
+			<h2 class="h5">{t("messages.noRolesYet")}</h2>
+			<p class="mb-0">{t("messages.noRolesHelp")}</p>
 		</div>
 	) : (
-		<div class="admin-content-stack">
+		<div class="row g-3">
 			{
 				roles.map((role) => (
-					<article class="admin-section-card">
-						<div class="admin-page-header border-0 pb-0">
-							<div class="admin-page-copy">
-								<h2 class="h5 mb-0">{role.label}</h2>
-								<p class="admin-page-description">
-									<code>{role.name}</code>{role.isSystem ? ` | ${t("messages.systemRole")}` : ""}
-								</p>
+					<article class="col-12">
+						<div class="card shadow-sm border-0">
+							<div class="card-body">
+								<div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+									<div>
+										<h2 class="h5 mb-1">{role.label}</h2>
+										<p class="text-muted mb-0">
+											<code>{role.name}</code>
+											{role.isSystem && <span class="ms-2 badge bg-secondary">{t("messages.systemRole")}</span>}
+										</p>
+										{role.description && <p class="text-muted mt-2 mb-0">{role.description}</p>}
+									</div>
+									<div class="d-flex flex-wrap gap-2">
+										<a class="btn btn-sm btn-outline-primary" href={`/admin/roles/${role.id}/edit`}>
+											{t("actions.edit")}
+										</a>
+										{
+											!role.isSystem && (
+												<form
+													method="post"
+													action={`/api/admin/roles/${role.id}`}
+													onsubmit={`return confirm('${t("messages.deleteRoleConfirm")}');`}
+													class="d-inline"
+												>
+													<input type="hidden" name="_intent" value="delete" />
+													<button class="btn btn-sm btn-outline-danger" type="submit">{t("actions.delete")}</button>
+												</form>
+											)
+										}
+									</div>
+								</div>
+								<div class="mt-3 d-flex flex-wrap gap-2">
+									{
+										role.permissions.length > 0 ? (
+											role.permissions.map((permission) => (
+												<PermissionBadge label={permission.label} resource={permission.resource} />
+											))
+										) : (
+											<span class="text-muted small">{t("messages.noPermissionsAssigned")}</span>
+										)
+									}
+								</div>
 							</div>
-							<div class="admin-row-actions">
-								<a href={`/admin/roles/${role.id}/edit`}>{t("actions.edit")}</a>
-								{
-									!role.isSystem && (
-										<form
-											class="admin-inline-form"
-											method="post"
-											action={`/api/admin/roles/${role.id}`}
-											onsubmit={`return confirm('${t("messages.deleteRoleConfirm")}');`}
-										>
-											<input type="hidden" name="_intent" value="delete" />
-											<button class="admin-danger-button" type="submit">{t("actions.delete")}</button>
-										</form>
-									)
-								}
-							</div>
-						</div>
-						{role.description && <p class="admin-muted">{role.description}</p>}
-						<div class="admin-row-actions">
-							{role.permissions.map((permission) => (
-								<PermissionBadge label={permission.label} resource={permission.resource} />
-							))}
-							{role.permissions.length === 0 && <span class="admin-muted">{t("messages.noPermissionsAssigned")}</span>}
 						</div>
 					</article>
 				))

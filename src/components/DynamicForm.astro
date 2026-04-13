@@ -19,13 +19,13 @@ const renderableFields = getRenderableFormFields(fields, currentLanguage, catalo
 
 {
 	renderableFields.length === 0 ? (
-		<div class="contact-form-empty">
-			<h3>{t("messages.noContactFieldsConfigured")}</h3>
-			<p>{t("messages.noContactFieldsConfiguredHelp")}</p>
+		<div class="alert alert-secondary">
+			<h3 class="h5 mb-2">{t("messages.noContactFieldsConfigured")}</h3>
+			<p class="mb-0">{t("messages.noContactFieldsConfiguredHelp")}</p>
 		</div>
 	) : (
 		<form
-			class="dynamic-contact-form"
+			class="card shadow-sm border-0 p-4"
 			method="post"
 			action="/api/forms/contact"
 			data-dynamic-contact-form
@@ -35,39 +35,39 @@ const renderableFields = getRenderableFormFields(fields, currentLanguage, catalo
 			<input type="hidden" name="language" value={currentLanguage} />
 			<input type="hidden" name="sourcePath" value={sourcePath} />
 
-			<div class="dynamic-contact-form-grid">
+			<div class="row g-3">
 				{
 					renderableFields.map((field) => (
-						<label class:list={["dynamic-contact-field", field.type === "textarea" && "is-full"]}>
-							<span>
+						<div class={field.type === "textarea" ? "col-12" : "col-12 col-md-6"}>
+							<label class="form-label">
 								{field.labelText}
-								{field.required && <small class="dynamic-contact-required">*</small>}
-							</span>
+								{field.required && <span class="text-danger ms-1">*</span>}
+							</label>
 							{
 								field.type === "textarea" ? (
 									<textarea
-										class="dynamic-contact-control"
+										class="form-control"
 										name={field.inputName}
 										rows="5"
 										required={field.required}
 									/>
 								) : (
 									<input
-										class="dynamic-contact-control"
+										class="form-control"
 										type={field.type}
 										name={field.inputName}
 										required={field.required}
 									/>
 								)
 							}
-						</label>
+						</div>
 					))
 				}
 			</div>
 
-			<div class="dynamic-contact-actions">
-				<button class="dynamic-contact-submit" type="submit">{t("actions.sendMessage")}</button>
-				<p class="dynamic-contact-status" data-contact-form-status aria-live="polite"></p>
+			<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mt-4 gap-3">
+				<button class="btn btn-primary" type="submit">{t("actions.sendMessage")}</button>
+				<p class="mb-0 text-muted small" data-contact-form-status aria-live="polite"></p>
 			</div>
 		</form>
 	)
