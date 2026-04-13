@@ -18,6 +18,8 @@
 	}
 
 	const apiBaseTemplate = formDataset.apiBaseTemplate ?? "/api/admin/languages/__locale__/translations";
+	const editingKey = formDataset.editingKey ?? "";
+	const routeTemplate = formDataset.routeTemplate ?? "";
 	const keyInput = form.querySelector("[name='key']");
 	const submitButton = form.querySelector("[data-translation-submit]");
 	const tabButtons = Array.from(form.querySelectorAll("[data-translation-tab]"));
@@ -59,6 +61,7 @@
 
 	const messages = {
 		createSuccess: formDataset.textCreateSuccess ?? "Translation added.",
+		updateSuccess: formDataset.textUpdateSuccess ?? "Translation saved.",
 		error: formDataset.messageError ?? "Unable to process the request.",
 		requiredKey: formDataset.textRequiredKey ?? "Translation key is required.",
 		requiredValues: formDataset.textRequiredValues ?? "Enter at least one translation value.",
@@ -66,12 +69,20 @@
 
 	const texts = {
 		addButton: formDataset.textAddButton ?? "Create translation entry",
+		saveButton: formDataset.textSaveButton ?? "Save changes",
 	};
 
 	let currentLocale = locale;
 	let currentTab = tabButtons.find((button) => button.classList.contains("active"))?.dataset.translationTab ?? languages[0]?.code;
 	if (currentTab) {
 		setActiveTab(currentTab);
+	}
+
+	if (editingKey) {
+		setSubmitMode("edit");
+		fillInitialTranslations();
+	} else {
+		setSubmitMode("create");
 	}
 
 	localeSelect?.addEventListener("change", () => {
@@ -101,7 +112,7 @@
 
 		try {
 			await createEntry(payload);
-			showNotice(messages.createSuccess, "success");
+			showNotice(editingKey ? messages.updateSuccess : messages.createSuccess, "success");
 			resetForm();
 		} catch (error) {
 			showNotice(handleError(error), "danger");
@@ -139,7 +150,7 @@
 
 	async function createEntry(payload) {
 		const response = await fetch(getApiBase(currentLocale), {
-			method: "POST",
+			method: editingKey ? "PATCH" : "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ key: payload.key, translations: payload.translations }),
 		});
@@ -150,17 +161,36 @@
 	}
 
 	function resetForm() {
-		keyInput.value = "";
-		for (const language of languages) {
-			const input = form.querySelector(`[name="value-${cssEscape(language.code)}"]`);
-			if (input) {
-				input.value = "";
+		if (!editingKey) {
+			keyInput.value = "";
+			for (const language of languages) {
+				const input = form.querySelector(`[name="value-${cssEscape(language.code)}"]`);
+				if (input) {
+					input.value = "";
+				}
 			}
 		}
 		if (currentTab) {
 			setActiveTab(currentTab);
 		}
 		keyInput.focus();
+	}
+
+	function fillInitialTranslations() {
+		let bundle = {};
+		try {
+			bundle = JSON.parse(formDataset.initialTranslations ?? "{}");
+		} catch {
+			bundle = {};
+		}
+
+		for (const language of languages) {
+			const input = form.querySelector(`[name="value-${cssEscape(language.code)}"]`);
+			if (!(input instanceof HTMLTextAreaElement)) {
+				continue;
+			}
+			input.value = String(bundle?.[language.code] ?? "");
+		}
 	}
 
 	function setActiveTab(code) {
@@ -178,14 +208,33 @@
 	}
 
 	function getApiBase(nextLocale) {
-		return apiBaseTemplate.replace("__locale__", encodeURIComponent(nextLocale || currentLocale));
+		const key = editingKey ? encodeURIComponent(editingKey) : "";
+		return apiBaseTemplate
+			.replace("__locale__", encodeURIComponent(nextLocale || currentLocale))
+			.replace("__key__", key);
 	}
 
 	function updateLocaleUrl(nextLocale) {
 		const url = new URL(window.location.href);
-		url.searchParams.set("locale", nextLocale);
-		url.hash = "translations";
+		if (routeTemplate && editingKey) {
+			const path = routeTemplate
+				.replace("__locale__", encodeURIComponent(nextLocale))
+				.replace("__key__", encodeURIComponent(editingKey));
+			url.pathname = path;
+			url.search = "";
+			url.hash = "";
+		} else {
+			url.searchParams.set("locale", nextLocale);
+			url.hash = "translations";
+		}
 		window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+	}
+
+	function setSubmitMode(mode) {
+		if (!submitButton) {
+			return;
+		}
+		submitButton.textContent = mode === "edit" ? texts.saveButton : texts.addButton;
 	}
 
 	function showNotice(text, variant = "success") {

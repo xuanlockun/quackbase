@@ -115,7 +115,7 @@ const texts = {
 							<td>
 								<a
 									class="btn btn-sm btn-outline-secondary"
-									href={`/admin/languages?locale=${encodeURIComponent(language.code)}#translations`}
+									href={`/admin/languages/${encodeURIComponent(language.code)}`}
 								>
 									{t("actions.editTranslations")}
 								</a>
