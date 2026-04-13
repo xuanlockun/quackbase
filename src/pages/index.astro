@@ -7,11 +7,12 @@ import { getDb, getPublishedPageBySlug, getSiteConfig } from '../lib/blog';
 import { getUiTranslations } from '../lib/i18n';
 
 let page = null;
+let config = null;
 const { language, t } = getUiTranslations(Astro);
 
 try {
 	const db = getDb(Astro.locals);
-	const config = await getSiteConfig(db);
+	config = await getSiteConfig(db);
 	page = await getPublishedPageBySlug(db, config.homePageSlug);
 } catch {
 	page = null;
@@ -31,6 +32,7 @@ if (!page) {
 			showDate={false}
 			wideContent={true}
 			lang={language}
+			faviconHref={config?.faviconUrl}
 		>
 			<CmsPageSections pageSections={page.pageSections} contentHtml={page.contentHtml} currentLanguage={language} />
 		</BlogPost>
@@ -43,6 +45,7 @@ if (!page) {
 			showDate={false}
 			wideContent={true}
 			lang={language}
+			faviconHref={config?.faviconUrl}
 		/>
 	)
 }

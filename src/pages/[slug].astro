@@ -14,11 +14,12 @@ const def = catalog.defaultLanguageCode;
 
 let page = null;
 let language = def;
+let config = null;
 
 if (isSupportedLanguage(slug, catalog)) {
 	try {
 		const db = getDb(Astro.locals);
-		const config = await getSiteConfig(db);
+		config = await getSiteConfig(db);
 		language = resolveLanguage(slug, catalog);
 		page = await getPublishedPageBySlug(db, config.homePageSlug, language, catalog);
 	} catch {
@@ -47,6 +48,7 @@ if (!page) {
 			showDate={false}
 			wideContent={true}
 			lang={language}
+			faviconHref={config?.faviconUrl}
 		>
 			<CmsPageSections
 				pageSections={page.pageSections}
@@ -64,6 +66,7 @@ if (!page) {
 			showDate={false}
 			wideContent={true}
 			lang={language}
+			faviconHref={config?.faviconUrl}
 		/>
 	)
 }

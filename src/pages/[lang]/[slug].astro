@@ -3,13 +3,14 @@ export const prerender = false;
 
 import BlogPost from "../../layouts/BlogPost.astro";
 import CmsPageSections from "../../components/CmsPageSections.astro";
-import { getDb, getPublishedPageBySlug, getPublishedPostBySlug } from "../../lib/blog";
+import { getDb, getPublishedPageBySlug, getPublishedPostBySlug, getSiteConfig } from "../../lib/blog";
 import { getLanguageCatalog, getUiTranslations, isSupportedLanguage, resolveLanguage } from "../../lib/i18n";
 
 const catalog = getLanguageCatalog(Astro.locals);
 const requestedLanguage = Astro.params.lang ?? "";
 const slug = Astro.params.slug ?? "";
 const { t } = getUiTranslations(Astro);
+let config = null;
 
 if (!isSupportedLanguage(requestedLanguage, catalog)) {
 	const target = new URL(Astro.url);
@@ -25,6 +26,7 @@ const lang = resolveLanguage(requestedLanguage, catalog);
 
 try {
 	const db = getDb(Astro.locals);
+	config = await getSiteConfig(db);
 	page = await getPublishedPageBySlug(db, slug, lang, catalog);
 	if (!page) {
 		post = await getPublishedPostBySlug(db, slug, lang, catalog);
@@ -49,6 +51,7 @@ if (!page && !post && !loadError) {
 			showDate={false}
 			wideContent={true}
 			lang={page.resolvedLanguage}
+			faviconHref={config?.faviconUrl}
 		>
 			<CmsPageSections
 				pageSections={page.pageSections}
@@ -66,6 +69,7 @@ if (!page && !post && !loadError) {
 			heroImage={post.heroImage}
 			contentHtml={post.contentHtml}
 			lang={post.resolvedLanguage}
+			faviconHref={config?.faviconUrl}
 		/>
 	) : (
 		<BlogPost
@@ -82,6 +86,7 @@ if (!page && !post && !loadError) {
 			showDate={false}
 			wideContent={true}
 			lang={lang}
+			faviconHref={config?.faviconUrl}
 		/>
 	)
 }

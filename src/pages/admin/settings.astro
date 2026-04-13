@@ -1,0 +1,9 @@
+---
+export const prerender = false;
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+return Astro.redirect("/admin/header");

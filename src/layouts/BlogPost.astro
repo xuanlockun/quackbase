@@ -15,6 +15,7 @@ interface Props {
 	showDate?: boolean;
 	wideContent?: boolean;
 	lang?: string;
+	faviconHref?: string;
 }
 
 const {
@@ -27,13 +28,14 @@ const {
 	showDate = true,
 	wideContent = false,
 	lang = "en",
+	faviconHref,
 } = Astro.props;
 const { t } = getUiTranslations(Astro);
 ---
 
 <html lang={lang}>
 	<head>
-		<BaseHead title={title} description={description} />
+		<BaseHead title={title} description={description} faviconHref={faviconHref} />
 		<style>
 			main {
 				width: calc(100% - 2em);
