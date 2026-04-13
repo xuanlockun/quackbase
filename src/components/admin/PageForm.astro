@@ -1005,4 +1005,82 @@ const initialContactFields = [];
 			.replace(/"/g, "&quot;")
 			.replace(/'/g, "&#39;");
 	}
+
+	const syncLocalizedEditor = (root) => {
+		if (!(root instanceof HTMLElement)) {
+			return;
+		}
+
+		const titleField = root.querySelector("[data-title-translations]");
+		const contentField = root.querySelector("[data-content-translations]");
+		if (!(titleField instanceof HTMLInputElement) || !(contentField instanceof HTMLInputElement)) {
+			return;
+		}
+
+		const titleTranslations = {};
+		const contentTranslations = {};
+
+		root.querySelectorAll("[data-title-input]").forEach((input) => {
+			if (!(input instanceof HTMLInputElement)) {
+				return;
+			}
+			const code = input.dataset.titleInput;
+			if (!code) {
+				return;
+			}
+			titleTranslations[code] = input.value;
+		});
+
+		root.querySelectorAll("[data-content-input]").forEach((input) => {
+			if (!(input instanceof HTMLTextAreaElement)) {
+				return;
+			}
+			const code = input.dataset.contentInput;
+			if (!code) {
+				return;
+			}
+			contentTranslations[code] = input.value;
+		});
+
+		titleField.value = JSON.stringify(titleTranslations);
+		contentField.value = JSON.stringify(contentTranslations);
+	};
+
+	document.querySelectorAll("[data-localized-editor]").forEach((root) => {
+		if (!(root instanceof HTMLElement)) {
+			return;
+		}
+
+		const setActiveLanguage = (languageCode) => {
+			root.dataset.activeLanguage = languageCode;
+			root.querySelectorAll("[data-language-tab]").forEach((button) => {
+				if (!(button instanceof HTMLButtonElement)) {
+					return;
+				}
+				const isActive = button.dataset.languageTab === languageCode;
+				button.classList.toggle("active", isActive);
+				button.setAttribute("aria-selected", isActive ? "true" : "false");
+			});
+			root.querySelectorAll("[data-language-panel]").forEach((panel) => {
+				if (!(panel instanceof HTMLElement)) {
+					return;
+				}
+				const isActive = panel.dataset.languagePanel === languageCode;
+				panel.hidden = !isActive;
+				panel.classList.toggle("is-active", isActive);
+			});
+		};
+
+		root.querySelectorAll("[data-language-tab]").forEach((button) => {
+			button.addEventListener("click", () => {
+				if (button instanceof HTMLButtonElement && button.dataset.languageTab) {
+					setActiveLanguage(button.dataset.languageTab);
+				}
+			});
+		});
+
+		root.addEventListener("input", () => syncLocalizedEditor(root));
+		syncLocalizedEditor(root);
+		setActiveLanguage(root.dataset.activeLanguage || root.dataset.defaultLanguage || "en");
+	});
 </script>

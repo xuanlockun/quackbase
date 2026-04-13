@@ -165,6 +165,14 @@ img {
 	min-height: 100%;
 }
 
+.admin-sidebar nav,
+.admin-sidebar-nav {
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	align-self: stretch;
+}
+
 .admin-sidebar header {
 	padding: 1rem 1rem 0.85rem;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -244,6 +252,7 @@ img {
 	flex-direction: column;
 	height: 100%;
 	min-height: 100%;
+	flex: 1 1 auto;
 }
 
 .admin-sidebar-header {
@@ -766,6 +775,9 @@ body.admin-app .admin-sidebar {
 body.admin-app .admin-sidebar-nav {
 	padding: 0;
 	min-height: 100%;
+	width: 100%;
+	min-width: 0;
+	flex: 1 1 auto;
 }
 
 body.admin-app .admin-sidebar-header {
@@ -1153,6 +1165,7 @@ body.admin-app .admin-page-shell > .card-body {
 
 body.admin-app .admin-offcanvas .admin-sidebar-nav {
 	min-height: 100%;
+	width: 100%;
 }
 
 body.admin-app .admin-offcanvas .btn-close {
