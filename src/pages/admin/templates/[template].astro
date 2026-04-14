@@ -4,7 +4,12 @@ export const prerender = false;
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { DEFAULT_PAGE_TEMPLATE_HTML, getDb, getSiteConfig } from "../../../lib/blog";
 import { getLanguageCatalog, getLanguageSwitchOptions, getUiTranslations } from "../../../lib/i18n";
-import { escapeHtml, renderTemplateHtml } from "../../../lib/template-html";
+import {
+	DEFAULT_HEADER_TEMPLATE_HTML,
+	DEFAULT_NAVIGATION_TEMPLATE_HTML,
+	escapeHtml,
+	renderTemplateHtml,
+} from "../../../lib/template-html";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -13,19 +18,16 @@ if (!session) {
 
 const { t, language, localizeHref } = getUiTranslations(Astro);
 const catalog = getLanguageCatalog(Astro.locals);
-const templateKind = Astro.params.template ?? "footer";
+const templateKind = Astro.params.template ?? "header";
+if (templateKind === "navbar") {
+	return Astro.redirect("/admin/templates/header");
+}
 const templateMeta = {
 	header: {
 		label: t("nav.header"),
-		description: "Edit the raw HTML used for the public header shell. Use {{brand}} and {{languageSwitch}} for dynamic content.",
+		description: "Edit the full public top bar. Use {{brand}} and {{navigation}} for dynamic content.",
 		value: (config) => config.headerTemplateHtml,
-		defaultHtml: `<header class="bg-white border-bottom shadow-sm">\n  <div class="container-fluid px-3 px-lg-4">\n    <nav class="navbar navbar-expand-lg py-2">\n      <div class="container-fluid px-0">\n        {{brand}}\n        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">\n          <span class="navbar-toggler-icon"></span>\n        </button>\n        <div class="collapse navbar-collapse w-100" id="mainNavbar">\n          {{languageSwitch}}\n        </div>\n      </div>\n    </nav>\n  </div>\n</header>`,
-	},
-	navbar: {
-		label: t("nav.navbar"),
-		description: "Edit the raw HTML used for the public navbar area. Use {{navItems}} and {{languageSwitch}} for dynamic content.",
-		value: (config) => config.navbarTemplateHtml,
-		defaultHtml: `<div class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center w-100 gap-lg-3">\n  <ul class="navbar-nav flex-grow-1 justify-content-lg-center mb-3 mb-lg-0 gap-lg-1">\n    {{navItems}}\n  </ul>\n  <div class="d-flex align-items-center justify-content-lg-end mt-3 mt-lg-0 flex-shrink-0">\n    {{languageSwitch}}\n  </div>\n</div>`,
+		defaultHtml: DEFAULT_HEADER_TEMPLATE_HTML,
 	},
 	page: {
 		label: "Page",
@@ -66,16 +68,17 @@ function renderTemplatePreview(
 	const source = templateHtml.trim() || defaultTemplateFor(template);
 
 	switch (template) {
-		case "header":
+		case "header": {
+			const navigationSource = config.headerTemplateHtml.trim()
+				? DEFAULT_NAVIGATION_TEMPLATE_HTML
+				: config.navbarTemplateHtml.trim() || DEFAULT_NAVIGATION_TEMPLATE_HTML;
 			return renderTemplateHtml(source, {
 				brand: buildBrandHtml(config.siteTitle, config.logoUrl),
-				languageSwitch: buildLanguageSwitchHtml(),
-			});
-		case "navbar":
-			return renderTemplateHtml(source, {
+				navigation: buildNavigationHtml(config.navItems, navigationSource),
 				navItems: buildNavItemsHtml(config.navItems),
 				languageSwitch: buildLanguageSwitchHtml(),
 			});
+		}
 		case "footer":
 			return renderTemplateHtml(source, {
 				footerText: escapeHtml(config.footerText),
@@ -94,8 +97,6 @@ function defaultTemplateFor(template: TemplateKind): string {
 	switch (template) {
 		case "header":
 			return templateMeta.header.defaultHtml;
-		case "navbar":
-			return templateMeta.navbar.defaultHtml;
 		case "page":
 			return templateMeta.page.defaultHtml;
 		case "footer":
@@ -110,6 +111,17 @@ function buildBrandHtml(siteTitle: string, logoUrl: string): string {
 	return logoUrl
 		? `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${homeHref}"><img src="${escapeHtml(logoUrl)}" alt="${title}" class="site-navbar-logo" loading="eager" /><span class="site-navbar-title">${title}</span></a>`
 		: `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${homeHref}"><span class="site-navbar-mark" aria-hidden="true">${escapeHtml(siteTitle.charAt(0) || siteTitle)}</span><span class="site-navbar-title">${title}</span></a>`;
+}
+
+function buildNavigationHtml(
+	navItems: Awaited<ReturnType<typeof getSiteConfig>>["navItems"],
+	navigationTemplateHtml: string,
+): string {
+	const navItemsHtml = buildNavItemsHtml(navItems);
+	return renderTemplateHtml(navigationTemplateHtml.trim() ? navigationTemplateHtml : DEFAULT_NAVIGATION_TEMPLATE_HTML, {
+		navItems: navItemsHtml,
+		languageSwitch: buildLanguageSwitchHtml(),
+	});
 }
 
 function buildNavItemsHtml(navItems: Awaited<ReturnType<typeof getSiteConfig>>["navItems"]): string {

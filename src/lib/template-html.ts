@@ -1,5 +1,30 @@
 const TEMPLATE_PLACEHOLDER_PATTERN = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g;
 
+export const DEFAULT_HEADER_TEMPLATE_HTML = `<header class="bg-white border-bottom shadow-sm">
+  <div class="container-fluid px-3 px-lg-4">
+    <nav class="navbar navbar-expand-lg py-2">
+      <div class="container-fluid px-0">
+        {{brand}}
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse w-100" id="mainNavbar">
+          {{navigation}}
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>`;
+
+export const DEFAULT_NAVIGATION_TEMPLATE_HTML = `<div class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center w-100 gap-lg-3">
+  <ul class="navbar-nav flex-grow-1 justify-content-lg-center mb-3 mb-lg-0 gap-lg-1">
+    {{navItems}}
+  </ul>
+  <div class="d-flex align-items-center justify-content-lg-end mt-3 mt-lg-0 flex-shrink-0">
+    {{languageSwitch}}
+  </div>
+</div>`;
+
 export function escapeHtml(value: string): string {
 	return value
 		.replace(/&/g, "&amp;")

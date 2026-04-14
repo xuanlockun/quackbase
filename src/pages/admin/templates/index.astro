@@ -16,13 +16,7 @@ const templateOptions = [
 		key: "header",
 		label: t("nav.header"),
 		href: "/admin/templates/header",
-		description: "Edit the raw HTML used for the public header shell.",
-	},
-	{
-		key: "navbar",
-		label: t("nav.navbar"),
-		href: "/admin/templates/navbar",
-		description: "Edit the raw HTML used for the public navbar area.",
+		description: "Edit the full public top bar HTML.",
 	},
 	{
 		key: "page",
@@ -39,7 +33,7 @@ const templateOptions = [
 ];
 
 const selectedTemplate = Astro.url.searchParams.get("template");
-const initialHref = templateOptions.find((template) => template.key === selectedTemplate)?.href ?? templateOptions[2].href;
+const initialHref = templateOptions.find((template) => template.key === selectedTemplate)?.href ?? templateOptions[0].href;
 const initialAdminHref = localizeAdminHref(initialHref);
 ---
 

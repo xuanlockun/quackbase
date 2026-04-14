@@ -11,11 +11,12 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 	if (!TEMPLATE_PATHS.has(template)) {
 		return redirect("/admin/templates/footer?error=1");
 	}
+	const normalizedTemplate = template === "navbar" ? "header" : template;
 
 	const session = await requireApiPermission(
 		{ locals, request, redirect },
 		["site.manage"],
-		{ loginRedirect: "/admin/login", forbiddenRedirect: `/admin/templates/${template}` },
+		{ loginRedirect: "/admin/login", forbiddenRedirect: `/admin/templates/${normalizedTemplate}` },
 	);
 	if (session instanceof Response) {
 		return session;
@@ -27,7 +28,7 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 		const templateHtml = typeof rawTemplate === "string" ? rawTemplate : "";
 		const db = getDb(locals);
 
-		if (template === "footer") {
+		if (normalizedTemplate === "footer") {
 			await db
 				.prepare(
 					`INSERT INTO footer_settings (id, footer_template_html)
@@ -38,7 +39,7 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 				)
 				.bind(templateHtml)
 				.run();
-		} else if (template === "header") {
+		} else if (normalizedTemplate === "header") {
 			await db
 				.prepare(
 					`INSERT INTO site_settings (id, header_template_html)
@@ -49,18 +50,7 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 				)
 				.bind(templateHtml)
 				.run();
-		} else if (template === "navbar") {
-			await db
-				.prepare(
-					`INSERT INTO site_settings (id, navbar_template_html)
-					VALUES (1, ?1)
-					ON CONFLICT(id) DO UPDATE SET
-						navbar_template_html = excluded.navbar_template_html,
-						updated_at = CURRENT_TIMESTAMP`,
-				)
-				.bind(templateHtml)
-				.run();
-		} else if (template === "page") {
+		} else if (normalizedTemplate === "page") {
 			await db
 				.prepare(
 					`INSERT INTO site_settings (id, page_template_html)
@@ -73,8 +63,8 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 				.run();
 		}
 
-		return redirect(`/admin/templates/${template}?saved=1`);
+		return redirect(`/admin/templates/${normalizedTemplate}?saved=1`);
 	} catch {
-		return redirect(`/admin/templates/${template}?error=1`);
+		return redirect(`/admin/templates/${normalizedTemplate}?error=1`);
 	}
 };

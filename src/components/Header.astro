@@ -1,9 +1,8 @@
 ---
-import LanguageSwitch from './LanguageSwitch.astro';
 import { SITE_TITLE } from '../consts';
 import { getDb, getSiteConfig, type SiteNavItem } from '../lib/blog';
 import { getLanguageCatalog, getLanguageSwitchOptions, getUiTranslations } from '../lib/i18n';
-import { escapeHtml, renderTemplateHtml } from '../lib/template-html';
+import { DEFAULT_HEADER_TEMPLATE_HTML, DEFAULT_NAVIGATION_TEMPLATE_HTML, escapeHtml, renderTemplateHtml } from '../lib/template-html';
 
 let siteTitle = SITE_TITLE;
 let logoUrl = "/logo.svg";
@@ -50,11 +49,13 @@ const languageSwitchOptions = getLanguageSwitchOptions(Astro.url, language, cata
 const brandHtml = buildBrandHtml();
 const navItemsHtml = navItems.map((item) => renderNavItemHtml(item)).join("");
 const languageSwitchHtml = buildLanguageSwitchHtml();
-const headerTemplateHtmlRendered = renderTemplateHtml(headerTemplateHtml, {
-	brand: brandHtml,
+const navigationHtml = renderTemplateHtml(headerTemplateHtml.trim() ? DEFAULT_NAVIGATION_TEMPLATE_HTML : navbarTemplateHtml.trim() || DEFAULT_NAVIGATION_TEMPLATE_HTML, {
+	navItems: navItemsHtml,
 	languageSwitch: languageSwitchHtml,
 });
-const navbarTemplateHtmlRendered = renderTemplateHtml(navbarTemplateHtml, {
+const headerTemplateHtmlRendered = renderTemplateHtml(headerTemplateHtml.trim() ? headerTemplateHtml : DEFAULT_HEADER_TEMPLATE_HTML, {
+	brand: brandHtml,
+	navigation: navigationHtml,
 	navItems: navItemsHtml,
 	languageSwitch: languageSwitchHtml,
 });
@@ -94,91 +95,7 @@ function renderNavItemHtml(item: SiteNavItem): string {
 }
 ---
 
-{headerTemplateHtml.trim() ? (
-	<Fragment set:html={headerTemplateHtmlRendered} />
-) : (
-<header class="bg-white border-bottom shadow-sm">
-	<div class="container-fluid px-3 px-lg-4">
-		<nav class="navbar navbar-expand-lg py-2">
-			<div class="container-fluid px-0">
-				<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href={localizeHref("/")}>
-					{logoUrl ? (
-						<img
-							src={logoUrl}
-							alt={siteTitle}
-							class="site-navbar-logo"
-							loading="eager"
-						/>
-					) : (
-						<span class="site-navbar-mark" aria-hidden="true">{siteTitle.charAt(0)}</span>
-					)}
-					<span class="site-navbar-title">{siteTitle}</span>
-				</a>
-				<button
-					class="navbar-toggler"
-					type="button"
-					data-bs-toggle="collapse"
-					data-bs-target="#mainNavbar"
-					aria-controls="mainNavbar"
-					aria-expanded="false"
-					aria-label="Toggle navigation"
-				>
-					<span class="navbar-toggler-icon"></span>
-				</button>
-					<div class="collapse navbar-collapse w-100" id="mainNavbar">
-					{navbarTemplateHtml.trim() ? (
-						<Fragment set:html={navbarTemplateHtmlRendered} />
-					) : (
-					<div class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center w-100 gap-lg-3">
-						<ul class="navbar-nav flex-grow-1 justify-content-lg-center mb-3 mb-lg-0 gap-lg-1">
-						{(() => {
-							const renderItem = (item: SiteNavItem) => {
-								const hasChildren = Boolean(item.children?.length);
-								const linkHref = resolveNavHref(item.href);
-								const active = isActivePath(item.href) || (hasChildren && hasActiveDescendant(item));
-
-								if (!hasChildren) {
-									return (
-										<li class={buildClass("nav-item")}>
-											<a class={buildClass("nav-link", active && "active")} href={linkHref}>
-												{getNavLabel(item)}
-											</a>
-										</li>
-									);
-								}
-
-								return (
-									<li class={buildClass("nav-item", "dropdown", active && "active")}>
-										<a
-											class="nav-link dropdown-toggle"
-											href={linkHref}
-											data-bs-toggle="dropdown"
-											aria-expanded="false"
-										>
-											{getNavLabel(item)}
-										</a>
-										<ul class={buildClass("dropdown-menu", "dropdown-submenu-menu")}>
-											{item.children!.map((child) => renderItem(child))}
-										</ul>
-									</li>
-								);
-							};
-
-							return navItems.map((item) => renderItem(item));
-						})()}
-						</ul>
-						<div class="d-flex align-items-center justify-content-lg-end mt-3 mt-lg-0 flex-shrink-0">
-							<LanguageSwitch fullWidth={false} />
-						</div>
-					</div>
-					)}
-				</div>
-			</div>
-		</nav>
-	</div>
-</header>
-)
-}
+<Fragment set:html={headerTemplateHtmlRendered} />
 <style>
 	.site-navbar-logo {
 		display: block;
