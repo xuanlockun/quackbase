@@ -57,6 +57,7 @@ if (!page && !post && !loadError) {
 			<CmsPageSections
 				pageSections={page.pageSections}
 				contentHtml={page.contentHtml}
+				pageTemplateHtml={config?.pageTemplateHtml}
 				currentLanguage={lang}
 				currentPath={Astro.url.pathname}
 			/>

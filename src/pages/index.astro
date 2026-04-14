@@ -35,7 +35,12 @@ if (!page) {
 			lang={language}
 			faviconHref={config?.faviconUrl}
 		>
-			<CmsPageSections pageSections={page.pageSections} contentHtml={page.contentHtml} currentLanguage={language} />
+			<CmsPageSections
+				pageSections={page.pageSections}
+				contentHtml={page.contentHtml}
+				pageTemplateHtml={config?.pageTemplateHtml}
+				currentLanguage={language}
+			/>
 		</BlogPost>
 	) : (
 		<BlogPost

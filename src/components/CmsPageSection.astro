@@ -10,6 +10,7 @@ import { getLanguageCatalog, getUiTranslations } from "../lib/i18n";
 interface Props {
 	section: PageSectionConfig;
 	contentHtml: string;
+	pageTemplateHtml?: string;
 	currentLanguage: string;
 	currentPath: string;
 	posts: Array<{
@@ -30,7 +31,7 @@ interface BannerSlide {
 	linkUrl?: string;
 }
 
-const { section, contentHtml, currentLanguage, currentPath, posts, banners, contactForms, legacyContactFields } =
+const { section, contentHtml, pageTemplateHtml = "", currentLanguage, currentPath, posts, banners, contactForms, legacyContactFields } =
 	Astro.props;
 const catalog = getLanguageCatalog(Astro.locals);
 const { t } = getUiTranslations(Astro);
@@ -72,9 +73,20 @@ function resolveContactForm(section: PageSectionConfig, forms: ContactFormRecord
 
 	return forms[0] ?? null;
 }
+
+function renderPageTemplate(templateHtml: string, content: string): string {
+	if (!templateHtml.trim()) {
+		return content;
+	}
+
+	const rendered = templateHtml.replace(/\{\{\s*content\s*\}\}/gi, content);
+	return rendered === templateHtml ? content : rendered;
+}
 ---
 
-{section.type === "page_content" && <div class="page-rich-content" set:html={contentHtml} />}
+{section.type === "page_content" && (
+	<div class="page-rich-content" set:html={renderPageTemplate(pageTemplateHtml, contentHtml)} />
+)}
 
 {section.type === "banner_slider" && bannerSlides.length > 0 && <BannerSection slides={bannerSlides} />}
 

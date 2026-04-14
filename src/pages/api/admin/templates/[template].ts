@@ -4,7 +4,7 @@ import { requireApiPermission } from "../../../../lib/rbac/guards";
 
 export const prerender = false;
 
-const TEMPLATE_PATHS = new Set(["header", "navbar", "footer"]);
+const TEMPLATE_PATHS = new Set(["header", "navbar", "page", "footer"]);
 
 export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 	const template = params.template ?? "footer";
@@ -56,6 +56,17 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 					VALUES (1, ?1)
 					ON CONFLICT(id) DO UPDATE SET
 						navbar_template_html = excluded.navbar_template_html,
+						updated_at = CURRENT_TIMESTAMP`,
+				)
+				.bind(templateHtml)
+				.run();
+		} else if (template === "page") {
+			await db
+				.prepare(
+					`INSERT INTO site_settings (id, page_template_html)
+					VALUES (1, ?1)
+					ON CONFLICT(id) DO UPDATE SET
+						page_template_html = excluded.page_template_html,
 						updated_at = CURRENT_TIMESTAMP`,
 				)
 				.bind(templateHtml)

@@ -13,6 +13,7 @@ import { getLanguageCatalog } from "../lib/i18n";
 interface Props {
 	pageSections: PageSectionConfig[];
 	contentHtml: string;
+	pageTemplateHtml?: string;
 	currentLanguage?: string;
 	currentPath?: string;
 }
@@ -25,7 +26,7 @@ interface BannerSlide {
 }
 
 const catalog = getLanguageCatalog(Astro.locals);
-const { pageSections, contentHtml, currentLanguage = catalog.defaultLanguageCode, currentPath = "/" } = Astro.props;
+const { pageSections, contentHtml, pageTemplateHtml = "", currentLanguage = catalog.defaultLanguageCode, currentPath = "/" } = Astro.props;
 
 let posts = [];
 let legacyContactFields = [];
@@ -58,11 +59,12 @@ const orderedSections = [...pageSections].sort((left, right) => left.order - rig
 
 {
 	orderedSections.map((section) => (
-		<CmsPageSection
-			section={section}
-			contentHtml={contentHtml}
-			currentLanguage={currentLanguage}
-			currentPath={currentPath}
+			<CmsPageSection
+				section={section}
+				contentHtml={contentHtml}
+				pageTemplateHtml={pageTemplateHtml}
+				currentLanguage={currentLanguage}
+				currentPath={currentPath}
 			posts={posts}
 			banners={banners}
 			contactForms={contactForms}
