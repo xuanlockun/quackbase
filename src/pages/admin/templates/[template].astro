@@ -2,7 +2,7 @@
 export const prerender = false;
 
 import AdminLayout from "../../../layouts/AdminLayout.astro";
-import { DEFAULT_PAGE_TEMPLATE_HTML, getDb, getSiteConfig } from "../../../lib/blog";
+import { getDb, getSiteConfig } from "../../../lib/blog";
 import { getUiTranslations } from "../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
@@ -27,9 +27,65 @@ const templateMeta = {
 	},
 	page: {
 		label: "Page",
-		description: "Edit the raw HTML wrapper used around rendered page markdown. Use {{content}} where the markdown should appear.",
-		value: (config) => config.pageTemplateHtml,
-		defaultHtml: DEFAULT_PAGE_TEMPLATE_HTML,
+		description: "Read-only reference for the current page renderer logic used by the CMS page sections.",
+		reference: String.raw`{section.type === "page_content" && (
+	<Fragment set:html={renderPageTemplate(pageTemplateHtml, contentHtml)} />
+)}
+
+{section.type === "banner_slider" && bannerSlides.length > 0 && <BannerSection slides={bannerSlides} />}
+
+{
+	section.type === "blog_feed" && posts.length > 0 && (
+		<section class="mb-5">
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<h2 class="h4 mb-0">{t("headings.latestPosts")}</h2>
+				<a class="btn btn-sm btn-outline-primary" href="/blog">{t("actions.viewAll")}</a>
+			</div>
+			<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+				{
+					posts.slice(0, 6).map((post) => (
+						<a class="col" href={getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog)}>
+							<div class="card h-100 shadow-sm border-0">
+								<img
+									src={post.heroImage || "/blog-placeholder-1.jpg"}
+									class="card-img-top rounded-top"
+									alt=""
+									loading="lazy"
+								/>
+								<div class="card-body">
+									<h3 class="h5">{post.title}</h3>
+									<p class="text-muted small mb-0">{post.description}</p>
+								</div>
+							</div>
+						</a>
+					))
+				}
+			</div>
+		</section>
+	)
+}
+
+{
+	section.type === "contact_form" && (
+		<section class="mb-5">
+			<div class="row align-items-center g-4">
+				<div class="col-lg-5">
+					<p class="text-uppercase text-muted small mb-2">{t("headings.contactUs")}</p>
+					<h2 class="h3">{resolvedContactFormTitle}</h2>
+					<p class="text-muted">{t("messages.contactFormIntro")}</p>
+				</div>
+				<div class="col-lg-7">
+					<DynamicForm
+						fields={resolvedContactFields}
+						currentLanguage={currentLanguage}
+						sourcePath={currentPath}
+						contactFormId={resolvedContactFormId}
+					/>
+				</div>
+			</div>
+		</section>
+	)
+}`,
 	},
 	footer: {
 		label: t("nav.footer"),
@@ -42,7 +98,8 @@ const templateMeta = {
 type TemplateKind = keyof typeof templateMeta;
 const kind = (templateKind in templateMeta ? templateKind : "footer") as TemplateKind;
 const meta = templateMeta[kind];
-const defaultTemplateHtml = meta.defaultHtml;
+const isReadOnlyTemplate = kind === "page";
+const defaultTemplateHtml = "defaultHtml" in meta ? meta.defaultHtml : "";
 
 let loadError = "";
 let templateHtml = "";
@@ -67,32 +124,57 @@ try {
 		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.templateSaved")}</p>}
 		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.templateSaveFailed")}</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
-		<form method="post" action={`/api/admin/templates/${kind}`} class="admin-form-shell">
-			<div class="admin-form-section">
-				<label style="grid-column: 1 / -1;">
-					<span>{meta.label} HTML</span>
-					<textarea
-						class="form-control"
-						name="templateHtml"
-						rows="14"
-						spellcheck="false"
-						placeholder={defaultTemplateHtml}
-						disabled={Boolean(loadError)}
-					>{templateHtml.trim() ? templateHtml : defaultTemplateHtml}</textarea>
-				</label>
-				<p class="admin-muted">{meta.description}</p>
-				<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>Save template</button>
-			</div>
-		</form>
-		<div class="admin-form-section">
-			<strong>Preview</strong>
-			<div class="template-preview border rounded p-3" set:html={templateHtml.trim() ? templateHtml : defaultTemplateHtml}></div>
-		</div>
+		{
+			isReadOnlyTemplate ? (
+				<div class="admin-form-section">
+					<strong class="d-block mb-2">{meta.label} reference</strong>
+					<p class="admin-muted mb-3">{meta.description}</p>
+					<pre class="template-code mb-0"><code>{meta.reference}</code></pre>
+				</div>
+			) : (
+				<form method="post" action={`/api/admin/templates/${kind}`} class="admin-form-shell">
+					<div class="admin-form-section">
+						<label style="grid-column: 1 / -1;">
+							<span>{meta.label} HTML</span>
+							<textarea
+								class="form-control"
+								name="templateHtml"
+								rows="14"
+								spellcheck="false"
+								placeholder={defaultTemplateHtml}
+								disabled={Boolean(loadError)}
+							>{templateHtml.trim() ? templateHtml : defaultTemplateHtml}</textarea>
+						</label>
+						<p class="admin-muted">{meta.description}</p>
+						<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>Save template</button>
+					</div>
+				</form>
+			)
+		}
+		{
+			!isReadOnlyTemplate && (
+				<div class="admin-form-section">
+					<strong>Preview</strong>
+					<div class="template-preview border rounded p-3" set:html={templateHtml.trim() ? templateHtml : defaultTemplateHtml}></div>
+				</div>
+			)
+		}
 	</div>
 </AdminLayout>
 
 <style>
 	.template-preview {
 		background: #fff;
+	}
+
+	.template-code {
+		white-space: pre-wrap;
+		word-break: break-word;
+		padding: 1rem;
+		border-radius: 0.75rem;
+		background: rgba(15, 18, 25, 0.92);
+		color: #f5f7fb;
+		font-size: 0.875rem;
+		line-height: 1.5;
 	}
 </style>
