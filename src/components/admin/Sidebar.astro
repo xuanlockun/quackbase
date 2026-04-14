@@ -137,6 +137,10 @@ const sections = sectionConfig
 	.filter((section) => section.links.length > 0);
 
 function isActiveLink(href: string, currentPath: string): boolean {
+	if (href === "/admin") {
+		return currentPath === "/admin" || currentPath === "/admin/";
+	}
+
 	return currentPath === href || currentPath.startsWith(`${href}/`);
 }
 
