@@ -9,6 +9,8 @@ let logoUrl = "/logo.svg";
 let headerBackground = '#ffffff';
 let headerTextColor = '#0f1219';
 let headerAccentColor = '#2337ff';
+let headerTemplateHtml = "";
+let navbarTemplateHtml = "";
 const { language, t, localizeHref, localizeAdminHref } = getUiTranslations(Astro);
 let navItems: SiteNavItem[] = [
 	{ label: t("nav.home"), labelTranslations: { en: "Home", vi: "Trang chu" }, href: '/', sortOrder: 0 },
@@ -21,6 +23,8 @@ try {
 	headerBackground = config.headerBackground;
 	headerTextColor = config.headerTextColor;
 	headerAccentColor = config.headerAccentColor;
+	headerTemplateHtml = config.headerTemplateHtml;
+	navbarTemplateHtml = config.navbarTemplateHtml;
 	navItems = config.navItems.length ? config.navItems : navItems;
 } catch {
 	// Fall back to baked-in navigation if D1 is unavailable on this route.
@@ -42,6 +46,9 @@ const hasActiveDescendant = (item: SiteNavItem): boolean =>
 const buildClass = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(" ");
 ---
 
+{headerTemplateHtml ? (
+	<div set:html={headerTemplateHtml} />
+) : (
 <header class="bg-white border-bottom shadow-sm">
 	<div class="container-fluid px-3 px-lg-4">
 		<nav class="navbar navbar-expand-lg py-2">
@@ -71,6 +78,9 @@ const buildClass = (...classes: (string | false | undefined)[]) => classes.filte
 					<span class="navbar-toggler-icon"></span>
 				</button>
 				<div class="collapse navbar-collapse w-100" id="mainNavbar">
+					{navbarTemplateHtml ? (
+						<div class="w-100" set:html={navbarTemplateHtml} />
+					) : (
 					<div class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center w-100 gap-lg-3">
 						<ul class="navbar-nav flex-grow-1 justify-content-lg-center mb-3 mb-lg-0 gap-lg-1">
 						{(() => {
@@ -113,11 +123,14 @@ const buildClass = (...classes: (string | false | undefined)[]) => classes.filte
 							<LanguageSwitch fullWidth={false} />
 						</div>
 					</div>
+					)}
 				</div>
 			</div>
 		</nav>
 	</div>
 </header>
+)
+}
 <style>
 	.site-navbar-logo {
 		display: block;

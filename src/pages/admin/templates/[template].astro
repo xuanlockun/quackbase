@@ -1,0 +1,88 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { getDb, getSiteConfig } from "../../../lib/blog";
+import { getUiTranslations } from "../../../lib/i18n";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const { t } = getUiTranslations(Astro);
+const templateKind = Astro.params.template ?? "footer";
+const templateMeta = {
+	header: {
+		label: t("nav.header"),
+		description: "Edit the raw HTML used for the public header shell.",
+		value: (config) => config.headerTemplateHtml,
+	},
+	navbar: {
+		label: t("nav.navbar"),
+		description: "Edit the raw HTML used for the public navbar area.",
+		value: (config) => config.navbarTemplateHtml,
+	},
+	footer: {
+		label: t("nav.footer"),
+		description: "Edit the raw HTML used for the public footer.",
+		value: (config) => config.footerTemplateHtml,
+	},
+} as const;
+
+type TemplateKind = keyof typeof templateMeta;
+const kind = (templateKind in templateMeta ? templateKind : "footer") as TemplateKind;
+const meta = templateMeta[kind];
+
+let loadError = "";
+let templateHtml = "";
+
+try {
+	const config = await getSiteConfig(getDb(Astro.locals));
+	templateHtml = meta.value(config);
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadSiteSettings");
+}
+---
+
+<AdminLayout
+	title={meta.label}
+	description={meta.description}
+	session={session}
+	pageEyebrow={t("nav.template")}
+	pageTitle={meta.label}
+	pageDescription={meta.description}
+>
+	<div class="admin-content-stack">
+		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.templateSaved")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.templateSaveFailed")}</p>}
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
+		<form method="post" action={`/api/admin/templates/${kind}`} class="admin-form-shell">
+			<div class="admin-form-section">
+				<label style="grid-column: 1 / -1;">
+					<span>{meta.label} HTML</span>
+					<textarea
+						class="form-control"
+						name="templateHtml"
+						rows="14"
+						spellcheck="false"
+						placeholder="<div>&copy; 2026 Edge CMS</div>"
+						disabled={Boolean(loadError)}
+					>{templateHtml}</textarea>
+				</label>
+				<p class="admin-muted">{meta.description}</p>
+				<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>Save template</button>
+			</div>
+		</form>
+		<div class="admin-form-section">
+			<strong>Preview</strong>
+			<div class="template-preview border rounded p-3" set:html={templateHtml || "<div>&copy; Edge CMS</div>"}></div>
+		</div>
+	</div>
+</AdminLayout>
+
+<style>
+	.template-preview {
+		background: #fff;
+	}
+</style>

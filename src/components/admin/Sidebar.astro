@@ -59,6 +59,13 @@ const navIconMap: Record<string, string> = {
 			<path d="M7 17h4" />
 		</svg>
 	`,
+	"nav.navbar": `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M4 7h16" />
+			<path d="M4 12h10" />
+			<path d="M4 17h13" />
+		</svg>
+	`,
 	"nav.settings": `
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 			<circle cx="12" cy="12" r="3" />
@@ -109,9 +116,26 @@ const navIconMap: Record<string, string> = {
 
 const navIconHtml = (key: string) => navIconMap[key] ?? navIconMap["default"];
 
+const templateOptions = [
+	{
+		labelKey: "nav.header",
+		href: "/admin/templates/header",
+		iconKey: "nav.header",
+	},
+	{
+		labelKey: "nav.navbar",
+		href: "/admin/templates/navbar",
+		iconKey: "nav.navbar",
+	},
+	{
+		labelKey: "nav.footer",
+		href: "/admin/templates/footer",
+		iconKey: "nav.footer",
+	},
+];
+
 const sectionConfig = [
 	{ title: "CMS", labelKeys: ["nav.posts", "nav.pages", "nav.banners", "nav.contactForms"] },
-	{ title: "Template", labelKeys: ["nav.footer"] },
 	{ title: "Management", labelKeys: ["nav.users", "nav.roles", "nav.permissions"] },
 	{ title: "Settings", labelKeys: ["nav.backup", "nav.settings", "nav.languages"] },
 ];
@@ -126,6 +150,8 @@ const sections = sectionConfig
 function isActiveLink(href: string, currentPath: string): boolean {
 	return currentPath === href || currentPath.startsWith(`${href}/`);
 }
+
+const activeTemplate = templateOptions.find((template) => isActiveLink(template.href, pathname)) ?? templateOptions[2];
 
 ---
 
@@ -142,6 +168,46 @@ function isActiveLink(href: string, currentPath: string): boolean {
 		</a>
 	</header>
 	<div class="admin-sidebar-body overflow-auto">
+		<section class="admin-sidebar-section">
+			<p class="text-uppercase mb-2 admin-sidebar-section-label">{t("nav.template")}</p>
+			<div class="dropdown admin-template-dropdown">
+				<button
+					class="btn btn-outline-light w-100 d-flex align-items-center justify-content-between gap-2 admin-template-toggle"
+					type="button"
+					data-bs-toggle="dropdown"
+					aria-expanded="false"
+				>
+					<span class="d-inline-flex align-items-center gap-2">
+						<span class="d-inline-flex align-items-center justify-content-center flex-shrink-0 admin-sidebar-icon-wrap">
+							<span aria-hidden="true" set:html={navIconHtml(activeTemplate.iconKey)}></span>
+						</span>
+						<span>{t(activeTemplate.labelKey)}</span>
+					</span>
+					<span class="small text-uppercase letter-spacing-wide">Edit</span>
+				</button>
+				<ul class="dropdown-menu dropdown-menu-dark shadow w-100 admin-template-menu">
+					{
+						templateOptions.map((template) => (
+							<li>
+								<a
+									class:list={[
+										"dropdown-item d-flex align-items-center gap-2",
+										isActiveLink(template.href, pathname) && "active",
+									]}
+									href={localizeAdminHref(template.href)}
+									data-admin-sidebar-link
+								>
+									<span class="d-inline-flex align-items-center justify-content-center flex-shrink-0 admin-sidebar-icon-wrap">
+										<span aria-hidden="true" set:html={navIconHtml(template.iconKey)}></span>
+									</span>
+									<span>{t(template.labelKey)}</span>
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</div>
+		</section>
 		{
 			sections.map((section) => (
 				<section key={section.title} class="admin-sidebar-section">

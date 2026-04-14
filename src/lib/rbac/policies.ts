@@ -28,6 +28,9 @@ const ADMIN_PAGE_POLICIES = new Map<string, string[]>([
 	["/admin/contact-forms", ["contactForms.manage"]],
 	["/admin/backup", ["site.manage"]],
 	["/admin/footer", ["site.manage"]],
+	["/admin/templates/header", ["site.manage"]],
+	["/admin/templates/navbar", ["site.manage"]],
+	["/admin/templates/footer", ["site.manage"]],
 	["/admin/settings", ["site.manage"]],
 	["/admin/users", ["users.manage"]],
 	["/admin/roles", ["roles.manage"]],
@@ -78,6 +81,10 @@ export function getRequiredAdminPagePermissions(pathname: string): string[] | nu
 
 	if (pathname === "/admin/roles/new" || /^\/admin\/roles\/[^/]+\/edit$/.test(pathname)) {
 		return ["roles.manage"];
+	}
+
+	if (/^\/admin\/templates\/(header|navbar|footer)$/.test(pathname)) {
+		return ["site.manage"];
 	}
 
 	return ADMIN_PAGE_POLICIES.get(pathname) ?? [];

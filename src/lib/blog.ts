@@ -186,6 +186,8 @@ export interface SiteConfig {
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
+	headerTemplateHtml: string;
+	navbarTemplateHtml: string;
 	footerText: string;
 	footerBackground: string;
 	footerTextColor: string;
@@ -345,7 +347,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const settings = await db
 		.prepare(
-			`SELECT site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color, nav_items
+			`SELECT site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, nav_items
 			FROM site_settings
 			WHERE id = 1`,
 		)
@@ -357,6 +359,8 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			header_background: string;
 			header_text_color: string;
 			header_accent_color: string;
+			header_template_html: string;
+			navbar_template_html: string;
 			nav_items: string | null;
 		}>();
 
@@ -417,6 +421,8 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 		headerBackground: settings?.header_background ?? "#ffffff",
 		headerTextColor: settings?.header_text_color ?? "#0f1219",
 		headerAccentColor: settings?.header_accent_color ?? "#2337ff",
+		headerTemplateHtml: settings?.header_template_html ?? "",
+		navbarTemplateHtml: settings?.navbar_template_html ?? "",
 		footerText: footerSettings?.footer_text ?? "Edge CMS. Content updates go live straight from D1.",
 		footerBackground: footerSettings?.footer_background ?? "#eef2f7",
 		footerTextColor: footerSettings?.footer_text_color ?? "#60739f",
@@ -1121,7 +1127,7 @@ async function assertPublishedPostSlugUniqueness(
 async function ensureSiteTables(db: D1Database): Promise<void> {
 	await db.batch([
 		db.prepare(
-			`CREATE TABLE IF NOT EXISTS site_settings (
+				`CREATE TABLE IF NOT EXISTS site_settings (
 				id INTEGER PRIMARY KEY CHECK (id = 1),
 				site_title TEXT NOT NULL DEFAULT 'Edge CMS',
 				home_page_slug TEXT NOT NULL DEFAULT 'home',
@@ -1130,6 +1136,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				header_background TEXT NOT NULL DEFAULT '#ffffff',
 				header_text_color TEXT NOT NULL DEFAULT '#0f1219',
 				header_accent_color TEXT NOT NULL DEFAULT '#2337ff',
+				header_template_html TEXT NOT NULL DEFAULT '',
+				navbar_template_html TEXT NOT NULL DEFAULT '',
 				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 			)`,
 		),
@@ -1187,6 +1195,14 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN logo_url TEXT NOT NULL DEFAULT ''`).run();
 	}
 
+	if (!settingsColumnNames.has("header_template_html")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN header_template_html TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("navbar_template_html")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN navbar_template_html TEXT NOT NULL DEFAULT ''`).run();
+	}
+
 	if (!footerColumnNames.has("footer_template_html")) {
 		await db.prepare(`ALTER TABLE footer_settings ADD COLUMN footer_template_html TEXT NOT NULL DEFAULT ''`).run();
 	}
@@ -1232,8 +1248,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	await db.batch([
 		db.prepare(
-			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color)
-			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '', '#ffffff', '#0f1219', '#2337ff')
+			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html)
+			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '', '#ffffff', '#0f1219', '#2337ff', '', '')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(
