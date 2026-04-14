@@ -720,6 +720,11 @@ const totalItemCount = navRows.length;
 			return null;
 		}
 
+		const defaultLanguageCode = editor?.dataset.defaultLanguage?.trim();
+		if (defaultLanguageCode && !labelTranslations[defaultLanguageCode]) {
+			labelTranslations[defaultLanguageCode] = fallbackLabel;
+		}
+
 		return {
 			label: fallbackLabel,
 			labelTranslations,

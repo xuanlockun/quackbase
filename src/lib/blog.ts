@@ -124,9 +124,32 @@ function normalizeNavTreeNode(
 		return null;
 	}
 
-	const labelTranslations = normalizeLocalizedText(record.label ?? record.labelTranslations, {
+	const rawLabelTranslations = record.labelTranslations;
+	let labelSource: unknown = record.label ?? rawLabelTranslations;
+
+	if (rawLabelTranslations && typeof rawLabelTranslations === "object" && !Array.isArray(rawLabelTranslations)) {
+		const normalizedRawTranslations = { ...(rawLabelTranslations as Record<string, unknown>) };
+		const defaultCode = catalog.defaultLanguageCode;
+		if (
+			typeof normalizedRawTranslations[defaultCode] !== "string" ||
+			!String(normalizedRawTranslations[defaultCode]).trim()
+		) {
+			const fallbackTranslation = Object.values(normalizedRawTranslations).find(
+				(value) => typeof value === "string" && value.trim(),
+			);
+			if (typeof fallbackTranslation === "string" && fallbackTranslation.trim()) {
+				normalizedRawTranslations[defaultCode] = fallbackTranslation.trim();
+			} else if (typeof record.label === "string" && record.label.trim()) {
+				normalizedRawTranslations[defaultCode] = record.label.trim();
+			}
+		}
+		labelSource = normalizedRawTranslations;
+	}
+
+	const labelTranslations = normalizeLocalizedText(labelSource, {
 		fallbackValue: typeof record.label === "string" ? record.label : undefined,
 		requireDefault: true,
+		defaultLanguageCode: catalog.defaultLanguageCode,
 	});
 
 	if (!labelTranslations) {
