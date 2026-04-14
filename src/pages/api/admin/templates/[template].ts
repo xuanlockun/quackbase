@@ -12,10 +12,6 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 		return redirect("/admin/templates/footer?error=1");
 	}
 
-	if (template === "page") {
-		return redirect("/admin/templates/page?error=readonly");
-	}
-
 	const session = await requireApiPermission(
 		{ locals, request, redirect },
 		["site.manage"],
@@ -60,6 +56,17 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 					VALUES (1, ?1)
 					ON CONFLICT(id) DO UPDATE SET
 						navbar_template_html = excluded.navbar_template_html,
+						updated_at = CURRENT_TIMESTAMP`,
+				)
+				.bind(templateHtml)
+				.run();
+		} else if (template === "page") {
+			await db
+				.prepare(
+					`INSERT INTO site_settings (id, page_template_html)
+					VALUES (1, ?1)
+					ON CONFLICT(id) DO UPDATE SET
+						page_template_html = excluded.page_template_html,
 						updated_at = CURRENT_TIMESTAMP`,
 				)
 				.bind(templateHtml)
