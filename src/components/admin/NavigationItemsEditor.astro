@@ -1,6 +1,6 @@
 ---
 import type { SiteNavItem } from "../../lib/blog";
-import { getUiTranslations } from "../../lib/i18n";
+import { getLanguageCatalog, getSupportedLanguages, getUiTranslations, type LocalizedText } from "../../lib/i18n";
 
 interface Props {
 	navItems: SiteNavItem[];
@@ -9,6 +9,29 @@ interface Props {
 
 const { navItems = [], loadError = "" } = Astro.props;
 const { t } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const languages = getSupportedLanguages(catalog);
+const defaultLanguageCode = catalog.defaultLanguageCode;
+const languagesJson = JSON.stringify(languages);
+const resolveNavPreviewLabel = (translations?: LocalizedText, fallback = "") => {
+	if (!translations) {
+		return fallback;
+	}
+
+	const defaultValue = translations[defaultLanguageCode]?.trim();
+	if (defaultValue) {
+		return defaultValue;
+	}
+
+	for (const language of languages) {
+		const value = translations[language.code]?.trim();
+		if (value) {
+			return value;
+		}
+	}
+
+	return fallback;
+};
 
 const flattenNavItems = (items: SiteNavItem[] = [], depth = 0): { item: SiteNavItem; depth: number }[] => {
 	const rows: { item: SiteNavItem; depth: number }[] = [];
@@ -54,6 +77,8 @@ const totalItemCount = navRows.length;
 	<div
 		class="nav-tree-editor-surface"
 		data-nav-items-editor
+		data-languages={languagesJson}
+		data-default-language={defaultLanguageCode}
 		data-disabled={Boolean(loadError)}
 		data-remove-label={t("actions.remove")}
 		data-add-child-label={t("actions.addChild")}
@@ -123,35 +148,30 @@ const totalItemCount = navRows.length;
 												<span class="nav-tree-leaf-pill">{t("labels.leaf", "Leaf")}</span>
 											)}
 										</div>
-										<strong class="nav-tree-title">{item.labelTranslations?.en ?? item.label ?? ""}</strong>
+										<strong class="nav-tree-title">{resolveNavPreviewLabel(item.labelTranslations, item.label)}</strong>
 										<span class="nav-tree-path">{item.href}</span>
 									</div>
 								</div>
 
 								<div class="nav-tree-fields">
-									<label class="nav-tree-field">
-										<span class="nav-tree-field-label">{t("labels.label")} ({t("actions.switchToEnglish")})</span>
-										<input
-											class="form-control form-control-sm"
-											type="text"
-											value={item.labelTranslations?.en ?? item.label ?? ""}
-											placeholder={t("nav.home")}
-											data-nav-label-en
-											disabled={Boolean(loadError)}
-										/>
-									</label>
-
-									<label class="nav-tree-field">
-										<span class="nav-tree-field-label">{t("labels.label")} ({t("actions.switchToVietnamese")})</span>
-										<input
-											class="form-control form-control-sm"
-											type="text"
-											value={item.labelTranslations?.vi ?? ""}
-											placeholder={t("nav.home")}
-											data-nav-label-vi
-											disabled={Boolean(loadError)}
-										/>
-									</label>
+									{
+										languages.map((languageOption) => (
+											<label class="nav-tree-field">
+												<span class="nav-tree-field-label">
+													{t("labels.label")} ({languageOption.label})
+												</span>
+												<input
+													class="form-control form-control-sm"
+													type="text"
+													value={item.labelTranslations?.[languageOption.code] ?? ""}
+													placeholder={languageOption.label}
+													data-nav-label
+													data-language-code={languageOption.code}
+													disabled={Boolean(loadError)}
+												/>
+											</label>
+										))
+									}
 
 									<label class="nav-tree-field nav-tree-field-link">
 										<span class="nav-tree-field-label">{t("labels.link")}</span>
@@ -277,8 +297,11 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-list {
+		--tree-step: 1.1rem;
 		display: grid;
 		gap: 0.75rem;
+		position: relative;
+		padding-left: 0.15rem;
 	}
 
 	.nav-tree-empty {
@@ -287,7 +310,8 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-row {
-		--nav-indent: calc(var(--nav-depth, 0) * 1.1rem);
+		--nav-indent: calc(var(--nav-depth, 0) * var(--tree-step));
+		position: relative;
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
 		gap: 0.9rem;
@@ -301,8 +325,24 @@ const totalItemCount = navRows.length;
 		margin-left: var(--nav-indent);
 	}
 
+	.nav-tree-row::before {
+		content: "";
+		position: absolute;
+		left: calc(0.78rem + var(--nav-indent));
+		top: -0.75rem;
+		bottom: -0.75rem;
+		width: 2px;
+		background: linear-gradient(180deg, rgba(35, 55, 255, 0.2), rgba(35, 55, 255, 0.06));
+		opacity: 0.85;
+		pointer-events: none;
+	}
+
 	.nav-tree-row[data-depth="0"] {
 		margin-left: 0;
+	}
+
+	.nav-tree-row[data-depth="0"]::before {
+		left: 0.78rem;
 	}
 
 	.nav-tree-row[data-depth="1"] {
@@ -326,6 +366,17 @@ const totalItemCount = navRows.length;
 
 	.nav-tree-row[data-has-children="true"] .nav-tree-spine {
 		background: linear-gradient(180deg, rgba(35, 55, 255, 0.52), rgba(35, 55, 255, 0.08));
+	}
+
+	.nav-tree-row[data-has-children="true"]::after {
+		content: "";
+		position: absolute;
+		left: calc(0.78rem + var(--nav-indent));
+		top: 2.35rem;
+		width: 1.15rem;
+		height: 2px;
+		background: linear-gradient(90deg, rgba(35, 55, 255, 0.35), rgba(35, 55, 255, 0.08));
+		pointer-events: none;
 	}
 
 	.nav-tree-row[data-collapsed="true"] .nav-tree-toggle {
@@ -630,31 +681,37 @@ const totalItemCount = navRows.length;
 	};
 
 	const buildNodeFromRow = (row) => {
-		const labelEn = row.querySelector("[data-nav-label-en]");
-		const labelVi = row.querySelector("[data-nav-label-vi]");
 		const href = row.querySelector("[data-nav-href]");
 
-		if (
-			!(labelEn instanceof HTMLInputElement) ||
-			!(labelVi instanceof HTMLInputElement) ||
-			!(href instanceof HTMLInputElement)
-		) {
+		if (!(href instanceof HTMLInputElement)) {
 			return null;
 		}
 
 		const trimmedHref = href.value.trim();
-		const trimmedEn = labelEn.value.trim();
-		const trimmedVi = labelVi.value.trim();
-		if (!trimmedEn || !trimmedHref) {
+		if (!trimmedHref) {
+			return null;
+		}
+
+		const labelTranslations = {};
+		for (const input of row.querySelectorAll("[data-nav-label]")) {
+			if (!(input instanceof HTMLInputElement)) {
+				continue;
+			}
+			const code = input.dataset.languageCode?.trim();
+			const value = input.value.trim();
+			if (code && value) {
+				labelTranslations[code] = value;
+			}
+		}
+
+		const fallbackLabel = labelTranslations[editor?.dataset.defaultLanguage ?? ""] ?? Object.values(labelTranslations)[0] ?? "";
+		if (!fallbackLabel) {
 			return null;
 		}
 
 		return {
-			label: trimmedEn,
-			labelTranslations: {
-				en: trimmedEn,
-				...(trimmedVi ? { vi: trimmedVi } : {}),
-			},
+			label: fallbackLabel,
+			labelTranslations,
 			href: trimmedHref,
 			children: [],
 		};
@@ -754,9 +811,9 @@ const totalItemCount = navRows.length;
 	};
 
 	const createNavRow = (entry = {}, depth = 0) => {
-		const labelTranslations = entry.label ?? entry.labelTranslations ?? {};
-		const labelEn = labelTranslations.en ?? entry.label ?? "";
-		const labelVi = labelTranslations.vi ?? "";
+		const labelTranslations = entry.labelTranslations ?? {};
+		const fallbackLabel = labelTranslations[editor?.dataset.defaultLanguage ?? ""] ?? Object.values(labelTranslations)[0] ?? entry.label ?? "";
+		const languages = JSON.parse(editor?.dataset.languages ?? "[]");
 
 		const row = document.createElement("article");
 		row.className = "nav-tree-row";
@@ -813,7 +870,7 @@ const totalItemCount = navRows.length;
 
 		const title = document.createElement("strong");
 		title.className = "nav-tree-title";
-		title.textContent = labelEn || labelTranslations.vi || "";
+		title.textContent = fallbackLabel;
 		const path = document.createElement("span");
 		path.className = "nav-tree-path";
 		path.textContent = entry.href ?? "";
@@ -834,27 +891,19 @@ const totalItemCount = navRows.length;
 			return field;
 		};
 
-		const enInput = document.createElement("input");
-		enInput.type = "text";
-		enInput.className = "form-control form-control-sm";
-		enInput.dataset.navLabelEn = "";
-		enInput.placeholder = "Home";
-		enInput.value = labelEn;
-		if (isReadOnly) {
-			enInput.disabled = true;
+		for (const languageOption of languages) {
+			const input = document.createElement("input");
+			input.type = "text";
+			input.className = "form-control form-control-sm";
+			input.dataset.navLabel = "";
+			input.dataset.languageCode = languageOption.code;
+			input.placeholder = languageOption.label;
+			input.value = labelTranslations[languageOption.code] ?? "";
+			if (isReadOnly) {
+				input.disabled = true;
+			}
+			fields.append(createField(`${t("labels.label")} (${languageOption.label})`, input));
 		}
-		fields.append(createField("Label EN", enInput));
-
-		const viInput = document.createElement("input");
-		viInput.type = "text";
-		viInput.className = "form-control form-control-sm";
-		viInput.dataset.navLabelVi = "";
-		viInput.placeholder = "Trang chủ";
-		viInput.value = labelVi;
-		if (isReadOnly) {
-			viInput.disabled = true;
-		}
-		fields.append(createField("Label VI", viInput));
 
 		const hrefInput = document.createElement("input");
 		hrefInput.type = "text";
