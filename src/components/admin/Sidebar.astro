@@ -171,7 +171,7 @@ function isActiveLink(href: string, currentPath: string): boolean {
 		<a
 			role="menuitem"
 			aria-current={isActiveLink(dashboardLink.href, pathname) ? "page" : undefined}
-			class:list={["nav-link", "w-100 text-start", "admin-sidebar-dashboard-link", "fw-semibold", isActiveLink(dashboardLink.href, pathname) && "active"]}
+			class:list={["nav-link", "w-100 text-start", isActiveLink(dashboardLink.href, pathname) && "active"]}
 			href={localizeAdminHref(dashboardLink.href)}
 			data-admin-sidebar-link
 		>
@@ -211,18 +211,3 @@ function isActiveLink(href: string, currentPath: string): boolean {
 		<small class="text-muted">Admin navigation</small>
 	</footer>
 </nav>
-
-<style>
-	.admin-sidebar-dashboard-link {
-		margin-bottom: 0.35rem;
-		border-left: 3px solid rgba(var(--brand-primary-rgb, 84, 129, 255), 0.75);
-	}
-
-	.admin-sidebar-dashboard-link.active {
-		background: rgba(var(--brand-primary-rgb, 84, 129, 255), 0.14);
-	}
-
-	.admin-sidebar-dashboard-link:not(.active) {
-		color: var(--admin-sidebar-link-color, rgba(255, 255, 255, 0.92));
-	}
-</style>
