@@ -1,0 +1,103 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { getUiTranslations } from "../../../lib/i18n";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const { t, localizeAdminHref } = getUiTranslations(Astro);
+
+const templateOptions = [
+	{
+		key: "header",
+		label: t("nav.header"),
+		href: "/admin/templates/header",
+		description: "Edit the raw HTML used for the public header shell.",
+	},
+	{
+		key: "navbar",
+		label: t("nav.navbar"),
+		href: "/admin/templates/navbar",
+		description: "Edit the raw HTML used for the public navbar area.",
+	},
+	{
+		key: "footer",
+		label: t("nav.footer"),
+		href: "/admin/templates/footer",
+		description: "Edit the raw HTML used for the public footer.",
+	},
+];
+
+const selectedTemplate = Astro.url.searchParams.get("template");
+const initialHref = templateOptions.find((template) => template.key === selectedTemplate)?.href ?? templateOptions[2].href;
+const initialAdminHref = localizeAdminHref(initialHref);
+---
+
+<AdminLayout
+	title={t("nav.template")}
+	description="Choose which public template fragment to edit."
+	session={session}
+	pageEyebrow={t("nav.template")}
+	pageTitle={t("nav.template")}
+	pageDescription="Choose which public template fragment to edit."
+>
+	<div class="admin-content-stack">
+		<div class="admin-form-section">
+			<label class="d-grid gap-2">
+				<span>Template to edit</span>
+				<select
+					class="form-select"
+					id="templatePicker"
+					onchange="window.location.href = this.value;"
+				>
+					{
+						templateOptions.map((template) => (
+							<option value={localizeAdminHref(template.href)} selected={localizeAdminHref(template.href) === initialAdminHref}>
+								{template.label}
+							</option>
+						))
+					}
+				</select>
+			</label>
+			<p class="admin-muted mb-0">
+				This page only changes the public template HTML saved in D1. The admin shell stays untouched.
+			</p>
+		</div>
+
+		<div class="admin-form-section">
+			<div class="d-flex flex-column gap-3">
+				{
+					templateOptions.map((template) => (
+						<a href={localizeAdminHref(template.href)} class="text-decoration-none">
+							<div class="border rounded-3 p-3 h-100 template-card">
+								<div class="d-flex justify-content-between align-items-start gap-3">
+									<div>
+										<strong class="d-block">{template.label}</strong>
+										<p class="mb-0 text-muted">{template.description}</p>
+									</div>
+									<span class="btn btn-sm btn-outline-secondary">Edit</span>
+								</div>
+							</div>
+						</a>
+					))
+				}
+			</div>
+		</div>
+	</div>
+</AdminLayout>
+
+<style>
+	.template-card {
+		background: rgba(255, 255, 255, 0.02);
+		transition: transform 0.15s ease, border-color 0.15s ease;
+	}
+
+	.template-card:hover {
+		transform: translateY(-1px);
+		border-color: rgba(255, 255, 255, 0.2);
+	}
+</style>
