@@ -2,7 +2,8 @@
 import LanguageSwitch from './LanguageSwitch.astro';
 import { SITE_TITLE } from '../consts';
 import { getDb, getSiteConfig, type SiteNavItem } from '../lib/blog';
-import { getUiTranslations } from '../lib/i18n';
+import { getLanguageCatalog, getLanguageSwitchOptions, getUiTranslations } from '../lib/i18n';
+import { escapeHtml, renderTemplateHtml } from '../lib/template-html';
 
 let siteTitle = SITE_TITLE;
 let logoUrl = "/logo.svg";
@@ -44,10 +45,57 @@ const isActivePath = (href: string) => href === currentPathname;
 const hasActiveDescendant = (item: SiteNavItem): boolean =>
 	(item.children ?? []).some((child) => isActivePath(child.href) || hasActiveDescendant(child));
 const buildClass = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(" ");
+const catalog = getLanguageCatalog(Astro.locals);
+const languageSwitchOptions = getLanguageSwitchOptions(Astro.url, language, catalog);
+const brandHtml = buildBrandHtml();
+const navItemsHtml = navItems.map((item) => renderNavItemHtml(item)).join("");
+const languageSwitchHtml = buildLanguageSwitchHtml();
+const headerTemplateHtmlRendered = renderTemplateHtml(headerTemplateHtml, {
+	brand: brandHtml,
+	languageSwitch: languageSwitchHtml,
+});
+const navbarTemplateHtmlRendered = renderTemplateHtml(navbarTemplateHtml, {
+	navItems: navItemsHtml,
+	languageSwitch: languageSwitchHtml,
+});
+
+function buildBrandHtml(): string {
+	const siteTitleHtml = escapeHtml(siteTitle);
+	const logoAltHtml = escapeHtml(siteTitle);
+	const homeHref = escapeHtml(localizeHref("/"));
+
+	return logoUrl
+		? `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${homeHref}"><img src="${escapeHtml(logoUrl)}" alt="${logoAltHtml}" class="site-navbar-logo" loading="eager" /><span class="site-navbar-title">${siteTitleHtml}</span></a>`
+		: `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${homeHref}"><span class="site-navbar-mark" aria-hidden="true">${escapeHtml(siteTitle.charAt(0) || siteTitle)}</span><span class="site-navbar-title">${siteTitleHtml}</span></a>`;
+}
+
+function buildLanguageSwitchHtml(): string {
+	const optionsHtml = languageSwitchOptions
+		.map(
+			(option) =>
+				`<option value="${escapeHtml(option.href)}"${option.isActive ? " selected" : ""}>${escapeHtml(option.label)}</option>`,
+		)
+		.join("");
+
+	return `<label class="language-switch"><span class="visually-hidden">${escapeHtml(t("labels.language"))}</span><select class="form-select form-select-sm language-switch-select w-auto" aria-label="${escapeHtml(t("labels.language"))}" data-language-switch>${optionsHtml}</select></label><script>document.querySelectorAll("[data-language-switch]").forEach((select) => {if (!(select instanceof HTMLSelectElement)) {return;}select.addEventListener("change", () => {if (select.value) {window.location.href = select.value;}});});</script>`;
+}
+
+function renderNavItemHtml(item: SiteNavItem): string {
+	const hasChildren = Boolean(item.children?.length);
+	const linkHref = escapeHtml(resolveNavHref(item.href));
+	const label = escapeHtml(getNavLabel(item));
+	const active = isActivePath(item.href) || (hasChildren && hasActiveDescendant(item));
+
+	if (!hasChildren) {
+		return `<li class="nav-item"><a class="${buildClass("nav-link", active && "active")}" href="${linkHref}">${label}</a></li>`;
+	}
+
+	return `<li class="${buildClass("nav-item", "dropdown", active && "active")}"><a class="nav-link dropdown-toggle" href="${linkHref}" data-bs-toggle="dropdown" aria-expanded="false">${label}</a><ul class="${buildClass("dropdown-menu", "dropdown-submenu-menu")}">${item.children!.map((child) => renderNavItemHtml(child)).join("")}</ul></li>`;
+}
 ---
 
 {headerTemplateHtml.trim() ? (
-	<Fragment set:html={headerTemplateHtml} />
+	<Fragment set:html={headerTemplateHtmlRendered} />
 ) : (
 <header class="bg-white border-bottom shadow-sm">
 	<div class="container-fluid px-3 px-lg-4">
@@ -79,7 +127,7 @@ const buildClass = (...classes: (string | false | undefined)[]) => classes.filte
 				</button>
 					<div class="collapse navbar-collapse w-100" id="mainNavbar">
 					{navbarTemplateHtml.trim() ? (
-						<Fragment set:html={navbarTemplateHtml} />
+						<Fragment set:html={navbarTemplateHtmlRendered} />
 					) : (
 					<div class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center w-100 gap-lg-3">
 						<ul class="navbar-nav flex-grow-1 justify-content-lg-center mb-3 mb-lg-0 gap-lg-1">
