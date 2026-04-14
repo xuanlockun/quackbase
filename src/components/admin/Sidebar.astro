@@ -13,13 +13,6 @@ const links = getVisibleAdminNavItems(session);
 const { t, localizeAdminHref } = getUiTranslations(Astro);
 
 const navIconMap: Record<string, string> = {
-	"nav.dashboard": `
-		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-			<path d="M4 11.5 12 4l8 7.5" />
-			<path d="M6 10.5V20h12v-9.5" />
-			<path d="M10 20v-5h4v5" />
-		</svg>
-	`,
 	"nav.posts": `
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 			<rect x="4" y="5" width="16" height="14" rx="2" />
@@ -130,9 +123,8 @@ const navIconMap: Record<string, string> = {
 
 const navIconHtml = (key: string) => navIconMap[key] ?? navIconMap["default"];
 const sectionConfig = [
-	{ title: "Main", labelKeys: ["nav.dashboard"] },
-	{ title: t("nav.template"), labelKeys: ["nav.template"] },
-	{ title: "CMS", labelKeys: ["nav.posts", "nav.pages", "nav.media", "nav.banners", "nav.contactForms"] },
+	{ title: null, labelKeys: ["nav.dashboard", "nav.posts", "nav.pages", "nav.media", "nav.banners", "nav.contactForms"] },
+	{ title: "Design", labelKeys: ["nav.template"] },
 	{ title: "Management", labelKeys: ["nav.users", "nav.roles", "nav.permissions"] },
 	{ title: "Settings", labelKeys: ["nav.backup", "nav.settings", "nav.languages"] },
 ];
@@ -166,7 +158,7 @@ function isActiveLink(href: string, currentPath: string): boolean {
 		{
 			sections.map((section) => (
 				<section key={section.title} class="admin-sidebar-section">
-					<p class="text-uppercase mb-2 admin-sidebar-section-label">{section.title}</p>
+					{section.title && <p class="text-uppercase mb-2 admin-sidebar-section-label">{section.title}</p>}
 					<div class="nav nav-pills flex-column admin-sidebar-links">
 						{
 							section.links.map((link) => (

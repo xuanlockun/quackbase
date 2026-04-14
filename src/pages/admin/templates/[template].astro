@@ -17,13 +17,13 @@ const templateMeta = {
 		label: t("nav.header"),
 		description: "Edit the raw HTML used for the public header shell.",
 		value: (config) => config.headerTemplateHtml,
-		defaultHtml: `<header class="bg-white border-bottom shadow-sm"><div class="container-fluid px-3 px-lg-4"><div class="d-flex align-items-center justify-content-between py-3"><strong>${t("app.brand")}</strong></div></div></header>`,
+		defaultHtml: `<header>\n  <div>\n    <strong>${t("app.brand")}</strong>\n  </div>\n</header>`,
 	},
 	navbar: {
 		label: t("nav.navbar"),
 		description: "Edit the raw HTML used for the public navbar area.",
 		value: (config) => config.navbarTemplateHtml,
-		defaultHtml: `<div class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center w-100 gap-lg-3"><ul class="navbar-nav flex-grow-1 justify-content-lg-center mb-3 mb-lg-0 gap-lg-1"><li class="nav-item"><a class="nav-link active" href="/">${t("nav.home")}</a></li></ul><div class="d-flex align-items-center justify-content-lg-end mt-3 mt-lg-0 flex-shrink-0"></div></div>`,
+		defaultHtml: `<nav>\n  <ul>\n    <li><a href="/">${t("nav.home")}</a></li>\n  </ul>\n</nav>`,
 	},
 	page: {
 		label: "Page",
@@ -35,7 +35,7 @@ const templateMeta = {
 		label: t("nav.footer"),
 		description: "Edit the raw HTML used for the public footer.",
 		value: (config) => config.footerTemplateHtml,
-		defaultHtml: `<footer style="--footer-bg:#eef2f7; --footer-text:#60739f;"><div class="container"><div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3"><div>&copy; 2026 ${t("app.brand")}</div></div></div></footer>`,
+		defaultHtml: `<footer>\n  <div>&copy; 2026 ${t("app.brand")}</div>\n</footer>`,
 	},
 } as const;
 
