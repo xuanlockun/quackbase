@@ -70,7 +70,8 @@
     "createLanguage": "言語を作成",
     "setDefaultLanguage": "既定に設定",
     "addTranslation": "翻訳を追加",
-    "editTranslations": "翻訳を編集"
+    "editTranslations": "翻訳を編集",
+    "applyFilters": "フィルターを適用"
   },
   "labels": {
     "signedIn": "サインイン済み",
@@ -133,7 +134,10 @@
     "translationValue": "翻訳値",
     "showPageTitle": "ページタイトルを表示",
     "showPageTitleHelp": "コンテンツの上にページタイトルを表示します。",
-    "bannerImageUrls": "バナー画像 URL"
+    "bannerImageUrls": "バナー画像 URL",
+    "parent": "親",
+    "child": "子",
+    "dragToReorder": "並べ替える"
   },
   "headings": {
     "dashboard": "ダッシュボード",
@@ -266,6 +270,11 @@
     "pageNotFoundBody": "このページは存在しません。",
     "noPermissionsAssigned": "権限が割り当てられていません",
     "noRolesAssigned": "ロールがありません",
-    "systemRole": "システムロール"
+    "systemRole": "システムロール",
+    "searchPages": "ページを検索",
+    "allStatuses": "すべての状態",
+    "noPagesMatchFilters": "フィルターに一致するページはありません",
+    "tryAdjustPageFilters": "検索を消すか、ステータスフィルターを切り替えてください。",
+    "navLinkPlaceholder": "パスまたはURLを入力"
   }
 }

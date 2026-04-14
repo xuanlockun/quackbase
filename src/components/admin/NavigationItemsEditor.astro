@@ -41,14 +41,18 @@ const navRows = flattenNavItems(navItems ?? []);
 		data-add-child-label={t("actions.addChild")}
 		data-indent-label={t("actions.indent")}
 		data-outdent-label={t("actions.outdent")}
+		data-parent-label={t("labels.parent")}
+		data-child-label={t("labels.child")}
+		data-drag-label={t("labels.dragToReorder")}
+		data-example-label={t("nav.home")}
 	>
 		<div class="table-responsive admin-table-surface">
 			<table class="table table-sm table-hover align-middle nav-items-table mb-0" role="table">
 				<thead>
 					<tr>
 						<th></th>
-						<th>{t("labels.label")} (EN)</th>
-						<th>{t("labels.label")} (VI)</th>
+						<th>{t("labels.label")} ({t("actions.switchToEnglish")})</th>
+						<th>{t("labels.label")} ({t("actions.switchToVietnamese")})</th>
 						<th>{t("labels.link")}</th>
 						<th>{t("labels.action")}</th>
 					</tr>
@@ -69,26 +73,26 @@ const navRows = flattenNavItems(navItems ?? []);
 								data-row-index={index}
 							>
 								<td class="drag-cell">
-									<span class="nav-drag-handle" data-drag-handle aria-label="Drag to reorder"></span>
+									<span class="nav-drag-handle" data-drag-handle aria-label={t("labels.dragToReorder")}></span>
 								</td>
 								<td class="nav-label-cell">
-									<span class="nav-depth-badge" aria-hidden="true">{depth === 0 ? "Parent" : `Child ${depth}`}</span>
+									<span class="nav-depth-badge" aria-hidden="true">{depth === 0 ? t("labels.parent") : t("labels.child")}</span>
 									<input
 										class="form-control form-control-sm"
 										type="text"
 										value={item.labelTranslations?.en ?? item.label ?? ""}
-										placeholder="Home"
+										placeholder={t("nav.home")}
 										data-nav-label-en
 										disabled={Boolean(loadError)}
 									/>
 								</td>
 								<td class="nav-label-cell">
-									<span class="nav-depth-badge" aria-hidden="true">{depth === 0 ? "Parent" : `Child ${depth}`}</span>
+									<span class="nav-depth-badge" aria-hidden="true">{depth === 0 ? t("labels.parent") : t("labels.child")}</span>
 									<input
 										class="form-control form-control-sm"
 										type="text"
 										value={item.labelTranslations?.vi ?? ""}
-										placeholder="Trang chu"
+										placeholder={t("nav.home")}
 										data-nav-label-vi
 										disabled={Boolean(loadError)}
 									/>
@@ -112,7 +116,7 @@ const navRows = flattenNavItems(navItems ?? []);
 											disabled={Boolean(loadError)}
 											aria-label={t("actions.addChild")}
 										>
-											+ Child
+											{t("actions.addChild")}
 										</button>
 										<button
 											class="btn btn-sm btn-outline-secondary nav-action mini"
@@ -290,6 +294,9 @@ const navRows = flattenNavItems(navItems ?? []);
 	const addChildLabel = editor?.dataset.addChildLabel ?? "Add child";
 	const indentLabel = editor?.dataset.indentLabel ?? "Indent";
 	const outdentLabel = editor?.dataset.outdentLabel ?? "Outdent";
+	const parentLabel = editor?.dataset.parentLabel ?? "Parent";
+	const childLabel = editor?.dataset.childLabel ?? "Child";
+	const dragLabel = editor?.dataset.dragLabel ?? "Drag to reorder";
 	const isReadOnly = editor?.dataset.disabled === "true";
 	let draggedNavRow = null;
 	const MAX_NAV_DEPTH = 4;
@@ -445,7 +452,7 @@ const navRows = flattenNavItems(navItems ?? []);
 		const handle = document.createElement("span");
 		handle.className = "nav-drag-handle";
 		handle.dataset.dragHandle = "";
-		handle.setAttribute("aria-label", "Drag to reorder");
+		handle.setAttribute("aria-label", dragLabel);
 		dragCell.append(handle);
 		row.append(dragCell);
 
@@ -453,13 +460,13 @@ const navRows = flattenNavItems(navItems ?? []);
 		enCell.className = "nav-label-cell";
 		const enBadge = document.createElement("span");
 		enBadge.className = "nav-depth-badge";
-		enBadge.textContent = depth === 0 ? "Parent" : `Child ${depth}`;
+		enBadge.textContent = depth === 0 ? parentLabel : childLabel;
 		enBadge.setAttribute("aria-hidden", "true");
 		enCell.append(enBadge);
 		const enInput = document.createElement("input");
 		enInput.type = "text";
 		enInput.dataset.navLabelEn = "";
-		enInput.placeholder = "Home";
+		enInput.placeholder = editor?.dataset.exampleLabel ?? "Home";
 		enInput.value = labelEn;
 		if (isReadOnly) {
 			enInput.disabled = true;
@@ -471,13 +478,13 @@ const navRows = flattenNavItems(navItems ?? []);
 		viCell.className = "nav-label-cell";
 		const viBadge = document.createElement("span");
 		viBadge.className = "nav-depth-badge";
-		viBadge.textContent = depth === 0 ? "Parent" : `Child ${depth}`;
+		viBadge.textContent = depth === 0 ? parentLabel : childLabel;
 		viBadge.setAttribute("aria-hidden", "true");
 		viCell.append(viBadge);
 		const viInput = document.createElement("input");
 		viInput.type = "text";
 		viInput.dataset.navLabelVi = "";
-		viInput.placeholder = "Trang chu";
+		viInput.placeholder = editor?.dataset.exampleLabel ?? "Home";
 		viInput.value = labelVi;
 		if (isReadOnly) {
 			viInput.disabled = true;
@@ -506,7 +513,7 @@ const navRows = flattenNavItems(navItems ?? []);
 		childButton.type = "button";
 		childButton.className = "btn btn-sm btn-outline-secondary nav-action mini";
 		childButton.dataset.navAddChild = "";
-		childButton.textContent = "+ Child";
+		childButton.textContent = "+";
 		childButton.setAttribute("aria-label", addChildLabel);
 		if (isReadOnly) {
 			childButton.disabled = true;

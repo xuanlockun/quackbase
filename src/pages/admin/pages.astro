@@ -80,10 +80,18 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 	</div>
 
 	<div class="admin-content-stack">
-		<section class="card border-0 shadow-sm">
+		<section class="card border-0 shadow-sm admin-page-hub">
 			<div class="card-body">
-				<h2 class="h6 mb-3">Page navigation</h2>
-				<p class="mb-3 text-body-secondary small">Manage the navigation tree alongside page content so route relationships stay easy to maintain.</p>
+				<div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
+					<div class="admin-page-hub-copy">
+						<p class="text-uppercase small fw-semibold mb-1 admin-eyebrow">{t("headings.pages")}</p>
+						<h2 class="h5 mb-1">{t("messages.pageNavigationHub")}</h2>
+						<p class="mb-0 text-body-secondary small">{t("messages.pageNavigationHubHelp")}</p>
+					</div>
+					<div class="admin-page-hub-badge">
+						<span class="badge text-bg-light border">{t("labels.navigationItems")}</span>
+					</div>
+				</div>
 				{settingsError && <p class="alert alert-warning mb-3">{settingsError}</p>}
 				<form method="post" action="/api/admin/site" class="admin-form-shell">
 					<input type="hidden" name="siteTitle" value={siteConfig.siteTitle} />
@@ -102,19 +110,19 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 		</section>
 
 		<FilterBar
-			title="Page Filters"
+			title={t("messages.pageListFilters")}
 			searchName="q"
 			searchValue={pageSearch}
-			searchPlaceholder="Search pages"
+			searchPlaceholder={t("messages.searchPages")}
 			resetHref={hasPageFilters ? "/admin/pages" : ""}
-			submitLabel="Apply filters"
+			submitLabel={t("actions.applyFilters")}
 			selects={[
 				{
 					name: "status",
-					label: "Status",
+					label: t("labels.status"),
 					value: pageStatus,
 					options: [
-						{ value: "all", label: "All statuses" },
+						{ value: "all", label: t("messages.allStatuses") },
 						{ value: "published", label: t("status.published") },
 						{ value: "draft", label: t("status.draft") },
 					],
@@ -132,8 +140,22 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 			pages={filteredPages}
 			canUpdate={canUpdate}
 			canDelete={canDelete}
-			emptyTitle={hasPageFilters ? "No pages match your filters" : undefined}
-			emptyDescription={hasPageFilters ? "Try clearing the search or switching the status filter." : undefined}
+			emptyTitle={hasPageFilters ? t("messages.noPagesMatchFilters") : undefined}
+			emptyDescription={hasPageFilters ? t("messages.tryAdjustPageFilters") : undefined}
 		/>
 	</div>
 </AdminLayout>
+
+<style>
+	.admin-page-hub {
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+	}
+
+	.admin-page-hub-copy {
+		max-width: 52rem;
+	}
+
+	.admin-page-hub-badge {
+		padding-top: 0.15rem;
+	}
+</style>
