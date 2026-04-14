@@ -154,11 +154,20 @@ function toContactFormRecord(row: ContactFormRow): ContactFormRecord {
 	return {
 		id: row.id,
 		title: row.title,
-		fields: normalizeFormFields(row.fields_json),
+		fields: parseStoredFieldsJson(row.fields_json),
 		isActive: row.is_active === 1,
 		sortOrder: row.sort_order,
 		updatedAt: new Date(row.updated_at),
 	};
+}
+
+function parseStoredFieldsJson(value: string): ContactFormField[] {
+	try {
+		const parsed = JSON.parse(value || "[]");
+		return normalizeFormFields(parsed);
+	} catch {
+		return [];
+	}
 }
 
 function requiredString(formData: FormData, key: string): string {
