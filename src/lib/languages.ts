@@ -25,6 +25,7 @@ export const FALLBACK_LANGUAGE_CATALOG: LanguageCatalogState = {
 	enabledLanguages: [
 		{ code: "en", label: "English" },
 		{ code: "vi", label: "Vietnamese" },
+		{ code: "jp", label: "Japanese" },
 	],
 };
 
@@ -58,6 +59,10 @@ export async function ensureLanguageTables(db: D1Database): Promise<void> {
 			db
 				.prepare(
 					`INSERT INTO languages (code, name, enabled, is_default) VALUES ('vi', 'Vietnamese', 1, 0)`,
+				),
+			db
+				.prepare(
+					`INSERT INTO languages (code, name, enabled, is_default) VALUES ('jp', 'Japanese', 1, 0)`,
 				),
 		]);
 	}

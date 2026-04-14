@@ -17,6 +17,12 @@ const { t, language } = getUiTranslations(Astro);
 const submitLabel = mode === "edit" ? t("actions.saveContactForm") : t("actions.createContactForm");
 const isDisabled = Boolean(loadError) || !canSubmit;
 const initialFields = form?.fields ?? [];
+const displayFields =
+	initialFields.length > 0
+		? initialFields
+		: mode === "create"
+			? [{ id: 1, type: "text", label: { en: "", vi: "" }, required: false, order: 1 }]
+			: [];
 const initialTitle = form?.title ?? "";
 const fieldsJson = JSON.stringify(initialFields);
 ---
@@ -79,7 +85,64 @@ const fieldsJson = JSON.stringify(initialFields);
 						<span>{t("labels.required")}</span>
 						<span>{t("labels.action")}</span>
 					</div>
-					<div class="contact-fields-rows" data-contact-fields-rows></div>
+					<div class="contact-fields-rows" data-contact-fields-rows>
+						{
+							displayFields.map((field) => {
+								const type = field.type ?? "text";
+								const labelEn = field.label?.en ?? "";
+								const labelVi = field.label?.vi ?? "";
+								return (
+									<div class="contact-field-row" draggable={!isDisabled} data-contact-field data-field-id={String(field.id ?? 1)}>
+										<span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
+										<div class="contact-field-meta">
+											<label>
+												<span>{t("labels.fieldType")}</span>
+												<select data-contact-field-type disabled={isDisabled}>
+													<option value="text" selected={type === "text"}>
+														{t("labels.textField")}
+													</option>
+													<option value="email" selected={type === "email"}>
+														{t("labels.emailField")}
+													</option>
+													<option value="textarea" selected={type === "textarea"}>
+														{t("labels.textareaField")}
+													</option>
+												</select>
+											</label>
+											<label class="contact-field-required">
+												<span>{t("labels.required")}</span>
+												<input type="checkbox" data-contact-field-required checked={field.required} disabled={isDisabled} />
+											</label>
+											<button class="admin-ghost-button" type="button" data-contact-field-remove disabled={isDisabled}>
+												{t("actions.remove")}
+											</button>
+										</div>
+										<div class="contact-field-labels">
+											<label>
+												<span>{t("labels.label")} (EN)</span>
+												<input
+													type="text"
+													data-contact-field-label-en
+													value={labelEn}
+													disabled={isDisabled}
+													required
+												/>
+											</label>
+											<label>
+												<span>{t("labels.label")} (VI)</span>
+												<input
+													type="text"
+													data-contact-field-label-vi
+													value={labelVi}
+													disabled={isDisabled}
+												/>
+											</label>
+										</div>
+									</div>
+								);
+							})
+						}
+					</div>
 				</div>
 				<p class="admin-inline-muted mb-0" data-contact-fields-empty hidden>
 					{t("messages.noContactFieldsConfigured")}
@@ -200,10 +263,16 @@ const fieldsJson = JSON.stringify(initialFields);
 		}
 
 		const initialContactFields = parseConfig(contactPayload.value);
-		nextFieldId = initialContactFields.reduce((max, field) => Math.max(max, Number(field.id ?? 0)), 0);
-		initialContactFields.forEach((entry) => {
-			contactRows.append(createContactFieldRow(entry));
-		});
+		const existingRows = Array.from(contactRows.querySelectorAll("[data-contact-field]"));
+		nextFieldId = Math.max(
+			initialContactFields.reduce((max, field) => Math.max(max, Number(field.id ?? 0)), 0),
+			existingRows.reduce((max, row) => Math.max(max, Number(row.dataset.fieldId ?? 0)), 0),
+		);
+		if (existingRows.length === 0) {
+			initialContactFields.forEach((entry) => {
+				contactRows.append(createContactFieldRow(entry));
+			});
+		}
 		syncContactFields();
 
 		addContactButton?.addEventListener("click", () => {

@@ -11,12 +11,17 @@ const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
 const LOCALES_DIR = resolve(ROOT, "locales");
 const WRANGLER_PATH = resolve(ROOT, "wrangler.json");
 const DESCRIPTION_PATTERN = /description$/i;
+const LOCALE_ORDER = new Map([
+	["en", 0],
+	["vi", 1],
+	["jp", 2],
+]);
 
 function listLocaleFiles(): Array<{ code: string; path: string }> {
 	return readdirSync(LOCALES_DIR)
 		.filter((file) => file.endsWith(".json"))
 		.map((file) => ({
-			code: file.replace(/\.json$/, ""),
+			code: file.replace(/\.json$/, "").toLowerCase(),
 			path: resolve(LOCALES_DIR, file),
 		}));
 }
@@ -43,7 +48,7 @@ function flattenTranslations(value: unknown, prefix = ""): FlattenedTranslations
 
 function buildInsertStatements(): string[] {
 	const statements: string[] = [];
-	for (const locale of listLocaleFiles()) {
+	for (const locale of listLocaleFiles().sort((left, right) => (LOCALE_ORDER.get(left.code) ?? 999) - (LOCALE_ORDER.get(right.code) ?? 999))) {
 		const raw = JSON.parse(readFileSync(locale.path, "utf-8"));
 		const flattened = flattenTranslations(raw);
 		for (const [translationKey, translatedValue] of Object.entries(flattened)) {
