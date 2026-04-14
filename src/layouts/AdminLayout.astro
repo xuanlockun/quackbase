@@ -13,6 +13,7 @@ interface Props {
 	pageTitle: string;
 	pageDescription?: string;
 	pageEyebrow?: string;
+	templateHtml?: string;
 }
 
 const {
@@ -22,6 +23,7 @@ const {
 	pageTitle,
 	pageDescription,
 	pageEyebrow = "Admin",
+	templateHtml,
 } = Astro.props;
 const { t, language } = getUiTranslations(Astro);
 
@@ -99,6 +101,9 @@ const expandLabel = "Expand sidebar";
 							<span class="visually-hidden admin-sidebar-toggle-label">{collapseLabel}</span>
 						</button>
 						<div class="d-flex align-items-center gap-2 ms-auto admin-topbar-actions">
+							{templateHtml && (
+								<div class="admin-template-html" set:html={templateHtml} />
+							)}
 							<a href="/" class="btn btn-sm btn-outline-secondary admin-view-site" target="_blank" rel="noopener noreferrer">
 								<svg aria-hidden="true" viewBox="0 0 24 24">
 									<path
@@ -232,5 +237,16 @@ const expandLabel = "Expand sidebar";
 				});
 			});
 		</script>
+		<style>
+			.admin-template-html {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+
+			.admin-template-html :global(*) {
+				box-sizing: border-box;
+			}
+		</style>
 	</body>
 </html>
