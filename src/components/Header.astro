@@ -64,9 +64,10 @@ function buildBrandHtml(): string {
 	const siteTitleHtml = escapeHtml(siteTitle);
 	const logoAltHtml = escapeHtml(siteTitle);
 	const homeHref = escapeHtml(localizeHref("/"));
+	const logoStyle = "height:32px;width:auto;max-width:128px;object-fit:contain;";
 
 	return logoUrl
-		? `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${homeHref}"><img src="${escapeHtml(logoUrl)}" alt="${logoAltHtml}" class="site-navbar-logo" loading="eager" /><span class="site-navbar-title">${siteTitleHtml}</span></a>`
+		? `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${homeHref}"><img src="${escapeHtml(logoUrl)}" alt="${logoAltHtml}" class="site-navbar-logo" loading="eager" width="128" height="32" style="${logoStyle}" /><span class="site-navbar-title">${siteTitleHtml}</span></a>`
 		: `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${homeHref}"><span class="site-navbar-mark" aria-hidden="true">${escapeHtml(siteTitle.charAt(0) || siteTitle)}</span><span class="site-navbar-title">${siteTitleHtml}</span></a>`;
 }
 
@@ -100,8 +101,8 @@ function renderNavItemHtml(item: SiteNavItem): string {
 	.site-navbar-logo {
 		display: block;
 		width: auto;
-		max-width: 170px;
-		height: 40px;
+		max-width: 128px;
+		height: 32px;
 		object-fit: contain;
 	}
 
@@ -158,8 +159,8 @@ function renderNavItemHtml(item: SiteNavItem): string {
 		}
 
 		.site-navbar-logo {
-			max-width: 130px;
-			height: 34px;
+			max-width: 112px;
+			height: 30px;
 		}
 
 		.site-navbar-mark {
