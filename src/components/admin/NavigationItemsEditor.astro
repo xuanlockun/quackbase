@@ -22,10 +22,22 @@ const flattenNavItems = (items: SiteNavItem[] = [], depth = 0): { item: SiteNavI
 };
 
 const navRows = flattenNavItems(navItems ?? []);
+const rootItemCount = navRows.filter(({ depth }) => depth === 0).length;
+const totalItemCount = navRows.length;
 ---
 
-<div class="admin-form-section">
-	<span>{t("labels.navigationItems")}</span>
+<div class="admin-form-section nav-tree-editor">
+	<div class="nav-tree-editor-header">
+		<div>
+			<h2 class="h5 mb-1">{t("labels.navigationItems")}</h2>
+			<p class="admin-inline-muted mb-0">{t("messages.navStorageHelp")}</p>
+		</div>
+		<div class="nav-tree-editor-meta">
+			<span class="badge text-bg-light border">{rootItemCount} root</span>
+			<span class="badge text-bg-light border">{totalItemCount} total</span>
+		</div>
+	</div>
+
 	<input
 		type="hidden"
 		name="navItems"
@@ -33,8 +45,9 @@ const navRows = flattenNavItems(navItems ?? []);
 		value={JSON.stringify(navItems ?? [])}
 		disabled={Boolean(loadError)}
 	/>
+
 	<div
-		class="nav-items-editor"
+		class="nav-tree-editor-surface"
 		data-nav-items-editor
 		data-disabled={Boolean(loadError)}
 		data-remove-label={t("actions.remove")}
@@ -46,189 +59,306 @@ const navRows = flattenNavItems(navItems ?? []);
 		data-drag-label={t("labels.dragToReorder")}
 		data-example-label={t("nav.home")}
 	>
-		<div class="table-responsive admin-table-surface">
-			<table class="table table-sm table-hover align-middle nav-items-table mb-0" role="table">
-				<thead>
-					<tr>
-						<th></th>
-						<th>{t("labels.label")} ({t("actions.switchToEnglish")})</th>
-						<th>{t("labels.label")} ({t("actions.switchToVietnamese")})</th>
-						<th>{t("labels.link")}</th>
-						<th>{t("labels.action")}</th>
-					</tr>
-				</thead>
-				<tbody data-nav-items-rows>
-					<tr class="admin-table-empty-row admin-muted" data-nav-empty hidden={navRows.length > 0}>
-						<td colSpan="5">{t("messages.noNavigationItemsConfigured")}</td>
-					</tr>
-					{
-						navRows.map(({ item, depth }, index) => (
-							<tr
-								class="nav-item-row"
-								role="row"
-								data-nav-row
-								data-depth={depth}
-								style={`--nav-depth: ${depth}`}
-								draggable={!Boolean(loadError) ? "true" : "false"}
-								data-row-index={index}
-							>
-								<td class="drag-cell">
-									<span class="nav-drag-handle" data-drag-handle aria-label={t("labels.dragToReorder")}></span>
-								</td>
-								<td class="nav-label-cell">
-									<span class="nav-depth-badge" aria-hidden="true">{depth === 0 ? t("labels.parent") : t("labels.child")}</span>
-									<input
-										class="form-control form-control-sm"
-										type="text"
-										value={item.labelTranslations?.en ?? item.label ?? ""}
-										placeholder={t("nav.home")}
-										data-nav-label-en
-										disabled={Boolean(loadError)}
-									/>
-								</td>
-								<td class="nav-label-cell">
-									<span class="nav-depth-badge" aria-hidden="true">{depth === 0 ? t("labels.parent") : t("labels.child")}</span>
-									<input
-										class="form-control form-control-sm"
-										type="text"
-										value={item.labelTranslations?.vi ?? ""}
-										placeholder={t("nav.home")}
-										data-nav-label-vi
-										disabled={Boolean(loadError)}
-									/>
-								</td>
-								<td>
-									<input
-										class="form-control form-control-sm"
-										type="text"
-										value={item.href}
-										placeholder="/about or https://example.com"
-										data-nav-href
-										disabled={Boolean(loadError)}
-									/>
-								</td>
-								<td class="nav-item-actions">
-									<div class="nav-action-buttons">
-										<button
-											class="btn btn-sm btn-outline-secondary nav-action mini"
-											type="button"
-											data-nav-add-child
-											disabled={Boolean(loadError)}
-											aria-label={t("actions.addChild")}
-										>
-											{t("actions.addChild")}
-										</button>
-										<button
-											class="btn btn-sm btn-outline-secondary nav-action mini"
-											type="button"
-											data-nav-indent
-											disabled={Boolean(loadError)}
-											aria-label={t("actions.indent")}
-										>
-											â†³
-										</button>
-										<button
-											class="btn btn-sm btn-outline-secondary nav-action mini"
-											type="button"
-											data-nav-outdent
-											disabled={Boolean(loadError)}
-											aria-label={t("actions.outdent")}
-										>
-											â†°
-										</button>
-										<button
-											class="btn btn-sm btn-outline-danger nav-item-remove"
-											type="button"
-											data-nav-remove
-											disabled={Boolean(loadError)}
-										>
-											{t("actions.remove")}
-										</button>
+		<div class="nav-tree-board">
+			<div class="nav-tree-board-head">
+				<div class="nav-tree-board-copy">
+					<span class="nav-tree-kicker">{t("labels.navigationItems")}</span>
+					<h3 class="h6 mb-1">{t("messages.pageNavigationHub")}</h3>
+					<p class="admin-inline-muted mb-0">{t("messages.pageNavigationHubHelp")}</p>
+				</div>
+				<div class="nav-tree-board-hint">
+					<span class="badge bg-primary-subtle border border-primary-subtle text-primary-emphasis">
+						{t("labels.dragToReorder")}
+					</span>
+				</div>
+			</div>
+
+			<div class="nav-tree-list" data-nav-items-rows role="list">
+				<div class="nav-tree-empty admin-state-surface" data-nav-empty hidden={navRows.length > 0}>
+					<h3 class="h6 mb-2">{t("messages.noNavigationItemsConfigured")}</h3>
+					<p class="mb-0 admin-muted">{t("messages.navStorageHelp")}</p>
+				</div>
+
+				{
+					navRows.map(({ item, depth }, index) => (
+						<article
+							class="nav-tree-row"
+							role="listitem"
+							data-nav-row
+							data-depth={depth}
+							style={`--nav-depth: ${depth}`}
+							draggable={!Boolean(loadError) ? "true" : "false"}
+							data-row-index={index}
+						>
+							<div class="nav-tree-rail" aria-hidden="true">
+								<span class="nav-drag-handle" data-drag-handle aria-label={t("labels.dragToReorder")}></span>
+								<span class="nav-tree-spine"></span>
+							</div>
+
+							<div class="nav-tree-body">
+								<div class="nav-tree-summary">
+									<div class="nav-tree-summary-copy">
+										<span class="nav-depth-badge">{depth === 0 ? t("labels.parent") : t("labels.child")}</span>
+										<strong class="nav-tree-title">{item.labelTranslations?.en ?? item.label ?? ""}</strong>
+										<span class="nav-tree-path">{item.href}</span>
 									</div>
-								</td>
-							</tr>
-						))
-					}
-				</tbody>
-			</table>
+								</div>
+
+								<div class="nav-tree-fields">
+									<label class="nav-tree-field">
+										<span class="nav-tree-field-label">{t("labels.label")} ({t("actions.switchToEnglish")})</span>
+										<input
+											class="form-control form-control-sm"
+											type="text"
+											value={item.labelTranslations?.en ?? item.label ?? ""}
+											placeholder={t("nav.home")}
+											data-nav-label-en
+											disabled={Boolean(loadError)}
+										/>
+									</label>
+
+									<label class="nav-tree-field">
+										<span class="nav-tree-field-label">{t("labels.label")} ({t("actions.switchToVietnamese")})</span>
+										<input
+											class="form-control form-control-sm"
+											type="text"
+											value={item.labelTranslations?.vi ?? ""}
+											placeholder={t("nav.home")}
+											data-nav-label-vi
+											disabled={Boolean(loadError)}
+										/>
+									</label>
+
+									<label class="nav-tree-field nav-tree-field-link">
+										<span class="nav-tree-field-label">{t("labels.link")}</span>
+										<input
+											class="form-control form-control-sm"
+											type="text"
+											value={item.href}
+											placeholder="/about or https://example.com"
+											data-nav-href
+											disabled={Boolean(loadError)}
+										/>
+									</label>
+								</div>
+							</div>
+
+							<div class="nav-tree-actions">
+								<button
+									class="btn btn-sm btn-outline-secondary nav-action"
+									type="button"
+									data-nav-add-child
+									disabled={Boolean(loadError)}
+									aria-label={t("actions.addChild")}
+								>
+									<span aria-hidden="true">+</span>
+									<span class="nav-action-label">{t("actions.addChild")}</span>
+								</button>
+								<button
+									class="btn btn-sm btn-outline-secondary nav-action"
+									type="button"
+									data-nav-indent
+									disabled={Boolean(loadError)}
+									aria-label={t("actions.indent")}
+								>
+									<span aria-hidden="true">&gt;</span>
+									<span class="nav-action-label">{t("actions.indent")}</span>
+								</button>
+								<button
+									class="btn btn-sm btn-outline-secondary nav-action"
+									type="button"
+									data-nav-outdent
+									disabled={Boolean(loadError)}
+									aria-label={t("actions.outdent")}
+								>
+									<span aria-hidden="true">&lt;</span>
+									<span class="nav-action-label">{t("actions.outdent")}</span>
+								</button>
+								<button
+									class="btn btn-sm btn-outline-danger nav-item-remove"
+									type="button"
+									data-nav-remove
+									disabled={Boolean(loadError)}
+								>
+									{t("actions.remove")}
+								</button>
+							</div>
+						</article>
+					))
+				}
+			</div>
 		</div>
-		<button class="btn btn-outline-secondary" type="button" data-nav-add disabled={Boolean(loadError)}>
-			{t("actions.addRow")}
-		</button>
+
+		<div class="nav-tree-footer">
+			<button class="btn btn-outline-secondary" type="button" data-nav-add disabled={Boolean(loadError)}>
+				{t("actions.addRow")}
+			</button>
+			<p class="admin-muted mb-0">{t("messages.navStorageHelp")}</p>
+		</div>
 	</div>
-</div>
-<div class="admin-form-section">
-	<p class="admin-muted">{t("messages.navStorageHelp")}</p>
-	<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>{t("actions.saveChanges")}</button>
+
+	<div class="admin-form-section">
+		<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>{t("actions.saveChanges")}</button>
+	</div>
 </div>
 
 <style>
-	.nav-items-editor {
+	.nav-tree-editor {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.nav-tree-editor-header,
+	.nav-tree-board-head,
+	.nav-tree-footer {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.nav-tree-editor-meta {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.nav-tree-editor-surface {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.nav-tree-board {
+		display: grid;
+		gap: 1rem;
+		padding: 1rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 1.15rem;
+		background:
+			linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(246, 249, 255, 0.95)),
+			linear-gradient(135deg, rgba(35, 55, 255, 0.03), rgba(35, 55, 255, 0));
+		box-shadow: 0 16px 34px rgba(15, 23, 42, 0.07);
+	}
+
+	.nav-tree-kicker {
+		display: inline-flex;
+		align-items: center;
+		margin-bottom: 0.35rem;
+		font-size: 0.72rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.09em;
+		color: var(--admin-muted, #60739f);
+	}
+
+	.nav-tree-list {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.nav-tree-empty {
+		border-style: dashed;
+		background: rgba(255, 255, 255, 0.72);
+	}
+
+	.nav-tree-row {
+		--nav-indent: calc(var(--nav-depth, 0) * 1.1rem);
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		gap: 0.9rem;
+		align-items: start;
+		padding: 0.95rem;
+		border-radius: 1rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		background: rgba(255, 255, 255, 0.92);
+		box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+		transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+		margin-left: var(--nav-indent);
+	}
+
+	.nav-tree-row[data-depth="0"] {
+		margin-left: 0;
+	}
+
+	.nav-tree-row[data-depth="1"] {
+		border-left: 4px solid rgba(35, 55, 255, 0.38);
+	}
+
+	.nav-tree-row[data-depth="2"] {
+		border-left: 4px solid rgba(35, 55, 255, 0.26);
+	}
+
+	.nav-tree-row[data-depth="3"],
+	.nav-tree-row[data-depth="4"] {
+		border-left: 4px solid rgba(35, 55, 255, 0.18);
+	}
+
+	.nav-tree-row:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+		border-color: rgba(35, 55, 255, 0.2);
+	}
+
+	.nav-tree-row.is-dragging {
+		opacity: 0.6;
+		transform: scale(0.995);
+	}
+
+	.nav-tree-rail {
+		display: grid;
+		justify-items: center;
+		gap: 0.45rem;
+		padding-top: 0.1rem;
+		min-width: 1.5rem;
+	}
+
+	.nav-tree-spine {
+		width: 2px;
+		flex: 1 1 auto;
+		min-height: 2.8rem;
+		border-radius: 999px;
+		background: linear-gradient(180deg, rgba(35, 55, 255, 0.4), rgba(35, 55, 255, 0.08));
+	}
+
+	.nav-drag-handle {
+		width: 1.15rem;
+		height: 1.15rem;
+		cursor: grab;
+		border-radius: 0.35rem;
+		background:
+			radial-gradient(circle at center, rgba(35, 55, 255, 0.7) 0 1.5px, transparent 1.6px) center / 0.38rem 0.38rem,
+			radial-gradient(circle at center, rgba(35, 55, 255, 0.7) 0 1.5px, transparent 1.6px) 50% 0.28rem / 0.38rem 0.38rem,
+			radial-gradient(circle at center, rgba(35, 55, 255, 0.7) 0 1.5px, transparent 1.6px) 0.28rem 50% / 0.38rem 0.38rem,
+			radial-gradient(circle at center, rgba(35, 55, 255, 0.7) 0 1.5px, transparent 1.6px) 0.28rem calc(100% - 0.28rem) / 0.38rem 0.38rem;
+		background-repeat: no-repeat;
+		opacity: 0.9;
+	}
+
+	.nav-tree-body {
+		min-width: 0;
 		display: grid;
 		gap: 0.85rem;
 	}
 
-	.nav-items-table {
-		width: 100%;
+	.nav-tree-summary {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
 	}
 
-	.nav-items-table thead th {
-		font-size: 0.72rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		color: var(--admin-muted, #60739f);
-		letter-spacing: 0.04em;
-	}
-
-	.nav-item-row td {
-		vertical-align: middle;
-	}
-
-	.drag-cell {
-		width: 48px;
-	}
-
-	.nav-item-actions {
-		padding: 0;
-	}
-
-	.nav-items-table .nav-item-row {
-		--nav-depth: 0;
-	}
-
-	.nav-item-row .nav-label-cell {
-		padding-left: calc(0.5rem + var(--nav-depth, 0) * 1.15rem);
-		position: relative;
+	.nav-tree-summary-copy {
+		min-width: 0;
 		display: grid;
-		gap: 0.35rem;
-	}
-
-	.nav-item-row[data-depth="0"] {
-		background: rgba(var(--gray-light), 0.25);
-	}
-
-	.nav-item-row[data-depth="1"] {
-		background: linear-gradient(90deg, rgba(35, 55, 255, 0.06), rgba(35, 55, 255, 0.02));
-		box-shadow: inset 3px 0 0 rgba(35, 55, 255, 0.35);
-	}
-
-	.nav-item-row[data-depth="2"] {
-		background: linear-gradient(90deg, rgba(35, 55, 255, 0.04), rgba(35, 55, 255, 0.015));
-		box-shadow: inset 6px 0 0 rgba(35, 55, 255, 0.25);
-	}
-
-	.nav-item-row[data-depth="3"],
-	.nav-item-row[data-depth="4"] {
-		background: linear-gradient(90deg, rgba(35, 55, 255, 0.03), rgba(35, 55, 255, 0.01));
-		box-shadow: inset 9px 0 0 rgba(35, 55, 255, 0.2);
+		gap: 0.22rem;
 	}
 
 	.nav-depth-badge {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.3rem;
-		margin-bottom: 0.35rem;
-		padding: 0.15rem 0.5rem;
+		width: fit-content;
+		padding: 0.18rem 0.55rem;
 		border-radius: 999px;
 		background: rgba(35, 55, 255, 0.08);
 		color: rgba(35, 55, 255, 0.95);
@@ -238,49 +368,100 @@ const navRows = flattenNavItems(navItems ?? []);
 		letter-spacing: 0.08em;
 	}
 
-	.nav-item-row[data-depth="0"] .nav-depth-badge {
-		background: rgba(var(--gray), 0.16);
-		color: rgba(15, 23, 42, 0.72);
+	.nav-tree-title {
+		font-size: 0.96rem;
+		line-height: 1.25;
+		word-break: break-word;
 	}
 
-	.nav-item-row .nav-label-cell input {
-		background: #fff;
+	.nav-tree-path {
+		font-size: 0.82rem;
+		color: var(--admin-muted, #60739f);
+		word-break: break-word;
 	}
 
-	.nav-action-buttons {
-		display: flex;
-		flex-wrap: wrap;
+	.nav-tree-fields {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.65rem;
+	}
+
+	.nav-tree-field {
+		display: grid;
 		gap: 0.35rem;
 	}
 
-	.nav-action-buttons .nav-action {
+	.nav-tree-field-label {
+		font-size: 0.72rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--admin-muted, #60739f);
+	}
+
+	.nav-tree-field-link {
+		grid-column: 1 / -1;
+	}
+
+	.nav-tree-actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 0.45rem;
+		align-content: start;
+	}
+
+	.nav-action {
 		display: inline-flex;
 		align-items: center;
-		justify-content: center;
-		gap: 0.25rem;
+		gap: 0.35rem;
 	}
 
-	.nav-action-buttons .nav-action[data-nav-add-child]::before {
-		content: "+";
-		font-weight: 700;
-		line-height: 1;
+	.nav-action-label {
+		font-size: 0.82rem;
 	}
 
-	.nav-action-buttons .nav-action[data-nav-indent]::before {
-		content: "â†³";
-		font-size: 0.95em;
-		line-height: 1;
+	.nav-tree-footer {
+		padding-top: 0.1rem;
 	}
 
-	.nav-action-buttons .nav-action[data-nav-outdent]::before {
-		content: "â†°";
-		font-size: 0.95em;
-		line-height: 1;
+	@media (max-width: 992px) {
+		.nav-tree-row {
+			grid-template-columns: 1fr;
+		}
+
+		.nav-tree-rail {
+			grid-template-columns: auto 1fr;
+			justify-items: start;
+		}
+
+		.nav-tree-spine {
+			display: none;
+		}
+
+		.nav-tree-summary {
+			flex-direction: column;
+		}
+
+		.nav-tree-fields {
+			grid-template-columns: 1fr;
+		}
+
+		.nav-tree-actions {
+			justify-content: flex-start;
+		}
 	}
 
-	.nav-action-buttons .nav-action.mini {
-		padding-inline: 0.55rem;
-		min-width: 2.5rem;
+	@media (max-width: 576px) {
+		.nav-tree-editor-header,
+		.nav-tree-board-head,
+		.nav-tree-footer {
+			align-items: stretch;
+		}
+
+		.nav-action-label {
+			display: none;
+		}
 	}
 </style>
 
@@ -440,107 +621,116 @@ const navRows = flattenNavItems(navItems ?? []);
 		const labelEn = labelTranslations.en ?? entry.label ?? "";
 		const labelVi = labelTranslations.vi ?? "";
 
-		const row = document.createElement("tr");
-		row.className = "nav-item-row";
-		row.setAttribute("role", "row");
+		const row = document.createElement("article");
+		row.className = "nav-tree-row";
+		row.setAttribute("role", "listitem");
 		row.dataset.navRow = "";
 		setRowDepth(row, depth);
 		row.draggable = !isReadOnly;
 
-		const dragCell = document.createElement("td");
-		dragCell.className = "drag-cell";
+		const rail = document.createElement("div");
+		rail.className = "nav-tree-rail";
+		rail.setAttribute("aria-hidden", "true");
 		const handle = document.createElement("span");
 		handle.className = "nav-drag-handle";
 		handle.dataset.dragHandle = "";
 		handle.setAttribute("aria-label", dragLabel);
-		dragCell.append(handle);
-		row.append(dragCell);
+		const spine = document.createElement("span");
+		spine.className = "nav-tree-spine";
+		rail.append(handle, spine);
+		row.append(rail);
 
-		const enCell = document.createElement("td");
-		enCell.className = "nav-label-cell";
-		const enBadge = document.createElement("span");
-		enBadge.className = "nav-depth-badge";
-		enBadge.textContent = depth === 0 ? parentLabel : childLabel;
-		enBadge.setAttribute("aria-hidden", "true");
-		enCell.append(enBadge);
+		const body = document.createElement("div");
+		body.className = "nav-tree-body";
+
+		const summary = document.createElement("div");
+		summary.className = "nav-tree-summary";
+		const summaryCopy = document.createElement("div");
+		summaryCopy.className = "nav-tree-summary-copy";
+		const badge = document.createElement("span");
+		badge.className = "nav-depth-badge";
+		badge.textContent = depth === 0 ? parentLabel : childLabel;
+		const title = document.createElement("strong");
+		title.className = "nav-tree-title";
+		title.textContent = labelEn || labelTranslations.vi || "";
+		const path = document.createElement("span");
+		path.className = "nav-tree-path";
+		path.textContent = entry.href ?? "";
+		summaryCopy.append(badge, title, path);
+		summary.append(summaryCopy);
+		body.append(summary);
+
+		const fields = document.createElement("div");
+		fields.className = "nav-tree-fields";
+
+		const createField = (labelText, input) => {
+			const field = document.createElement("label");
+			field.className = "nav-tree-field";
+			const fieldLabel = document.createElement("span");
+			fieldLabel.className = "nav-tree-field-label";
+			fieldLabel.textContent = labelText;
+			field.append(fieldLabel, input);
+			return field;
+		};
+
 		const enInput = document.createElement("input");
 		enInput.type = "text";
+		enInput.className = "form-control form-control-sm";
 		enInput.dataset.navLabelEn = "";
-		enInput.placeholder = editor?.dataset.exampleLabel ?? "Home";
+		enInput.placeholder = "Home";
 		enInput.value = labelEn;
 		if (isReadOnly) {
 			enInput.disabled = true;
 		}
-		enCell.append(enInput);
-		row.append(enCell);
+		fields.append(createField("Label EN", enInput));
 
-		const viCell = document.createElement("td");
-		viCell.className = "nav-label-cell";
-		const viBadge = document.createElement("span");
-		viBadge.className = "nav-depth-badge";
-		viBadge.textContent = depth === 0 ? parentLabel : childLabel;
-		viBadge.setAttribute("aria-hidden", "true");
-		viCell.append(viBadge);
 		const viInput = document.createElement("input");
 		viInput.type = "text";
+		viInput.className = "form-control form-control-sm";
 		viInput.dataset.navLabelVi = "";
-		viInput.placeholder = editor?.dataset.exampleLabel ?? "Home";
+		viInput.placeholder = "Trang chủ";
 		viInput.value = labelVi;
 		if (isReadOnly) {
 			viInput.disabled = true;
 		}
-		viCell.append(viInput);
-		row.append(viCell);
+		fields.append(createField("Label VI", viInput));
 
-		const linkCell = document.createElement("td");
 		const hrefInput = document.createElement("input");
 		hrefInput.type = "text";
+		hrefInput.className = "form-control form-control-sm";
 		hrefInput.dataset.navHref = "";
 		hrefInput.placeholder = "/about or https://example.com";
 		hrefInput.value = entry.href ?? "";
 		if (isReadOnly) {
 			hrefInput.disabled = true;
 		}
-		linkCell.append(hrefInput);
-		row.append(linkCell);
+		const linkField = createField("Link", hrefInput);
+		linkField.classList.add("nav-tree-field-link");
+		fields.append(linkField);
 
-		const actionCell = document.createElement("td");
-		actionCell.className = "nav-item-actions";
-		const buttonGroup = document.createElement("div");
-		buttonGroup.className = "nav-action-buttons";
+		body.append(fields);
+		row.append(body);
 
-		const childButton = document.createElement("button");
-		childButton.type = "button";
-		childButton.className = "btn btn-sm btn-outline-secondary nav-action mini";
-		childButton.dataset.navAddChild = "";
-		childButton.textContent = "+";
-		childButton.setAttribute("aria-label", addChildLabel);
-		if (isReadOnly) {
-			childButton.disabled = true;
+		const actions = document.createElement("div");
+		actions.className = "nav-tree-actions";
+		const buttonConfigs = [
+			["navAddChild", "+", addChildLabel, "btn btn-sm btn-outline-secondary nav-action"],
+			["navIndent", ">", indentLabel, "btn btn-sm btn-outline-secondary nav-action"],
+			["navOutdent", "<", outdentLabel, "btn btn-sm btn-outline-secondary nav-action"],
+		];
+
+		for (const [datasetKey, symbol, label, className] of buttonConfigs) {
+			const button = document.createElement("button");
+			button.type = "button";
+			button.className = className;
+			button.dataset[datasetKey] = "";
+			button.setAttribute("aria-label", label);
+			button.textContent = symbol;
+			if (isReadOnly) {
+				button.disabled = true;
+			}
+			actions.append(button);
 		}
-		buttonGroup.append(childButton);
-
-		const indentButton = document.createElement("button");
-		indentButton.type = "button";
-		indentButton.className = "btn btn-sm btn-outline-secondary nav-action mini";
-		indentButton.dataset.navIndent = "";
-		indentButton.textContent = ">";
-		indentButton.setAttribute("aria-label", indentLabel);
-		if (isReadOnly) {
-			indentButton.disabled = true;
-		}
-		buttonGroup.append(indentButton);
-
-		const outdentButton = document.createElement("button");
-		outdentButton.type = "button";
-		outdentButton.className = "btn btn-sm btn-outline-secondary nav-action mini";
-		outdentButton.dataset.navOutdent = "";
-		outdentButton.textContent = "<";
-		outdentButton.setAttribute("aria-label", outdentLabel);
-		if (isReadOnly) {
-			outdentButton.disabled = true;
-		}
-		buttonGroup.append(outdentButton);
 
 		const removeButton = document.createElement("button");
 		removeButton.type = "button";
@@ -550,10 +740,9 @@ const navRows = flattenNavItems(navItems ?? []);
 		if (isReadOnly) {
 			removeButton.disabled = true;
 		}
-		buttonGroup.append(removeButton);
+		actions.append(removeButton);
 
-		actionCell.append(buttonGroup);
-		row.append(actionCell);
+		row.append(actions);
 
 		attachNavRow(row);
 		return row;

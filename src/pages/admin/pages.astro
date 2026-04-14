@@ -82,15 +82,10 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 	<div class="admin-content-stack">
 		<section class="card border-0 shadow-sm admin-page-hub">
 			<div class="card-body">
-				<div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-4">
-					<div class="admin-page-hub-copy">
-						<p class="text-uppercase small fw-semibold mb-1 admin-eyebrow">{t("headings.pages")}</p>
-						<h2 class="h5 mb-1">{t("messages.pageNavigationHub")}</h2>
-						<p class="mb-0 text-body-secondary small">{t("messages.pageNavigationHubHelp")}</p>
-					</div>
-					<div class="admin-page-hub-badge">
-						<span class="badge text-bg-light border">{t("labels.navigationItems")}</span>
-					</div>
+				<div class="admin-page-hub-copy mb-3">
+					<p class="text-uppercase small fw-semibold mb-1 admin-eyebrow">{t("headings.pages")}</p>
+					<h2 class="h5 mb-1">{t("messages.pageNavigationHub")}</h2>
+					<p class="mb-0 text-body-secondary small">{t("messages.pageNavigationHubHelp")}</p>
 				</div>
 				{settingsError && <p class="alert alert-warning mb-3">{settingsError}</p>}
 				<form method="post" action="/api/admin/site" class="admin-form-shell">
@@ -152,10 +147,6 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 	}
 
 	.admin-page-hub-copy {
-		max-width: 52rem;
-	}
-
-	.admin-page-hub-badge {
-		padding-top: 0.15rem;
+		max-width: 56rem;
 	}
 </style>
