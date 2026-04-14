@@ -12,6 +12,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 	{ href: "/admin/banners", labelKey: "nav.banners", permissions: ["pages.read"] },
 	{ href: "/admin/contact-forms", labelKey: "nav.contactForms", permissions: ["contactForms.manage"] },
 	{ href: "/admin/backup", labelKey: "nav.backup", permissions: ["site.manage"] },
+	{ href: "/admin/templates", labelKey: "nav.template", permissions: ["site.manage"] },
 	{ href: "/admin/footer", labelKey: "nav.footer", permissions: ["site.manage"] },
 	{ href: "/admin/settings", labelKey: "nav.settings", permissions: ["site.manage"] },
 	{ href: "/admin/users", labelKey: "nav.users", permissions: ["users.manage"] },
