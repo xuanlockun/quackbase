@@ -55,13 +55,11 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 --- 
 
 <AdminLayout
-	title={t("nav.header")}
+	title={t("nav.settings")}
 	description={t("messages.manageSiteSettings")}
 	session={session}
-	pageEyebrow="Template"
-	pageTitle={t("nav.header")}
+	pageTitle={t("nav.settings")}
 	pageDescription={t("messages.settingsHub")}
-	templateHtml={siteConfig.adminTemplateHtml}
 >
 	<div class="admin-content-stack">
 		{Astro.url.searchParams.get("siteSaved") && <p class="alert alert-success mb-0">{t("messages.headerSettingsSaved")}</p>}
@@ -79,17 +77,6 @@ const navRows = flattenNavItems(siteConfig.navItems ?? []);
 				<label><span>{t("labels.footerBackground")}</span><input class="form-control" name="footerBackground" value={siteConfig.footerBackground} placeholder="#eef2f7" disabled={Boolean(loadError)} /></label>
 				<label><span>{t("labels.footerTextColor")}</span><input class="form-control" name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
 				<label style="grid-column: 1 / -1;"><span>{t("labels.footerText")}</span><input class="form-control" name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
-				<label style="grid-column: 1 / -1;">
-					<span>Template HTML</span>
-					<textarea
-						class="form-control"
-						name="templateHtml"
-						rows="10"
-						spellcheck="false"
-						placeholder="<header class='admin-topbar'>...</header>"
-						disabled={Boolean(loadError)}
-					>{siteConfig.adminTemplateHtml}</textarea>
-				</label>
 			</div>
 			<div class="admin-form-section">
 				<span>{t("labels.navigationItems")}</span>

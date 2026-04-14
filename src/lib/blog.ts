@@ -183,13 +183,13 @@ export interface SiteConfig {
 	homePageSlug: string;
 	faviconUrl: string;
 	logoUrl: string;
-	adminTemplateHtml: string;
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
 	footerText: string;
 	footerBackground: string;
 	footerTextColor: string;
+	footerTemplateHtml: string;
 	navItems: SiteNavItem[];
 }
 
@@ -345,7 +345,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const settings = await db
 		.prepare(
-			`SELECT site_title, home_page_slug, favicon_url, logo_url, admin_template_html, header_background, header_text_color, header_accent_color, nav_items
+			`SELECT site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color, nav_items
 			FROM site_settings
 			WHERE id = 1`,
 		)
@@ -354,7 +354,6 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			home_page_slug: string;
 			favicon_url: string;
 			logo_url: string;
-			admin_template_html: string;
 			header_background: string;
 			header_text_color: string;
 			header_accent_color: string;
@@ -363,7 +362,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const footerSettings = await db
 		.prepare(
-			`SELECT footer_text, footer_background, footer_text_color
+			`SELECT footer_text, footer_background, footer_text_color, footer_template_html
 			FROM footer_settings
 			WHERE id = 1`,
 		)
@@ -371,6 +370,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			footer_text: string;
 			footer_background: string;
 			footer_text_color: string;
+			footer_template_html: string;
 		}>();
 
 	const navResult = await db
@@ -414,13 +414,13 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 		homePageSlug: settings?.home_page_slug ?? "home",
 		faviconUrl: settings?.favicon_url ?? "/favicon.svg",
 		logoUrl: settings?.logo_url ?? "",
-		adminTemplateHtml: settings?.admin_template_html ?? "",
 		headerBackground: settings?.header_background ?? "#ffffff",
 		headerTextColor: settings?.header_text_color ?? "#0f1219",
 		headerAccentColor: settings?.header_accent_color ?? "#2337ff",
 		footerText: footerSettings?.footer_text ?? "Edge CMS. Content updates go live straight from D1.",
 		footerBackground: footerSettings?.footer_background ?? "#eef2f7",
 		footerTextColor: footerSettings?.footer_text_color ?? "#60739f",
+		footerTemplateHtml: footerSettings?.footer_template_html ?? "",
 		navItems,
 	};
 }
@@ -432,7 +432,6 @@ export async function saveSiteConfig(
 		homePageSlug: string;
 		faviconUrl: string;
 		logoUrl: string;
-		adminTemplateHtml: string;
 		headerBackground: string;
 		headerTextColor: string;
 		headerAccentColor: string;
@@ -452,14 +451,13 @@ export async function saveSiteConfig(
 	const statements = [
 		db
 			.prepare(
-				`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, admin_template_html, header_background, header_text_color, header_accent_color, nav_items, updated_at)
-				VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, CURRENT_TIMESTAMP)
+				`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color, nav_items, updated_at)
+				VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, CURRENT_TIMESTAMP)
 				ON CONFLICT(id) DO UPDATE SET
 					site_title = excluded.site_title,
 					home_page_slug = excluded.home_page_slug,
 					favicon_url = excluded.favicon_url,
 					logo_url = excluded.logo_url,
-					admin_template_html = excluded.admin_template_html,
 					header_background = excluded.header_background,
 					header_text_color = excluded.header_text_color,
 					header_accent_color = excluded.header_accent_color,
@@ -471,7 +469,6 @@ export async function saveSiteConfig(
 				normalizeHomePageSlug(input.homePageSlug),
 				normalizeFaviconUrl(input.faviconUrl),
 				normalizeLogoUrl(input.logoUrl),
-				input.adminTemplateHtml.trim(),
 				sanitizeHexColor(input.headerBackground, "#ffffff"),
 				sanitizeHexColor(input.headerTextColor, "#0f1219"),
 				sanitizeHexColor(input.headerAccentColor, "#2337ff"),
@@ -867,13 +864,11 @@ export function parseSiteForm(formData: FormData): {
 	footerBackground: string;
 	footerTextColor: string;
 	navItems: SiteNavItem[];
-	templateHtml: string;
 } {
 	const siteTitle = requiredString(formData, "siteTitle");
 	const homePageSlug = requiredString(formData, "homePageSlug");
 	const faviconUrl = optionalString(formData, "faviconUrl") || "/favicon.svg";
 	const logoUrl = optionalString(formData, "logoUrl");
-	const templateHtml = optionalString(formData, "templateHtml");
 	const headerBackground = optionalString(formData, "headerBackground") || "#ffffff";
 	const headerTextColor = optionalString(formData, "headerTextColor") || "#0f1219";
 	const headerAccentColor = optionalString(formData, "headerAccentColor") || "#2337ff";
@@ -924,7 +919,6 @@ export function parseSiteForm(formData: FormData): {
 		homePageSlug,
 		faviconUrl,
 		logoUrl,
-		templateHtml,
 		headerBackground,
 		headerTextColor,
 		headerAccentColor,
@@ -1133,7 +1127,6 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				home_page_slug TEXT NOT NULL DEFAULT 'home',
 				favicon_url TEXT NOT NULL DEFAULT '/favicon.svg',
 				logo_url TEXT NOT NULL DEFAULT '',
-				admin_template_html TEXT NOT NULL DEFAULT '',
 				header_background TEXT NOT NULL DEFAULT '#ffffff',
 				header_text_color TEXT NOT NULL DEFAULT '#0f1219',
 				header_accent_color TEXT NOT NULL DEFAULT '#2337ff',
@@ -1169,6 +1162,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				footer_text TEXT NOT NULL DEFAULT 'Edge CMS. Content updates go live straight from D1.',
 				footer_background TEXT NOT NULL DEFAULT '#eef2f7',
 				footer_text_color TEXT NOT NULL DEFAULT '#60739f',
+				footer_template_html TEXT NOT NULL DEFAULT '',
 				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 			)`,
 		),
@@ -1178,6 +1172,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 	const columnNames = new Set((pageColumns.results ?? []).map((column) => column.name));
 	const settingsColumns = await db.prepare(`PRAGMA table_info(site_settings)`).all<{ name: string }>();
 	const settingsColumnNames = new Set((settingsColumns.results ?? []).map((column) => column.name));
+	const footerColumns = await db.prepare(`PRAGMA table_info(footer_settings)`).all<{ name: string }>();
+	const footerColumnNames = new Set((footerColumns.results ?? []).map((column) => column.name));
 
 	if (!settingsColumnNames.has("nav_items")) {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN nav_items TEXT NOT NULL DEFAULT '[]'`).run();
@@ -1191,8 +1187,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN logo_url TEXT NOT NULL DEFAULT ''`).run();
 	}
 
-	if (!settingsColumnNames.has("admin_template_html")) {
-		await db.prepare(`ALTER TABLE site_settings ADD COLUMN admin_template_html TEXT NOT NULL DEFAULT ''`).run();
+	if (!footerColumnNames.has("footer_template_html")) {
+		await db.prepare(`ALTER TABLE footer_settings ADD COLUMN footer_template_html TEXT NOT NULL DEFAULT ''`).run();
 	}
 
 	if (!columnNames.has("page_sections")) {
@@ -1236,13 +1232,13 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	await db.batch([
 		db.prepare(
-			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, admin_template_html, header_background, header_text_color, header_accent_color)
-			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '', '', '#ffffff', '#0f1219', '#2337ff')
+			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color)
+			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '', '#ffffff', '#0f1219', '#2337ff')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(
-			`INSERT INTO footer_settings (id, footer_text, footer_background, footer_text_color)
-			VALUES (1, 'Edge CMS. Content updates go live straight from D1.', '#eef2f7', '#60739f')
+			`INSERT INTO footer_settings (id, footer_text, footer_background, footer_text_color, footer_template_html)
+			VALUES (1, 'Edge CMS. Content updates go live straight from D1.', '#eef2f7', '#60739f', '')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(

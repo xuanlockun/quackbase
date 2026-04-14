@@ -1,0 +1,66 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { getDb, getSiteConfig } from "../../lib/blog";
+import { getUiTranslations } from "../../lib/i18n";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const { t } = getUiTranslations(Astro);
+
+let loadError = "";
+let footerTemplateHtml = "";
+
+try {
+	const siteConfig = await getSiteConfig(getDb(Astro.locals));
+	footerTemplateHtml = siteConfig.footerTemplateHtml;
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadSiteSettings");
+}
+---
+
+<AdminLayout
+	title={t("nav.footer")}
+	description={t("messages.manageSiteSettings")}
+	session={session}
+	pageEyebrow="Template"
+	pageTitle={t("nav.footer")}
+	pageDescription="Edit the raw footer HTML stored in D1."
+>
+	<div class="admin-content-stack">
+		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.footerSaved")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.footerSaveFailed")}</p>}
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
+		<form method="post" action="/api/admin/footer" class="admin-form-shell">
+			<div class="admin-form-section">
+				<label style="grid-column: 1 / -1;">
+					<span>Footer HTML</span>
+					<textarea
+						class="form-control"
+						name="footerTemplateHtml"
+						rows="14"
+						spellcheck="false"
+						placeholder="<div>&copy; 2026 Edge CMS</div>"
+						disabled={Boolean(loadError)}
+					>{footerTemplateHtml}</textarea>
+				</label>
+				<p class="admin-muted">This HTML is rendered directly in the public footer component.</p>
+				<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>Save footer template</button>
+			</div>
+		</form>
+		<div class="admin-form-section">
+			<strong>Preview</strong>
+			<div class="footer-template-preview border rounded p-3" set:html={footerTemplateHtml || "<div>&copy; Edge CMS</div>"}></div>
+		</div>
+	</div>
+</AdminLayout>
+
+<style>
+	.footer-template-preview {
+		background: #fff;
+	}
+</style>
