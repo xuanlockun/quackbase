@@ -84,7 +84,7 @@ function renderPageTemplate(templateHtml: string, content: string): string {
 ---
 
 {section.type === "page_content" && (
-	<div class="page-rich-content" set:html={renderPageTemplate(pageTemplateHtml, contentHtml)} />
+	<Fragment set:html={renderPageTemplate(pageTemplateHtml, contentHtml)} />
 )}
 
 {section.type === "banner_slider" && bannerSlides.length > 0 && <BannerSection slides={bannerSlides} />}

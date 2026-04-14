@@ -7,6 +7,7 @@ export interface AdminNavItem {
 }
 
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
+	{ href: "/admin", labelKey: "nav.dashboard", permissions: [] },
 	{ href: "/admin/posts", labelKey: "nav.posts", permissions: ["posts.read"] },
 	{ href: "/admin/pages", labelKey: "nav.pages", permissions: ["pages.read"] },
 	{ href: "/admin/media", labelKey: "nav.media", permissions: ["site.manage"] },

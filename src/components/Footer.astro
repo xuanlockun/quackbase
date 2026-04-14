@@ -22,8 +22,8 @@ try {
 
 <footer style={`--footer-bg:${footerBackground}; --footer-text:${footerTextColor};`}>
 	{
-		footerTemplateHtml ? (
-			<div set:html={footerTemplateHtml} />
+		footerTemplateHtml.trim() ? (
+			<Fragment set:html={footerTemplateHtml} />
 		) : (
 			<div class="container">
 				<div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">

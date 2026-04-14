@@ -13,6 +13,13 @@ const links = getVisibleAdminNavItems(session);
 const { t, localizeAdminHref } = getUiTranslations(Astro);
 
 const navIconMap: Record<string, string> = {
+	"nav.dashboard": `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M4 11.5 12 4l8 7.5" />
+			<path d="M6 10.5V20h12v-9.5" />
+			<path d="M10 20v-5h4v5" />
+		</svg>
+	`,
 	"nav.posts": `
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 			<rect x="4" y="5" width="16" height="14" rx="2" />
@@ -122,6 +129,11 @@ const navIconMap: Record<string, string> = {
 };
 
 const navIconHtml = (key: string) => navIconMap[key] ?? navIconMap["default"];
+const dashboardLink = links.find((link) => link.href === "/admin") ?? {
+	href: "/admin",
+	labelKey: "nav.dashboard",
+	permissions: [],
+};
 
 const sectionConfig = [
 	{ title: t("nav.template"), labelKeys: ["nav.template"] },
@@ -156,6 +168,18 @@ function isActiveLink(href: string, currentPath: string): boolean {
 		</a>
 	</header>
 	<div class="admin-sidebar-body overflow-auto">
+		<a
+			role="menuitem"
+			aria-current={isActiveLink(dashboardLink.href, pathname) ? "page" : undefined}
+			class:list={["nav-link", "w-100 text-start", "admin-sidebar-dashboard-link", isActiveLink(dashboardLink.href, pathname) && "active"]}
+			href={localizeAdminHref(dashboardLink.href)}
+			data-admin-sidebar-link
+		>
+			<span class="d-inline-flex align-items-center justify-content-center flex-shrink-0 admin-sidebar-icon-wrap">
+				<span aria-hidden="true" set:html={navIconHtml(dashboardLink.labelKey)}></span>
+			</span>
+			<span>{t(dashboardLink.labelKey)}</span>
+		</a>
 		{
 			sections.map((section) => (
 				<section key={section.title} class="admin-sidebar-section">
@@ -187,3 +211,24 @@ function isActiveLink(href: string, currentPath: string): boolean {
 		<small class="text-muted">Admin navigation</small>
 	</footer>
 </nav>
+
+<style>
+	.admin-sidebar-dashboard-link {
+		margin-bottom: 1rem;
+		border-radius: 1rem;
+		padding: 0.95rem 1rem;
+		font-weight: 700;
+		background: rgba(var(--brand-primary-rgb, 84, 129, 255), 0.16);
+		border: 1px solid rgba(var(--brand-primary-rgb, 84, 129, 255), 0.28);
+		box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+	}
+
+	.admin-sidebar-dashboard-link.active {
+		background: linear-gradient(135deg, rgba(var(--brand-primary-rgb, 84, 129, 255), 0.95), rgba(var(--brand-primary-rgb, 84, 129, 255), 0.72));
+		border-color: rgba(var(--brand-primary-rgb, 84, 129, 255), 0.65);
+	}
+
+	.admin-sidebar-dashboard-link:not(.active) {
+		color: var(--admin-sidebar-link-color, rgba(255, 255, 255, 0.96));
+	}
+</style>

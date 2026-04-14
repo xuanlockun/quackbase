@@ -5,6 +5,8 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 import { SITE_TITLE } from "../../consts";
 import { getDb, getSiteConfig } from "../../lib/blog";
 import { getUiTranslations } from "../../lib/i18n";
+import { listAdminSecrets, type AdminSecretRecord } from "../../lib/secrets";
+import SecretsManager from "../../components/admin/SecretsManager.astro";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -22,15 +24,24 @@ let siteConfig = {
 	headerBackground: "#ffffff",
 	headerTextColor: "#0f1219",
 	headerAccentColor: "#2337ff",
-	footerText: "Edge CMS. Content updates go live straight from D1.",
 	footerBackground: "#eef2f7",
 	footerTextColor: "#60739f",
 };
+let secrets: AdminSecretRecord[] = [];
+let secretsLoadError = "";
+
+const db = getDb(Astro.locals);
 
 try {
-	siteConfig = await getSiteConfig(getDb(Astro.locals));
+	siteConfig = await getSiteConfig(db);
 } catch (error) {
 	loadError = error instanceof Error ? error.message : t("messages.failedToLoadSiteSettings");
+}
+
+try {
+	secrets = await listAdminSecrets(db);
+} catch (error) {
+	secretsLoadError = error instanceof Error ? error.message : t("messages.failedToLoadSecrets");
 }
 ---
 
@@ -44,6 +55,9 @@ try {
 	<div class="admin-content-stack">
 		{Astro.url.searchParams.get("siteSaved") && <p class="alert alert-success mb-0">{t("messages.siteSettingsSaved")}</p>}
 		{Astro.url.searchParams.get("siteError") && <p class="alert alert-danger mb-0">{t("messages.siteSettingsFailed")}</p>}
+		{Astro.url.searchParams.get("secretSaved") && <p class="alert alert-success mb-0">{t("messages.secretSaved")}</p>}
+		{Astro.url.searchParams.get("secretDeleted") && <p class="alert alert-info mb-0">{t("messages.secretDeleted")}</p>}
+		{Astro.url.searchParams.get("secretError") && <p class="alert alert-danger mb-0">{t("messages.secretRequestFailed")}</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 		<form method="post" action="/api/admin/site" class="admin-form-shell">
 			<div class="admin-grid-two">
@@ -56,12 +70,12 @@ try {
 				<label><span>{t("labels.headerAccentColor")}</span><input class="form-control" name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
 				<label><span>{t("labels.footerBackground")}</span><input class="form-control" name="footerBackground" value={siteConfig.footerBackground} placeholder="#eef2f7" disabled={Boolean(loadError)} /></label>
 				<label><span>{t("labels.footerTextColor")}</span><input class="form-control" name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
-				<label style="grid-column: 1 / -1;"><span>{t("labels.footerText")}</span><input class="form-control" name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
 			</div>
 			<div class="admin-form-section">
 				<p class="admin-muted">{t("messages.siteSettingsHelp")}</p>
 				<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>{t("actions.saveChanges")}</button>
 			</div>
 		</form>
+		<SecretsManager secrets={secrets} canManage={session.isSuperadmin || session.permissions.includes("site.manage")} loadError={secretsLoadError} />
 	</div>
 </AdminLayout>

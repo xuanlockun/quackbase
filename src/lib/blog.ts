@@ -446,7 +446,6 @@ export async function saveSiteConfig(
 		headerBackground: string;
 		headerTextColor: string;
 		headerAccentColor: string;
-		footerText: string;
 		footerBackground: string;
 		footerTextColor: string;
 		navItems: SiteNavItem[];
@@ -487,16 +486,14 @@ export async function saveSiteConfig(
 			),
 		db
 			.prepare(
-				`INSERT INTO footer_settings (id, footer_text, footer_background, footer_text_color, updated_at)
-				VALUES (1, ?1, ?2, ?3, CURRENT_TIMESTAMP)
+				`INSERT INTO footer_settings (id, footer_background, footer_text_color, updated_at)
+				VALUES (1, ?1, ?2, CURRENT_TIMESTAMP)
 				ON CONFLICT(id) DO UPDATE SET
-					footer_text = excluded.footer_text,
 					footer_background = excluded.footer_background,
 					footer_text_color = excluded.footer_text_color,
 					updated_at = CURRENT_TIMESTAMP`,
 			)
 			.bind(
-				input.footerText.trim() || "Edge CMS. Content updates go live straight from D1.",
 				sanitizeHexColor(input.footerBackground, "#eef2f7"),
 				sanitizeHexColor(input.footerTextColor, "#60739f"),
 			),
@@ -871,7 +868,6 @@ export function parseSiteForm(formData: FormData): {
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
-	footerText: string;
 	footerBackground: string;
 	footerTextColor: string;
 	navItems: SiteNavItem[];
@@ -883,8 +879,6 @@ export function parseSiteForm(formData: FormData): {
 	const headerBackground = optionalString(formData, "headerBackground") || "#ffffff";
 	const headerTextColor = optionalString(formData, "headerTextColor") || "#0f1219";
 	const headerAccentColor = optionalString(formData, "headerAccentColor") || "#2337ff";
-	const footerText =
-		optionalString(formData, "footerText") || "Edge CMS. Content updates go live straight from D1.";
 	const footerBackground = optionalString(formData, "footerBackground") || "#eef2f7";
 	const footerTextColor = optionalString(formData, "footerTextColor") || "#60739f";
 	const navRaw = optionalString(formData, "navItems");
@@ -933,7 +927,6 @@ export function parseSiteForm(formData: FormData): {
 		headerBackground,
 		headerTextColor,
 		headerAccentColor,
-		footerText,
 		footerBackground,
 		footerTextColor,
 		navItems,
