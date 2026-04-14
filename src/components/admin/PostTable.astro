@@ -7,17 +7,19 @@ interface Props {
 	posts: AdminPostSummary[];
 	canUpdate: boolean;
 	canDelete: boolean;
+	emptyTitle?: string;
+	emptyDescription?: string;
 }
 
-const { posts, canUpdate, canDelete } = Astro.props;
+const { posts, canUpdate, canDelete, emptyTitle, emptyDescription } = Astro.props;
 const { t } = getUiTranslations(Astro);
 ---
 
 {
 	posts.length === 0 ? (
 		<div class="admin-state-surface">
-			<h2 class="h5 mb-2">{t("messages.noPostsYet")}</h2>
-			<p class="mb-0 admin-muted">{t("messages.noPostsHelp")}</p>
+			<h2 class="h5 mb-2">{emptyTitle ?? t("messages.noPostsYet")}</h2>
+			<p class="mb-0 admin-muted">{emptyDescription ?? t("messages.noPostsHelp")}</p>
 		</div>
 	) : (
 		<div class="admin-table-surface table-responsive">

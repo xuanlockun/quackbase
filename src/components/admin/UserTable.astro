@@ -4,17 +4,19 @@ import { getUiTranslations } from "../../lib/i18n";
 
 interface Props {
 	users: AdminUserSummary[];
+	emptyTitle?: string;
+	emptyDescription?: string;
 }
 
-const { users } = Astro.props;
+const { users, emptyTitle, emptyDescription } = Astro.props;
 const { t } = getUiTranslations(Astro);
 ---
 
 {
 	users.length === 0 ? (
 		<div class="admin-state-surface">
-			<h2 class="h5 mb-2">{t("messages.noUsersYet")}</h2>
-			<p class="mb-0 admin-muted">{t("messages.noUsersHelp")}</p>
+			<h2 class="h5 mb-2">{emptyTitle ?? t("messages.noUsersYet")}</h2>
+			<p class="mb-0 admin-muted">{emptyDescription ?? t("messages.noUsersHelp")}</p>
 		</div>
 	) : (
 		<div class="admin-table-surface table-responsive">

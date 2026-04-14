@@ -7,9 +7,11 @@ interface Props {
 	pages: SitePage[];
 	canUpdate: boolean;
 	canDelete: boolean;
+	emptyTitle?: string;
+	emptyDescription?: string;
 }
 
-const { pages, canUpdate, canDelete } = Astro.props;
+const { pages, canUpdate, canDelete, emptyTitle, emptyDescription } = Astro.props;
 const { t, language } = getUiTranslations(Astro);
 const catalog = getLanguageCatalog(Astro.locals);
 ---
@@ -17,8 +19,8 @@ const catalog = getLanguageCatalog(Astro.locals);
 {
 	pages.length === 0 ? (
 		<div class="admin-state-surface">
-			<h2 class="h5 mb-2">{t("messages.noPagesYet")}</h2>
-			<p class="mb-0 admin-muted">{t("messages.noPagesHelp")}</p>
+			<h2 class="h5 mb-2">{emptyTitle ?? t("messages.noPagesYet")}</h2>
+			<p class="mb-0 admin-muted">{emptyDescription ?? t("messages.noPagesHelp")}</p>
 		</div>
 	) : (
 		<div class="admin-table-surface table-responsive">

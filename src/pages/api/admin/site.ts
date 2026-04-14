@@ -8,7 +8,7 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 	const session = await requireApiPermission(
 		{ locals, request, redirect },
 		["site.manage"],
-		{ loginRedirect: "/admin/login", forbiddenRedirect: "/admin/header" },
+		{ loginRedirect: "/admin/login", forbiddenRedirect: "/admin/settings" },
 	);
 	if (session instanceof Response) {
 		return session;
@@ -18,8 +18,8 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		const formData = await request.formData();
 		const input = parseSiteForm(formData);
 		await saveSiteConfig(getDb(locals), input);
-		return redirect("/admin/header?siteSaved=1");
+		return redirect("/admin/settings?siteSaved=1");
 	} catch {
-		return redirect("/admin/header?siteError=1");
+		return redirect("/admin/settings?siteError=1");
 	}
 };

@@ -1,0 +1,173 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { getDb } from "../../lib/blog";
+import { getMediaStorageStatus, listMediaAssets, type MediaAsset } from "../../lib/media";
+import { getUiTranslations } from "../../lib/i18n";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const canManage = session.isSuperadmin || session.permissions.includes("site.manage");
+const { t } = getUiTranslations(Astro);
+const storageStatus = getMediaStorageStatus(Astro.locals);
+
+let assets: MediaAsset[] = [];
+let loadError = "";
+
+try {
+	assets = await listMediaAssets(getDb(Astro.locals));
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.mediaLoadFailed");
+}
+
+function formatBytes(bytes: number): string {
+	if (!Number.isFinite(bytes) || bytes <= 0) {
+		return "0 B";
+	}
+
+	const units = ["B", "KB", "MB", "GB", "TB"];
+	let value = bytes;
+	let index = 0;
+
+	while (value >= 1024 && index < units.length - 1) {
+		value /= 1024;
+		index++;
+	}
+
+	return `${index === 0 ? Math.round(value) : value.toFixed(1)} ${units[index]}`;
+}
+
+function formatDate(value: Date): string {
+	return new Intl.DateTimeFormat(undefined, {
+		dateStyle: "medium",
+		timeStyle: "short",
+	}).format(value);
+}
+
+function getAssetPreviewUrl(asset: MediaAsset): string {
+	return asset.publicUrl || `/api/admin/media/${asset.id}`;
+}
+
+function isImageAsset(asset: MediaAsset): boolean {
+	return asset.mimeType.startsWith("image/");
+}
+---
+
+<AdminLayout
+	title={t("headings.mediaLibrary")}
+	description={t("messages.manageMedia")}
+	session={session}
+	pageTitle={t("headings.mediaLibrary")}
+	pageDescription={t("messages.mediaLibraryHelp")}
+>
+	<div class="admin-content-stack">
+		{Astro.url.searchParams.get("uploaded") && <p class="alert alert-success mb-0">{t("messages.mediaUploadSuccess")}</p>}
+		{Astro.url.searchParams.get("deleted") && <p class="alert alert-success mb-0">{t("messages.mediaDeleteSuccess")}</p>}
+		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.mediaRequestFailed")}</p>}
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
+
+		<section class="card border-0 shadow-sm">
+			<div class="card-body">
+				<div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+					<div>
+						<p class="text-uppercase letter-spacing-wide text-muted mb-2">{t("labels.status")}</p>
+						<h2 class="h5 mb-1">{storageStatus.label}</h2>
+						<p class="mb-0 text-body-secondary">{storageStatus.details}</p>
+					</div>
+					<div class="text-end">
+						<span class:list={["badge rounded-pill", storageStatus.isConfigured ? "text-bg-success" : "text-bg-warning"]}>
+							{storageStatus.isConfigured ? t("messages.mediaStorageConfigured") : t("messages.mediaStorageUnconfigured")}
+						</span>
+						{storageStatus.publicBaseUrl && (
+							<p class="mt-2 mb-0 small text-body-secondary text-break">{storageStatus.publicBaseUrl}</p>
+						)}
+					</div>
+				</div>
+				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="mt-4">
+					<label class="form-label fw-semibold" for="mediaFiles">{t("actions.uploadMedia")}</label>
+					<input
+						id="mediaFiles"
+						class="form-control"
+						type="file"
+						name="files"
+						multiple
+						disabled={!storageStatus.isConfigured || !canManage}
+					/>
+					<p class="form-text mb-3">{t("messages.mediaUploadHint")}</p>
+					<button class="btn btn-primary" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
+						{t("actions.uploadMedia")}
+					</button>
+				</form>
+			</div>
+		</section>
+
+		<section class="card border-0 shadow-sm">
+			<div class="card-body">
+				<div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+					<h2 class="h5 mb-0">{t("headings.mediaLibrary")}</h2>
+					<span class="text-body-secondary small">{assets.length} items</span>
+				</div>
+
+				{assets.length === 0 ? (
+					<p class="text-body-secondary mb-0">{t("messages.noMediaYet")}</p>
+				) : (
+					<div class="row g-3">
+						{assets.map((asset) => {
+							const previewUrl = getAssetPreviewUrl(asset);
+							return (
+								<div class="col-12 col-md-6 col-xl-4">
+									<article class="card h-100 border-0 shadow-sm">
+										{isImageAsset(asset) ? (
+											<img src={previewUrl} alt={asset.fileName} class="card-img-top media-preview-image" loading="lazy" />
+										) : (
+											<div class="media-preview-fallback d-flex align-items-center justify-content-center">
+												<span class="text-uppercase fw-semibold text-body-secondary">{asset.mimeType || "FILE"}</span>
+											</div>
+										)}
+										<div class="card-body">
+											<h3 class="h6 text-break mb-2">{asset.fileName}</h3>
+											<ul class="list-unstyled small text-body-secondary mb-3">
+												<li>{asset.mimeType}</li>
+												<li>{formatBytes(asset.sizeBytes)}</li>
+												<li>{formatDate(asset.createdAt)}</li>
+											</ul>
+											<div class="d-flex flex-wrap gap-2">
+												<a class="btn btn-sm btn-outline-secondary" href={previewUrl} target="_blank" rel="noopener noreferrer">
+													{t("actions.view")}
+												</a>
+												{storageStatus.isConfigured && canManage && (
+													<form method="post" action={`/api/admin/media/${asset.id}`} class="d-inline">
+														<input type="hidden" name="_action" value="delete" />
+														<button class="btn btn-sm btn-outline-danger" type="submit">{t("actions.delete")}</button>
+													</form>
+												)}
+											</div>
+										</div>
+									</article>
+								</div>
+							);
+						})}
+					</div>
+				)}
+			</div>
+		</section>
+	</div>
+</AdminLayout>
+
+<style>
+	.media-preview-image {
+		width: 100%;
+		height: 220px;
+		object-fit: cover;
+		background: #f8fafc;
+	}
+
+	.media-preview-fallback {
+		min-height: 220px;
+		background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(14, 165, 233, 0.12));
+	}
+</style>

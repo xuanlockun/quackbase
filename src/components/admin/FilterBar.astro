@@ -1,0 +1,82 @@
+---
+interface SelectOption {
+	value: string;
+	label: string;
+}
+
+interface SelectField {
+	name: string;
+	label: string;
+	value: string;
+	options: SelectOption[];
+}
+
+interface Props {
+	title?: string;
+	searchName?: string;
+	searchValue?: string;
+	searchPlaceholder?: string;
+	selects?: SelectField[];
+	resetHref?: string;
+	submitLabel?: string;
+}
+
+const {
+	title = "Filters",
+	searchName = "q",
+	searchValue = "",
+	searchPlaceholder = "Search",
+	selects = [],
+	resetHref = "",
+	submitLabel = "Apply",
+} = Astro.props;
+---
+
+<section class="card border-0 shadow-sm admin-filter-bar">
+	<div class="card-body">
+		<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+			<div>
+				<h2 class="h6 mb-1">{title}</h2>
+				<p class="mb-0 text-body-secondary small">Refine the current list using one or more filters.</p>
+			</div>
+			{resetHref && (
+				<a class="btn btn-sm btn-outline-secondary" href={resetHref}>
+					Clear
+				</a>
+			)}
+		</div>
+
+		<form method="get" class="row g-3 align-items-end">
+			<div class="col-12 col-lg-4">
+				<label class="form-label fw-semibold" for={`filter-${searchName}`}>{searchPlaceholder}</label>
+				<input
+					id={`filter-${searchName}`}
+					class="form-control"
+					type="search"
+					name={searchName}
+					value={searchValue}
+					placeholder={searchPlaceholder}
+				/>
+			</div>
+			{selects.map((select) => (
+				<div class="col-12 col-md-6 col-lg-3">
+					<label class="form-label fw-semibold" for={`filter-${select.name}`}>
+						{select.label}
+					</label>
+					<select id={`filter-${select.name}`} class="form-select" name={select.name} value={select.value}>
+						{select.options.map((option) => (
+							<option value={option.value} selected={option.value === select.value}>
+								{option.label}
+							</option>
+						))}
+					</select>
+				</div>
+			))}
+			<div class="col-12 col-lg-auto">
+				<button class="btn btn-primary w-100" type="submit">
+					{submitLabel}
+				</button>
+			</div>
+		</form>
+	</div>
+</section>

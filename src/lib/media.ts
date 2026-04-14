@@ -1,5 +1,3 @@
-import { getDb } from "./blog";
-
 export type MediaStorageProvider = "r2" | "s3" | "unconfigured";
 
 export interface MediaAsset {
@@ -140,7 +138,7 @@ export async function createMediaAsset(
 				created_at,
 				updated_at
 			)
-			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)` ,
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
 			input.storageProvider,

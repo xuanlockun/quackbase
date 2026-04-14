@@ -1,9 +1,67 @@
 ---
 export const prerender = false;
 
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { SITE_TITLE } from "../../consts";
+import { getDb, getSiteConfig } from "../../lib/blog";
+import { getUiTranslations } from "../../lib/i18n";
+
 const session = Astro.locals.adminSession;
 if (!session) {
 	return Astro.redirect("/admin/login");
 }
 
-return Astro.redirect("/admin/header");
+const { t } = getUiTranslations(Astro);
+
+let loadError = "";
+let siteConfig = {
+	siteTitle: SITE_TITLE,
+	homePageSlug: "home",
+	faviconUrl: "/favicon.svg",
+	logoUrl: "",
+	headerBackground: "#ffffff",
+	headerTextColor: "#0f1219",
+	headerAccentColor: "#2337ff",
+	footerText: "Edge CMS. Content updates go live straight from D1.",
+	footerBackground: "#eef2f7",
+	footerTextColor: "#60739f",
+};
+
+try {
+	siteConfig = await getSiteConfig(getDb(Astro.locals));
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadSiteSettings");
+}
+---
+
+<AdminLayout
+	title={t("nav.settings")}
+	description={t("messages.manageSiteSettings")}
+	session={session}
+	pageTitle={t("nav.settings")}
+	pageDescription={t("messages.settingsHub")}
+>
+	<div class="admin-content-stack">
+		{Astro.url.searchParams.get("siteSaved") && <p class="alert alert-success mb-0">{t("messages.siteSettingsSaved")}</p>}
+		{Astro.url.searchParams.get("siteError") && <p class="alert alert-danger mb-0">{t("messages.siteSettingsFailed")}</p>}
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
+		<form method="post" action="/api/admin/site" class="admin-form-shell">
+			<div class="admin-grid-two">
+				<label><span>{t("labels.siteTitle")}</span><input class="form-control" name="siteTitle" required value={siteConfig.siteTitle} disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.homePageSlug")}</span><input class="form-control" name="homePageSlug" required value={siteConfig.homePageSlug} placeholder="home" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.faviconUrl")}</span><input class="form-control" name="faviconUrl" value={siteConfig.faviconUrl} placeholder="/favicon.svg" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.logoUrl")}</span><input class="form-control" name="logoUrl" value={siteConfig.logoUrl} placeholder="/logo.svg" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.headerBackground")}</span><input class="form-control" name="headerBackground" value={siteConfig.headerBackground} placeholder="#ffffff" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.headerTextColor")}</span><input class="form-control" name="headerTextColor" value={siteConfig.headerTextColor} placeholder="#0f1219" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.headerAccentColor")}</span><input class="form-control" name="headerAccentColor" value={siteConfig.headerAccentColor} placeholder="#2337ff" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.footerBackground")}</span><input class="form-control" name="footerBackground" value={siteConfig.footerBackground} placeholder="#eef2f7" disabled={Boolean(loadError)} /></label>
+				<label><span>{t("labels.footerTextColor")}</span><input class="form-control" name="footerTextColor" value={siteConfig.footerTextColor} placeholder="#60739f" disabled={Boolean(loadError)} /></label>
+				<label style="grid-column: 1 / -1;"><span>{t("labels.footerText")}</span><input class="form-control" name="footerText" value={siteConfig.footerText} disabled={Boolean(loadError)} /></label>
+			</div>
+			<div class="admin-form-section">
+				<p class="admin-muted">{t("messages.siteSettingsHelp")}</p>
+				<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>{t("actions.saveChanges")}</button>
+			</div>
+		</form>
+	</div>
+</AdminLayout>

@@ -1,10 +1,13 @@
 ---
 export const prerender = false;
 
+import FilterBar from "../../components/admin/FilterBar.astro";
 import PageTable from "../../components/admin/PageTable.astro";
+import NavigationItemsEditor from "../../components/admin/NavigationItemsEditor.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import { getDb, listAllPages } from "../../lib/blog";
+import { getDb, getSiteConfig, listAllPages } from "../../lib/blog";
 import { getLanguageCatalog, getUiTranslations } from "../../lib/i18n";
+import { SITE_TITLE } from "../../consts";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -16,15 +19,52 @@ const canUpdate = session.isSuperadmin || session.permissions.includes("pages.up
 const canDelete = session.isSuperadmin || session.permissions.includes("pages.delete");
 const { t, language } = getUiTranslations(Astro);
 const catalog = getLanguageCatalog(Astro.locals);
+const pageSearch = (Astro.url.searchParams.get("q") ?? "").trim();
+const pageStatusParam = (Astro.url.searchParams.get("status") ?? "all").trim();
+const pageStatus = ["all", "published", "draft"].includes(pageStatusParam) ? pageStatusParam : "all";
 
 let pages = [];
+let siteConfig = {
+	siteTitle: SITE_TITLE,
+	homePageSlug: "home",
+	faviconUrl: "/favicon.svg",
+	logoUrl: "",
+	headerBackground: "#ffffff",
+	headerTextColor: "#0f1219",
+	headerAccentColor: "#2337ff",
+	footerText: "Edge CMS. Content updates go live straight from D1.",
+	footerBackground: "#eef2f7",
+	footerTextColor: "#60739f",
+	navItems: [],
+};
 let loadError = "";
+let settingsError = "";
 
 try {
-	pages = await listAllPages(getDb(Astro.locals), language, catalog);
+	const db = getDb(Astro.locals);
+	pages = await listAllPages(db, language, catalog);
+	siteConfig = await getSiteConfig(db);
 } catch (error) {
-	loadError = error instanceof Error ? error.message : t("messages.failedToLoadPages");
+	if (!pages.length) {
+		loadError = error instanceof Error ? error.message : t("messages.failedToLoadPages");
+	} else {
+		settingsError = error instanceof Error ? error.message : t("messages.failedToLoadSiteSettings");
+	}
 }
+
+const filteredPages = pages.filter((page) => {
+	const q = pageSearch.toLowerCase();
+	const matchesSearch =
+		q === "" ||
+		[page.title, page.description, page.slug]
+			.join(" ")
+			.toLowerCase()
+			.includes(q);
+	const matchesStatus = pageStatus === "all" || page.status === pageStatus;
+	return matchesSearch && matchesStatus;
+});
+
+const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 ---
 
 <AdminLayout
@@ -40,12 +80,60 @@ try {
 	</div>
 
 	<div class="admin-content-stack">
+		<section class="card border-0 shadow-sm">
+			<div class="card-body">
+				<h2 class="h6 mb-3">Page navigation</h2>
+				<p class="mb-3 text-body-secondary small">Manage the navigation tree alongside page content so route relationships stay easy to maintain.</p>
+				{settingsError && <p class="alert alert-warning mb-3">{settingsError}</p>}
+				<form method="post" action="/api/admin/site" class="admin-form-shell">
+					<input type="hidden" name="siteTitle" value={siteConfig.siteTitle} />
+					<input type="hidden" name="homePageSlug" value={siteConfig.homePageSlug} />
+					<input type="hidden" name="faviconUrl" value={siteConfig.faviconUrl} />
+					<input type="hidden" name="logoUrl" value={siteConfig.logoUrl} />
+					<input type="hidden" name="headerBackground" value={siteConfig.headerBackground} />
+					<input type="hidden" name="headerTextColor" value={siteConfig.headerTextColor} />
+					<input type="hidden" name="headerAccentColor" value={siteConfig.headerAccentColor} />
+					<input type="hidden" name="footerText" value={siteConfig.footerText} />
+					<input type="hidden" name="footerBackground" value={siteConfig.footerBackground} />
+					<input type="hidden" name="footerTextColor" value={siteConfig.footerTextColor} />
+					<NavigationItemsEditor navItems={siteConfig.navItems ?? []} loadError={settingsError} />
+				</form>
+			</div>
+		</section>
+
+		<FilterBar
+			title="Page Filters"
+			searchName="q"
+			searchValue={pageSearch}
+			searchPlaceholder="Search pages"
+			resetHref={hasPageFilters ? "/admin/pages" : ""}
+			submitLabel="Apply filters"
+			selects={[
+				{
+					name: "status",
+					label: "Status",
+					value: pageStatus,
+					options: [
+						{ value: "all", label: "All statuses" },
+						{ value: "published", label: t("status.published") },
+						{ value: "draft", label: t("status.draft") },
+					],
+				},
+			]}
+		/>
+
 		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.pageCreated")}</p>}
 		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.pageSaved")}</p>}
 		{Astro.url.searchParams.get("deleted") && <p class="alert alert-info mb-0">{t("messages.pageDeleted")}</p>}
 		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.pageRequestFailed")}</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 
-		<PageTable pages={pages} canUpdate={canUpdate} canDelete={canDelete} />
+		<PageTable
+			pages={filteredPages}
+			canUpdate={canUpdate}
+			canDelete={canDelete}
+			emptyTitle={hasPageFilters ? "No pages match your filters" : undefined}
+			emptyDescription={hasPageFilters ? "Try clearing the search or switching the status filter." : undefined}
+		/>
 	</div>
 </AdminLayout>

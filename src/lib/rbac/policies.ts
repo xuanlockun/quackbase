@@ -9,6 +9,7 @@ export interface AdminNavItem {
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 	{ href: "/admin/posts", labelKey: "nav.posts", permissions: ["posts.read"] },
 	{ href: "/admin/pages", labelKey: "nav.pages", permissions: ["pages.read"] },
+	{ href: "/admin/media", labelKey: "nav.media", permissions: ["site.manage"] },
 	{ href: "/admin/banners", labelKey: "nav.banners", permissions: ["pages.read"] },
 	{ href: "/admin/contact-forms", labelKey: "nav.contactForms", permissions: ["contactForms.manage"] },
 	{ href: "/admin/backup", labelKey: "nav.backup", permissions: ["site.manage"] },
@@ -25,6 +26,7 @@ const ADMIN_PAGE_POLICIES = new Map<string, string[]>([
 	["/admin", []],
 	["/admin/posts", ["posts.read"]],
 	["/admin/pages", ["pages.read"]],
+	["/admin/media", ["site.manage"]],
 	["/admin/banners", ["pages.read"]],
 	["/admin/contact-forms", ["contactForms.manage"]],
 	["/admin/backup", ["site.manage"]],
@@ -56,6 +58,10 @@ export function getRequiredAdminPagePermissions(pathname: string): string[] | nu
 
 	if (pathname === "/admin/pages/new") {
 		return ["pages.create"];
+	}
+
+	if (pathname === "/admin/media") {
+		return ["site.manage"];
 	}
 
 	if (/^\/admin\/pages\/[^/]+\/edit$/.test(pathname)) {
