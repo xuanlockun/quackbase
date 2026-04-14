@@ -178,93 +178,110 @@ const fieldsJson = JSON.stringify(initialFields);
 </style>
 
 <script type="module">
-	const editor = document.querySelector("[data-contact-fields-editor]");
-	const contactRows = document.querySelector("[data-contact-fields-rows]");
-	const contactPayload = document.querySelector("[data-contact-fields-payload]");
-	const addContactButton = document.querySelector("[data-contact-field-add]");
-	const contactEmptyState = document.querySelector("[data-contact-fields-empty]");
-	const isContactReadOnly = addContactButton?.dataset.readonly === "true";
+	let editor;
+	let contactRows;
+	let contactPayload;
+	let addContactButton;
+	let contactEmptyState;
+	let isContactReadOnly = false;
 	let nextFieldId = 0;
 	let draggedContactRow = null;
 
-	const initialContactFields = parseConfig(contactPayload?.value);
-	nextFieldId = initialContactFields.reduce((max, field) => Math.max(max, Number(field.id ?? 0)), 0);
-	initialContactFields.forEach((entry) => {
-		contactRows?.append(createContactFieldRow(entry));
-	});
-	syncContactFields();
+	const initializeContactFormEditor = () => {
+		editor = document.querySelector("[data-contact-fields-editor]");
+		contactRows = editor?.querySelector("[data-contact-fields-rows]");
+		contactPayload = editor?.querySelector("[data-contact-fields-payload]");
+		addContactButton = editor?.querySelector("[data-contact-field-add]");
+		contactEmptyState = editor?.querySelector("[data-contact-fields-empty]");
+		isContactReadOnly = addContactButton?.dataset.readonly === "true";
 
-	addContactButton?.addEventListener("click", () => {
-		if (!contactRows) {
+		if (!(contactRows instanceof HTMLElement) || !(contactPayload instanceof HTMLInputElement)) {
 			return;
 		}
-		contactRows.append(createContactFieldRow());
-		const lastInput = contactRows.querySelector("[data-contact-field]:last-child [data-contact-field-label-en]");
-		if (lastInput instanceof HTMLInputElement) {
-			lastInput.focus();
-		}
+
+		const initialContactFields = parseConfig(contactPayload.value);
+		nextFieldId = initialContactFields.reduce((max, field) => Math.max(max, Number(field.id ?? 0)), 0);
+		initialContactFields.forEach((entry) => {
+			contactRows.append(createContactFieldRow(entry));
+		});
 		syncContactFields();
-	});
 
-	contactRows?.addEventListener("click", (event) => {
-		const target = event.target;
-		if (!(target instanceof HTMLElement) || !target.matches("[data-contact-field-remove]")) {
-			return;
-		}
-		const row = target.closest("[data-contact-field]");
-		if (row) {
-			row.remove();
+		addContactButton?.addEventListener("click", () => {
+			contactRows.append(createContactFieldRow());
+			const lastInput = contactRows.querySelector("[data-contact-field]:last-child [data-contact-field-label-en]");
+			if (lastInput instanceof HTMLInputElement) {
+				lastInput.focus();
+			}
 			syncContactFields();
-		}
-	});
+		});
 
-	contactRows?.addEventListener("input", syncContactFields);
+		contactRows.addEventListener("click", (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLElement) || !target.matches("[data-contact-field-remove]")) {
+				return;
+			}
+			const row = target.closest("[data-contact-field]");
+			if (row) {
+				row.remove();
+				syncContactFields();
+			}
+		});
 
-	contactRows?.addEventListener("dragstart", (event) => {
-		const row = findContactRow(event.target);
-		if (!row || isContactReadOnly) {
-			return;
-		}
-		draggedContactRow = row;
-		row.classList.add("is-dragging");
-		event.dataTransfer?.setData("text/plain", "");
-		event.dataTransfer?.setDragImage(row, 0, 0);
-	});
+		contactRows.addEventListener("input", syncContactFields);
+		contactRows.addEventListener("change", syncContactFields);
 
-	contactRows?.addEventListener("dragover", (event) => {
-		if (!draggedContactRow) {
-			return;
-		}
-		event.preventDefault();
-		const row = findContactRow(event.target);
-		if (!row || row === draggedContactRow) {
-			return;
-		}
-		const bounding = row.getBoundingClientRect();
-		const after = event.clientY > bounding.top + bounding.height / 2;
-		if (after) {
-			row.after(draggedContactRow);
-		} else {
-			row.before(draggedContactRow);
-		}
-	});
+		contactRows.addEventListener("dragstart", (event) => {
+			const row = findContactRow(event.target);
+			if (!row || isContactReadOnly) {
+				return;
+			}
+			draggedContactRow = row;
+			row.classList.add("is-dragging");
+			event.dataTransfer?.setData("text/plain", "");
+			event.dataTransfer?.setDragImage(row, 0, 0);
+		});
 
-	contactRows?.addEventListener("drop", (event) => {
-		event.preventDefault();
-		if (!draggedContactRow) {
-			return;
-		}
-		draggedContactRow.classList.remove("is-dragging");
-		draggedContactRow = null;
-		syncContactFields();
-	});
+		contactRows.addEventListener("dragover", (event) => {
+			if (!draggedContactRow) {
+				return;
+			}
+			event.preventDefault();
+			const row = findContactRow(event.target);
+			if (!row || row === draggedContactRow) {
+				return;
+			}
+			const bounding = row.getBoundingClientRect();
+			const after = event.clientY > bounding.top + bounding.height / 2;
+			if (after) {
+				row.after(draggedContactRow);
+			} else {
+				row.before(draggedContactRow);
+			}
+		});
 
-	contactRows?.addEventListener("dragend", () => {
-		if (draggedContactRow) {
+		contactRows.addEventListener("drop", (event) => {
+			event.preventDefault();
+			if (!draggedContactRow) {
+				return;
+			}
 			draggedContactRow.classList.remove("is-dragging");
 			draggedContactRow = null;
-		}
-	});
+			syncContactFields();
+		});
+
+		contactRows.addEventListener("dragend", () => {
+			if (draggedContactRow) {
+				draggedContactRow.classList.remove("is-dragging");
+				draggedContactRow = null;
+			}
+		});
+	};
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", initializeContactFormEditor, { once: true });
+	} else {
+		initializeContactFormEditor();
+	}
 
 	function parseConfig(value) {
 		try {
@@ -319,7 +336,7 @@ const fieldsJson = JSON.stringify(initialFields);
 	}
 
 	function syncContactFields() {
-		if (!contactPayload || !contactRows) {
+		if (!(contactPayload instanceof HTMLInputElement) || !(contactRows instanceof HTMLElement)) {
 			return;
 		}
 		const fields = Array.from(contactRows.querySelectorAll("[data-contact-field]"))
@@ -347,7 +364,7 @@ const fieldsJson = JSON.stringify(initialFields);
 	}
 
 	function updateEmptyState() {
-		if (!contactEmptyState || !contactRows) {
+		if (!(contactEmptyState instanceof HTMLElement) || !(contactRows instanceof HTMLElement)) {
 			return;
 		}
 		contactEmptyState.hidden = Boolean(contactRows.querySelector("[data-contact-field]"));

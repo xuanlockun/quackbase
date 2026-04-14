@@ -128,6 +128,7 @@
     "bannerImageUrls": "URL ảnh banner"
   },
   "headings": {
+    "dashboard": "Bảng điều khiển",
     "localizedContent": "Nội dung đa ngôn ngữ",
     "pageSections": "Phần trang",
     "banners": "Banner",
@@ -154,6 +155,11 @@
     "inactive": "Tạm dừng"
   },
   "messages": {
+    "dashboardIntro": "Tổng quan về nội dung CMS, cài đặt trang và khu vực quản trị.",
+    "dashboardWelcome": "Chào mừng quay lại, {name}.",
+    "dashboardSummary": "Tổng quan nội dung",
+    "dashboardQuickActions": "Thao tác nhanh",
+    "dashboardTemplateHelp": "Chỉnh raw HTML shell cho header, navbar, page wrapper và footer của trang public.",
     "contentAndAccessManagement": "Quản lý nội dung và truy cập",
     "adminUserFallback": "Người dùng quản trị",
     "changesSaveAdminApi": "Thay đổi được lưu qua API quản trị có kiểm tra quyền.",

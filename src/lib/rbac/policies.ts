@@ -121,8 +121,7 @@ export function getDefaultAdminPath(session: AdminSession | null): string {
 		return "/admin/login";
 	}
 
-	const firstVisible = ADMIN_NAV_ITEMS.find((item) => sessionHasPermissions(session, item.permissions));
-	return firstVisible?.href ?? "/admin/login?error=access-denied";
+	return "/admin";
 }
 
 export function getVisibleAdminNavItems(session: AdminSession | null): AdminNavItem[] {

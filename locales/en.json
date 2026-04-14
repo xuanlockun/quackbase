@@ -128,6 +128,7 @@
     "bannerImageUrls": "Banner image URLs"
   },
   "headings": {
+    "dashboard": "Dashboard",
     "localizedContent": "Localized content",
     "pageSections": "Page sections",
     "banners": "Banners",
@@ -154,6 +155,11 @@
     "inactive": "Inactive"
   },
   "messages": {
+    "dashboardIntro": "Overview of your CMS content, site settings, and admin workspace.",
+    "dashboardWelcome": "Welcome back, {name}.",
+    "dashboardSummary": "Content overview",
+    "dashboardQuickActions": "Quick actions",
+    "dashboardTemplateHelp": "Edit the raw HTML shell for the public header, navbar, page wrapper, and footer.",
     "contentAndAccessManagement": "Content and access management",
     "adminUserFallback": "Admin user",
     "changesSaveAdminApi": "Changes save through permission-checked admin APIs.",
