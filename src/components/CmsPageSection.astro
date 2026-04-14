@@ -31,6 +31,8 @@ interface BannerSlide {
 	linkUrl?: string;
 }
 
+const DEFAULT_PAGE_TEMPLATE_HTML = `<section class="page-shell">{{content}}</section>`;
+
 const { section, contentHtml, pageTemplateHtml = "", currentLanguage, currentPath, posts, banners, contactForms, legacyContactFields } =
 	Astro.props;
 const catalog = getLanguageCatalog(Astro.locals);
@@ -75,12 +77,9 @@ function resolveContactForm(section: PageSectionConfig, forms: ContactFormRecord
 }
 
 function renderPageTemplate(templateHtml: string, content: string): string {
-	if (!templateHtml.trim()) {
-		return content;
-	}
-
-	const rendered = templateHtml.replace(/\{\{\s*content\s*\}\}/gi, content);
-	return rendered === templateHtml ? content : rendered;
+	const source = templateHtml.trim() || DEFAULT_PAGE_TEMPLATE_HTML;
+	const rendered = source.replace(/\{\{\s*content\s*\}\}/gi, content);
+	return rendered === source ? content : rendered;
 }
 ---
 

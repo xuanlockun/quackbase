@@ -16,6 +16,8 @@ function catalogOrFallback(catalog?: LanguageCatalogState): LanguageCatalogState
 	return catalog ?? FALLBACK_LANGUAGE_CATALOG;
 }
 
+export const DEFAULT_PAGE_TEMPLATE_HTML = `<section class="page-shell">{{content}}</section>`;
+
 export interface BlogPostRecord {
 	id: number;
 	slug: string;
@@ -425,7 +427,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 		headerAccentColor: settings?.header_accent_color ?? "#2337ff",
 		headerTemplateHtml: settings?.header_template_html ?? "",
 		navbarTemplateHtml: settings?.navbar_template_html ?? "",
-		pageTemplateHtml: settings?.page_template_html ?? "",
+		pageTemplateHtml: settings?.page_template_html?.trim() ? settings.page_template_html : DEFAULT_PAGE_TEMPLATE_HTML,
 		footerText: footerSettings?.footer_text ?? "Edge CMS. Content updates go live straight from D1.",
 		footerBackground: footerSettings?.footer_background ?? "#eef2f7",
 		footerTextColor: footerSettings?.footer_text_color ?? "#60739f",
@@ -1257,7 +1259,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 	await db.batch([
 		db.prepare(
 			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html)
-			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '', '#ffffff', '#0f1219', '#2337ff', '', '', '')
+			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '', '#ffffff', '#0f1219', '#2337ff', '', '', '${DEFAULT_PAGE_TEMPLATE_HTML.replace(/'/g, "''")}')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(
