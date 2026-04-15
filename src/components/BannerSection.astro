@@ -38,15 +38,27 @@ const slides =
 								{slide.linkUrl ? (
 									<a href={slide.linkUrl} class="banner-slide-link">
 										<img src={slide.imageUrl} alt={slide.altText ?? slide.title} loading="lazy" class="d-block w-100 banner-slide-image" />
+										{(slide.headline?.trim() || slide.caption?.trim()) && (
+											<div class="banner-slide-overlay">
+												<div class="banner-slide-copy">
+													<h2 class="banner-slide-title">{slide.headline?.trim() || slide.title}</h2>
+													{slide.caption?.trim() && <p class="banner-slide-caption">{slide.caption}</p>}
+												</div>
+											</div>
+										)}
 									</a>
 								) : (
-									<img src={slide.imageUrl} alt={slide.altText ?? slide.title} loading="lazy" class="d-block w-100 banner-slide-image" />
-								)}
-								{(slide.headline?.trim() || slide.caption?.trim()) && (
-									<div class="banner-slide-copy">
-										<h2 class="banner-slide-title">{slide.headline?.trim() || slide.title}</h2>
-										{slide.caption?.trim() && <p class="banner-slide-caption">{slide.caption}</p>}
-									</div>
+									<>
+										<img src={slide.imageUrl} alt={slide.altText ?? slide.title} loading="lazy" class="d-block w-100 banner-slide-image" />
+										{(slide.headline?.trim() || slide.caption?.trim()) && (
+											<div class="banner-slide-overlay">
+												<div class="banner-slide-copy">
+													<h2 class="banner-slide-title">{slide.headline?.trim() || slide.title}</h2>
+													{slide.caption?.trim() && <p class="banner-slide-caption">{slide.caption}</p>}
+												</div>
+											</div>
+										)}
+									</>
 								)}
 							</div>
 						</div>
@@ -91,13 +103,13 @@ const slides =
 	}
 
 	.banner-slide {
-		display: grid;
-		gap: 0.75rem;
+		position: relative;
 	}
 
 	.banner-slide-image {
-		min-height: 240px;
-		max-height: 72vh;
+		display: block;
+		width: 100%;
+		height: auto;
 		object-fit: cover;
 	}
 
@@ -108,20 +120,35 @@ const slides =
 	}
 
 	.banner-slide-copy {
-		padding-inline: 0.25rem;
+		max-width: min(42rem, 100%);
+		padding: 0;
+		color: #fff;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+	}
+
+	.banner-slide-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		padding: clamp(1rem, 4vw, 3rem);
+		background: linear-gradient(90deg, rgba(15, 23, 42, 0.55) 0%, rgba(15, 23, 42, 0.24) 34%, rgba(15, 23, 42, 0) 72%);
+		pointer-events: none;
 	}
 
 	.banner-slide-title {
 		margin: 0;
-		font-size: clamp(1.1rem, 2.4vw, 2rem);
-		line-height: 1.1;
-		font-weight: 700;
+		font-size: clamp(1.7rem, 4vw, 4rem);
+		line-height: 1.02;
+		font-weight: 800;
 	}
 
 	.banner-slide-caption {
-		margin: 0.35rem 0 0;
-		font-size: 0.95rem;
-		line-height: 1.45;
-		color: rgba(15, 23, 42, 0.72);
+		margin: 0.65rem 0 0;
+		font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+		line-height: 1.5;
+		max-width: 34rem;
+		color: rgba(255, 255, 255, 0.94);
 	}
 </style>
