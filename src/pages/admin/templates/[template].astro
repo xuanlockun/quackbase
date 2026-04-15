@@ -39,7 +39,7 @@ const templateMeta = {
 		label: t("nav.footer"),
 		description: "Edit the raw HTML used for the public footer. Use {{footerText}}, {{year}}, and {{socialLinks}} for dynamic content.",
 		value: (config) => config.footerTemplateHtml,
-		defaultHtml: `<footer style="--footer-bg:#eef2f7; --footer-text:#60739f;">\n  <div class="container">\n    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">\n      <div>&copy; {{year}} {{footerText}}</div>\n      {{socialLinks}}\n    </div>\n  </div>\n</footer>`,
+		defaultHtml: `<footer style="--footer-bg:#eef2f7; --footer-text:#60739f;">\n  <div>&copy; {{year}} {{footerText}}</div>\n  {{socialLinks}}\n</footer>`,
 	},
 } as const;
 
@@ -199,7 +199,7 @@ function buildSocialLinksHtml(): string {
 		</form>
 		<div class="admin-form-section">
 			<strong>Preview</strong>
-			<div class="template-preview border rounded p-3" set:html={previewHtml}></div>
+			<div class="template-preview" set:html={previewHtml}></div>
 		</div>
 	</div>
 </AdminLayout>
