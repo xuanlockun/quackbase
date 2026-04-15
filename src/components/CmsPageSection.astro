@@ -3,6 +3,7 @@ import { getLocalizedPostPath, type PageSectionConfig } from "../lib/blog";
 import type { BannerRecord } from "../lib/banners";
 import type { ContactFormField } from "../lib/forms";
 import type { ContactFormRecord } from "../lib/contact-forms";
+import { escapeHtml, renderBlogFeedTemplate } from "../lib/template-html";
 import BannerSection from "./BannerSection.astro";
 import DynamicForm from "./DynamicForm.astro";
 import { getLanguageCatalog, getUiTranslations } from "../lib/i18n";
@@ -11,6 +12,7 @@ interface Props {
 	section: PageSectionConfig;
 	contentHtml: string;
 	pageTemplateHtml?: string;
+	blogFeedTemplateHtml?: string;
 	currentLanguage: string;
 	currentPath: string;
 	posts: Array<{
@@ -35,8 +37,18 @@ interface BannerSlide {
 
 const DEFAULT_PAGE_TEMPLATE_HTML = `<section class="page-shell">{{content}}</section>`;
 
-const { section, contentHtml, pageTemplateHtml = "", currentLanguage, currentPath, posts, banners, contactForms, legacyContactFields } =
-	Astro.props;
+const {
+	section,
+	contentHtml,
+	pageTemplateHtml = "",
+	blogFeedTemplateHtml = "",
+	currentLanguage,
+	currentPath,
+	posts,
+	banners,
+	contactForms,
+	legacyContactFields,
+} = Astro.props;
 const catalog = getLanguageCatalog(Astro.locals);
 const { t } = getUiTranslations(Astro);
 const bannerSlides = resolveBannerSlides(section, banners);
@@ -85,6 +97,35 @@ function renderPageTemplate(templateHtml: string, content: string): string {
 	const rendered = source.replace(/\{\{\s*content\s*\}\}/gi, content);
 	return rendered === source ? content : rendered;
 }
+
+function renderBlogFeedSection(): string {
+	const cardsHtml = posts
+		.slice(0, 6)
+		.map((post) => {
+			const href = escapeHtml(getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog));
+			const title = escapeHtml(post.title);
+			const description = escapeHtml(post.description);
+			const heroImage = escapeHtml(post.heroImage || "/blog-placeholder-1.jpg");
+
+			return `<a class="col text-decoration-none" href="${href}">
+				<div class="card h-100 shadow-sm border-0 overflow-hidden">
+					<img src="${heroImage}" class="card-img-top rounded-0" alt="" loading="lazy" />
+					<div class="card-body">
+						<h3 class="h5">${title}</h3>
+						<p class="text-muted small mb-0">${description}</p>
+					</div>
+				</div>
+			</a>`;
+		})
+		.join("");
+
+	return renderBlogFeedTemplate(blogFeedTemplateHtml, {
+		heading: escapeHtml(t("headings.latestPosts")),
+		viewAllHref: escapeHtml("/blog"),
+		viewAllLabel: escapeHtml(t("actions.viewAll")),
+		posts: cardsHtml,
+	});
+}
 ---
 
 {section.type === "page_content" && (
@@ -94,34 +135,7 @@ function renderPageTemplate(templateHtml: string, content: string): string {
 {section.type === "banner_slider" && bannerSlides.length > 0 && <BannerSection slides={bannerSlides} />}
 
 {
-	section.type === "blog_feed" && posts.length > 0 && (
-		<section class="mb-5">
-			<div class="d-flex justify-content-between align-items-center mb-3">
-				<h2 class="h4 mb-0">{t("headings.latestPosts")}</h2>
-				<a class="btn btn-sm btn-outline-primary" href="/blog">{t("actions.viewAll")}</a>
-			</div>
-			<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-				{
-					posts.slice(0, 6).map((post) => (
-						<a class="col" href={getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog)}>
-							<div class="card h-100 shadow-sm border-0">
-								<img
-									src={post.heroImage || "/blog-placeholder-1.jpg"}
-									class="card-img-top rounded-top"
-									alt=""
-									loading="lazy"
-								/>
-								<div class="card-body">
-									<h3 class="h5">{post.title}</h3>
-									<p class="text-muted small mb-0">{post.description}</p>
-								</div>
-							</div>
-						</a>
-					))
-				}
-			</div>
-		</section>
-	)
+	section.type === "blog_feed" && posts.length > 0 && <Fragment set:html={renderBlogFeedSection()} />
 }
 
 {

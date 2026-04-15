@@ -25,6 +25,16 @@ export const DEFAULT_NAVIGATION_TEMPLATE_HTML = `<div class="d-flex flex-column 
   </div>
 </div>`;
 
+export const DEFAULT_BLOG_FEED_TEMPLATE_HTML = `<section class="mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h4 mb-0">{{heading}}</h2>
+    <a class="btn btn-sm btn-outline-primary" href="{{viewAllHref}}">{{viewAllLabel}}</a>
+  </div>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {{posts}}
+  </div>
+</section>`;
+
 export function escapeHtml(value: string): string {
 	return value
 		.replace(/&/g, "&amp;")
@@ -43,4 +53,8 @@ export function renderTemplateHtml(templateHtml: string, replacements: Record<st
 	return source.replace(TEMPLATE_PLACEHOLDER_PATTERN, (match, key: string) => {
 		return Object.prototype.hasOwnProperty.call(replacements, key) ? replacements[key] : match;
 	});
+}
+
+export function renderBlogFeedTemplate(templateHtml: string, replacements: Record<string, string>): string {
+	return renderTemplateHtml(templateHtml.trim() || DEFAULT_BLOG_FEED_TEMPLATE_HTML, replacements);
 }

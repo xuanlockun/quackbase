@@ -5,6 +5,7 @@ import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { DEFAULT_PAGE_TEMPLATE_HTML, getDb, getSiteConfig } from "../../../lib/blog";
 import { getLanguageCatalog, getLanguageSwitchOptions, getUiTranslations } from "../../../lib/i18n";
 import {
+	DEFAULT_BLOG_FEED_TEMPLATE_HTML,
 	DEFAULT_HEADER_TEMPLATE_HTML,
 	DEFAULT_NAVIGATION_TEMPLATE_HTML,
 	escapeHtml,
@@ -35,11 +36,17 @@ const templateMeta = {
 		value: (config) => config.pageTemplateHtml,
 		defaultHtml: DEFAULT_PAGE_TEMPLATE_HTML,
 	},
+	posts: {
+		label: "Posts",
+		description: "Edit the HTML wrapper and card layout used for the public posts section. Use {{posts}}, {{heading}}, {{viewAllHref}}, and {{viewAllLabel}}.",
+		value: (config) => config.blogFeedTemplateHtml,
+		defaultHtml: DEFAULT_BLOG_FEED_TEMPLATE_HTML,
+	},
 	footer: {
 		label: t("nav.footer"),
-		description: "Edit the raw HTML used for the public footer. Use {{footerText}}, {{year}}, and {{socialLinks}} for dynamic content.",
+		description: "Edit the raw HTML used for the public footer. Use {{footerText}} and {{year}} for dynamic content.",
 		value: (config) => config.footerTemplateHtml,
-		defaultHtml: `<footer style="--footer-bg:#eef2f7; --footer-text:#60739f;">\n  <div>&copy; {{year}} {{footerText}}</div>\n  {{socialLinks}}\n</footer>`,
+		defaultHtml: `<footer>© {{year}} {{footerText}}</footer>`,
 	},
 } as const;
 
@@ -85,6 +92,13 @@ function renderTemplatePreview(
 				year: String(new Date().getFullYear()),
 				socialLinks: buildSocialLinksHtml(),
 			});
+		case "posts":
+			return renderTemplateHtml(source, {
+				heading: "Latest posts",
+				viewAllHref: "/blog",
+				viewAllLabel: "View all",
+				posts: buildPostsPreviewHtml(),
+			});
 		case "page":
 		default:
 			return renderTemplateHtml(source, {
@@ -99,6 +113,8 @@ function defaultTemplateFor(template: TemplateKind): string {
 			return templateMeta.header.defaultHtml;
 		case "page":
 			return templateMeta.page.defaultHtml;
+		case "posts":
+			return templateMeta.posts.defaultHtml;
 		case "footer":
 		default:
 			return templateMeta.footer.defaultHtml;
@@ -122,6 +138,13 @@ function buildNavigationHtml(
 		navItems: navItemsHtml,
 		languageSwitch: buildLanguageSwitchHtml(),
 	});
+}
+
+function buildPostsPreviewHtml(): string {
+	return [
+		`<a class="col text-decoration-none" href="/blog/example-1"><div class="card h-100 shadow-sm border-0 overflow-hidden"><img src="/blog-placeholder-1.jpg" class="card-img-top rounded-0" alt="" loading="lazy" /><div class="card-body"><h3 class="h5">Sample post one</h3><p class="text-muted small mb-0">Preview text for the first post card.</p></div></div></a>`,
+		`<a class="col text-decoration-none" href="/blog/example-2"><div class="card h-100 shadow-sm border-0 overflow-hidden"><img src="/blog-placeholder-2.jpg" class="card-img-top rounded-0" alt="" loading="lazy" /><div class="card-body"><h3 class="h5">Sample post two</h3><p class="text-muted small mb-0">Preview text for the second post card.</p></div></div></a>`,
+	].join("");
 }
 
 function buildNavItemsHtml(navItems: Awaited<ReturnType<typeof getSiteConfig>>["navItems"]): string {
