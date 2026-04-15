@@ -534,6 +534,34 @@ export async function saveSiteConfig(
 	await db.batch(statements);
 }
 
+export async function saveSiteSettings(
+	db: D1Database,
+	input: {
+		siteTitle: string;
+		faviconUrl: string;
+		logoUrl: string;
+	},
+): Promise<void> {
+	await ensureSiteTables(db);
+
+	await db
+		.prepare(
+			`INSERT INTO site_settings (id, site_title, favicon_url, logo_url, updated_at)
+			VALUES (1, ?1, ?2, ?3, CURRENT_TIMESTAMP)
+			ON CONFLICT(id) DO UPDATE SET
+				site_title = excluded.site_title,
+				favicon_url = excluded.favicon_url,
+				logo_url = excluded.logo_url,
+				updated_at = CURRENT_TIMESTAMP`,
+		)
+		.bind(
+			input.siteTitle.trim(),
+			normalizeFaviconUrl(input.faviconUrl),
+			normalizeLogoUrl(input.logoUrl),
+		)
+		.run();
+}
+
 export async function listAllPages(
 	db: D1Database,
 	language = DEFAULT_LANGUAGE,
@@ -883,6 +911,22 @@ export function parsePostPayload(payload: unknown, defaultLanguageCode?: string)
 	};
 }
 
+export function parseSiteSettingsForm(formData: FormData): {
+	siteTitle: string;
+	faviconUrl: string;
+	logoUrl: string;
+} {
+	const siteTitle = optionalString(formData, "siteTitle") || "";
+	const faviconUrl = optionalString(formData, "faviconUrl") || "/favicon.svg";
+	const logoUrl = optionalString(formData, "logoUrl");
+
+	return {
+		siteTitle,
+		faviconUrl,
+		logoUrl,
+	};
+}
+
 export function parseSiteForm(formData: FormData): {
 	siteTitle: string;
 	homePageSlug: string;
@@ -895,7 +939,7 @@ export function parseSiteForm(formData: FormData): {
 	footerTextColor: string;
 	navItems: SiteNavItem[];
 } {
-	const siteTitle = requiredString(formData, "siteTitle");
+	const siteTitle = optionalString(formData, "siteTitle") || "";
 	const homePageSlug = requiredString(formData, "homePageSlug");
 	const faviconUrl = optionalString(formData, "faviconUrl") || "/favicon.svg";
 	const logoUrl = optionalString(formData, "logoUrl");

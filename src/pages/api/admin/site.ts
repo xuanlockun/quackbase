@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getDb, parseSiteForm, saveSiteConfig } from "../../../lib/blog";
+import { getDb, parseSiteSettingsForm, saveSiteSettings } from "../../../lib/blog";
 import { requireApiPermission } from "../../../lib/rbac/guards";
 
 export const prerender = false;
@@ -16,8 +16,8 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 
 	try {
 		const formData = await request.formData();
-		const input = parseSiteForm(formData);
-		await saveSiteConfig(getDb(locals), input);
+		const input = parseSiteSettingsForm(formData);
+		await saveSiteSettings(getDb(locals), input);
 		return redirect("/admin/settings?siteSaved=1");
 	} catch {
 		return redirect("/admin/settings?siteError=1");
