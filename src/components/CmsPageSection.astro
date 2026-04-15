@@ -57,6 +57,7 @@ const resolvedContactFields = resolvedContactForm?.fields ?? legacyContactFields
 const resolvedContactFormTitle = resolvedContactForm?.title ?? "";
 const resolvedContactFormDescription = resolvedContactForm?.description ?? "";
 const resolvedContactFormLayout = resolvedContactForm?.layout ?? "split";
+const resolvedContactFormBackgroundStyle = resolvedContactForm?.backgroundStyle ?? "solid";
 const resolvedContactFormBackgroundColor = resolvedContactForm?.backgroundColor ?? "#f8fbff";
 const resolvedContactFormButtonColor = resolvedContactForm?.buttonColor ?? "#4f80ff";
 const resolvedContactFormId = resolvedContactForm?.id ?? 0;
@@ -162,6 +163,7 @@ function renderBlogFeedSection(): string {
 							contactFormId={resolvedContactFormId}
 							title={resolvedContactFormTitle}
 							description={resolvedContactFormDescription}
+							backgroundStyle={resolvedContactFormBackgroundStyle}
 							backgroundColor={resolvedContactFormBackgroundColor}
 							buttonColor={resolvedContactFormButtonColor}
 						/>
@@ -182,6 +184,7 @@ function renderBlogFeedSection(): string {
 										contactFormId={resolvedContactFormId}
 										title={resolvedContactFormTitle}
 										description={resolvedContactFormDescription}
+										backgroundStyle={resolvedContactFormBackgroundStyle}
 										backgroundColor={resolvedContactFormBackgroundColor}
 										buttonColor={resolvedContactFormButtonColor}
 									/>
@@ -203,6 +206,7 @@ function renderBlogFeedSection(): string {
 								contactFormId={resolvedContactFormId}
 								title={resolvedContactFormTitle}
 								description={resolvedContactFormDescription}
+								backgroundStyle={resolvedContactFormBackgroundStyle}
 								backgroundColor={resolvedContactFormBackgroundColor}
 								buttonColor={resolvedContactFormButtonColor}
 							/>

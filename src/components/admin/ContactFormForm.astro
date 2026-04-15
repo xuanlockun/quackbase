@@ -33,6 +33,7 @@ const displayFields =
 const initialTitle = form?.title ?? "";
 const initialDescription = form?.description ?? "";
 const initialLayout = form?.layout ?? "split";
+const initialBackgroundStyle = form?.backgroundStyle ?? "solid";
 const initialBackgroundColor = form?.backgroundColor ?? "#f8fbff";
 const initialButtonColor = form?.buttonColor ?? "#4f80ff";
 const fieldsJson = JSON.stringify(initialFields);
@@ -88,6 +89,21 @@ const labelGridColumns = `44px 1fr repeat(${Math.max(labelLanguages.length, 1)},
 					</option>
 				</select>
 				<p class="admin-inline-muted mb-0">{t("messages.contactFormTemplateHelp", "Choose a preset layout for the public contact section.")}</p>
+			</label>
+			<label>
+				<span>{t("messages.contactFormBackgroundStyle", "Background style")}</span>
+				<select class="form-select" name="backgroundStyle" disabled={isDisabled}>
+					<option value="solid" selected={initialBackgroundStyle === "solid"}>
+						{t("messages.contactFormBackgroundSolid", "Solid")}
+					</option>
+					<option value="gradient" selected={initialBackgroundStyle === "gradient"}>
+						{t("messages.contactFormBackgroundGradient", "Gradient")}
+					</option>
+					<option value="radial" selected={initialBackgroundStyle === "radial"}>
+						{t("messages.contactFormBackgroundRadial", "Radial")}
+					</option>
+				</select>
+				<p class="admin-inline-muted mb-0">{t("messages.contactFormBackgroundStyleHelp", "Choose how the background color is painted.")}</p>
 			</label>
 			<div class="contact-form-colors">
 				<label>
