@@ -46,7 +46,7 @@ const templateMeta = {
 		label: t("nav.footer"),
 		description: "Edit the raw HTML used for the public footer. Use {{footerText}} and {{year}} for dynamic content.",
 		value: (config) => config.footerTemplateHtml,
-		defaultHtml: `<footer>© {{year}} {{footerText}}</footer>`,
+		defaultHtml: `<footer>&copy; {{year}} {{footerText}}</footer>`,
 	},
 } as const;
 
@@ -142,8 +142,8 @@ function buildNavigationHtml(
 
 function buildPostsPreviewHtml(): string {
 	return [
-		`<a class="col text-decoration-none" href="/blog/example-1"><div class="card h-100 shadow-sm border-0 overflow-hidden"><img src="/blog-placeholder-1.jpg" class="card-img-top rounded-0" alt="" loading="lazy" /><div class="card-body"><h3 class="h5">Sample post one</h3><p class="text-muted small mb-0">Preview text for the first post card.</p></div></div></a>`,
-		`<a class="col text-decoration-none" href="/blog/example-2"><div class="card h-100 shadow-sm border-0 overflow-hidden"><img src="/blog-placeholder-2.jpg" class="card-img-top rounded-0" alt="" loading="lazy" /><div class="card-body"><h3 class="h5">Sample post two</h3><p class="text-muted small mb-0">Preview text for the second post card.</p></div></div></a>`,
+		`<a class="col text-decoration-none" href="/blog/example-1"><article class="blog-card card h-100 shadow-sm border-0 overflow-hidden"><div class="post-thumbnail" style="aspect-ratio: 16 / 10;"><img src="/blog-placeholder-1.jpg" class="post-image" alt="" loading="lazy" /></div><div class="blog-card-body card-body post-content"><h3 class="h5 card-title post-title">Sample post one</h3><p class="text-muted small mb-0 card-text post-excerpt">Preview text for the first post card.</p></div></article></a>`,
+		`<a class="col text-decoration-none" href="/blog/example-2"><article class="blog-card card h-100 shadow-sm border-0 overflow-hidden"><div class="post-thumbnail" style="aspect-ratio: 16 / 10;"><img src="/blog-placeholder-2.jpg" class="post-image" alt="" loading="lazy" /></div><div class="blog-card-body card-body post-content"><h3 class="h5 card-title post-title">Sample post two</h3><p class="text-muted small mb-0 card-text post-excerpt">Preview text for the second post card.</p></div></article></a>`,
 	].join("");
 }
 
@@ -308,3 +308,4 @@ function buildSocialLinksHtml(): string {
 		}
 	}
 </style>
+

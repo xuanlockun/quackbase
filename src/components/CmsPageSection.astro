@@ -108,13 +108,15 @@ function renderBlogFeedSection(): string {
 			const heroImage = escapeHtml(post.heroImage || "/blog-placeholder-1.jpg");
 
 			return `<a class="col text-decoration-none" href="${href}">
-				<div class="card h-100 shadow-sm border-0 overflow-hidden">
-					<img src="${heroImage}" class="card-img-top rounded-0" alt="" loading="lazy" />
-					<div class="card-body">
-						<h3 class="h5">${title}</h3>
-						<p class="text-muted small mb-0">${description}</p>
+				<article class="blog-card card h-100 shadow-sm border-0 overflow-hidden">
+					<div class="post-thumbnail" style="aspect-ratio: 16 / 10;">
+						<img src="${heroImage}" class="post-image" alt="" loading="lazy" />
 					</div>
-				</div>
+					<div class="blog-card-body card-body post-content">
+						<h3 class="h5 card-title post-title">${title}</h3>
+						<p class="text-muted small mb-0 card-text post-excerpt">${description}</p>
+					</div>
+				</article>
 			</a>`;
 		})
 		.join("");
