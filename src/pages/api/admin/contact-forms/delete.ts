@@ -8,7 +8,7 @@ export const prerender = false;
 export const POST: APIRoute = async ({ locals, request, redirect }) => {
 	const session = await requireApiPermission(
 		{ locals, request, redirect },
-		["pages.delete"],
+		["contactForms.manage"],
 		{ loginRedirect: "/admin/login", forbiddenRedirect: "/admin/contact-forms" },
 	);
 	if (session instanceof Response) {

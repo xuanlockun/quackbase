@@ -1,0 +1,79 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import ContactFormSubmissions from "../../../../components/admin/ContactFormSubmissions.astro";
+import { getDb } from "../../../../lib/blog";
+import { getContactFormById } from "../../../../lib/contact-forms";
+import { listFormSubmissions } from "../../../../lib/forms";
+import { getUiTranslations } from "../../../../lib/i18n";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const canView = session.isSuperadmin || session.permissions.includes("contactForms.read") || session.permissions.includes("contactForms.manage");
+const { id } = Astro.params;
+const { t } = getUiTranslations(Astro);
+
+let form = null;
+let submissions = [];
+let loadError = "";
+let notFound = false;
+
+try {
+	const formId = Number(id);
+	if (!Number.isInteger(formId) || formId <= 0) {
+		notFound = true;
+	} else {
+		const db = getDb(Astro.locals);
+		form = await getContactFormById(db, formId);
+		submissions = await listFormSubmissions(db, formId);
+		notFound = !form;
+	}
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadContactForms");
+}
+
+if (Astro.url.searchParams.get("error")) {
+	loadError = t("messages.contactFormRequestFailed");
+}
+---
+
+<AdminLayout
+	title={t("messages.contactFormLeads", "Contact form leads")}
+	description={t("messages.contactFormLeadsHelp", "Review messages submitted through this form.")}
+	session={session}
+	pageTitle={t("messages.contactFormLeads", "Contact form leads")}
+	pageDescription={t("messages.contactFormLeadsHelp", "Review messages submitted through this form.")}
+>
+	<div class="admin-content-stack">
+		{
+			notFound ? (
+				<div class="admin-empty-state">
+					<h2>{t("messages.contactFormNotFound")}</h2>
+					<p class="admin-muted">{t("messages.failedToLoadContactForms")}</p>
+					<p>
+						<a class="btn btn-outline-secondary" href="/admin/contact-forms">
+							{t("messages.backToContactForms")}
+						</a>
+					</p>
+				</div>
+			) : (
+				<>
+					<div class="admin-surface-header">
+						<a class="btn btn-outline-secondary btn-sm" href="/admin/contact-forms">{t("actions.back")}</a>
+						<p class="admin-inline-muted mb-0">
+							{form ? `${form.title} · ${submissions.length} leads` : t("messages.contactFormLeadsHelp", "Review messages submitted through this form.")}
+						</p>
+					</div>
+
+					{loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
+
+					{form && <ContactFormSubmissions form={form} submissions={submissions} />}
+				</>
+			)
+		}
+	</div>
+</AdminLayout>

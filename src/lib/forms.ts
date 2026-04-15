@@ -46,6 +46,15 @@ export interface ContactFormSubmissionInput {
 	values: Record<string, string>;
 }
 
+export interface ContactFormSubmissionRecord {
+	id: number;
+	contactFormId: number;
+	language: string;
+	sourcePath: string | null;
+	values: Record<string, string>;
+	submittedAt: Date;
+}
+
 const SUPPORTED_FIELD_TYPES = new Set<ContactFormFieldType>(["text", "email", "textarea"]);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -68,6 +77,7 @@ export async function ensureFormTables(db: D1Database): Promise<void> {
 		db.prepare(
 			`CREATE TABLE IF NOT EXISTS form_submissions (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				contact_form_id INTEGER NOT NULL DEFAULT 0,
 				language TEXT NOT NULL,
 				source_path TEXT,
 				values_json TEXT NOT NULL,
@@ -78,7 +88,17 @@ export async function ensureFormTables(db: D1Database): Promise<void> {
 			`CREATE INDEX IF NOT EXISTS idx_form_submissions_submitted_at
 			ON form_submissions (submitted_at DESC, id DESC)`,
 		),
+		db.prepare(
+			`CREATE INDEX IF NOT EXISTS idx_form_submissions_contact_form_id
+			ON form_submissions (contact_form_id ASC, submitted_at DESC, id DESC)`,
+		),
 	]);
+
+	const submissionColumns = await db.prepare(`PRAGMA table_info(form_submissions)`).all<{ name: string }>();
+	const submissionColumnNames = new Set((submissionColumns.results ?? []).map((column) => column.name));
+	if (!submissionColumnNames.has("contact_form_id")) {
+		await db.prepare(`ALTER TABLE form_submissions ADD COLUMN contact_form_id INTEGER NOT NULL DEFAULT 0`).run();
+	}
 }
 
 export async function listFormFields(db: D1Database): Promise<ContactFormField[]> {
@@ -129,10 +149,13 @@ export async function createFormSubmission(
 
 	const result = await db
 		.prepare(
-			`INSERT INTO form_submissions (language, source_path, values_json, submitted_at)
-			VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)`,
+			`INSERT INTO form_submissions (contact_form_id, language, source_path, values_json, submitted_at)
+			VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
+			Number.isFinite(Number(input.contactFormId ?? 0)) && Number(input.contactFormId) > 0
+				? Math.floor(Number(input.contactFormId))
+				: 0,
 			resolveLanguage(input.language, catalog),
 			normalizeOptionalString(input.sourcePath),
 			JSON.stringify(input.values),
@@ -140,6 +163,51 @@ export async function createFormSubmission(
 		.run();
 
 	return Number(result.meta.last_row_id ?? 0);
+}
+
+export async function listFormSubmissions(
+	db: D1Database,
+	contactFormId?: number,
+): Promise<ContactFormSubmissionRecord[]> {
+	await ensureFormTables(db);
+	const hasFilter = Number.isFinite(contactFormId ?? NaN) && Number(contactFormId) > 0;
+	const query = hasFilter
+		? `SELECT id, contact_form_id, language, source_path, values_json, submitted_at
+			FROM form_submissions
+			WHERE contact_form_id = ?1
+			ORDER BY submitted_at DESC, id DESC`
+		: `SELECT id, contact_form_id, language, source_path, values_json, submitted_at
+			FROM form_submissions
+			ORDER BY submitted_at DESC, id DESC`;
+	const statement = hasFilter ? db.prepare(query).bind(Math.floor(Number(contactFormId))) : db.prepare(query);
+	const result = await statement.all<{
+		id: number;
+		contact_form_id: number;
+		language: string;
+		source_path: string | null;
+		values_json: string;
+		submitted_at: string;
+	}>();
+	return (result.results ?? []).map((row) => ({
+		id: row.id,
+		contactFormId: row.contact_form_id,
+		language: row.language,
+		sourcePath: row.source_path,
+		values: parseStoredSubmissionValues(row.values_json),
+		submittedAt: new Date(row.submitted_at),
+	}));
+}
+
+export async function countFormSubmissionsByContactFormId(db: D1Database): Promise<Map<number, number>> {
+	await ensureFormTables(db);
+	const result = await db
+		.prepare(
+			`SELECT contact_form_id, COUNT(*) AS count
+			FROM form_submissions
+			GROUP BY contact_form_id`,
+		)
+		.all<{ contact_form_id: number; count: number }>();
+	return new Map((result.results ?? []).map((row) => [row.contact_form_id, row.count]));
 }
 
 export function parseFormFieldsForm(formData: FormData, key = "contactFormFields"): ContactFormField[] {
@@ -360,4 +428,20 @@ function parsePositiveInteger(value: FormDataEntryValue | unknown): number | und
 
 function normalizeOptionalString(value?: string | null): string | null {
 	return value && value.trim() ? value.trim() : null;
+}
+
+function parseStoredSubmissionValues(value: string): Record<string, string> {
+	try {
+		const parsed = JSON.parse(value || "{}");
+		if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+			return {};
+		}
+
+	const entries = Object.entries(parsed as Record<string, unknown>).filter(
+		([, entry]): entry is [string, string] => typeof entry === "string",
+	);
+	return Object.fromEntries(entries);
+	} catch {
+		return {};
+	}
 }

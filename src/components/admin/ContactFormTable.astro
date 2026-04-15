@@ -7,9 +7,11 @@ interface Props {
 	forms: ContactFormRecord[];
 	canUpdate: boolean;
 	canDelete: boolean;
+	canViewLeads: boolean;
+	submissionCounts?: Record<string, number>;
 }
 
-const { forms, canUpdate, canDelete } = Astro.props;
+const { forms, canUpdate, canDelete, canViewLeads, submissionCounts = {} } = Astro.props;
 const { t } = getUiTranslations(Astro);
 ---
 
@@ -39,6 +41,7 @@ const { t } = getUiTranslations(Astro);
 									<div class="d-grid">
 										<strong>{form.title}</strong>
 										<span class="text-muted small">{form.fields.length} fields</span>
+										<span class="text-muted small">{submissionCounts[form.id] ?? 0} leads</span>
 									</div>
 								</td>
 								<td><code>{form.fields.length}</code></td>
@@ -50,6 +53,11 @@ const { t } = getUiTranslations(Astro);
 								<td><FormattedDate date={form.updatedAt} /></td>
 								<td>
 									<div class="d-flex flex-wrap gap-2">
+										{canViewLeads && (
+											<a class="btn btn-sm btn-outline-secondary" href={`/admin/contact-forms/${form.id}/leads`}>
+												Leads
+											</a>
+										)}
 										{canUpdate && (
 											<a class="btn btn-sm btn-outline-primary" href={`/admin/contact-forms/${form.id}/edit`}>
 												{t("actions.edit")}

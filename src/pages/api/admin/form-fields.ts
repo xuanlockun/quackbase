@@ -8,8 +8,8 @@ export const prerender = false;
 export const GET: APIRoute = async ({ locals, request, redirect }) => {
 	const session = await requireApiPermission(
 		{ locals, request, redirect },
-		["pages.read"],
-		{ loginRedirect: "/admin/login", forbiddenRedirect: "/admin/pages", forceJson: true },
+		["contactForms.manage"],
+		{ loginRedirect: "/admin/login", forbiddenRedirect: "/admin/contact-forms", forceJson: true },
 	);
 	if (session instanceof Response) {
 		return session;
@@ -22,8 +22,8 @@ export const GET: APIRoute = async ({ locals, request, redirect }) => {
 export const POST: APIRoute = async ({ locals, request, redirect }) => {
 	const session = await requireApiPermission(
 		{ locals, request, redirect },
-		["pages.update"],
-		{ loginRedirect: "/admin/login", forbiddenRedirect: "/admin/pages", forceJson: true },
+		["contactForms.manage"],
+		{ loginRedirect: "/admin/login", forbiddenRedirect: "/admin/contact-forms", forceJson: true },
 	);
 	if (session instanceof Response) {
 		return session;

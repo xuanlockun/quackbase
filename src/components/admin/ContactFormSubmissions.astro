@@ -1,0 +1,97 @@
+---
+import FormattedDate from "../FormattedDate.astro";
+import type { ContactFormRecord } from "../../lib/contact-forms";
+import type { ContactFormSubmissionRecord } from "../../lib/forms";
+import { getLanguageCatalog, getUiTranslations, resolveLocalizedLabel } from "../../lib/i18n";
+
+interface Props {
+	form: ContactFormRecord;
+	submissions: ContactFormSubmissionRecord[];
+}
+
+const { form, submissions } = Astro.props;
+const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+---
+
+{
+	submissions.length === 0 ? (
+		<div class="admin-state-surface">
+			<h2 class="h5 mb-2">{t("messages.noContactFormSubmissions", "No submissions yet.")}</h2>
+			<p class="mb-0 admin-muted">{t("messages.contactFormSubmissionsHelp", "Submitted responses for this contact form will appear here.")}</p>
+		</div>
+	) : (
+		<div class="d-grid gap-3">
+			{submissions.map((submission) => {
+				const entries = form.fields.map((field) => {
+					const key = String(field.id);
+					return {
+						id: key,
+						label: resolveLocalizedLabel(field.label, language, catalog),
+						value: submission.values[key] ?? "",
+					};
+				});
+
+				const extraEntries = Object.entries(submission.values)
+					.filter(([key]) => !form.fields.some((field) => String(field.id) === key))
+					.map(([key, value]) => ({
+						id: key,
+						label: key,
+						value,
+					}));
+
+				return (
+					<article class="card border-0 shadow-sm">
+						<div class="card-header bg-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+							<div>
+								<strong>#{submission.id}</strong>
+								<div class="text-muted small">
+									<FormattedDate date={submission.submittedAt} />
+									{submission.sourcePath ? <span> · {submission.sourcePath}</span> : null}
+								</div>
+							</div>
+							<div class="d-flex flex-wrap gap-2">
+								<span class="badge text-bg-light text-uppercase">{submission.language}</span>
+							</div>
+						</div>
+						<div class="card-body">
+							<dl class="row mb-0 g-3">
+								{
+									entries.map((entry) => (
+										<>
+											<dt class="col-sm-3 col-lg-2">{entry.label}</dt>
+											<dd class="col-sm-9 col-lg-10">
+												<div class="submission-value">{entry.value || "—"}</div>
+											</dd>
+										</>
+									))
+								}
+								{
+									extraEntries.length > 0 && (
+										<>
+											{extraEntries.map((entry) => (
+												<>
+													<dt class="col-sm-3 col-lg-2 text-muted">{entry.label}</dt>
+													<dd class="col-sm-9 col-lg-10">
+														<div class="submission-value">{entry.value || "—"}</div>
+													</dd>
+												</>
+											))}
+										</>
+									)
+								}
+							</dl>
+						</div>
+					</article>
+				);
+			})}
+		</div>
+	)
+}
+
+<style>
+	.submission-value {
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+</style>

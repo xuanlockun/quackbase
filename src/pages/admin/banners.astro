@@ -12,9 +12,9 @@ if (!session) {
 	return Astro.redirect("/admin/login");
 }
 
-const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
-const canUpdate = session.isSuperadmin || session.permissions.includes("pages.update");
-const canDelete = session.isSuperadmin || session.permissions.includes("pages.delete");
+const canCreate = session.isSuperadmin || session.permissions.includes("banners.manage");
+const canUpdate = session.isSuperadmin || session.permissions.includes("banners.manage");
+const canDelete = session.isSuperadmin || session.permissions.includes("banners.manage");
 const { t } = getUiTranslations(Astro);
 
 let banners = [];

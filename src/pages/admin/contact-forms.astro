@@ -4,6 +4,7 @@ export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getDb } from "../../lib/blog";
 import { listContactForms } from "../../lib/contact-forms";
+import { countFormSubmissionsByContactFormId } from "../../lib/forms";
 import ContactFormTable from "../../components/admin/ContactFormTable.astro";
 import { getUiTranslations } from "../../lib/i18n";
 
@@ -13,13 +14,18 @@ if (!session) {
 }
 
 const canManage = session.isSuperadmin || session.permissions.includes("contactForms.manage");
+const canView = session.isSuperadmin || session.permissions.includes("contactForms.read") || canManage;
 const { t } = getUiTranslations(Astro);
 
 let forms = [];
+let submissionCounts = {};
 let loadError = "";
 
 try {
-	forms = await listContactForms(getDb(Astro.locals));
+	const db = getDb(Astro.locals);
+	forms = await listContactForms(db);
+	const counts = await countFormSubmissionsByContactFormId(db);
+	submissionCounts = Object.fromEntries(Array.from(counts.entries()).map(([id, count]) => [String(id), count]));
 } catch (error) {
 	loadError = error instanceof Error ? error.message : t("messages.failedToLoadContactForms");
 }
@@ -43,6 +49,6 @@ try {
 		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.contactFormRequestFailed")}</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 
-		<ContactFormTable forms={forms} canUpdate={canManage} canDelete={canManage} />
+		<ContactFormTable forms={forms} canUpdate={canManage} canDelete={canManage} canViewLeads={canView} submissionCounts={submissionCounts} />
 	</div>
 </AdminLayout>

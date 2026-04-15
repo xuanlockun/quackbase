@@ -94,6 +94,7 @@ const renderableFields = getRenderableFormFields(fields, currentLanguage, catalo
 			const payload = {
 				language: String(formData.get("language") || "en"),
 				sourcePath: String(formData.get("sourcePath") || "/"),
+				contactFormId: Number(formData.get("contactFormId") || 0),
 				values: {},
 			};
 

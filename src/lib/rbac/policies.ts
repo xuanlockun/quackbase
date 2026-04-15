@@ -11,8 +11,8 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 	{ href: "/admin/posts", labelKey: "nav.posts", permissions: ["posts.read"] },
 	{ href: "/admin/pages", labelKey: "nav.pages", permissions: ["pages.read"] },
 	{ href: "/admin/media", labelKey: "nav.media", permissions: ["site.manage"] },
-	{ href: "/admin/banners", labelKey: "nav.banners", permissions: ["pages.read"] },
-	{ href: "/admin/contact-forms", labelKey: "nav.contactForms", permissions: ["contactForms.manage"] },
+	{ href: "/admin/banners", labelKey: "nav.banners", permissions: ["banners.read"] },
+	{ href: "/admin/contact-forms", labelKey: "nav.contactForms", permissions: ["contactForms.read"] },
 	{ href: "/admin/backup", labelKey: "nav.backup", permissions: ["site.manage"] },
 	{ href: "/admin/templates", labelKey: "nav.template", permissions: ["site.manage"] },
 	{ href: "/admin/footer", labelKey: "nav.footer", permissions: ["site.manage"] },
@@ -28,8 +28,8 @@ const ADMIN_PAGE_POLICIES = new Map<string, string[]>([
 	["/admin/posts", ["posts.read"]],
 	["/admin/pages", ["pages.read"]],
 	["/admin/media", ["site.manage"]],
-	["/admin/banners", ["pages.read"]],
-	["/admin/contact-forms", ["contactForms.manage"]],
+	["/admin/banners", ["banners.read"]],
+	["/admin/contact-forms", ["contactForms.read"]],
 	["/admin/backup", ["site.manage"]],
 	["/admin/footer", ["site.manage"]],
 	["/admin/templates", ["site.manage"]],
@@ -65,16 +65,16 @@ export function getRequiredAdminPagePermissions(pathname: string): string[] | nu
 		return ["site.manage"];
 	}
 
+	if (pathname === "/admin/banners/new") {
+		return ["banners.manage"];
+	}
+
 	if (/^\/admin\/pages\/[^/]+\/edit$/.test(pathname)) {
 		return ["pages.update"];
 	}
 
-	if (pathname === "/admin/banners/new") {
-		return ["pages.create"];
-	}
-
 	if (/^\/admin\/banners\/[^/]+\/edit$/.test(pathname)) {
-		return ["pages.update"];
+		return ["banners.manage"];
 	}
 
 	if (pathname === "/admin/contact-forms/new") {
@@ -83,6 +83,10 @@ export function getRequiredAdminPagePermissions(pathname: string): string[] | nu
 
 	if (/^\/admin\/contact-forms\/[^/]+\/edit$/.test(pathname)) {
 		return ["contactForms.manage"];
+	}
+
+	if (/^\/admin\/contact-forms\/[^/]+\/leads$/.test(pathname)) {
+		return ["contactForms.read"];
 	}
 
 	if (pathname === "/admin/users/new" || /^\/admin\/users\/[^/]+\/edit$/.test(pathname)) {
