@@ -289,11 +289,148 @@ export function getDb(locals: App.Locals): D1Database {
 }
 
 export function renderMarkdown(markdown: string): string {
+	return renderStructuredMarkdown(markdown);
+}
+
+function renderStructuredMarkdown(markdown: string): string {
+	const normalized = markdown.replace(/\r\n?/g, "\n");
+	const lines = normalized.split("\n");
+	const segments: string[] = [];
+	const markdownBuffer: string[] = [];
+	let inFence = false;
+
+	const flushMarkdownBuffer = () => {
+		if (markdownBuffer.length === 0) {
+			return;
+		}
+
+		segments.push(renderMarkdownChunk(markdownBuffer.join("\n")));
+		markdownBuffer.length = 0;
+	};
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index];
+		const trimmed = line.trim();
+
+		if (isFenceLine(trimmed)) {
+			inFence = !inFence;
+			markdownBuffer.push(line);
+			continue;
+		}
+
+		if (!inFence && isColumnsBlockStart(trimmed)) {
+			const block = parseColumnsBlock(lines, index);
+			if (block) {
+				flushMarkdownBuffer();
+				segments.push(block.html);
+				index = block.nextIndex;
+				continue;
+			}
+		}
+
+		markdownBuffer.push(line);
+	}
+
+	flushMarkdownBuffer();
+	return segments.join("");
+}
+
+function renderMarkdownChunk(markdown: string): string {
+	if (!markdown.trim()) {
+		return "";
+	}
+
 	return micromark(markdown, {
 		allowDangerousHtml: false,
 		extensions: [gfm()],
 		htmlExtensions: [gfmHtml()],
 	});
+}
+
+function isFenceLine(trimmedLine: string): boolean {
+	return trimmedLine.startsWith("```") || trimmedLine.startsWith("~~~");
+}
+
+function isColumnsBlockStart(trimmedLine: string): boolean {
+	return /^:::\s*columns(?:\s|$)/i.test(trimmedLine);
+}
+
+function isColumnBlockStart(trimmedLine: string): boolean {
+	return /^:::\s*column(?:\s|$)/i.test(trimmedLine);
+}
+
+function isBlockClose(trimmedLine: string): boolean {
+	return trimmedLine === ":::";
+}
+
+function parseColumnsBlock(
+	lines: string[],
+	startIndex: number,
+): { html: string; nextIndex: number } | null {
+	const columns: string[] = [];
+	let currentColumn: string[] | null = null;
+	let inFence = false;
+
+	for (let index = startIndex + 1; index < lines.length; index += 1) {
+		const line = lines[index];
+		const trimmed = line.trim();
+
+		if (isFenceLine(trimmed)) {
+			inFence = !inFence;
+			if (currentColumn) {
+				currentColumn.push(line);
+			}
+			continue;
+		}
+
+		if (!inFence && isColumnBlockStart(trimmed)) {
+			if (currentColumn) {
+				return null;
+			}
+
+			currentColumn = [];
+			continue;
+		}
+
+		if (!inFence && isBlockClose(trimmed)) {
+			if (currentColumn) {
+				columns.push(currentColumn.join("\n"));
+				currentColumn = null;
+				continue;
+			}
+
+			if (columns.length === 0) {
+				return null;
+			}
+
+			return {
+				html: renderColumnsBlock(columns),
+				nextIndex: index,
+			};
+		}
+
+		if (currentColumn) {
+			currentColumn.push(line);
+			continue;
+		}
+
+		if (trimmed.length === 0) {
+			continue;
+		}
+
+		return null;
+	}
+
+	return null;
+}
+
+function renderColumnsBlock(columns: string[]): string {
+	const columnCount = columns.length;
+	const renderedColumns = columns
+		.map((column) => `<div class="cms-column">${renderMarkdownChunk(column)}</div>`)
+		.join("");
+
+	return `<div class="cms-columns" style="--cms-columns-count: ${columnCount};" data-cms-columns-count="${columnCount}">${renderedColumns}</div>`;
 }
 
 export { getDefaultLanguage, getSupportedLanguages, getLocalizedPagePath, getLocalizedPostPath } from "./i18n";
