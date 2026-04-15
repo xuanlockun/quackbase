@@ -89,6 +89,8 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 				</div>
 				{settingsError && <p class="alert alert-warning mb-3">{settingsError}</p>}
 				<form method="post" action="/api/admin/site" class="admin-form-shell">
+					<input type="hidden" name="successRedirectTo" value="/admin/pages?navSaved=1" />
+					<input type="hidden" name="errorRedirectTo" value="/admin/pages?navError=1" />
 					<input type="hidden" name="siteTitle" value={siteConfig.siteTitle} />
 					<input type="hidden" name="homePageSlug" value={siteConfig.homePageSlug} />
 					<input type="hidden" name="faviconUrl" value={siteConfig.faviconUrl} />
@@ -127,6 +129,8 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 
 		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.pageCreated")}</p>}
 		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.pageSaved")}</p>}
+		{Astro.url.searchParams.get("navSaved") && <p class="alert alert-success mb-0">{t("messages.navigationSaved", "Navigation saved.")}</p>}
+		{Astro.url.searchParams.get("navError") && <p class="alert alert-danger mb-0">{t("messages.navigationFailed", "Navigation could not be saved.")}</p>}
 		{Astro.url.searchParams.get("deleted") && <p class="alert alert-info mb-0">{t("messages.pageDeleted")}</p>}
 		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.pageRequestFailed")}</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}

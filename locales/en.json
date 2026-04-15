@@ -260,6 +260,8 @@
     "pageSaved": "Page saved.",
     "pageDeleted": "Page deleted.",
     "pageRequestFailed": "The page request failed.",
+    "navigationSaved": "Navigation saved.",
+    "navigationFailed": "Navigation could not be saved.",
     "bannerCreated": "Banner created.",
     "bannerSaved": "Banner saved.",
     "bannerDeleted": "Banner deleted.",

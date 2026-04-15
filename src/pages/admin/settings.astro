@@ -54,6 +54,8 @@ try {
 		{Astro.url.searchParams.get("secretError") && <p class="alert alert-danger mb-0">{t("messages.secretRequestFailed")}</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 		<form method="post" action="/api/admin/site" class="admin-form-shell">
+			<input type="hidden" name="successRedirectTo" value="/admin/settings?siteSaved=1" />
+			<input type="hidden" name="errorRedirectTo" value="/admin/settings?siteError=1" />
 			<div class="admin-grid-two">
 				<label><span>{t("labels.siteTitle")}</span><input class="form-control" name="siteTitle" value={siteConfig.siteTitle} placeholder={SITE_TITLE} disabled={Boolean(loadError)} /></label>
 				<label><span>{t("labels.faviconUrl")}</span><input class="form-control" name="faviconUrl" value={siteConfig.faviconUrl} placeholder="/favicon.svg" disabled={Boolean(loadError)} /></label>
