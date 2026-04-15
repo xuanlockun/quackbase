@@ -612,6 +612,7 @@ const totalItemCount = navRows.length;
 	const isReadOnly = editor?.dataset.disabled === "true";
 	let draggedNavRow = null;
 	const MAX_NAV_DEPTH = 4;
+	const defaultNavLabel = editor?.dataset.exampleLabel ?? "New item";
 
 	const clampDepth = (value) => {
 		const depth = Number.isFinite(value) ? value : 0;
@@ -828,7 +829,11 @@ const totalItemCount = navRows.length;
 
 	const createNavRow = (entry = {}, depth = 0) => {
 		const labelTranslations = entry.labelTranslations ?? {};
-		const fallbackLabel = labelTranslations[editor?.dataset.defaultLanguage ?? ""] ?? Object.values(labelTranslations)[0] ?? entry.label ?? "";
+		const fallbackLabel =
+			labelTranslations[editor?.dataset.defaultLanguage ?? ""] ??
+			Object.values(labelTranslations)[0] ??
+			entry.label ??
+			defaultNavLabel;
 		const languages = JSON.parse(editor?.dataset.languages ?? "[]");
 
 		const row = document.createElement("article");
@@ -889,7 +894,7 @@ const totalItemCount = navRows.length;
 		title.textContent = fallbackLabel;
 		const path = document.createElement("span");
 		path.className = "nav-tree-path";
-		path.textContent = entry.href ?? "";
+		path.textContent = entry.href ?? "/";
 		summaryCopy.append(title, path);
 		summary.append(summaryCopy);
 		body.append(summary);
@@ -926,7 +931,7 @@ const totalItemCount = navRows.length;
 		hrefInput.className = "form-control form-control-sm";
 		hrefInput.dataset.navHref = "";
 		hrefInput.placeholder = "/about or https://example.com";
-		hrefInput.value = entry.href ?? "";
+		hrefInput.value = entry.href ?? "/";
 		if (isReadOnly) {
 			hrefInput.disabled = true;
 		}
@@ -1001,10 +1006,11 @@ const totalItemCount = navRows.length;
 		const newRow = createNavRow({}, depth);
 		const insertAfter = findInsertPositionForChild(parentRow);
 		insertAfter.after(newRow);
-		const focusInput = newRow.querySelector("[data-nav-label-en]");
+		const focusInput = newRow.querySelector("[data-nav-label]");
 		if (focusInput instanceof HTMLInputElement) {
 			focusInput.focus();
 		}
+		newRow.scrollIntoView({ block: "nearest" });
 		syncPayload();
 	};
 
@@ -1049,16 +1055,18 @@ const totalItemCount = navRows.length;
 		}
 	});
 
-	addButton?.addEventListener("click", () => {
+	addButton?.addEventListener("click", (event) => {
+		event.preventDefault();
 		if (isReadOnly || !(rowsContainer instanceof HTMLElement)) {
 			return;
 		}
-		const newRow = createNavRow({}, 0);
+		const newRow = createNavRow({ label: defaultNavLabel, href: "/" }, 0);
 		rowsContainer.append(newRow);
-		const focusInput = newRow.querySelector("[data-nav-label-en]");
+		const focusInput = newRow.querySelector("[data-nav-label]");
 		if (focusInput instanceof HTMLInputElement) {
 			focusInput.focus();
 		}
+		newRow.scrollIntoView({ block: "nearest" });
 		syncPayload();
 	});
 
