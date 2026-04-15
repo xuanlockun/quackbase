@@ -86,6 +86,8 @@ const totalItemCount = navRows.length;
 		data-outdent-label={t("actions.outdent")}
 		data-parent-label={t("labels.parent")}
 		data-child-label={t("labels.child")}
+		data-label-label={t("labels.label")}
+		data-link-label={t("labels.link")}
 		data-drag-label={t("labels.dragToReorder")}
 		data-collapse-label={t("actions.collapse", "Collapse")}
 		data-expand-label={t("actions.expand", "Expand")}
@@ -606,6 +608,8 @@ const totalItemCount = navRows.length;
 	const outdentLabel = editor?.dataset.outdentLabel ?? "Outdent";
 	const parentLabel = editor?.dataset.parentLabel ?? "Parent";
 	const childLabel = editor?.dataset.childLabel ?? "Child";
+	const labelLabel = editor?.dataset.labelLabel ?? "Label";
+	const linkLabel = editor?.dataset.linkLabel ?? "Link";
 	const dragLabel = editor?.dataset.dragLabel ?? "Drag to reorder";
 	const collapseLabel = editor?.dataset.collapseLabel ?? "Collapse";
 	const expandLabel = editor?.dataset.expandLabel ?? "Expand";
@@ -923,7 +927,7 @@ const totalItemCount = navRows.length;
 			if (isReadOnly) {
 				input.disabled = true;
 			}
-			fields.append(createField(`${t("labels.label")} (${languageOption.label})`, input));
+			fields.append(createField(`${labelLabel} (${languageOption.label})`, input));
 		}
 
 		const hrefInput = document.createElement("input");
@@ -935,7 +939,7 @@ const totalItemCount = navRows.length;
 		if (isReadOnly) {
 			hrefInput.disabled = true;
 		}
-		const linkField = createField("Link", hrefInput);
+		const linkField = createField(linkLabel, hrefInput);
 		linkField.classList.add("nav-tree-field-link");
 		fields.append(linkField);
 
