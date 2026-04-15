@@ -1030,30 +1030,31 @@ const totalItemCount = navRows.length;
 		if (!row) {
 			return;
 		}
+		const actionButton = target.closest("button");
 
-		if (target.matches("[data-nav-remove]")) {
+		if (actionButton?.matches("[data-nav-remove]")) {
 			row.remove();
 			syncPayload();
 			return;
 		}
 
-		if (target.matches("[data-nav-add-child]")) {
+		if (actionButton?.matches("[data-nav-add-child]")) {
 			addChildRow(row);
 			return;
 		}
 
-		if (target.matches("[data-nav-toggle]")) {
+		if (actionButton?.matches("[data-nav-toggle]")) {
 			row.dataset.collapsed = row.dataset.collapsed === "true" ? "false" : "true";
 			refreshTreeState();
 			return;
 		}
 
-		if (target.matches("[data-nav-indent]")) {
+		if (actionButton?.matches("[data-nav-indent]")) {
 			changeDepth(row, 1);
 			return;
 		}
 
-		if (target.matches("[data-nav-outdent]")) {
+		if (actionButton?.matches("[data-nav-outdent]")) {
 			changeDepth(row, -1);
 			return;
 		}
