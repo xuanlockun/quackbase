@@ -46,6 +46,14 @@ const isActive = banner?.isActive ?? true;
 				<input class="form-control" name="imageUrl" required value={banner?.imageUrl ?? ""} placeholder="/images/banner-1.jpg" disabled={isDisabled} />
 			</label>
 			<label>
+				<span>{t("labels.bannerHeadline") ?? "Banner headline"}</span>
+				<input class="form-control" name="headline" value={banner?.headline ?? ""} placeholder="Big summer sale" disabled={isDisabled} />
+			</label>
+			<label class="admin-banner-caption">
+				<span>{t("labels.bannerCaption") ?? "Banner caption"}</span>
+				<textarea class="form-control" name="caption" rows="4" placeholder="Add a short supporting message for this slide." disabled={isDisabled}>{banner?.caption ?? ""}</textarea>
+			</label>
+			<label>
 				<span>{t("labels.altText")}</span>
 				<input class="form-control" name="altText" value={banner?.altText ?? ""} placeholder={t("labels.altTextPlaceholder", "Describe the image") ?? "Describe the image"} disabled={isDisabled} />
 			</label>
@@ -68,3 +76,8 @@ const isActive = banner?.isActive ?? true;
 		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
 	</div>
 </form>
+<style>
+	.admin-banner-caption {
+		grid-column: 1 / -1;
+	}
+</style>

@@ -27,6 +27,8 @@ interface Props {
 interface BannerSlide {
 	imageUrl: string;
 	title: string;
+	headline?: string;
+	caption?: string;
 	altText?: string;
 	linkUrl?: string;
 }
@@ -52,6 +54,8 @@ function resolveBannerSlides(section: PageSectionConfig, banners: BannerRecord[]
 			.map((banner) => ({
 				imageUrl: banner.imageUrl,
 				title: banner.title,
+				headline: banner.headline,
+				caption: banner.caption,
 				altText: banner.altText || banner.title,
 				linkUrl: banner.linkUrl || undefined,
 			}));

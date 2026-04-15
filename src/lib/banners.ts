@@ -2,6 +2,8 @@ export interface BannerRecord {
 	id: number;
 	title: string;
 	imageUrl: string;
+	headline: string;
+	caption: string;
 	altText: string;
 	linkUrl: string;
 	isActive: boolean;
@@ -12,6 +14,8 @@ export interface BannerRecord {
 export interface BannerInput {
 	title: string;
 	imageUrl: string;
+	headline: string;
+	caption: string;
 	altText: string;
 	linkUrl: string;
 	isActive: boolean;
@@ -22,6 +26,8 @@ interface BannerRow {
 	id: number;
 	title: string;
 	image_url: string;
+	headline: string;
+	caption: string;
 	alt_text: string;
 	link_url: string;
 	is_active: number;
@@ -36,6 +42,8 @@ export async function ensureBannerTables(db: D1Database): Promise<void> {
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT NOT NULL,
 				image_url TEXT NOT NULL,
+				headline TEXT NOT NULL DEFAULT '',
+				caption TEXT NOT NULL DEFAULT '',
 				alt_text TEXT NOT NULL DEFAULT '',
 				link_url TEXT NOT NULL DEFAULT '',
 				is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
@@ -48,16 +56,25 @@ export async function ensureBannerTables(db: D1Database): Promise<void> {
 			ON banners (sort_order ASC, id ASC)`,
 		),
 	]);
+
+	const bannerColumns = await db.prepare(`PRAGMA table_info(banners)`).all<{ name: string }>();
+	const bannerColumnNames = new Set((bannerColumns.results ?? []).map((column) => column.name));
+	if (!bannerColumnNames.has("headline")) {
+		await db.prepare(`ALTER TABLE banners ADD COLUMN headline TEXT NOT NULL DEFAULT ''`).run();
+	}
+	if (!bannerColumnNames.has("caption")) {
+		await db.prepare(`ALTER TABLE banners ADD COLUMN caption TEXT NOT NULL DEFAULT ''`).run();
+	}
 }
 
 export async function listBanners(db: D1Database, activeOnly = false): Promise<BannerRecord[]> {
 	await ensureBannerTables(db);
 	const query = activeOnly
-		? `SELECT id, title, image_url, alt_text, link_url, is_active, sort_order, updated_at
+		? `SELECT id, title, image_url, headline, caption, alt_text, link_url, is_active, sort_order, updated_at
 			FROM banners
 			WHERE is_active = 1
 			ORDER BY sort_order ASC, id ASC`
-		: `SELECT id, title, image_url, alt_text, link_url, is_active, sort_order, updated_at
+		: `SELECT id, title, image_url, headline, caption, alt_text, link_url, is_active, sort_order, updated_at
 			FROM banners
 			ORDER BY sort_order ASC, id ASC`;
 	const result = await db.prepare(query).all<BannerRow>();
@@ -68,7 +85,7 @@ export async function getBannerById(db: D1Database, id: number): Promise<BannerR
 	await ensureBannerTables(db);
 	const row = await db
 		.prepare(
-			`SELECT id, title, image_url, alt_text, link_url, is_active, sort_order, updated_at
+			`SELECT id, title, image_url, headline, caption, alt_text, link_url, is_active, sort_order, updated_at
 			FROM banners
 			WHERE id = ?1`,
 		)
@@ -81,12 +98,14 @@ export async function createBanner(db: D1Database, input: BannerInput): Promise<
 	await ensureBannerTables(db);
 	const result = await db
 		.prepare(
-			`INSERT INTO banners (title, image_url, alt_text, link_url, is_active, sort_order, updated_at)
-			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP)`,
+			`INSERT INTO banners (title, image_url, headline, caption, alt_text, link_url, is_active, sort_order, updated_at)
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
 			input.title.trim(),
 			normalizeImageUrl(input.imageUrl),
+			input.headline.trim(),
+			input.caption.trim(),
 			input.altText.trim(),
 			normalizeLinkUrl(input.linkUrl),
 			input.isActive ? 1 : 0,
@@ -103,16 +122,20 @@ export async function updateBanner(db: D1Database, id: number, input: BannerInpu
 			`UPDATE banners
 			SET title = ?1,
 				image_url = ?2,
-				alt_text = ?3,
-				link_url = ?4,
-				is_active = ?5,
-				sort_order = ?6,
+				headline = ?3,
+				caption = ?4,
+				alt_text = ?5,
+				link_url = ?6,
+				is_active = ?7,
+				sort_order = ?8,
 				updated_at = CURRENT_TIMESTAMP
-			WHERE id = ?7`,
+			WHERE id = ?9`,
 		)
 		.bind(
 			input.title.trim(),
 			normalizeImageUrl(input.imageUrl),
+			input.headline.trim(),
+			input.caption.trim(),
 			input.altText.trim(),
 			normalizeLinkUrl(input.linkUrl),
 			input.isActive ? 1 : 0,
@@ -131,6 +154,8 @@ export function parseBannerForm(formData: FormData): BannerInput {
 	return {
 		title: requiredString(formData, "title"),
 		imageUrl: requiredString(formData, "imageUrl"),
+		headline: optionalString(formData, "headline"),
+		caption: optionalString(formData, "caption"),
 		altText: optionalString(formData, "altText"),
 		linkUrl: optionalString(formData, "linkUrl"),
 		isActive: formData.get("isActive") === "on" || formData.get("isActive") === "true",
@@ -143,6 +168,8 @@ function toBannerRecord(row: BannerRow): BannerRecord {
 		id: row.id,
 		title: row.title,
 		imageUrl: row.image_url,
+		headline: row.headline,
+		caption: row.caption,
 		altText: row.alt_text,
 		linkUrl: row.link_url,
 		isActive: row.is_active === 1,

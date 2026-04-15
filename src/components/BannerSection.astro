@@ -2,6 +2,8 @@
 interface BannerSlide {
 	imageUrl: string;
 	title: string;
+	headline?: string;
+	caption?: string;
 	altText?: string;
 	linkUrl?: string;
 }
@@ -18,6 +20,8 @@ const slides =
 		title: `Banner ${index + 1}`,
 		altText: `Banner ${index + 1}`,
 	}));
+
+const hasCaptions = slides.some((slide) => Boolean((slide.headline ?? slide.title).trim() || slide.caption?.trim()));
 ---
 
 <section class="banner-section">
@@ -32,13 +36,35 @@ const slides =
 				{
 					slides.map((slide, index) => (
 						<div class:list={["carousel-item", index === 0 && "active"]} key={`${slide.imageUrl}-${index}`}>
-							{slide.linkUrl ? (
-								<a href={slide.linkUrl}>
-									<img src={slide.imageUrl} alt={slide.altText ?? slide.title} loading="lazy" class="d-block w-100 rounded-3" />
-								</a>
-							) : (
-								<img src={slide.imageUrl} alt={slide.altText ?? slide.title} loading="lazy" class="d-block w-100 rounded-3" />
-							)}
+							<div class="banner-slide">
+								{slide.linkUrl ? (
+									<a href={slide.linkUrl} class="banner-slide-link">
+										<img src={slide.imageUrl} alt={slide.altText ?? slide.title} loading="lazy" class="d-block w-100 banner-slide-image" />
+										{hasCaptions && (
+											<div class="banner-slide-overlay">
+												<div class="banner-slide-copy">
+													<p class="banner-slide-eyebrow">Banner</p>
+													<h2 class="banner-slide-title">{slide.headline?.trim() || slide.title}</h2>
+													{slide.caption?.trim() && <p class="banner-slide-caption">{slide.caption}</p>}
+												</div>
+											</div>
+										)}
+									</a>
+								) : (
+									<>
+										<img src={slide.imageUrl} alt={slide.altText ?? slide.title} loading="lazy" class="d-block w-100 banner-slide-image" />
+										{hasCaptions && (
+											<div class="banner-slide-overlay">
+												<div class="banner-slide-copy">
+													<p class="banner-slide-eyebrow">Banner</p>
+													<h2 class="banner-slide-title">{slide.headline?.trim() || slide.title}</h2>
+													{slide.caption?.trim() && <p class="banner-slide-caption">{slide.caption}</p>}
+												</div>
+											</div>
+										)}
+									</>
+								)}
+							</div>
 						</div>
 					))
 				}
@@ -75,3 +101,73 @@ const slides =
 		</div>
 	</div>
 </section>
+<style>
+	.banner-section-frame {
+		position: relative;
+	}
+
+	.banner-slide {
+		position: relative;
+		overflow: hidden;
+		border-radius: 1rem;
+	}
+
+	.banner-slide-image {
+		min-height: 240px;
+		max-height: 72vh;
+		object-fit: cover;
+	}
+
+	.banner-slide-link {
+		display: block;
+		position: relative;
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.banner-slide-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: flex-end;
+		padding: 1rem;
+		background: linear-gradient(180deg, rgba(15, 23, 42, 0.02) 35%, rgba(15, 23, 42, 0.62) 100%);
+		pointer-events: none;
+	}
+
+	.banner-slide-copy {
+		max-width: min(40rem, 100%);
+		color: #fff;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+	}
+
+	.banner-slide-eyebrow {
+		margin: 0 0 0.35rem;
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		opacity: 0.88;
+	}
+
+	.banner-slide-title {
+		margin: 0;
+		font-size: clamp(1.4rem, 3vw, 3rem);
+		line-height: 1.05;
+		font-weight: 800;
+	}
+
+	.banner-slide-caption {
+		margin: 0.6rem 0 0;
+		font-size: 0.98rem;
+		line-height: 1.45;
+		max-width: 32rem;
+		opacity: 0.95;
+	}
+
+	@media (min-width: 768px) {
+		.banner-slide-overlay {
+			padding: 1.5rem;
+		}
+	}
+</style>

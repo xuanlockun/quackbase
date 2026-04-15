@@ -40,7 +40,7 @@ const { t } = getUiTranslations(Astro);
 										<img src={banner.imageUrl} alt={banner.altText || banner.title} class="rounded-2" style="width:72px;height:40px;object-fit:cover;" loading="lazy" />
 										<div class="d-grid">
 											<strong>{banner.title}</strong>
-											<span class="text-muted small">{banner.altText || banner.linkUrl || banner.imageUrl}</span>
+											<span class="text-muted small">{banner.headline || banner.caption || banner.altText || banner.linkUrl || banner.imageUrl}</span>
 										</div>
 									</div>
 								</td>
