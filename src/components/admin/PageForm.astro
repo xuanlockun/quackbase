@@ -562,6 +562,7 @@ const initialContactFields = [];
 	const contactEmptyState = document.querySelector("[data-contact-fields-empty]");
 	const addContactButton = document.querySelector("[data-contact-field-add]");
 	const isSectionReadOnly = sectionAddButton?.dataset.readonly === "true";
+	const isDisabled = isSectionReadOnly;
 	const isContactReadOnly = addContactButton?.dataset.readonly === "true";
 	let draggedSectionRow = null;
 	let nextFieldId = 0;
