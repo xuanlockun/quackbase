@@ -14,6 +14,8 @@ export interface ContactFormRecord {
 	title: string;
 	description: string;
 	layout: ContactFormLayout;
+	backgroundColor: string;
+	buttonColor: string;
 	fields: ContactFormField[];
 	isActive: boolean;
 	sortOrder: number;
@@ -24,6 +26,8 @@ export interface ContactFormInput {
 	title: string;
 	description: string;
 	layout: ContactFormLayout;
+	backgroundColor: string;
+	buttonColor: string;
 	fields: ContactFormFieldInput[];
 	isActive: boolean;
 	sortOrder: number;
@@ -34,6 +38,8 @@ interface ContactFormRow {
 	title: string;
 	description: string;
 	layout: string;
+	background_color: string;
+	button_color: string;
 	fields_json: string;
 	is_active: number;
 	sort_order: number;
@@ -48,6 +54,8 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 				title TEXT NOT NULL,
 				description TEXT NOT NULL DEFAULT '',
 				layout TEXT NOT NULL DEFAULT 'split',
+				background_color TEXT NOT NULL DEFAULT '#f8fbff',
+				button_color TEXT NOT NULL DEFAULT '#4f80ff',
 				fields_json TEXT NOT NULL DEFAULT '[]',
 				is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
 				sort_order INTEGER NOT NULL DEFAULT 0,
@@ -68,16 +76,22 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 	if (!columnNames.has("layout")) {
 		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN layout TEXT NOT NULL DEFAULT 'split'`).run();
 	}
+	if (!columnNames.has("background_color")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN background_color TEXT NOT NULL DEFAULT '#f8fbff'`).run();
+	}
+	if (!columnNames.has("button_color")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN button_color TEXT NOT NULL DEFAULT '#4f80ff'`).run();
+	}
 }
 
 export async function listContactForms(db: D1Database, activeOnly = false): Promise<ContactFormRecord[]> {
 	await ensureContactFormTables(db);
 	const query = activeOnly
-		? `SELECT id, title, description, layout, fields_json, is_active, sort_order, updated_at
+		? `SELECT id, title, description, layout, background_color, button_color, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			WHERE is_active = 1
 			ORDER BY sort_order ASC, id ASC`
-		: `SELECT id, title, description, layout, fields_json, is_active, sort_order, updated_at
+		: `SELECT id, title, description, layout, background_color, button_color, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			ORDER BY sort_order ASC, id ASC`;
 	const result = await db.prepare(query).all<ContactFormRow>();
@@ -88,7 +102,7 @@ export async function getContactFormById(db: D1Database, id: number): Promise<Co
 	await ensureContactFormTables(db);
 	const row = await db
 		.prepare(
-			`SELECT id, title, description, layout, fields_json, is_active, sort_order, updated_at
+			`SELECT id, title, description, layout, background_color, button_color, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			WHERE id = ?1`,
 		)
@@ -103,13 +117,15 @@ export async function createContactForm(db: D1Database, input: ContactFormInput)
 	const normalizedFields = normalizeFormFields(input.fields, catalog.defaultLanguageCode);
 	const result = await db
 		.prepare(
-			`INSERT INTO contact_forms (title, description, layout, fields_json, is_active, sort_order, updated_at)
-			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP)`,
+			`INSERT INTO contact_forms (title, description, layout, background_color, button_color, fields_json, is_active, sort_order, updated_at)
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
 			input.title.trim(),
 			input.description.trim(),
 			normalizeContactFormLayout(input.layout),
+			normalizeContactFormColor(input.backgroundColor, "#f8fbff"),
+			normalizeContactFormColor(input.buttonColor, "#4f80ff"),
 			JSON.stringify(normalizedFields),
 			input.isActive ? 1 : 0,
 			normalizeSortOrder(input.sortOrder),
@@ -128,16 +144,20 @@ export async function updateContactForm(db: D1Database, id: number, input: Conta
 			SET title = ?1,
 				description = ?2,
 				layout = ?3,
-				fields_json = ?4,
-				is_active = ?5,
-				sort_order = ?6,
+				background_color = ?4,
+				button_color = ?5,
+				fields_json = ?6,
+				is_active = ?7,
+				sort_order = ?8,
 				updated_at = CURRENT_TIMESTAMP
-			WHERE id = ?7`,
+			WHERE id = ?9`,
 		)
 		.bind(
 			input.title.trim(),
 			input.description.trim(),
 			normalizeContactFormLayout(input.layout),
+			normalizeContactFormColor(input.backgroundColor, "#f8fbff"),
+			normalizeContactFormColor(input.buttonColor, "#4f80ff"),
 			JSON.stringify(normalizedFields),
 			input.isActive ? 1 : 0,
 			normalizeSortOrder(input.sortOrder),
@@ -156,6 +176,8 @@ export function parseContactFormForm(formData: FormData): ContactFormInput {
 		title: requiredString(formData, "title"),
 		description: optionalString(formData, "description"),
 		layout: normalizeContactFormLayout(optionalString(formData, "layout")),
+		backgroundColor: normalizeContactFormColor(optionalString(formData, "backgroundColor"), "#f8fbff"),
+		buttonColor: normalizeContactFormColor(optionalString(formData, "buttonColor"), "#4f80ff"),
 		fields: parseFormFieldsForm(formData),
 		isActive: formData.get("isActive") === "on" || formData.get("isActive") === "true",
 		sortOrder: Number.parseInt(optionalString(formData, "sortOrder") || "0", 10) || 0,
@@ -173,6 +195,14 @@ export function parseContactFormPayload(payload: unknown): ContactFormInput {
 		title: typeof record.title === "string" ? record.title.trim() : "",
 		description: typeof record.description === "string" ? record.description.trim() : "",
 		layout: normalizeContactFormLayout(typeof record.layout === "string" ? record.layout : ""),
+		backgroundColor: normalizeContactFormColor(
+			typeof record.backgroundColor === "string" ? record.backgroundColor : "",
+			"#f8fbff",
+		),
+		buttonColor: normalizeContactFormColor(
+			typeof record.buttonColor === "string" ? record.buttonColor : "",
+			"#4f80ff",
+		),
 		fields,
 		isActive: Boolean(record.isActive),
 		sortOrder: normalizeSortOrder(
@@ -191,6 +221,8 @@ function toContactFormRecord(row: ContactFormRow): ContactFormRecord {
 		title: row.title,
 		description: row.description,
 		layout: normalizeContactFormLayout(row.layout),
+		backgroundColor: normalizeContactFormColor(row.background_color, "#f8fbff"),
+		buttonColor: normalizeContactFormColor(row.button_color, "#4f80ff"),
 		fields: parseStoredFieldsJson(row.fields_json),
 		isActive: row.is_active === 1,
 		sortOrder: row.sort_order,
@@ -226,6 +258,11 @@ function normalizeSortOrder(value: number): number {
 
 function normalizeContactFormLayout(value: string): ContactFormLayout {
 	return value === "stacked" || value === "compact" ? value : "split";
+}
+
+function normalizeContactFormColor(value: string, fallback: string): string {
+	const trimmed = typeof value === "string" ? value.trim() : "";
+	return /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(trimmed) ? trimmed : fallback;
 }
 
 function getLanguageCatalogForForms() {

@@ -57,6 +57,8 @@ const resolvedContactFields = resolvedContactForm?.fields ?? legacyContactFields
 const resolvedContactFormTitle = resolvedContactForm?.title ?? "";
 const resolvedContactFormDescription = resolvedContactForm?.description ?? "";
 const resolvedContactFormLayout = resolvedContactForm?.layout ?? "split";
+const resolvedContactFormBackgroundColor = resolvedContactForm?.backgroundColor ?? "#f8fbff";
+const resolvedContactFormButtonColor = resolvedContactForm?.buttonColor ?? "#4f80ff";
 const resolvedContactFormId = resolvedContactForm?.id ?? 0;
 
 function resolveBannerSlides(section: PageSectionConfig, banners: BannerRecord[]): BannerSlide[] {
@@ -158,6 +160,10 @@ function renderBlogFeedSection(): string {
 							currentLanguage={currentLanguage}
 							sourcePath={currentPath}
 							contactFormId={resolvedContactFormId}
+							title={resolvedContactFormTitle}
+							description={resolvedContactFormDescription}
+							backgroundColor={resolvedContactFormBackgroundColor}
+							buttonColor={resolvedContactFormButtonColor}
 						/>
 					</div>
 				) : resolvedContactFormLayout === "compact" ? (
@@ -174,6 +180,10 @@ function renderBlogFeedSection(): string {
 										currentLanguage={currentLanguage}
 										sourcePath={currentPath}
 										contactFormId={resolvedContactFormId}
+										title={resolvedContactFormTitle}
+										description={resolvedContactFormDescription}
+										backgroundColor={resolvedContactFormBackgroundColor}
+										buttonColor={resolvedContactFormButtonColor}
 									/>
 								</div>
 							</div>
@@ -191,6 +201,10 @@ function renderBlogFeedSection(): string {
 								currentLanguage={currentLanguage}
 								sourcePath={currentPath}
 								contactFormId={resolvedContactFormId}
+								title={resolvedContactFormTitle}
+								description={resolvedContactFormDescription}
+								backgroundColor={resolvedContactFormBackgroundColor}
+								buttonColor={resolvedContactFormButtonColor}
 							/>
 						</div>
 					</div>

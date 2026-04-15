@@ -33,6 +33,8 @@ const displayFields =
 const initialTitle = form?.title ?? "";
 const initialDescription = form?.description ?? "";
 const initialLayout = form?.layout ?? "split";
+const initialBackgroundColor = form?.backgroundColor ?? "#f8fbff";
+const initialButtonColor = form?.buttonColor ?? "#4f80ff";
 const fieldsJson = JSON.stringify(initialFields);
 const labelLanguagesJson = JSON.stringify(labelLanguages);
 const labelGridColumns = `44px 1fr repeat(${Math.max(labelLanguages.length, 1)}, minmax(180px, 1fr)) 120px 120px`;
@@ -87,6 +89,16 @@ const labelGridColumns = `44px 1fr repeat(${Math.max(labelLanguages.length, 1)},
 				</select>
 				<p class="admin-inline-muted mb-0">{t("messages.contactFormTemplateHelp", "Choose a preset layout for the public contact section.")}</p>
 			</label>
+			<div class="contact-form-colors">
+				<label>
+					<span>{t("messages.contactFormBackgroundColor", "Background color")}</span>
+					<input class="form-control form-control-color" type="color" name="backgroundColor" value={initialBackgroundColor} disabled={isDisabled} />
+				</label>
+				<label>
+					<span>{t("messages.contactFormButtonColor", "Button color")}</span>
+					<input class="form-control form-control-color" type="color" name="buttonColor" value={initialButtonColor} disabled={isDisabled} />
+				</label>
+			</div>
 			<label>
 				<span>{t("labels.order")}</span>
 				<input class="form-control" type="number" min="0" name="sortOrder" value={String(form?.sortOrder ?? 0)} disabled={isDisabled} />
@@ -216,6 +228,17 @@ const labelGridColumns = `44px 1fr repeat(${Math.max(labelLanguages.length, 1)},
 		font-size: 0.95rem;
 	}
 
+	.contact-form-colors {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
+	}
+
+	.contact-form-colors label {
+		display: grid;
+		gap: 0.35rem;
+	}
+
 	.contact-fields-table {
 		width: 100%;
 	}
@@ -273,6 +296,10 @@ const labelGridColumns = `44px 1fr repeat(${Math.max(labelLanguages.length, 1)},
 		.contact-fields-toolbar {
 			flex-direction: column;
 			align-items: stretch;
+		}
+
+		.contact-form-colors {
+			grid-template-columns: 1fr;
 		}
 
 		.contact-field-row {
