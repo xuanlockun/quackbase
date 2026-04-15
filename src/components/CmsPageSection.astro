@@ -165,7 +165,6 @@ function renderBlogFeedSection(): string {
 						<div class="card-body p-4 p-lg-5">
 							<div class="row g-4 align-items-start">
 								<div class="col-lg-4">
-									<p class="text-uppercase text-muted small mb-2">{t("nav.contactForm")}</p>
 									{resolvedContactFormTitle && <h2 class="h3 mb-3">{resolvedContactFormTitle}</h2>}
 									{resolvedContactFormDescription && <p class="text-muted mb-0">{resolvedContactFormDescription}</p>}
 								</div>
@@ -183,7 +182,6 @@ function renderBlogFeedSection(): string {
 				) : (
 					<div class="row align-items-start g-4">
 						<div class="col-lg-5">
-							<p class="text-uppercase text-muted small mb-2">{t("nav.contactForm")}</p>
 							{resolvedContactFormTitle && <h2 class="h3">{resolvedContactFormTitle}</h2>}
 							{resolvedContactFormDescription && <p class="text-muted mb-0">{resolvedContactFormDescription}</p>}
 						</div>

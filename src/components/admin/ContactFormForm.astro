@@ -1,6 +1,6 @@
 ---
 import type { ContactFormRecord } from "../../lib/contact-forms";
-import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
+import { getLanguageCatalog, getSupportedLanguages, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
 	mode: "create" | "edit";
@@ -14,6 +14,13 @@ interface Props {
 const { mode, action, form = null, canSubmit, backHref = "/admin/contact-forms", loadError = "" } = Astro.props;
 
 const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const languages = getSupportedLanguages(catalog);
+const defaultLanguageCode = catalog.defaultLanguageCode;
+const labelLanguages = [
+	...languages.filter((entry) => entry.code === defaultLanguageCode),
+	...languages.filter((entry) => entry.code !== defaultLanguageCode),
+];
 const submitLabel = mode === "edit" ? t("actions.saveContactForm") : t("actions.createContactForm");
 const isDisabled = Boolean(loadError) || !canSubmit;
 const initialFields = form?.fields ?? [];
@@ -21,12 +28,14 @@ const displayFields =
 	initialFields.length > 0
 		? initialFields
 		: mode === "create"
-			? [{ id: 1, type: "text", label: { en: "", vi: "" }, required: false, order: 1 }]
+			? [{ id: 1, type: "text", label: { [defaultLanguageCode]: "" }, required: false, order: 1 }]
 			: [];
 const initialTitle = form?.title ?? "";
 const initialDescription = form?.description ?? "";
 const initialLayout = form?.layout ?? "split";
 const fieldsJson = JSON.stringify(initialFields);
+const labelLanguagesJson = JSON.stringify(labelLanguages);
+const labelGridColumns = `44px 1fr repeat(${Math.max(labelLanguages.length, 1)}, minmax(180px, 1fr)) 120px 120px`;
 ---
 
 <div class="admin-surface-header">
@@ -94,11 +103,10 @@ const fieldsJson = JSON.stringify(initialFields);
 			class="contact-fields-editor"
 			data-contact-fields-editor
 			data-disabled={String(isDisabled)}
+			data-label-languages={labelLanguagesJson}
 			data-remove-label={t("actions.remove")}
 			data-type-label={t("labels.fieldType")}
 			data-required-label={t("labels.required")}
-			data-label-en={`${t("labels.label")} (EN)`}
-			data-label-vi={`${t("labels.label")} (VI)`}
 			data-text-option={t("labels.textField")}
 			data-email-option={t("labels.emailField")}
 			data-textarea-option={t("labels.textareaField")}
@@ -113,11 +121,10 @@ const fieldsJson = JSON.stringify(initialFields);
 			<input type="hidden" name="contactFormFields" data-contact-fields-payload value={fieldsJson} />
 			<div class="contact-fields-config">
 				<div class="contact-fields-table" role="table">
-					<div class="contact-fields-header" role="row">
+					<div class="contact-fields-header" role="row" style={`grid-template-columns: ${labelGridColumns};`}>
 						<span></span>
 						<span>{t("labels.fieldType")}</span>
-						<span>{t("labels.label")} (EN)</span>
-						<span>{t("labels.label")} (VI)</span>
+						{labelLanguages.map((entry) => <span>{t("labels.label")} ({entry.code.toUpperCase()})</span>)}
 						<span>{t("labels.required")}</span>
 						<span>{t("labels.action")}</span>
 					</div>
@@ -125,10 +132,18 @@ const fieldsJson = JSON.stringify(initialFields);
 						{
 							displayFields.map((field) => {
 								const type = field.type ?? "text";
-								const labelEn = field.label?.en ?? "";
-								const labelVi = field.label?.vi ?? "";
+								const labelValues = labelLanguages.map((entry) => ({
+									code: entry.code,
+									value: field.label?.[entry.code] ?? "",
+								}));
 								return (
-									<div class="contact-field-row" draggable={!isDisabled} data-contact-field data-field-id={String(field.id ?? 1)}>
+									<div
+										class="contact-field-row"
+										draggable={!isDisabled}
+										data-contact-field
+										data-field-id={String(field.id ?? 1)}
+										style={`grid-template-columns: ${labelGridColumns};`}
+									>
 										<span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
 										<div class="contact-field-meta">
 											<label>
@@ -153,27 +168,19 @@ const fieldsJson = JSON.stringify(initialFields);
 												{t("actions.remove")}
 											</button>
 										</div>
-										<div class="contact-field-labels">
+										{labelValues.map((entry, index) => (
 											<label>
-												<span>{t("labels.label")} (EN)</span>
+												<span>{t("labels.label")} ({entry.code.toUpperCase()})</span>
 												<input
 													type="text"
-													data-contact-field-label-en
-													value={labelEn}
+													data-contact-field-label
+													data-language-code={entry.code}
+													value={entry.value}
 													disabled={isDisabled}
-													required
+													required={index === 0}
 												/>
 											</label>
-											<label>
-												<span>{t("labels.label")} (VI)</span>
-												<input
-													type="text"
-													data-contact-field-label-vi
-													value={labelVi}
-													disabled={isDisabled}
-												/>
-											</label>
-										</div>
+										))}
 									</div>
 								);
 							})
@@ -215,7 +222,6 @@ const fieldsJson = JSON.stringify(initialFields);
 
 	.contact-fields-header {
 		display: grid;
-		grid-template-columns: 44px 1fr 1fr 1fr 120px 120px;
 		gap: 0.5rem;
 		padding: 0.6rem 0;
 		font-size: 0.72rem;
@@ -231,7 +237,6 @@ const fieldsJson = JSON.stringify(initialFields);
 
 	.contact-field-row {
 		display: grid;
-		grid-template-columns: 44px 1fr 1fr;
 		gap: 0.75rem;
 		padding: 0.85rem;
 		border: 1px solid rgba(var(--gray), 0.12);
@@ -245,9 +250,9 @@ const fieldsJson = JSON.stringify(initialFields);
 		gap: 0.75rem;
 	}
 
-	.contact-field-labels {
+	.contact-field-row > label {
 		display: grid;
-		gap: 0.75rem;
+		gap: 0.35rem;
 	}
 
 	.contact-field-required {
@@ -313,7 +318,7 @@ const fieldsJson = JSON.stringify(initialFields);
 
 		addContactButton?.addEventListener("click", () => {
 			contactRows.append(createContactFieldRow());
-			const lastInput = contactRows.querySelector("[data-contact-field]:last-child [data-contact-field-label-en]");
+			const lastInput = contactRows.querySelector("[data-contact-field]:last-child [data-contact-field-label]");
 			if (lastInput instanceof HTMLInputElement) {
 				lastInput.focus();
 			}
@@ -397,6 +402,15 @@ const fieldsJson = JSON.stringify(initialFields);
 		}
 	}
 
+	function parseLabelLanguages() {
+		try {
+			const parsed = JSON.parse(editor?.dataset.labelLanguages ?? "[]");
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	}
+
 	function createContactFieldRow(field = {}) {
 		const row = document.createElement("div");
 		row.className = "contact-field-row";
@@ -406,8 +420,25 @@ const fieldsJson = JSON.stringify(initialFields);
 		row.dataset.fieldId = String(assignedId);
 		nextFieldId = Math.max(nextFieldId, assignedId);
 		const type = field.type ?? "text";
-		const labelEn = escapeAttribute(field.label?.en ?? "");
-		const labelVi = escapeAttribute(field.label?.vi ?? "");
+		const labelLanguages = parseLabelLanguages();
+		const labelInputs = labelLanguages
+			.map((entry, index) => {
+				const code = String(entry.code ?? "");
+				const value = escapeAttribute(field.label?.[code] ?? "");
+				return `
+					<label>
+						<span>${editor?.dataset.typeLabel ?? "Label"} (${escapeAttribute(code.toUpperCase())})</span>
+						<input
+							type="text"
+							data-contact-field-label
+							data-language-code="${escapeAttribute(code)}"
+							value="${value}"
+							${isContactReadOnly ? "disabled" : ""}
+							${index === 0 ? "required" : ""}
+						/>
+					</label>`;
+			})
+			.join("");
 		row.innerHTML = `
 			<span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
 			<div class="contact-field-meta">
@@ -428,14 +459,7 @@ const fieldsJson = JSON.stringify(initialFields);
 				</button>
 			</div>
 			<div class="contact-field-labels">
-				<label>
-					<span>${editor?.dataset.labelEn ?? "Label (EN)"}</span>
-					<input type="text" data-contact-field-label-en value="${labelEn}" ${isContactReadOnly ? "disabled" : ""} required />
-				</label>
-				<label>
-					<span>${editor?.dataset.labelVi ?? "Label (VI)"}</span>
-					<input type="text" data-contact-field-label-vi value="${labelVi}" ${isContactReadOnly ? "disabled" : ""} />
-				</label>
+				${labelInputs}
 			</div>`;
 		return row;
 	}
@@ -448,22 +472,25 @@ const fieldsJson = JSON.stringify(initialFields);
 			.map((row, index) => {
 				const typeInput = row.querySelector("[data-contact-field-type]");
 				const requiredInput = row.querySelector("[data-contact-field-required]");
-				const labelEnInput = row.querySelector("[data-contact-field-label-en]");
-				const labelViInput = row.querySelector("[data-contact-field-label-vi]");
+				const labelInputs = Array.from(row.querySelectorAll("[data-contact-field-label]"));
 				const fieldId = Number(row.dataset.fieldId ?? index + 1);
 				const type = typeInput instanceof HTMLSelectElement ? typeInput.value : "text";
-				const labelEn = labelEnInput instanceof HTMLInputElement ? labelEnInput.value.trim() : "";
-				const labelVi = labelViInput instanceof HTMLInputElement ? labelViInput.value.trim() : "";
 				const required = requiredInput instanceof HTMLInputElement ? requiredInput.checked : false;
+				const labels = Object.fromEntries(
+					labelInputs
+						.filter((input) => input instanceof HTMLInputElement)
+						.map((input) => [input.dataset.languageCode ?? "", input.value.trim()])
+						.filter(([code, value]) => code && value),
+				);
 				return {
 					id: fieldId,
 					type,
-					label: { en: labelEn, vi: labelVi || labelEn },
+					label: labels,
 					required,
 					order: index + 1,
 				};
 			})
-			.filter((field) => field.label.en || field.label.vi);
+			.filter((field) => Object.keys(field.label).length > 0);
 		contactPayload.value = JSON.stringify(fields);
 		updateEmptyState();
 	}

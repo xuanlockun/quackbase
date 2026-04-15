@@ -26,7 +26,7 @@ const renderableFields = getRenderableFormFields(fields, currentLanguage, catalo
 		</div>
 	) : (
 		<form
-			class="contact-form card border-0 shadow-lg rounded-4 overflow-hidden"
+			class="contact-form card border-0 shadow-lg overflow-hidden"
 			method="post"
 			action="/api/forms/contact"
 			data-dynamic-contact-form
@@ -143,3 +143,37 @@ const renderableFields = getRenderableFormFields(fields, currentLanguage, catalo
 		});
 	});
 </script>
+
+<style>
+	.contact-form {
+		background:
+			linear-gradient(180deg, rgba(247, 250, 255, 0.96) 0%, rgba(255, 255, 255, 1) 68%),
+			linear-gradient(135deg, rgba(79, 128, 255, 0.08), rgba(6, 182, 212, 0.06));
+		border-radius: 0;
+		border: 1px solid rgba(55, 80, 138, 0.14);
+	}
+
+	.contact-form .card-body {
+		border-radius: 0;
+	}
+
+	.contact-form .form-control,
+	.contact-form .form-select,
+	.contact-form .btn {
+		border-radius: 0;
+	}
+
+	.contact-form .form-control:focus,
+	.contact-form .form-select:focus {
+		box-shadow: none;
+		border-color: #4f80ff;
+	}
+
+	.contact-form .form-label {
+		color: #22304f;
+	}
+
+	.contact-form .text-muted {
+		color: rgba(34, 48, 79, 0.72) !important;
+	}
+</style>

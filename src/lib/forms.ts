@@ -301,6 +301,7 @@ export function validateContactFormSubmission(
 	return {
 		language: resolveLanguage(input.language, catalog),
 		sourcePath: normalizeOptionalString(input.sourcePath) ?? undefined,
+		contactFormId: input.contactFormId,
 		values,
 	};
 }
