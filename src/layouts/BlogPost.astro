@@ -33,17 +33,41 @@ const {
 	faviconHref,
 } = Astro.props;
 const { t } = getUiTranslations(Astro);
+const mainClass = wideContent ? "page-main page-main-wide" : "page-main";
 ---
 
 <html lang={lang}>
 	<head>
 		<BaseHead title={title} description={description} faviconHref={faviconHref} />
 		<style>
-			main {
+			main.page-main {
 				width: calc(100% - 2em);
 				max-width: 100%;
 				margin: 0;
 			}
+
+			main.page-main-wide {
+				width: 100%;
+				max-width: 100%;
+				margin: 0;
+			}
+
+			.page-bleed {
+				width: 100%;
+				margin: 0;
+			}
+
+			.page-bleed .hero-image,
+			.page-bleed .title,
+			.page-bleed .prose {
+				width: 100%;
+				max-width: none;
+			}
+
+			.page-bleed .prose {
+				padding-inline: 0;
+			}
+
 			.hero-image {
 				width: 100%;
 			}
@@ -84,8 +108,39 @@ const { t } = getUiTranslations(Astro);
 
 	<body class="bg-body">
 		<Header />
-		<main >
-			<div class="container">
+		<main class={mainClass}>
+			{wideContent ? (
+				<article class="page-bleed">
+					{heroImage && (
+						<div class="hero-image">
+							<img src={heroImage} alt="" class="img-fluid" />
+						</div>
+					)}
+					{showDate && (
+						<div class="d-flex flex-column flex-md-row justify-content-between mb-3 text-muted small">
+							<div>
+								<span>{t("messages.publishedOn")} </span>
+								<FormattedDate date={pubDate} />
+							</div>
+							{updatedDate && (
+								<div>
+									<span>{t("messages.lastUpdatedOn")} </span>
+									<FormattedDate date={updatedDate} />
+								</div>
+							)}
+						</div>
+					)}
+					{showTitle && (
+						<>
+							<h1 class="display-5">{title}</h1>
+							<hr />
+						</>
+					)}
+					{contentHtml && <div class="prose" set:html={contentHtml} />}
+					<slot />
+				</article>
+			) : (
+				<div class="container">
 				<article class="card shadow-sm border-0">
 					<div class="row g-0">
 						{
@@ -124,6 +179,7 @@ const { t } = getUiTranslations(Astro);
 					</div>
 				</article>
 			</div>
+			)}
 		</main>
 		<Footer />
 	</body>
