@@ -54,7 +54,9 @@ const { t } = getUiTranslations(Astro);
 const bannerSlides = resolveBannerSlides(section, banners);
 const resolvedContactForm = resolveContactForm(section, contactForms);
 const resolvedContactFields = resolvedContactForm?.fields ?? legacyContactFields;
-const resolvedContactFormTitle = resolvedContactForm?.title ?? t("headings.contactFormTitle");
+const resolvedContactFormTitle = resolvedContactForm?.title ?? "";
+const resolvedContactFormDescription = resolvedContactForm?.description ?? "";
+const resolvedContactFormLayout = resolvedContactForm?.layout ?? "split";
 const resolvedContactFormId = resolvedContactForm?.id ?? 0;
 
 function resolveBannerSlides(section: PageSectionConfig, banners: BannerRecord[]): BannerSlide[] {
@@ -142,22 +144,60 @@ function renderBlogFeedSection(): string {
 
 {
 	section.type === "contact_form" && (
-		<section class="mb-5">
-			<div class="row align-items-center g-4">
-				<div class="col-lg-5">
-					<p class="text-uppercase text-muted small mb-2">{t("headings.contactUs")}</p>
-					<h2 class="h3">{resolvedContactFormTitle}</h2>
-					<p class="text-muted">{t("messages.contactFormIntro")}</p>
-				</div>
-				<div class="col-lg-7">
-					<DynamicForm
-						fields={resolvedContactFields}
-						currentLanguage={currentLanguage}
-						sourcePath={currentPath}
-						contactFormId={resolvedContactFormId}
-					/>
-				</div>
-			</div>
+		<section class="mb-5 contact-form-section">
+			{
+				resolvedContactFormLayout === "stacked" ? (
+					<div class="mx-auto" style="max-width: 860px;">
+						<div class="text-center mb-4">
+							<p class="text-uppercase text-muted small mb-2">{t("nav.contactForm")}</p>
+							{resolvedContactFormTitle && <h2 class="display-6 fw-semibold mb-3">{resolvedContactFormTitle}</h2>}
+							{resolvedContactFormDescription && <p class="lead text-muted mb-0">{resolvedContactFormDescription}</p>}
+						</div>
+						<DynamicForm
+							fields={resolvedContactFields}
+							currentLanguage={currentLanguage}
+							sourcePath={currentPath}
+							contactFormId={resolvedContactFormId}
+						/>
+					</div>
+				) : resolvedContactFormLayout === "compact" ? (
+					<div class="contact-form-compact card border-0 shadow-sm">
+						<div class="card-body p-4 p-lg-5">
+							<div class="row g-4 align-items-start">
+								<div class="col-lg-4">
+									<p class="text-uppercase text-muted small mb-2">{t("nav.contactForm")}</p>
+									{resolvedContactFormTitle && <h2 class="h3 mb-3">{resolvedContactFormTitle}</h2>}
+									{resolvedContactFormDescription && <p class="text-muted mb-0">{resolvedContactFormDescription}</p>}
+								</div>
+								<div class="col-lg-8">
+									<DynamicForm
+										fields={resolvedContactFields}
+										currentLanguage={currentLanguage}
+										sourcePath={currentPath}
+										contactFormId={resolvedContactFormId}
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+				) : (
+					<div class="row align-items-start g-4">
+						<div class="col-lg-5">
+							<p class="text-uppercase text-muted small mb-2">{t("nav.contactForm")}</p>
+							{resolvedContactFormTitle && <h2 class="h3">{resolvedContactFormTitle}</h2>}
+							{resolvedContactFormDescription && <p class="text-muted mb-0">{resolvedContactFormDescription}</p>}
+						</div>
+						<div class="col-lg-7">
+							<DynamicForm
+								fields={resolvedContactFields}
+								currentLanguage={currentLanguage}
+								sourcePath={currentPath}
+								contactFormId={resolvedContactFormId}
+							/>
+						</div>
+					</div>
+				)
+			}
 		</section>
 	)
 }

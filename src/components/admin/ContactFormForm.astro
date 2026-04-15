@@ -1,5 +1,5 @@
 ---
-import type { ContactFormInput, ContactFormRecord } from "../../lib/contact-forms";
+import type { ContactFormRecord } from "../../lib/contact-forms";
 import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
@@ -24,6 +24,8 @@ const displayFields =
 			? [{ id: 1, type: "text", label: { en: "", vi: "" }, required: false, order: 1 }]
 			: [];
 const initialTitle = form?.title ?? "";
+const initialDescription = form?.description ?? "";
+const initialLayout = form?.layout ?? "split";
 const fieldsJson = JSON.stringify(initialFields);
 ---
 
@@ -40,7 +42,41 @@ const fieldsJson = JSON.stringify(initialFields);
 		<div class="admin-form-grid">
 			<label>
 				<span>{t("labels.title")}</span>
-				<input class="form-control" name="title" required value={initialTitle} placeholder={t("messages.contactFormTitlePlaceholder", "Main contact form") ?? "Main contact form"} disabled={isDisabled} />
+				<input
+					class="form-control"
+					name="title"
+					required
+					value={initialTitle}
+					placeholder={t("messages.contactFormTitlePlaceholder", "Main contact form") ?? "Main contact form"}
+					disabled={isDisabled}
+				/>
+				<p class="admin-inline-muted mb-0">{t("messages.contactFormTitleHelp", "Shown as the public heading of this form.")}</p>
+			</label>
+			<label>
+				<span>{t("labels.description")}</span>
+				<textarea
+					class="form-control"
+					name="description"
+					rows="4"
+					placeholder={t("messages.contactFormDescriptionPlaceholder", "Add a short description to support the heading.") ?? "Add a short description to support the heading."}
+					disabled={isDisabled}
+				>{initialDescription}</textarea>
+				<p class="admin-inline-muted mb-0">{t("messages.contactFormDescriptionHelp", "Optional supporting text shown above or beside the form.")}</p>
+			</label>
+			<label>
+				<span>{t("labels.template")}</span>
+				<select class="form-select" name="layout" disabled={isDisabled}>
+					<option value="split" selected={initialLayout === "split"}>
+						{t("messages.contactFormTemplateSplit", "Split layout")}
+					</option>
+					<option value="stacked" selected={initialLayout === "stacked"}>
+						{t("messages.contactFormTemplateStacked", "Stacked layout")}
+					</option>
+					<option value="compact" selected={initialLayout === "compact"}>
+						{t("messages.contactFormTemplateCompact", "Compact layout")}
+					</option>
+				</select>
+				<p class="admin-inline-muted mb-0">{t("messages.contactFormTemplateHelp", "Choose a preset layout for the public contact section.")}</p>
 			</label>
 			<label>
 				<span>{t("labels.order")}</span>

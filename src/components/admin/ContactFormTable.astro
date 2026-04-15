@@ -25,13 +25,15 @@ const { t } = getUiTranslations(Astro);
 		<div class="admin-table-surface table-responsive">
 			<table class="table table-sm table-hover align-middle mb-0">
 				<thead>
-					<tr>
-						<th>{t("labels.title")}</th>
-						<th>{t("labels.fieldType")}</th>
-						<th>{t("labels.status")}</th>
-						<th>{t("labels.updated")}</th>
-						<th>{t("labels.action")}</th>
-					</tr>
+						<tr>
+							<th>{t("labels.title")}</th>
+							<th>{t("labels.description")}</th>
+							<th>{t("labels.template")}</th>
+							<th>{t("labels.fieldType")}</th>
+							<th>{t("labels.status")}</th>
+							<th>{t("labels.updated")}</th>
+							<th>{t("labels.action")}</th>
+						</tr>
 				</thead>
 				<tbody>
 					{
@@ -43,6 +45,12 @@ const { t } = getUiTranslations(Astro);
 										<span class="text-muted small">{form.fields.length} fields</span>
 										<span class="text-muted small">{submissionCounts[form.id] ?? 0} leads</span>
 									</div>
+								</td>
+								<td>
+									<span class="text-muted small">{form.description || "—"}</span>
+								</td>
+								<td>
+									<span class="badge text-bg-light text-uppercase">{form.layout}</span>
 								</td>
 								<td><code>{form.fields.length}</code></td>
 								<td>

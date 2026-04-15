@@ -1,9 +1,19 @@
-import { getLanguageCatalog, type LocalizedText, normalizeLocalizedText, stringifyLocalizedText } from "./i18n";
-import { type ContactFormField, type ContactFormFieldInput, normalizeFormFields, parseFormFieldsForm, parseFormFieldsPayload } from "./forms";
+import { getLanguageCatalog } from "./i18n";
+import {
+	type ContactFormField,
+	type ContactFormFieldInput,
+	normalizeFormFields,
+	parseFormFieldsForm,
+	parseFormFieldsPayload,
+} from "./forms";
+
+export type ContactFormLayout = "split" | "stacked" | "compact";
 
 export interface ContactFormRecord {
 	id: number;
 	title: string;
+	description: string;
+	layout: ContactFormLayout;
 	fields: ContactFormField[];
 	isActive: boolean;
 	sortOrder: number;
@@ -12,6 +22,8 @@ export interface ContactFormRecord {
 
 export interface ContactFormInput {
 	title: string;
+	description: string;
+	layout: ContactFormLayout;
 	fields: ContactFormFieldInput[];
 	isActive: boolean;
 	sortOrder: number;
@@ -20,6 +32,8 @@ export interface ContactFormInput {
 interface ContactFormRow {
 	id: number;
 	title: string;
+	description: string;
+	layout: string;
 	fields_json: string;
 	is_active: number;
 	sort_order: number;
@@ -32,6 +46,8 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 			`CREATE TABLE IF NOT EXISTS contact_forms (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT NOT NULL,
+				description TEXT NOT NULL DEFAULT '',
+				layout TEXT NOT NULL DEFAULT 'split',
 				fields_json TEXT NOT NULL DEFAULT '[]',
 				is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
 				sort_order INTEGER NOT NULL DEFAULT 0,
@@ -43,16 +59,25 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 			ON contact_forms (sort_order ASC, id ASC)`,
 		),
 	]);
+
+	const tableInfo = await db.prepare(`PRAGMA table_info(contact_forms)`).all<{ name: string }>();
+	const columnNames = new Set((tableInfo.results ?? []).map((column) => column.name));
+	if (!columnNames.has("description")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN description TEXT NOT NULL DEFAULT ''`).run();
+	}
+	if (!columnNames.has("layout")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN layout TEXT NOT NULL DEFAULT 'split'`).run();
+	}
 }
 
 export async function listContactForms(db: D1Database, activeOnly = false): Promise<ContactFormRecord[]> {
 	await ensureContactFormTables(db);
 	const query = activeOnly
-		? `SELECT id, title, fields_json, is_active, sort_order, updated_at
+		? `SELECT id, title, description, layout, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			WHERE is_active = 1
 			ORDER BY sort_order ASC, id ASC`
-		: `SELECT id, title, fields_json, is_active, sort_order, updated_at
+		: `SELECT id, title, description, layout, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			ORDER BY sort_order ASC, id ASC`;
 	const result = await db.prepare(query).all<ContactFormRow>();
@@ -63,7 +88,7 @@ export async function getContactFormById(db: D1Database, id: number): Promise<Co
 	await ensureContactFormTables(db);
 	const row = await db
 		.prepare(
-			`SELECT id, title, fields_json, is_active, sort_order, updated_at
+			`SELECT id, title, description, layout, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			WHERE id = ?1`,
 		)
@@ -78,11 +103,13 @@ export async function createContactForm(db: D1Database, input: ContactFormInput)
 	const normalizedFields = normalizeFormFields(input.fields, catalog.defaultLanguageCode);
 	const result = await db
 		.prepare(
-			`INSERT INTO contact_forms (title, fields_json, is_active, sort_order, updated_at)
-			VALUES (?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)`,
+			`INSERT INTO contact_forms (title, description, layout, fields_json, is_active, sort_order, updated_at)
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
 			input.title.trim(),
+			input.description.trim(),
+			normalizeContactFormLayout(input.layout),
 			JSON.stringify(normalizedFields),
 			input.isActive ? 1 : 0,
 			normalizeSortOrder(input.sortOrder),
@@ -99,14 +126,18 @@ export async function updateContactForm(db: D1Database, id: number, input: Conta
 		.prepare(
 			`UPDATE contact_forms
 			SET title = ?1,
-				fields_json = ?2,
-				is_active = ?3,
-				sort_order = ?4,
+				description = ?2,
+				layout = ?3,
+				fields_json = ?4,
+				is_active = ?5,
+				sort_order = ?6,
 				updated_at = CURRENT_TIMESTAMP
-			WHERE id = ?5`,
+			WHERE id = ?7`,
 		)
 		.bind(
 			input.title.trim(),
+			input.description.trim(),
+			normalizeContactFormLayout(input.layout),
 			JSON.stringify(normalizedFields),
 			input.isActive ? 1 : 0,
 			normalizeSortOrder(input.sortOrder),
@@ -123,6 +154,8 @@ export async function deleteContactForm(db: D1Database, id: number): Promise<voi
 export function parseContactFormForm(formData: FormData): ContactFormInput {
 	return {
 		title: requiredString(formData, "title"),
+		description: optionalString(formData, "description"),
+		layout: normalizeContactFormLayout(optionalString(formData, "layout")),
 		fields: parseFormFieldsForm(formData),
 		isActive: formData.get("isActive") === "on" || formData.get("isActive") === "true",
 		sortOrder: Number.parseInt(optionalString(formData, "sortOrder") || "0", 10) || 0,
@@ -138,6 +171,8 @@ export function parseContactFormPayload(payload: unknown): ContactFormInput {
 	const fields = parseFormFieldsPayload(payload, "fields");
 	return {
 		title: typeof record.title === "string" ? record.title.trim() : "",
+		description: typeof record.description === "string" ? record.description.trim() : "",
+		layout: normalizeContactFormLayout(typeof record.layout === "string" ? record.layout : ""),
 		fields,
 		isActive: Boolean(record.isActive),
 		sortOrder: normalizeSortOrder(
@@ -154,6 +189,8 @@ function toContactFormRecord(row: ContactFormRow): ContactFormRecord {
 	return {
 		id: row.id,
 		title: row.title,
+		description: row.description,
+		layout: normalizeContactFormLayout(row.layout),
 		fields: parseStoredFieldsJson(row.fields_json),
 		isActive: row.is_active === 1,
 		sortOrder: row.sort_order,
@@ -185,6 +222,10 @@ function optionalString(formData: FormData, key: string): string {
 
 function normalizeSortOrder(value: number): number {
 	return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+}
+
+function normalizeContactFormLayout(value: string): ContactFormLayout {
+	return value === "stacked" || value === "compact" ? value : "split";
 }
 
 function getLanguageCatalogForForms() {
