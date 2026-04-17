@@ -1,5 +1,6 @@
 ---
 import FormattedDate from "../FormattedDate.astro";
+import IconAction from "./IconAction.astro";
 import type { ContactFormRecord } from "../../lib/contact-forms";
 import { getUiTranslations } from "../../lib/i18n";
 
@@ -62,21 +63,24 @@ const { t } = getUiTranslations(Astro);
 								<td>
 									<div class="d-flex flex-wrap gap-2">
 										{canViewLeads && (
-											<a class="btn btn-sm btn-outline-secondary" href={`/admin/contact-forms/${form.id}/leads`}>
-												Leads
-											</a>
+											<IconAction
+												href={`/admin/contact-forms/${form.id}/leads`}
+												icon="view"
+												label="Leads"
+											/>
 										)}
 										{canUpdate && (
-											<a class="btn btn-sm btn-outline-primary" href={`/admin/contact-forms/${form.id}/edit`}>
-												{t("actions.edit")}
-											</a>
+											<IconAction
+												href={`/admin/contact-forms/${form.id}/edit`}
+												icon="edit"
+												label={t("actions.edit")}
+												variant="btn-outline-primary"
+											/>
 										)}
 										{canDelete && (
 											<form class="d-inline" method="post" action="/api/admin/contact-forms/delete">
 												<input type="hidden" name="id" value={form.id} />
-												<button class="btn btn-sm btn-outline-danger" type="submit">
-													{t("actions.delete")}
-												</button>
+												<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
 											</form>
 										)}
 									</div>

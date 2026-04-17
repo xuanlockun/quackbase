@@ -1,4 +1,5 @@
 ---
+import IconAction from "./IconAction.astro";
 import type { AdminUserSummary } from "../../lib/auth/types";
 import { getUiTranslations } from "../../lib/i18n";
 
@@ -58,9 +59,12 @@ const { t } = getUiTranslations(Astro);
 									</div>
 								</td>
 								<td>
-									<a class="btn btn-sm btn-outline-primary" href={`/admin/users/${user.id}/edit`}>
-										{t("actions.edit")}
-									</a>
+									<IconAction
+										href={`/admin/users/${user.id}/edit`}
+										icon="edit"
+										label={t("actions.edit")}
+										variant="btn-outline-primary"
+									/>
 								</td>
 							</tr>
 						))

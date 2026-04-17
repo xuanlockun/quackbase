@@ -1,5 +1,6 @@
 ---
 import FormattedDate from "../FormattedDate.astro";
+import IconAction from "./IconAction.astro";
 import { getLocalizedPagePath, type SitePage } from "../../lib/blog";
 import { getLanguageCatalog, getUiTranslations } from "../../lib/i18n";
 
@@ -58,19 +59,17 @@ const catalog = getLanguageCatalog(Astro.locals);
 								<td>
 									<div class="d-flex flex-wrap gap-2">
 										{canUpdate && (
-											<a class="btn btn-sm btn-outline-primary" href={`/admin/pages/${page.id}/edit`}>
-												{t("actions.edit")}
-											</a>
+											<IconAction href={`/admin/pages/${page.id}/edit`} icon="edit" label={t("actions.edit")} variant="btn-outline-primary" />
 										)}
-										<a class="btn btn-sm btn-outline-secondary" href={getLocalizedPagePath(page.slug, language, catalog)}>
-											{t("actions.view")}
-										</a>
+										<IconAction
+											href={getLocalizedPagePath(page.slug, language, catalog)}
+											icon="view"
+											label={t("actions.view")}
+										/>
 										{canDelete && (
 											<form class="d-inline" method="post" action="/api/admin/pages/delete">
 												<input type="hidden" name="id" value={page.id} />
-												<button class="btn btn-sm btn-outline-danger" type="submit">
-													{t("actions.delete")}
-												</button>
+												<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
 											</form>
 										)}
 									</div>

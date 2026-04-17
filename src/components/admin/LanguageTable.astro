@@ -1,4 +1,5 @@
 ---
+import IconAction from "./IconAction.astro";
 import type { LanguageEntry } from "../../lib/languages";
 import { getUiTranslations } from "../../lib/i18n";
 
@@ -79,15 +80,17 @@ const texts = {
 							</td>
 							<td>{language.name}</td>
 							<td>
-								<button
+								<IconAction
 									type="button"
-									class="btn btn-sm btn-outline-primary"
-									data-action="toggle-enabled"
-									data-code={language.code}
-									data-enabled={language.enabled}
-								>
-									{language.enabled ? texts.active : texts.inactive}
-								</button>
+									icon="toggle"
+									label={language.enabled ? "Disable language" : "Enable language"}
+									variant="btn-outline-primary"
+									attrs={{
+										"data-action": "toggle-enabled",
+										"data-code": language.code,
+										"data-enabled": String(language.enabled),
+									}}
+								/>
 							</td>
 							<td>
 								<button
@@ -113,12 +116,11 @@ const texts = {
 								</span>
 							</td>
 							<td>
-								<a
-									class="btn btn-sm btn-outline-secondary"
+								<IconAction
 									href={`/admin/languages/${encodeURIComponent(language.code)}`}
-								>
-									{t("actions.editTranslations")}
-								</a>
+									icon="edit"
+									label={t("actions.editTranslations")}
+								/>
 							</td>
 						</tr>
 					))

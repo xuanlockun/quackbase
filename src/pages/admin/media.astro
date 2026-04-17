@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import AdminLayout from "../../layouts/AdminLayout.astro";
+import IconAction from "../../components/admin/IconAction.astro";
 import { getDb } from "../../lib/blog";
 import { getMediaStorageStatus, listMediaAssets, type MediaAsset } from "../../lib/media";
 import { getUiTranslations } from "../../lib/i18n";
@@ -136,13 +137,16 @@ function isImageAsset(asset: MediaAsset): boolean {
 												<li>{formatDate(asset.createdAt)}</li>
 											</ul>
 											<div class="d-flex flex-wrap gap-2">
-												<a class="btn btn-sm btn-outline-secondary" href={previewUrl} target="_blank" rel="noopener noreferrer">
-													{t("actions.view")}
-												</a>
+												<IconAction
+													href={previewUrl}
+													icon="view"
+													label={t("actions.view")}
+													attrs={{ target: "_blank", rel: "noopener noreferrer" }}
+												/>
 												{storageStatus.isConfigured && canManage && (
 													<form method="post" action={`/api/admin/media/${asset.id}`} class="d-inline">
 														<input type="hidden" name="_action" value="delete" />
-														<button class="btn btn-sm btn-outline-danger" type="submit">{t("actions.delete")}</button>
+														<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
 													</form>
 												)}
 											</div>

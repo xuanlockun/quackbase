@@ -81,11 +81,11 @@ const initialAdminHref = localizeAdminHref(initialHref);
 						<a href={localizeAdminHref(template.href)} class="text-decoration-none">
 							<div class="border rounded-0 p-3 h-100 template-card">
 								<div class="d-flex justify-content-between align-items-start gap-3">
-									<div>
-										<strong class="d-block">{template.label}</strong>
-										<p class="mb-0 text-muted">{template.description}</p>
-									</div>
-									<span class="btn btn-sm btn-outline-secondary">Edit</span>
+								<div>
+									<strong class="d-block">{template.label}</strong>
+									<p class="mb-0 text-muted">{template.description}</p>
+								</div>
+									<span class="template-card-icon" aria-hidden="true">→</span>
 								</div>
 							</div>
 						</a>
@@ -105,5 +105,16 @@ const initialAdminHref = localizeAdminHref(initialHref);
 	.template-card:hover {
 		transform: translateY(-1px);
 		border-color: rgba(255, 255, 255, 0.2);
+	}
+
+	.template-card-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.75rem;
+		height: 1.75rem;
+		font-size: 1rem;
+		line-height: 1;
+		border: 1px solid rgba(255, 255, 255, 0.18);
 	}
 </style>

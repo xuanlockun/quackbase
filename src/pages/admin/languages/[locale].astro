@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import AdminLayout from "../../../layouts/AdminLayout.astro";
+import IconAction from "../../../components/admin/IconAction.astro";
 import { getDb } from "../../../lib/blog";
 import { getLanguageByCode, listAllLanguages } from "../../../lib/languages";
 import { listTranslationEntriesByLocale } from "../../../lib/translations";
@@ -152,12 +153,11 @@ function buildNamespaceOptions(entries: { translationKey: string }[]): Array<{ l
 										</td>
 										<td class="text-break">{entry.translatedValue}</td>
 										<td class="text-end">
-											<a
-												class="btn btn-sm btn-outline-secondary"
+											<IconAction
 												href={`/admin/languages/${encodeURIComponent(selectedLanguage!.code)}/${encodeURIComponent(entry.translationKey)}`}
-											>
-												{t("actions.edit")}
-											</a>
+												icon="edit"
+												label={t("actions.edit")}
+											/>
 										</td>
 									</tr>
 								))

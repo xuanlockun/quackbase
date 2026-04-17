@@ -19,7 +19,6 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 	{ href: "/admin/settings", labelKey: "nav.settings", permissions: ["site.manage"] },
 	{ href: "/admin/users", labelKey: "nav.users", permissions: ["users.manage"] },
 	{ href: "/admin/roles", labelKey: "nav.roles", permissions: ["roles.manage"] },
-	{ href: "/admin/permissions", labelKey: "nav.permissions", permissions: ["permissions.read"] },
 	{ href: "/admin/languages", labelKey: "nav.languages", permissions: ["languages.manage"] },
 ];
 
@@ -40,7 +39,6 @@ const ADMIN_PAGE_POLICIES = new Map<string, string[]>([
 	["/admin/settings", ["site.manage"]],
 	["/admin/users", ["users.manage"]],
 	["/admin/roles", ["roles.manage"]],
-	["/admin/permissions", ["permissions.read"]],
 	["/admin/languages", ["languages.manage"]],
 ]);
 

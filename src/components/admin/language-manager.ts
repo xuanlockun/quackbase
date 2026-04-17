@@ -27,6 +27,14 @@ const texts = {
 	setDefault: dataset.textSetDefault ?? "Set as default",
 };
 
+const toggleIconHtml = `
+	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+		<rect x="3.5" y="5" width="17" height="14" rx="0" />
+		<path d="M8 9h8" />
+		<path d="M8 13h5" />
+	</svg>
+`;
+
 let cachedLanguages: LanguageRecord[] = [];
 
 function showNotice(text: string, variant: "success" | "danger" = "success") {
@@ -56,7 +64,11 @@ function buildRow(language: LanguageRecord): HTMLTableRowElement {
 	enabledButton.dataset.action = "toggle-enabled";
 	enabledButton.dataset.code = language.code;
 	enabledButton.dataset.enabled = String(language.enabled);
-	enabledButton.textContent = language.enabled ? texts.active : texts.inactive;
+	enabledButton.setAttribute("aria-label", language.enabled ? "Disable language" : "Enable language");
+	enabledButton.title = language.enabled ? "Disable language" : "Enable language";
+	enabledButton.innerHTML = `<span class="admin-icon-action-icon" aria-hidden="true">${toggleIconHtml}</span><span class="visually-hidden">${
+		language.enabled ? "Disable language" : "Enable language"
+	}</span>`;
 	enabledCell.appendChild(enabledButton);
 
 	const defaultCell = document.createElement("td");

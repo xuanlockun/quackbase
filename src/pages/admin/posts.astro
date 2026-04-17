@@ -5,7 +5,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 import FilterBar from "../../components/admin/FilterBar.astro";
 import PostTable from "../../components/admin/PostTable.astro";
 import { getDb, listAllPosts, toAdminPostSummary } from "../../lib/blog";
-import { getLanguageCatalog, getUiTranslations, localizeHref } from "../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -54,10 +54,9 @@ const hasActiveFilters = Boolean(search || status !== "all");
 	pageTitle={t("headings.posts")}
 	pageDescription={t("messages.managePublishedArticles")}
 >
-	<div slot="actions" class="admin-page-actions">
-		{canCreate && <a class="btn btn-primary" href="/admin/posts/new">{t("actions.createPost")}</a>}
-		<a class="btn btn-outline-secondary" href={localizeHref("/")}>{t("actions.viewBlog")}</a>
-	</div>
+<div slot="actions" class="admin-page-actions">
+	{canCreate && <a class="btn btn-primary" href="/admin/posts/new">{t("actions.createPost")}</a>}
+</div>
 
 	<div class="admin-content-stack">
 		<FilterBar

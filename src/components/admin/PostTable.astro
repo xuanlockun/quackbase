@@ -1,5 +1,6 @@
 ---
 import FormattedDate from "../FormattedDate.astro";
+import IconAction from "./IconAction.astro";
 import type { AdminPostSummary } from "../../lib/blog";
 import { getUiTranslations } from "../../lib/i18n";
 
@@ -57,19 +58,13 @@ const { t } = getUiTranslations(Astro);
 								<td>
 									<div class="d-flex flex-wrap gap-2">
 										{canUpdate && (
-											<a class="btn btn-sm btn-outline-primary" href={post.editHref}>
-												{t("actions.editPost")}
-											</a>
+											<IconAction href={post.editHref} icon="edit" label={t("actions.editPost")} variant="btn-outline-primary" />
 										)}
-										<a class="btn btn-sm btn-outline-secondary" href={post.viewHref}>
-											{t("actions.view")}
-										</a>
+										<IconAction href={post.viewHref} icon="view" label={t("actions.view")} />
 										{canDelete && (
 											<form method="post" action="/api/admin/posts/delete" class="d-inline">
 												<input type="hidden" name="id" value={post.id} />
-												<button class="btn btn-sm btn-outline-danger" type="submit">
-													{t("actions.delete")}
-												</button>
+												<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
 											</form>
 										)}
 									</div>

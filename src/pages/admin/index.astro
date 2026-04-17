@@ -134,92 +134,75 @@ const quickActions = [
 	</div>
 
 	<div class="admin-content-stack">
-		<section class="dashboard-hero card border-0 shadow-sm">
-			<div class="card-body p-4 p-lg-5">
-				<div class="row g-4 align-items-center">
-					<div class="col-lg-8">
-						<p class="text-uppercase text-muted small mb-2">{t("app.brand")}</p>
-						<h2 class="display-6 fw-semibold mb-3">
-							{t("messages.dashboardWelcome", "Welcome back, {name}.").replace("{name}", session.displayName ?? t("messages.adminUserFallback"))}
-						</h2>
-						<p class="lead text-muted mb-0">
-							{t("messages.dashboardIntro", "Overview of your CMS content, site settings, and admin workspace.")}
-						</p>
-					</div>
-					<div class="col-lg-4">
-						<div class="dashboard-meta rounded-0 p-3">
-							<div class="d-flex justify-content-between gap-3 mb-2">
-								<span class="text-muted">Site</span>
-								<strong class="text-end">{config.siteTitle}</strong>
-							</div>
-							<div class="d-flex justify-content-between gap-3 mb-2">
-								<span class="text-muted">Home</span>
-								<strong class="text-end">{config.homePageSlug}</strong>
-							</div>
-							<div class="d-flex justify-content-between gap-3 mb-0">
-								<span class="text-muted">Language</span>
-								<strong class="text-end">{language}</strong>
-							</div>
-						</div>
-					</div>
+		<section class="dashboard-hero">
+			<div class="dashboard-hero-copy">
+				<p class="dashboard-kicker">{t("app.brand")}</p>
+				<h2 class="dashboard-title">
+					{t("messages.dashboardWelcome", "Welcome back, {name}.").replace("{name}", session.displayName ?? t("messages.adminUserFallback"))}
+				</h2>
+				<p class="dashboard-summary">
+					{t("messages.dashboardIntro", "Overview of your CMS content, site settings, and admin workspace.")}
+				</p>
+			</div>
+			<div class="dashboard-meta">
+				<div>
+					<span>Site</span>
+					<strong>{config.siteTitle}</strong>
+				</div>
+				<div>
+					<span>Home</span>
+					<strong>{config.homePageSlug}</strong>
+				</div>
+				<div>
+					<span>Language</span>
+					<strong>{language}</strong>
 				</div>
 			</div>
 		</section>
 
 		<section>
-			<div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+			<div class="dashboard-section-head">
 				<h3 class="h5 mb-0">{t("messages.dashboardSummary", "Content overview")}</h3>
 			</div>
 			<div class="row g-3">
 				{statCards.map((card) => (
 					<div class="col-12 col-md-6 col-xl-4">
-						<a href={localizeAdminHref(card.href)} class="text-decoration-none">
-							<div class="dashboard-stat card h-100 border-0 shadow-sm">
-								<div class="card-body p-3 p-xl-4">
-									<div class="d-flex justify-content-between align-items-start gap-3">
-										<div>
-											<p class="text-uppercase small text-muted mb-2">{card.title}</p>
-											<h4 class="display-6 fw-semibold mb-1">{card.value}</h4>
-											<p class="mb-0 text-muted">{card.description}</p>
-										</div>
-										<span class="dashboard-stat-arrow" aria-hidden="true">→</span>
-									</div>
-								</div>
-							</div>
+						<a href={localizeAdminHref(card.href)} class="dashboard-stat">
+							<span class="dashboard-stat-title">{card.title}</span>
+							<strong class="dashboard-stat-value">{card.value}</strong>
+							<span class="dashboard-stat-description">{card.description}</span>
 						</a>
 					</div>
 				))}
 			</div>
 		</section>
 
-		<section class="row g-4">
-			<div class="col-12 col-lg-7">
-				<div class="card border-0 shadow-sm h-100">
-					<div class="card-body p-4">
-						<h3 class="h5 mb-3">{t("messages.dashboardQuickActions", "Quick actions")}</h3>
-						<div class="d-flex flex-column gap-2">
-							{quickActions.map((action) => (
-								<a href={localizeAdminHref(action.href)} class="dashboard-action-link">
-									<span>{action.label}</span>
-									<span aria-hidden="true">→</span>
-								</a>
-							))}
-						</div>
-					</div>
+		<section class="dashboard-panels">
+			<div class="dashboard-panel">
+				<h3 class="h5 mb-0">{t("messages.dashboardQuickActions", "Quick actions")}</h3>
+				<div class="dashboard-links">
+					{quickActions.map((action) => (
+						<a href={localizeAdminHref(action.href)} class="dashboard-action-link">
+							<span>{action.label}</span>
+							<span aria-hidden="true">→</span>
+						</a>
+					))}
 				</div>
 			</div>
-			<div class="col-12 col-lg-5">
-				<div class="card border-0 shadow-sm h-100">
-					<div class="card-body p-4">
-						<h3 class="h5 mb-3">{t("nav.template")}</h3>
-						<p class="text-muted mb-3">
-							{t("messages.dashboardTemplateHelp", "Edit the raw HTML shell for the public header, navbar, page wrapper, and footer.")}
-						</p>
-						<div class="d-grid gap-2">
-							<a class="btn btn-outline-primary" href={localizeAdminHref("/admin/templates")}>{t("nav.template")}</a>
-							<a class="btn btn-outline-secondary" href={localizeAdminHref("/admin/templates/page")}>Page</a>
-						</div>
-					</div>
+			<div class="dashboard-panel">
+				<h3 class="h5 mb-0">{t("nav.template")}</h3>
+				<p class="dashboard-panel-copy">
+					{t("messages.dashboardTemplateHelp", "Edit the raw HTML shell for the public header, navbar, page wrapper, and footer.")}
+				</p>
+				<div class="dashboard-links">
+					<a class="dashboard-action-link" href={localizeAdminHref("/admin/templates")}>
+						<span>{t("nav.template")}</span>
+						<span aria-hidden="true">→</span>
+					</a>
+					<a class="dashboard-action-link" href={localizeAdminHref("/admin/templates/page")}>
+						<span>Page</span>
+						<span aria-hidden="true">→</span>
+					</a>
 				</div>
 			</div>
 		</section>
@@ -228,47 +211,140 @@ const quickActions = [
 
 <style>
 	.dashboard-hero {
-		background:
-			linear-gradient(135deg, rgba(35, 55, 255, 0.12), rgba(15, 18, 25, 0.04)),
-			#ffffff;
+		display: grid;
+		gap: 1rem;
+		padding: 1rem 1.1rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 0;
+		background: #fff;
+	}
+
+	.dashboard-hero-copy {
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.dashboard-kicker {
+		margin: 0;
+		font-size: 0.62rem;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.14em;
+		color: rgba(15, 23, 42, 0.52);
+	}
+
+	.dashboard-title {
+		margin: 0;
+		font-size: clamp(1.35rem, 2vw, 1.75rem);
+		line-height: 1.1;
+		font-weight: 700;
+	}
+
+	.dashboard-summary {
+		margin: 0;
+		max-width: 58ch;
+		color: rgba(15, 23, 42, 0.68);
 	}
 
 	.dashboard-meta {
-		background: rgba(15, 18, 25, 0.04);
-		border: 1px solid rgba(15, 18, 25, 0.08);
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.75rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid rgba(15, 23, 42, 0.08);
+	}
+
+	.dashboard-meta div {
+		display: grid;
+		gap: 0.15rem;
+	}
+
+	.dashboard-meta span,
+	.dashboard-stat-title {
+		font-size: 0.62rem;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		color: rgba(15, 23, 42, 0.52);
+	}
+
+	.dashboard-meta strong,
+	.dashboard-stat-value {
+		font-size: 1rem;
+		line-height: 1.1;
+		font-weight: 700;
+	}
+
+	.dashboard-section-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
 	}
 
 	.dashboard-stat {
-		transition: transform 0.16s ease, box-shadow 0.16s ease;
+		display: grid;
+		gap: 0.35rem;
+		padding: 0.9rem 1rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 0;
+		background: #fff;
+		color: inherit;
+		text-decoration: none;
 	}
 
 	.dashboard-stat:hover {
-		transform: translateY(-2px);
+		background: rgba(248, 250, 252, 0.96);
 	}
 
-	.dashboard-stat-arrow {
-		font-size: 1.5rem;
-		line-height: 1;
-		color: var(--bs-primary);
+	.dashboard-stat-description,
+	.dashboard-panel-copy {
+		font-size: 0.9rem;
+		color: rgba(15, 23, 42, 0.66);
+	}
+
+	.dashboard-panels {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1rem;
+	}
+
+	.dashboard-panel {
+		display: grid;
+		gap: 0.8rem;
+		padding: 1rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 0;
+		background: #fff;
+	}
+
+	.dashboard-links {
+		display: grid;
+		gap: 0.45rem;
 	}
 
 	.dashboard-action-link {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 1rem;
-		padding: 0.9rem 1rem;
-		border: 1px solid rgba(15, 18, 25, 0.12);
-		border-radius: 0.85rem;
+		gap: 0.75rem;
+		padding: 0.7rem 0.8rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 0;
 		color: inherit;
 		text-decoration: none;
-		background: rgba(255, 255, 255, 0.8);
-		transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+		background: #fff;
 	}
 
 	.dashboard-action-link:hover {
-		transform: translateY(-1px);
-		border-color: rgba(35, 55, 255, 0.3);
-		background: #fff;
+		background: rgba(248, 250, 252, 0.96);
+	}
+
+	@media (max-width: 991px) {
+		.dashboard-meta,
+		.dashboard-panels {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

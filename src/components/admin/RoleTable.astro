@@ -1,4 +1,5 @@
 ---
+import IconAction from "./IconAction.astro";
 import PermissionBadge from "./PermissionBadge.astro";
 import type { AdminRole } from "../../lib/auth/types";
 import { getUiTranslations } from "../../lib/i18n";
@@ -34,9 +35,12 @@ const { t } = getUiTranslations(Astro);
 										{role.description && <p class="text-muted mt-2 mb-0">{role.description}</p>}
 									</div>
 									<div class="d-flex flex-wrap gap-2" aria-label={t("labels.action")}>
-										<a class="btn btn-sm btn-outline-primary" href={`/admin/roles/${role.id}/edit`}>
-											{t("actions.edit")}
-										</a>
+										<IconAction
+											href={`/admin/roles/${role.id}/edit`}
+											icon="edit"
+											label={t("actions.edit")}
+											variant="btn-outline-primary"
+										/>
 										{
 											!role.isSystem && (
 												<form
@@ -46,7 +50,12 @@ const { t } = getUiTranslations(Astro);
 													class="d-inline"
 												>
 													<input type="hidden" name="_intent" value="delete" />
-													<button class="btn btn-sm btn-outline-danger" type="submit">{t("actions.delete")}</button>
+													<IconAction
+														type="submit"
+														icon="delete"
+														label={t("actions.delete")}
+														variant="btn-outline-danger"
+													/>
 												</form>
 											)
 										}
