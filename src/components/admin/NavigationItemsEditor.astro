@@ -156,13 +156,10 @@ const totalItemCount = navRows.length;
 												>
 													<span class="nav-tree-toggle-glyph" aria-hidden="true">▼</span>
 												</button>
-											) : (
-												<span class="nav-tree-leaf-pill">{t("labels.leaf", "File")}</span>
 											)}
-											<span class="nav-tree-leaf-pill">{depth === 0 ? t("labels.parent") : t("labels.child")}</span>
 										</div>
-										<strong class="nav-tree-title">{resolveNavPreviewLabel(item.labelTranslations, item.label)}</strong>
-										<span class="nav-tree-path">{item.href}</span>
+										<strong class="nav-tree-title" data-nav-preview-title>{resolveNavPreviewLabel(item.labelTranslations, item.label)}</strong>
+										<span class="nav-tree-path" data-nav-preview-path>{item.href}</span>
 									</div>
 								</div>
 
@@ -201,6 +198,17 @@ const totalItemCount = navRows.length;
 							</div>
 
 							<div class="nav-tree-actions">
+								<button
+									class="btn btn-sm btn-outline-secondary nav-action"
+									type="button"
+									data-nav-edit
+									disabled={Boolean(loadError)}
+									aria-label={t("actions.edit")}
+									aria-pressed="false"
+								>
+									<span class="nav-action-icon" aria-hidden="true">✎</span>
+									<span class="visually-hidden">{t("actions.edit")}</span>
+								</button>
 								<button
 									class="btn btn-sm btn-outline-secondary nav-action"
 									type="button"
@@ -377,6 +385,10 @@ const totalItemCount = navRows.length;
 		margin-left: 0;
 	}
 
+	.nav-tree-row[data-editing="true"] {
+		background: rgba(15, 23, 42, 0.03);
+	}
+
 	.nav-tree-row:hover {
 		transform: none;
 		background: rgba(15, 23, 42, 0.028);
@@ -473,6 +485,11 @@ const totalItemCount = navRows.length;
 		font-weight: 650;
 	}
 
+	.nav-tree-row[data-editing="true"] .nav-tree-title,
+	.nav-tree-row[data-editing="true"] .nav-tree-path {
+		display: none;
+	}
+
 	.nav-tree-toggle {
 		line-height: 1;
 		width: 0.9rem;
@@ -506,11 +523,15 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-fields {
-		display: grid;
+		display: none;
 		grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
 		gap: 0.18rem;
 		padding-top: 0;
 		border-top: 0;
+	}
+
+	.nav-tree-row[data-editing="true"] .nav-tree-fields {
+		display: grid;
 	}
 
 	.nav-tree-field {
@@ -545,6 +566,7 @@ const totalItemCount = navRows.length;
 		gap: 0;
 		width: 1.3rem;
 		height: 1.3rem;
+		min-height: 1.3rem;
 		padding: 0;
 		border-radius: 0.25rem;
 		font-size: 0.68rem;
@@ -556,6 +578,7 @@ const totalItemCount = navRows.length;
 		justify-content: center;
 		width: 1.3rem;
 		height: 1.3rem;
+		min-height: 1.3rem;
 		padding: 0;
 		border-radius: 0.25rem;
 		font-size: 0.68rem;
@@ -652,6 +675,83 @@ const totalItemCount = navRows.length;
 	const getNavRows = () => Array.from(rowsContainer?.querySelectorAll("[data-nav-row]") ?? []);
 
 	const getRowDepth = (row) => clampDepth(Number(row.dataset.depth ?? "0"));
+
+	const getRowEditorInputs = (row) => ({
+		labels: Array.from(row.querySelectorAll("[data-nav-label]")).filter(
+			(input) => input instanceof HTMLInputElement,
+		),
+		href: row.querySelector("[data-nav-href]"),
+	});
+
+	const getRowLabel = (row) => {
+		const { labels } = getRowEditorInputs(row);
+		for (const input of labels) {
+			const value = input.value.trim();
+			if (value) {
+				return value;
+			}
+		}
+		return "";
+	};
+
+	const updateRowPreview = (row) => {
+		if (!(row instanceof HTMLElement)) {
+			return;
+		}
+
+		const title = row.querySelector("[data-nav-preview-title]");
+		const path = row.querySelector("[data-nav-preview-path]");
+		const label = getRowLabel(row);
+		const hrefInput = row.querySelector("[data-nav-href]");
+
+		if (title instanceof HTMLElement) {
+			title.textContent = label || defaultNavLabel;
+		}
+
+		if (path instanceof HTMLElement && hrefInput instanceof HTMLInputElement) {
+			path.textContent = hrefInput.value.trim() || "/";
+		}
+	};
+
+	let activeEditRow = null;
+
+	const setRowEditing = (row, editing) => {
+		if (!(row instanceof HTMLElement)) {
+			return;
+		}
+
+		const nextEditing = Boolean(editing);
+		const currentActive = activeEditRow;
+		if (nextEditing && currentActive && currentActive !== row) {
+			setRowEditing(currentActive, false);
+		}
+
+		row.dataset.editing = nextEditing ? "true" : "false";
+		activeEditRow = nextEditing ? row : activeEditRow === row ? null : activeEditRow;
+
+		const editButton = row.querySelector("[data-nav-edit]");
+		if (editButton instanceof HTMLButtonElement) {
+			editButton.setAttribute("aria-pressed", nextEditing ? "true" : "false");
+			editButton.setAttribute("aria-label", t("actions.edit", "Edit"));
+		}
+
+		const firstInput = row.querySelector("[data-nav-label]");
+		if (nextEditing && firstInput instanceof HTMLInputElement) {
+			requestAnimationFrame(() => {
+				firstInput.focus();
+				firstInput.select();
+			});
+		}
+
+		updateRowPreview(row);
+	};
+
+	const exitActiveEditRow = () => {
+		if (activeEditRow) {
+			setRowEditing(activeEditRow, false);
+			syncPayload();
+		}
+	};
 
 	const updateRowToggle = (row) => {
 		const hasChildren = row.dataset.hasChildren === "true";
@@ -759,6 +859,7 @@ const totalItemCount = navRows.length;
 		for (const row of rowsContainer.querySelectorAll("[data-nav-row]")) {
 			const currentDepth = clampDepth(Number(row.dataset.depth ?? "0"));
 			setRowDepth(row, currentDepth);
+			updateRowPreview(row);
 			const node = buildNodeFromRow(row);
 			if (!node) {
 				continue;
@@ -783,12 +884,22 @@ const totalItemCount = navRows.length;
 		}
 		row.dataset.navRowAttached = "true";
 		row.dataset.collapsed = row.dataset.collapsed ?? "false";
+		row.dataset.editing = row.dataset.editing ?? "false";
 		setRowDepth(row, Number(row.dataset.depth ?? "0"));
 		row.draggable = !isReadOnly;
 		row.addEventListener("dragstart", onNavDragStart);
 		row.addEventListener("dragover", onNavDragOver);
 		row.addEventListener("drop", onNavDragDrop);
 		row.addEventListener("dragend", onNavDragEnd);
+		row.addEventListener("focusout", (event) => {
+			if (!(event.relatedTarget instanceof Node) || row.contains(event.relatedTarget)) {
+				return;
+			}
+			if (row.dataset.editing === "true") {
+				setRowEditing(row, false);
+				syncPayload();
+			}
+		});
 	};
 
 	const findNavRow = (target) => (target instanceof Element ? target.closest("[data-nav-row]") : null);
@@ -911,18 +1022,15 @@ const totalItemCount = navRows.length;
 		toggleGlyph.textContent = "▼";
 		toggleButton.append(toggleGlyph);
 		summaryLine.append(toggleButton);
-
-		const depthPill = document.createElement("span");
-		depthPill.className = "nav-tree-leaf-pill";
-		depthPill.textContent = depth === 0 ? parentLabel : childLabel;
-		summaryLine.append(depthPill);
 		summaryCopy.append(summaryLine);
 
 		const title = document.createElement("strong");
 		title.className = "nav-tree-title";
+		title.dataset.navPreviewTitle = "";
 		title.textContent = fallbackLabel;
 		const path = document.createElement("span");
 		path.className = "nav-tree-path";
+		path.dataset.navPreviewPath = "";
 		path.textContent = entry.href ?? "/";
 		summaryCopy.append(title, path);
 		summary.append(summaryCopy);
@@ -974,6 +1082,7 @@ const totalItemCount = navRows.length;
 		const actions = document.createElement("div");
 		actions.className = "nav-tree-actions";
 		const buttonConfigs = [
+			["navEdit", "✎", t("actions.edit", "Edit"), "btn btn-sm btn-outline-secondary nav-action"],
 			["navAddChild", "+", addChildLabel, "btn btn-sm btn-outline-secondary nav-action"],
 			["navIndent", "›", indentLabel, "btn btn-sm btn-outline-secondary nav-action"],
 			["navOutdent", "‹", outdentLabel, "btn btn-sm btn-outline-secondary nav-action"],
@@ -985,6 +1094,9 @@ const totalItemCount = navRows.length;
 			button.className = className;
 			button.dataset[datasetKey] = "";
 			button.setAttribute("aria-label", label);
+			if (datasetKey === "navEdit") {
+				button.setAttribute("aria-pressed", "false");
+			}
 			button.textContent = symbol;
 			if (isReadOnly) {
 				button.disabled = true;
@@ -1036,11 +1148,8 @@ const totalItemCount = navRows.length;
 		const newRow = createNavRow({}, depth);
 		const insertAfter = findInsertPositionForChild(parentRow);
 		insertAfter.after(newRow);
-		const focusInput = newRow.querySelector("[data-nav-label]");
-		if (focusInput instanceof HTMLInputElement) {
-			focusInput.focus();
-		}
 		newRow.scrollIntoView({ block: "nearest" });
+		setRowEditing(newRow, true);
 		syncPayload();
 	};
 
@@ -1058,7 +1167,20 @@ const totalItemCount = navRows.length;
 		}
 		const actionButton = target.closest("button");
 
+		if (actionButton?.matches("[data-nav-edit]")) {
+			if (row.dataset.editing === "true") {
+				setRowEditing(row, false);
+				syncPayload();
+			} else {
+				setRowEditing(row, true);
+			}
+			return;
+		}
+
 		if (actionButton?.matches("[data-nav-remove]")) {
+			if (activeEditRow === row) {
+				activeEditRow = null;
+			}
 			row.remove();
 			syncPayload();
 			return;
@@ -1093,11 +1215,8 @@ const totalItemCount = navRows.length;
 		}
 		const newRow = createNavRow({ label: defaultNavLabel, href: "/" }, 0);
 		rowsContainer.append(newRow);
-		const focusInput = newRow.querySelector("[data-nav-label]");
-		if (focusInput instanceof HTMLInputElement) {
-			focusInput.focus();
-		}
 		newRow.scrollIntoView({ block: "nearest" });
+		setRowEditing(newRow, true);
 		syncPayload();
 	});
 
