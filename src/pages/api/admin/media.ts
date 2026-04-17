@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			.filter((entry): entry is File => entry instanceof File && entry.size > 0);
 
 		if (files.length === 0) {
-			return redirect("/admin/media?error=1");
+			return redirect("/admin/media?errorMessage=Please choose at least one file to upload.");
 		}
 
 		const db = getDb(locals);
@@ -52,11 +52,13 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		}
 
 		if (uploadedCount === 0) {
-			return redirect("/admin/media?error=1");
+			return redirect("/admin/media?errorMessage=No files were uploaded successfully.");
 		}
 
-		return redirect(`/admin/media?uploaded=${uploadedCount}${hadFailure ? "&error=1" : ""}`);
+		return redirect(
+			`/admin/media?uploaded=${uploadedCount}${hadFailure ? "&errorMessage=Some files failed to upload." : ""}`,
+		);
 	} catch {
-		return redirect("/admin/media?error=1");
+		return redirect("/admin/media?errorMessage=The media request failed.");
 	}
 };

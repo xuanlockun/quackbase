@@ -68,7 +68,11 @@ function isImageAsset(asset: MediaAsset): boolean {
 	<div class="admin-content-stack">
 		{Astro.url.searchParams.get("uploaded") && <p class="alert alert-success mb-0">{t("messages.mediaUploadSuccess")}</p>}
 		{Astro.url.searchParams.get("deleted") && <p class="alert alert-success mb-0">{t("messages.mediaDeleteSuccess")}</p>}
-		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.mediaRequestFailed")}</p>}
+		{Astro.url.searchParams.get("errorMessage") ? (
+			<p class="alert alert-danger mb-0">{Astro.url.searchParams.get("errorMessage")}</p>
+		) : (
+			Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.mediaRequestFailed")}</p>
+		)}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 
 		<section class="card border-0 shadow-sm">
