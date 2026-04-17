@@ -1,4 +1,4 @@
----
+﻿---
 import type { SiteNavItem } from "../../lib/blog";
 import { getLanguageCatalog, getSupportedLanguages, getUiTranslations, type LocalizedText } from "../../lib/i18n";
 
@@ -208,8 +208,8 @@ const totalItemCount = navRows.length;
 									disabled={Boolean(loadError)}
 									aria-label={t("actions.addChild")}
 								>
-									<span aria-hidden="true">+</span>
-									<span class="nav-action-label">{t("actions.addChild")}</span>
+									<span class="nav-action-icon" aria-hidden="true">+</span>
+									<span class="visually-hidden">{t("actions.addChild")}</span>
 								</button>
 								<button
 									class="btn btn-sm btn-outline-secondary nav-action"
@@ -218,8 +218,8 @@ const totalItemCount = navRows.length;
 									disabled={Boolean(loadError)}
 									aria-label={t("actions.indent")}
 								>
-									<span aria-hidden="true">&gt;</span>
-									<span class="nav-action-label">{t("actions.indent")}</span>
+									<span class="nav-action-icon" aria-hidden="true">›</span>
+									<span class="visually-hidden">{t("actions.indent")}</span>
 								</button>
 								<button
 									class="btn btn-sm btn-outline-secondary nav-action"
@@ -228,16 +228,18 @@ const totalItemCount = navRows.length;
 									disabled={Boolean(loadError)}
 									aria-label={t("actions.outdent")}
 								>
-									<span aria-hidden="true">&lt;</span>
-									<span class="nav-action-label">{t("actions.outdent")}</span>
+									<span class="nav-action-icon" aria-hidden="true">‹</span>
+									<span class="visually-hidden">{t("actions.outdent")}</span>
 								</button>
 								<button
 									class="btn btn-sm btn-outline-danger nav-item-remove"
 									type="button"
 									data-nav-remove
 									disabled={Boolean(loadError)}
+									aria-label={t("actions.remove")}
 								>
-									{t("actions.remove")}
+									<span class="nav-action-icon" aria-hidden="true">×</span>
+									<span class="visually-hidden">{t("actions.remove")}</span>
 								</button>
 							</div>
 						</article>
@@ -317,8 +319,8 @@ const totalItemCount = navRows.length;
 
 	.nav-tree-board {
 		display: grid;
-		gap: 0.55rem;
-		padding: 0.25rem 0;
+		gap: 0.4rem;
+		padding: 0.05rem 0;
 		border: 0;
 		border-radius: 0;
 		background: transparent;
@@ -337,7 +339,7 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-list {
-		--tree-step: 0.95rem;
+		--tree-step: 1rem;
 		display: grid;
 		gap: 0;
 		position: relative;
@@ -356,18 +358,18 @@ const totalItemCount = navRows.length;
 
 	.nav-tree-row {
 		--nav-indent: calc(var(--nav-depth, 0) * var(--tree-step));
-		--nav-row-padding-left: calc(0.35rem + var(--nav-indent));
+		--nav-row-padding-left: calc(0.2rem + var(--nav-indent));
 		position: relative;
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
-		gap: 0.45rem;
+		gap: 0.35rem;
 		align-items: start;
-		padding: 0.3rem 0.45rem 0.32rem var(--nav-row-padding-left);
+		padding: 0.22rem 0.28rem 0.24rem var(--nav-row-padding-left);
 		border-radius: 0;
 		border: 0;
 		background: transparent;
 		box-shadow: none;
-		transition: background-color 0.15s ease, border-color 0.15s ease;
+		transition: background-color 0.15s ease;
 		margin-left: 0;
 	}
 
@@ -377,16 +379,16 @@ const totalItemCount = navRows.length;
 
 	.nav-tree-row:hover {
 		transform: none;
-		background: rgba(15, 23, 42, 0.03);
-	}
-
-	.nav-tree-row:focus-within {
 		background: rgba(15, 23, 42, 0.035);
 	}
 
+	.nav-tree-row:focus-within {
+		background: rgba(15, 23, 42, 0.045);
+	}
+
 	.nav-tree-row[data-collapsed="true"] .nav-tree-toggle {
-		background: rgba(15, 23, 42, 0.04);
-		border-color: rgba(15, 23, 42, 0.18);
+		background: rgba(15, 23, 42, 0.03);
+		border-color: rgba(15, 23, 42, 0.12);
 	}
 
 	.nav-tree-row.is-dragging {
@@ -398,8 +400,8 @@ const totalItemCount = navRows.length;
 		display: flex;
 		align-items: flex-start;
 		justify-content: center;
-		min-width: 0.8rem;
-		padding-top: 0.12rem;
+		min-width: 0.75rem;
+		padding-top: 0.09rem;
 	}
 
 	.nav-tree-spine {
@@ -407,8 +409,8 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-drag-handle {
-		width: 0.8rem;
-		height: 0.8rem;
+		width: 0.72rem;
+		height: 0.72rem;
 		cursor: grab;
 		border-radius: 0;
 		background:
@@ -423,65 +425,62 @@ const totalItemCount = navRows.length;
 	.nav-tree-body {
 		min-width: 0;
 		display: grid;
-		gap: 0.28rem;
+		gap: 0.2rem;
 	}
 
 	.nav-tree-summary {
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		gap: 0.5rem;
+		gap: 0.35rem;
 	}
 
 	.nav-tree-summary-copy {
 		min-width: 0;
 		display: grid;
-		gap: 0.08rem;
+		gap: 0.04rem;
 	}
 
 	.nav-tree-summary-line {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.3rem;
+		gap: 0.22rem;
 	}
 
 	.nav-tree-kind-icon {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 0.88rem;
-		height: 0.88rem;
-		color: rgba(15, 23, 42, 0.58);
+		width: 0.82rem;
+		height: 0.82rem;
+		color: rgba(15, 23, 42, 0.52);
 		flex: 0 0 auto;
 	}
 
 	.nav-tree-leaf-pill {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.25rem;
+		gap: 0.2rem;
 		padding: 0;
 		border-radius: 0;
-		font-size: 0.66rem;
+		font-size: 0.58rem;
 		font-weight: 700;
 		text-transform: none;
-		letter-spacing: 0;
-		color: rgba(15, 23, 42, 0.56);
+		letter-spacing: 0.01em;
+		color: rgba(15, 23, 42, 0.48);
+		background: transparent;
 	}
 
 	.nav-tree-row[data-depth="0"] .nav-tree-title {
-		font-size: 0.88rem;
+		font-size: 0.87rem;
 		font-weight: 700;
-	}
-
-	.nav-tree-row[data-depth="0"] .nav-tree-path {
-		color: rgba(15, 23, 42, 0.5);
 	}
 
 	.nav-tree-toggle {
 		line-height: 1;
-		width: 1rem;
-		height: 1rem;
+		width: 0.98rem;
+		height: 0.98rem;
 		padding: 0;
 		display: inline-flex;
 		align-items: center;
@@ -493,33 +492,28 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-toggle-glyph {
-		font-size: 0.72rem;
+		font-size: 0.68rem;
 		line-height: 1;
 	}
 
-	.nav-tree-leaf-pill {
-		background: rgba(15, 23, 42, 0.05);
-		color: rgba(15, 23, 42, 0.62);
-	}
-
 	.nav-tree-title {
-		font-size: 0.82rem;
+		font-size: 0.8rem;
 		line-height: 1.2;
 		font-weight: 600;
 		word-break: break-word;
 	}
 
 	.nav-tree-path {
-		font-size: 0.68rem;
-		color: rgba(15, 23, 42, 0.46);
+		font-size: 0.64rem;
+		color: rgba(15, 23, 42, 0.42);
 		word-break: break-word;
 	}
 
 	.nav-tree-fields {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 0.28rem;
-		padding-top: 0.1rem;
+		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+		gap: 0.24rem;
+		padding-top: 0.03rem;
 		border-top: 0;
 	}
 
@@ -529,7 +523,7 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-field-label {
-		font-size: 0.56rem;
+		font-size: 0.54rem;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
@@ -544,23 +538,37 @@ const totalItemCount = navRows.length;
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: flex-end;
-		gap: 0.25rem;
+		gap: 0.2rem;
 		align-content: start;
 	}
 
 	.nav-action {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.18rem;
-		padding-inline: 0.4rem;
-		padding-block: 0.12rem;
+		justify-content: center;
+		gap: 0;
+		width: 1.45rem;
+		height: 1.45rem;
+		padding: 0;
 		border-radius: 0.35rem;
-		font-size: 0.7rem;
+		font-size: 0.74rem;
 	}
 
-	.nav-action-label {
-		font-size: 0.62rem;
-		font-weight: 600;
+	.nav-item-remove {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.45rem;
+		height: 1.45rem;
+		padding: 0;
+		border-radius: 0.35rem;
+		font-size: 0.74rem;
+	}
+
+	.nav-action-icon {
+		font-size: 0.84rem;
+		line-height: 1;
+		font-weight: 700;
 	}
 
 	.nav-tree-footer {
@@ -570,7 +578,7 @@ const totalItemCount = navRows.length;
 	@media (max-width: 992px) {
 		.nav-tree-row {
 			grid-template-columns: 1fr;
-			padding-left: 0.65rem;
+			padding-left: 0.5rem;
 		}
 
 		.nav-tree-rail {
@@ -598,19 +606,15 @@ const totalItemCount = navRows.length;
 		}
 
 		.nav-tree-board {
-			padding: 0.7rem;
+			padding: 0.35rem 0;
 		}
 
 		.nav-tree-row {
-			padding: 0.35rem 0.35rem 0.42rem 0.65rem;
+			padding: 0.3rem 0.2rem 0.34rem 0.5rem;
 		}
 
 		.nav-tree-fields {
 			grid-template-columns: 1fr;
-		}
-
-		.nav-action-label {
-			display: none;
 		}
 	}
 </style>
@@ -884,7 +888,7 @@ const totalItemCount = navRows.length;
 		const kindIcon = document.createElement("span");
 		kindIcon.className = "nav-tree-kind-icon";
 		kindIcon.setAttribute("aria-hidden", "true");
-		kindIcon.innerHTML = hasChildren
+		kindIcon.innerHTML = entry.children?.length
 			? `
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
 					<path d="M3.5 7.5h7l2 2H20.5v8.5h-17z" />
@@ -975,8 +979,8 @@ const totalItemCount = navRows.length;
 		actions.className = "nav-tree-actions";
 		const buttonConfigs = [
 			["navAddChild", "+", addChildLabel, "btn btn-sm btn-outline-secondary nav-action"],
-			["navIndent", ">", indentLabel, "btn btn-sm btn-outline-secondary nav-action"],
-			["navOutdent", "<", outdentLabel, "btn btn-sm btn-outline-secondary nav-action"],
+			["navIndent", "›", indentLabel, "btn btn-sm btn-outline-secondary nav-action"],
+			["navOutdent", "‹", outdentLabel, "btn btn-sm btn-outline-secondary nav-action"],
 		];
 
 		for (const [datasetKey, symbol, label, className] of buttonConfigs) {
@@ -996,7 +1000,8 @@ const totalItemCount = navRows.length;
 		removeButton.type = "button";
 		removeButton.className = "btn btn-sm btn-outline-danger nav-item-remove";
 		removeButton.dataset.navRemove = "";
-		removeButton.textContent = removeLabel;
+		removeButton.setAttribute("aria-label", removeLabel);
+		removeButton.innerHTML = `<span class="nav-action-icon" aria-hidden="true">×</span><span class="visually-hidden">${removeLabel}</span>`;
 		if (isReadOnly) {
 			removeButton.disabled = true;
 		}
@@ -1111,3 +1116,6 @@ const totalItemCount = navRows.length;
 	updateEmptyState();
 	syncPayload();
 </script>
+
+
+
