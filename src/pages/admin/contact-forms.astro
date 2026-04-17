@@ -30,6 +30,10 @@ try {
 } catch (error) {
 	loadError = error instanceof Error ? error.message : t("messages.failedToLoadContactForms");
 }
+
+const totalForms = forms.length;
+const activeForms = forms.filter((form) => form.isActive).length;
+const totalSubmissions = Object.values(submissionCounts).reduce((sum, count) => sum + Number(count || 0), 0);
 ---
 
 <AdminLayout
@@ -44,6 +48,47 @@ try {
 	</div>
 
 	<div class="admin-content-stack">
+		<div class="contact-forms-stats">
+			<div class="contact-forms-stat-card">
+				<span class="contact-forms-stat-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M4 6h16v12H4z" />
+						<path d="M7 10h10" />
+						<path d="M7 14h6" />
+					</svg>
+				</span>
+				<div>
+					<div class="contact-forms-stat-label">{t("messages.totalForms", "Total Forms")}</div>
+					<div class="contact-forms-stat-value">{totalForms}</div>
+				</div>
+			</div>
+			<div class="contact-forms-stat-card">
+				<span class="contact-forms-stat-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M5 12h14" />
+						<path d="M12 5v14" />
+						<path d="M7 7h10" />
+					</svg>
+				</span>
+				<div>
+					<div class="contact-forms-stat-label">{t("messages.activeForms", "Active Forms")}</div>
+					<div class="contact-forms-stat-value">{activeForms}</div>
+				</div>
+			</div>
+			<div class="contact-forms-stat-card">
+				<span class="contact-forms-stat-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M12 5v14" />
+						<path d="M8 9l4-4 4 4" />
+						<path d="M6 19h12" />
+					</svg>
+				</span>
+				<div>
+					<div class="contact-forms-stat-label">{t("messages.totalSubmissions", "Total Submissions")}</div>
+					<div class="contact-forms-stat-value">{totalSubmissions}</div>
+				</div>
+			</div>
+		</div>
 		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.contactFormCreated")}</p>}
 		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.contactFormSaved")}</p>}
 		{Astro.url.searchParams.get("deleted") && <p class="alert alert-info mb-0">{t("messages.contactFormDeleted")}</p>}
@@ -53,3 +98,51 @@ try {
 		<ContactFormTable forms={forms} canUpdate={canManage} canDelete={canManage} canViewLeads={canView} submissionCounts={submissionCounts} />
 	</div>
 </AdminLayout>
+
+<style>
+	.contact-forms-stats {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: 0.75rem;
+	}
+
+	.contact-forms-stat-card {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.85rem 0.95rem;
+		border: 1px solid rgba(var(--gray), 0.14);
+		background: rgba(255, 255, 255, 0.9);
+	}
+
+	.contact-forms-stat-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		height: 2rem;
+		border: 1px solid rgba(var(--gray), 0.16);
+		flex: 0 0 auto;
+		color: rgba(15, 23, 42, 0.74);
+		background: rgba(var(--gray-light), 0.45);
+	}
+
+	.contact-forms-stat-icon svg {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	.contact-forms-stat-label {
+		font-size: 0.72rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: rgba(15, 23, 42, 0.6);
+	}
+
+	.contact-forms-stat-value {
+		margin-top: 0.15rem;
+		font-size: 1.1rem;
+		font-weight: 600;
+		line-height: 1.1;
+	}
+</style>

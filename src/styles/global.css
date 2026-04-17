@@ -724,6 +724,28 @@ body.admin-app input[type="checkbox"] {
 	justify-content: flex-end;
 }
 
+.admin-filter-submit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.45rem;
+	border-radius: 0.8rem;
+}
+
+.admin-filter-submit-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 0.95rem;
+	height: 0.95rem;
+	flex: 0 0 auto;
+}
+
+.admin-filter-submit-icon svg {
+	width: 100%;
+	height: 100%;
+}
+
 .admin-sidebar .drag-handle {
 	display: inline-flex;
 	width: 26px;
@@ -1502,7 +1524,7 @@ body.admin-app .admin-create-action {
 	align-items: center;
 	gap: 0.45rem;
 	padding: 0.55rem 0.85rem;
-	border-radius: 0.6rem;
+	border-radius: 0.8rem;
 	font-weight: 600;
 	line-height: 1;
 	white-space: nowrap;
@@ -1578,19 +1600,13 @@ body.admin-app .admin-page-content > * + * {
 	margin-top: 1rem;
 }
 
-body.admin-app .btn,
-body.admin-app .form-control,
-body.admin-app .form-select,
-body.admin-app .admin-form-surface,
-body.admin-app .admin-table-surface,
-body.admin-app .admin-state-surface,
-body.admin-app .admin-resource-card,
-body.admin-app .admin-form-section,
-body.admin-app .admin-notice,
-body.admin-app .admin-empty-state,
+body.admin-app .btn {
+	border-radius: 0.8rem;
+}
+
 body.admin-app .admin-ghost-button,
 body.admin-app .admin-primary-button {
-	border-radius: 0;
+	border-radius: 0.8rem;
 }
 
 @media (max-width: 991px) {
