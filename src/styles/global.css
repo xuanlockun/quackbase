@@ -486,21 +486,25 @@ img {
 
 .admin-checkbox-field .form-check {
 	display: flex;
-	align-items: flex-start;
-	gap: 0.5rem;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.75rem 0.85rem;
+	border: 1px solid rgba(var(--gray), 0.16);
+	border-radius: 0;
+	background: rgba(255, 255, 255, 0.94);
 }
 
 .admin-checkbox-field .form-check-label {
-	margin-top: -0.1rem;
 	text-transform: none;
 	letter-spacing: normal;
 	font-size: 0.92rem;
 	color: inherit;
+	line-height: 1.35;
 }
 
 .admin-form-section {
 	background: rgba(255, 255, 255, 0.9);
-	border-radius: 1rem;
+	border-radius: 0;
 	border: 1px solid rgba(var(--gray), 0.16);
 	padding: 1.15rem;
 	box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
@@ -586,7 +590,7 @@ img {
 .admin-resource-card {
 	background: rgba(255, 255, 255, 0.9);
 	border: 1px solid rgba(var(--gray), 0.16);
-	border-radius: 1rem;
+	border-radius: 0;
 	padding: 1.15rem;
 	box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
 }
@@ -604,17 +608,19 @@ img {
 
 .admin-check-row {
 	display: flex;
-	align-items: flex-start;
-	gap: 0.7rem;
-	padding: 0.8rem 0.9rem;
+	align-items: center;
+	gap: 0.65rem;
+	padding: 0.75rem 0.85rem;
 	border: 1px solid rgba(var(--gray), 0.18);
-	border-radius: 0.9rem;
+	border-radius: 0;
 	background: rgba(255, 255, 255, 0.92);
 	margin: 0;
 }
 
 .admin-check-row .form-check-input {
-	margin-top: 0.2rem;
+	flex-shrink: 0;
+	margin-top: 0;
+	border-radius: 0;
 }
 
 .admin-sidebar .drag-handle {
@@ -744,6 +750,7 @@ img {
 
 .admin-table-empty-row td {
 	padding: 1.1rem 0.9rem;
+	border-radius: 0;
 }
 
 .admin-check-grid {
@@ -771,13 +778,13 @@ img {
 	display: grid;
 	gap: 0.9rem;
 	padding: 1rem;
-	border-radius: 1rem;
+	border-radius: 0;
 	background: rgba(248, 250, 253, 0.92);
 	border: 1px solid rgba(var(--gray), 0.14);
 }
 
 .localized-editor-tabs .nav-link {
-	border-radius: 999px;
+	border-radius: 0;
 }
 
 .localized-slug-row,
@@ -1298,7 +1305,7 @@ body.admin-app .localized-editor-panel,
 body.admin-app .admin-check-row {
 	background: #fff;
 	border: 1px solid rgba(15, 23, 42, 0.08);
-	border-radius: 0.75rem;
+	border-radius: 0;
 	box-shadow: none;
 }
 
@@ -1342,8 +1349,16 @@ body.admin-app .localized-editor-panel {
 	box-shadow: none;
 }
 
+body.admin-app .badge {
+	border-radius: 0;
+}
+
+body.admin-app .admin-sidebar .drag-handle {
+	border-radius: 0;
+}
+
 body.admin-app .admin-page-shell {
-	border-radius: 0.75rem;
+	border-radius: 0;
 	box-shadow: none;
 	border-color: rgba(15, 23, 42, 0.08);
 }

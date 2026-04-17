@@ -79,7 +79,7 @@ function isImageAsset(asset: MediaAsset): boolean {
 						<p class="mb-0 text-body-secondary">{storageStatus.details}</p>
 					</div>
 					<div class="text-end">
-						<span class:list={["badge rounded-pill", storageStatus.isConfigured ? "text-bg-success" : "text-bg-warning"]}>
+						<span class:list={["badge", storageStatus.isConfigured ? "text-bg-success" : "text-bg-warning"]}>
 							{storageStatus.isConfigured ? t("messages.mediaStorageConfigured") : t("messages.mediaStorageUnconfigured")}
 						</span>
 						{storageStatus.publicBaseUrl && (
