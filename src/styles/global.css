@@ -495,11 +495,14 @@ img {
 }
 
 .admin-checkbox-field .form-check-label {
+	display: block;
+	min-width: 0;
 	text-transform: none;
 	letter-spacing: normal;
 	font-size: 0.92rem;
 	color: inherit;
 	line-height: 1.35;
+	overflow-wrap: anywhere;
 }
 
 .admin-form-section {
@@ -604,6 +607,7 @@ img {
 	display: grid;
 	gap: 0.75rem;
 	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	align-items: stretch;
 }
 
 .admin-check-row {
@@ -615,12 +619,21 @@ img {
 	border-radius: 0;
 	background: rgba(255, 255, 255, 0.92);
 	margin: 0;
+	height: 100%;
 }
 
 .admin-check-row .form-check-input {
 	flex-shrink: 0;
 	margin-top: 0;
 	border-radius: 0;
+}
+
+.admin-check-row > span {
+	display: block;
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	line-height: 1.35;
 }
 
 .admin-sidebar .drag-handle {
