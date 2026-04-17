@@ -14,6 +14,18 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 	}
 
 	try {
+		const env = locals.runtime.env as Record<string, string | undefined>;
+		const accountId = env.CLOUDFLARE_ACCOUNT_ID?.trim() ?? "";
+		if (!accountId) {
+			return Response.json(
+				{
+					ok: false,
+					error: "Cloudflare account ID is not configured.",
+				},
+				{ status: 500 },
+			);
+		}
+
 		const body = request.headers.get("content-type")?.includes("application/json")
 			? await request.json()
 			: Object.fromEntries(await request.formData());
@@ -22,7 +34,7 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			return Response.json({ ok: false, error: "Token is required." }, { status: 400 });
 		}
 
-		const response = await fetch("https://api.cloudflare.com/client/v4/user/tokens/verify", {
+		const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/tokens/verify`, {
 			method: "GET",
 			headers: {
 				Authorization: `Bearer ${secretValue}`,
