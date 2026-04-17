@@ -494,6 +494,19 @@ img {
 	background: rgba(255, 255, 255, 0.94);
 }
 
+.admin-checkbox-field .form-switch {
+	padding-left: 0.75rem;
+}
+
+.admin-checkbox-field .form-switch .form-check-input {
+	width: 2.25em;
+	height: 1.25em;
+	min-width: 2.25em;
+	min-height: 1.25em;
+	border-radius: 2em;
+	flex-shrink: 0;
+}
+
 .admin-checkbox-field .form-check-label {
 	display: block;
 	min-width: 0;

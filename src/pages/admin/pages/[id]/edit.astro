@@ -57,7 +57,17 @@ if (Astro.url.searchParams.get("error")) {
 				<div class="admin-empty-state">
 					<h2>{t("messages.pageNotFound")}</h2>
 					<p class="admin-muted">{t("messages.failedToLoadPages")}</p>
-					<p><a class="btn btn-outline-secondary" href={localizeAdminHref("/admin/pages", language)}>{t("messages.backToPages")}</a></p>
+					<p>
+						<a class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" href={localizeAdminHref("/admin/pages", language)}>
+							<span aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M14 6l-6 6 6 6" />
+									<path d="M20 12H8" />
+								</svg>
+							</span>
+							{t("messages.backToPages")}
+						</a>
+					</p>
 				</div>
 			) : (
 				<PageForm

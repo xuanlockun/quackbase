@@ -70,7 +70,15 @@ const translationTabsLabel = t("labels.languages", "Languages");
 	<div class="admin-content-stack">
 		{loadError && <p class="alert alert-warning mb-0">{loadError}</p>}
 		<div class="admin-surface-header">
-			<a class="btn btn-outline-secondary btn-sm" href="/admin/languages">{t("messages.backToLanguages", "Back to languages")}</a>
+			<a class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2" href="/admin/languages">
+				<span aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M14 6l-6 6 6 6" />
+						<path d="M20 12H8" />
+					</svg>
+				</span>
+				{t("messages.backToLanguages", "Back to languages")}
+			</a>
 		</div>
 		<form
 			data-translation-form

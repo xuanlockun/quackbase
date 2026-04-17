@@ -54,15 +54,20 @@ const formatDateTimeLocal = (value: Date | string) => {
 };
 const pubDateValue = post?.pubDate ? formatDateTimeLocal(post.pubDate) : formatDateTimeLocal(new Date());
 const isDisabled = Boolean(loadError) || !canSubmit;
+const backIcon = `
+	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M14 6l-6 6 6 6" />
+		<path d="M20 12H8" />
+	</svg>
+`;
 ---
 
 <div class="admin-surface-header">
-	<button class="btn btn-outline-secondary btn-sm" type="button" data-admin-back={localizeAdminHref(backHref, language)}>
+	<button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2" type="button" data-admin-back={localizeAdminHref(backHref, language)}>
+		<span aria-hidden="true" set:html={backIcon}></span>
 		{t("actions.back")}
 	</button>
-	<p class="admin-inline-muted mb-0">
-		{canSubmit ? t("messages.changesSaveAdminApi") : t("messages.cannotSaveForm")}
-	</p>
+	{!canSubmit && <p class="admin-inline-muted mb-0">{t("messages.cannotSaveForm")}</p>}
 </div>
 
 {loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}

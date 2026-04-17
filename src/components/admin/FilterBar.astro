@@ -13,6 +13,7 @@ interface SelectField {
 
 interface Props {
 	title?: string;
+	description?: string;
 	searchName?: string;
 	searchValue?: string;
 	searchPlaceholder?: string;
@@ -23,6 +24,7 @@ interface Props {
 
 const {
 	title = "Filters",
+	description = "",
 	searchName = "q",
 	searchValue = "",
 	searchPlaceholder = "Search",
@@ -34,17 +36,21 @@ const {
 
 <section class="card border-0 shadow-sm admin-filter-bar">
 	<div class="card-body">
-		<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-			<div>
-				<h2 class="h6 mb-1">{title}</h2>
-				<p class="mb-0 text-body-secondary small">Refine the current list using one or more filters.</p>
+		{(title || description || resetHref) && (
+			<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+				{(title || description) && (
+					<div>
+						{title && <h2 class="h6 mb-1">{title}</h2>}
+						{description && <p class="mb-0 text-body-secondary small">{description}</p>}
+					</div>
+				)}
+				{resetHref && (
+					<a class="btn btn-sm btn-outline-secondary" href={resetHref}>
+						Clear
+					</a>
+				)}
 			</div>
-			{resetHref && (
-				<a class="btn btn-sm btn-outline-secondary" href={resetHref}>
-					Clear
-				</a>
-			)}
-		</div>
+		)}
 
 		<form method="get" class="row g-3 align-items-end">
 			<div class="col-12 col-lg-4">

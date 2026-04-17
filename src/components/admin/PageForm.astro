@@ -36,6 +36,7 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 const languages = getSupportedLanguages(catalog);
 const initialLanguage = page?.requestedLanguage ?? language;
 const initialShowTitle = page?.showTitle ?? true;
+const showTitleId = "page-show-title";
 const titleTranslations = {
 	[def]: "",
 	...(page?.titleTranslations ?? {}),
@@ -54,6 +55,12 @@ const bannerCatalogJson = JSON.stringify(bannerCatalog);
 const contactFormCatalogJson = JSON.stringify(contactFormCatalog);
 const addSectionLabel = t("actions.addSection") ?? "Add section";
 const sectionDetailsLabel = t("labels.details") ?? "Details";
+const backIcon = `
+	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M14 6l-6 6 6 6" />
+		<path d="M20 12H8" />
+	</svg>
+`;
 const sectionCatalog = [
 	{
 		type: "page_content",
@@ -88,10 +95,11 @@ const initialContactFields = [];
 ---
 
 <div class="admin-surface-header">
-	<a class="btn btn-outline-secondary btn-sm" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
-	<p class="admin-inline-muted mb-0">
-		{canSubmit ? t("messages.changesSavePageRoutes") : t("messages.cannotSavePage")}
-	</p>
+	<a class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2" href={localizeAdminHref(backHref, language)}>
+		<span aria-hidden="true" set:html={backIcon}></span>
+		{t("actions.back")}
+	</a>
+	{!canSubmit && <p class="admin-inline-muted mb-0">{t("messages.cannotSavePage")}</p>}
 </div>
 
 {loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
@@ -125,9 +133,19 @@ const initialContactFields = [];
 			</label>
 			<div class="admin-checkbox-field">
 				<span>{t("labels.showPageTitle", "Show page title")}</span>
-				<div class="form-check">
-					<input class="form-check-input" type="checkbox" name="showTitle" value="1" checked={initialShowTitle} disabled={isDisabled} />
-					<label class="form-check-label">{t("labels.showPageTitleHelp", "Display the page title above the content.")}</label>
+				<div class="form-check form-switch">
+					<input
+						class="form-check-input"
+						type="checkbox"
+						id={showTitleId}
+						name="showTitle"
+						value="1"
+						checked={initialShowTitle}
+						disabled={isDisabled}
+					/>
+					<label class="form-check-label" for={showTitleId}>
+						{t("labels.showPageTitleHelp", "Display the page title above the content.")}
+					</label>
 				</div>
 			</div>
 			<label>

@@ -25,11 +25,20 @@ const { t, language } = getUiTranslations(Astro);
 const submitLabel = mode === "edit" ? t("actions.saveBanner") : t("actions.createBanner");
 const isDisabled = Boolean(loadError) || !canSubmit;
 const isActive = banner?.isActive ?? true;
+const backIcon = `
+	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M14 6l-6 6 6 6" />
+		<path d="M20 12H8" />
+	</svg>
+`;
 ---
 
 <div class="admin-surface-header">
-	<a class="btn btn-outline-secondary btn-sm" href={localizeAdminHref(backHref, language)}>{t("actions.back")}</a>
-	<p class="admin-inline-muted mb-0">{canSubmit ? t("messages.changesSaveAdminApi") : t("messages.cannotSaveForm")}</p>
+	<a class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2" href={localizeAdminHref(backHref, language)}>
+		<span aria-hidden="true" set:html={backIcon}></span>
+		{t("actions.back")}
+	</a>
+	{!canSubmit && <p class="admin-inline-muted mb-0">{t("messages.cannotSaveForm")}</p>}
 </div>
 
 {loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}

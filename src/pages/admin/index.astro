@@ -185,12 +185,7 @@ const quickActions = [
 	pageDescription={t("messages.dashboardIntro", "Overview of your CMS content, site settings, and admin workspace.")}
 >
 	<div class="admin-content-stack">
-		<section class="dashboard-hero">
-			<div class="dashboard-hero-copy">
-				<p class="dashboard-kicker">{t("messages.dashboardWelcome", "Welcome back, {name}.").replace("{name}", session.displayName ?? t("messages.adminUserFallback"))}</p>
-				<h2 class="dashboard-title">{session.displayName ?? t("messages.adminUserFallback")}</h2>
-			</div>
-		</section>
+		<p class="dashboard-kicker mb-0">{t("messages.dashboardWelcome", "Welcome back, {name}.").replace("{name}", session.displayName ?? t("messages.adminUserFallback"))}</p>
 
 		<section>
 			<div class="dashboard-section-head">
@@ -249,32 +244,11 @@ const quickActions = [
 </AdminLayout>
 
 <style>
-	.dashboard-hero {
-		display: grid;
-		align-items: center;
-		padding: 1rem 1.1rem;
-		border: 1px solid rgba(15, 23, 42, 0.08);
-		border-radius: 0;
-		background: #fff;
-	}
-
-	.dashboard-hero-copy {
-		display: grid;
-		gap: 0.2rem;
-	}
-
 	.dashboard-kicker {
 		margin: 0;
 		font-size: 0.95rem;
 		font-weight: 600;
 		color: rgba(15, 23, 42, 0.7);
-	}
-
-	.dashboard-title {
-		margin: 0;
-		font-size: clamp(1.5rem, 2vw, 2rem);
-		line-height: 1.1;
-		font-weight: 700;
 	}
 
 	.dashboard-stat-title {
