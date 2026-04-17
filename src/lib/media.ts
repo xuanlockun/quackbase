@@ -357,6 +357,7 @@ async function putS3Object(config: S3StorageConfig, objectKey: string, file: Fil
 	const url = buildS3ObjectUrl(config, objectKey);
 	const contentType = file.type || "application/octet-stream";
 	const headers = new Headers({
+		host: url.host,
 		"content-type": contentType,
 		"x-amz-content-sha256": await sha256Hex(body),
 		"x-amz-date": getAmzDate(),
@@ -375,6 +376,7 @@ async function putS3Object(config: S3StorageConfig, objectKey: string, file: Fil
 async function deleteS3Object(config: S3StorageConfig, objectKey: string): Promise<void> {
 	const url = buildS3ObjectUrl(config, objectKey);
 	const headers = new Headers({
+		host: url.host,
 		"x-amz-content-sha256": await sha256Hex(""),
 		"x-amz-date": getAmzDate(),
 	});
@@ -391,6 +393,7 @@ async function deleteS3Object(config: S3StorageConfig, objectKey: string): Promi
 async function fetchS3Object(config: S3StorageConfig, objectKey: string): Promise<Response> {
 	const url = buildS3ObjectUrl(config, objectKey);
 	const headers = new Headers({
+		host: url.host,
 		"x-amz-content-sha256": await sha256Hex(""),
 		"x-amz-date": getAmzDate(),
 	});

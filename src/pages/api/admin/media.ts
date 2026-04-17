@@ -28,6 +28,7 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		const db = getDb(locals);
 		let uploadedCount = 0;
 		let hadFailure = false;
+		let failureMessage = "";
 
 		for (const file of files) {
 			try {
@@ -46,17 +47,18 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 					await deleteMediaObject(locals, uploaded.objectKey).catch(() => void 0);
 					throw error;
 				}
-			} catch {
+			} catch (error) {
 				hadFailure = true;
+				failureMessage = failureMessage || (error instanceof Error ? error.message : "The media request failed.");
 			}
 		}
 
 		if (uploadedCount === 0) {
-			return redirect("/admin/media?errorMessage=No files were uploaded successfully.");
+			return redirect(`/admin/media?errorMessage=${encodeURIComponent(failureMessage || "No files were uploaded successfully.")}`);
 		}
 
 		return redirect(
-			`/admin/media?uploaded=${uploadedCount}${hadFailure ? "&errorMessage=Some files failed to upload." : ""}`,
+			`/admin/media?uploaded=${uploadedCount}${hadFailure ? `&errorMessage=${encodeURIComponent(failureMessage || "Some files failed to upload.")}` : ""}`,
 		);
 	} catch {
 		return redirect("/admin/media?errorMessage=The media request failed.");
