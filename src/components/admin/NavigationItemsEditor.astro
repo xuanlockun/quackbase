@@ -134,18 +134,6 @@ const totalItemCount = navRows.length;
 								<div class="nav-tree-summary">
 									<div class="nav-tree-summary-copy">
 										<div class="nav-tree-summary-line">
-											<span class="nav-tree-kind-icon" aria-hidden="true">
-												{hasChildren ? (
-													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-														<path d="M3.5 7.5h7l2 2H20.5v8.5h-17z" />
-													</svg>
-												) : (
-													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-														<path d="M6.5 3.5h7l4 4v12h-11z" />
-														<path d="M13.5 3.5v4h4" />
-													</svg>
-												)}
-											</span>
 											{hasChildren ? (
 												<button
 													class="btn btn-sm btn-outline-secondary nav-tree-toggle"
@@ -463,16 +451,6 @@ const totalItemCount = navRows.length;
 		min-width: 0;
 	}
 
-	.nav-tree-kind-icon {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 0.72rem;
-		height: 0.72rem;
-		color: rgba(15, 23, 42, 0.45);
-		flex: 0 0 auto;
-	}
-
 	.nav-tree-leaf-pill {
 		display: inline-flex;
 		align-items: center;
@@ -499,8 +477,8 @@ const totalItemCount = navRows.length;
 
 	.nav-tree-toggle {
 		line-height: 1;
-		width: 0.92rem;
-		height: 0.92rem;
+		width: 1rem;
+		height: 1rem;
 		padding: 0;
 		display: inline-flex;
 		align-items: center;
@@ -512,13 +490,13 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-toggle-glyph {
-		font-size: 0.74rem;
+		font-size: 0.82rem;
 		font-weight: 700;
 		line-height: 1;
 	}
 
 	.nav-tree-title {
-		font-size: 0.73rem;
+		font-size: 0.78rem;
 		line-height: 1.2;
 		font-weight: 600;
 		min-width: 0;
@@ -529,7 +507,7 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-path {
-		font-size: 0.58rem;
+		font-size: 0.62rem;
 		color: rgba(15, 23, 42, 0.36);
 		min-width: 0;
 		overflow: hidden;
@@ -581,28 +559,28 @@ const totalItemCount = navRows.length;
 		align-items: center;
 		justify-content: center;
 		gap: 0;
-		width: 1.3rem;
-		height: 1.3rem;
-		min-height: 1.3rem;
+		width: 1.45rem;
+		height: 1.45rem;
+		min-height: 1.45rem;
 		padding: 0;
-		border-radius: 0.25rem;
-		font-size: 0.68rem;
+		border-radius: 0.3rem;
+		font-size: 0.72rem;
 	}
 
 	.nav-item-remove {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 1.3rem;
-		height: 1.3rem;
-		min-height: 1.3rem;
+		width: 1.45rem;
+		height: 1.45rem;
+		min-height: 1.45rem;
 		padding: 0;
-		border-radius: 0.25rem;
-		font-size: 0.68rem;
+		border-radius: 0.3rem;
+		font-size: 0.72rem;
 	}
 
 	.nav-action-icon {
-		font-size: 0.78rem;
+		font-size: 0.84rem;
 		line-height: 1;
 		font-weight: 700;
 	}
@@ -1009,22 +987,6 @@ const totalItemCount = navRows.length;
 		summaryCopy.className = "nav-tree-summary-copy";
 		const summaryLine = document.createElement("div");
 		summaryLine.className = "nav-tree-summary-line";
-		const kindIcon = document.createElement("span");
-		kindIcon.className = "nav-tree-kind-icon";
-		kindIcon.setAttribute("aria-hidden", "true");
-		kindIcon.innerHTML = entry.children?.length
-			? `
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M3.5 7.5h7l2 2H20.5v8.5h-17z" />
-				</svg>
-			`
-			: `
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M6.5 3.5h7l4 4v12h-11z" />
-					<path d="M13.5 3.5v4h4" />
-				</svg>
-			`;
-		summaryLine.append(kindIcon);
 
 		const toggleButton = document.createElement("button");
 		toggleButton.type = "button";
