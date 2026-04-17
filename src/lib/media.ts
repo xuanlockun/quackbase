@@ -4,10 +4,18 @@ export interface MediaAsset {
 	id: number;
 	storageProvider: Exclude<MediaStorageProvider, "unconfigured">;
 	objectKey: string;
+	folderPath: string;
 	fileName: string;
 	mimeType: string;
 	sizeBytes: number;
 	publicUrl: string;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+export interface MediaFolderRecord {
+	id: number;
+	folderPath: string;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -20,6 +28,13 @@ interface MediaAssetRow {
 	mime_type: string;
 	size_bytes: number;
 	public_url: string;
+	created_at: string;
+	updated_at: string;
+}
+
+interface MediaFolderRow {
+	id: number;
+	folder_path: string;
 	created_at: string;
 	updated_at: string;
 }
@@ -83,10 +98,22 @@ export async function ensureMediaTables(db: D1Database): Promise<void> {
 			`CREATE INDEX IF NOT EXISTS idx_media_assets_created_at
 			ON media_assets (created_at DESC, id DESC)`,
 		),
+		db.prepare(
+			`CREATE TABLE IF NOT EXISTS media_folders (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				folder_path TEXT NOT NULL UNIQUE,
+				created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+		),
+		db.prepare(
+			`CREATE INDEX IF NOT EXISTS idx_media_folders_created_at
+			ON media_folders (created_at DESC, id DESC)`,
+		),
 	]);
 }
 
-export async function listMediaAssets(db: D1Database): Promise<MediaAsset[]> {
+export async function listMediaAssets(db: D1Database, folderPath = ""): Promise<MediaAsset[]> {
 	await ensureMediaTables(db);
 	const result = await db
 		.prepare(
@@ -96,7 +123,10 @@ export async function listMediaAssets(db: D1Database): Promise<MediaAsset[]> {
 		)
 		.all<MediaAssetRow>();
 
-	return (result.results ?? []).map(toMediaAsset);
+	const normalizedFolderPath = sanitizeMediaFolderPath(folderPath);
+	return (result.results ?? [])
+		.map(toMediaAsset)
+		.filter((asset) => asset.folderPath === normalizedFolderPath);
 }
 
 export async function getMediaAssetById(db: D1Database, id: number): Promise<MediaAsset | null> {
@@ -114,11 +144,86 @@ export async function getMediaAssetById(db: D1Database, id: number): Promise<Med
 	return row ? toMediaAsset(row) : null;
 }
 
+export async function listMediaFolders(db: D1Database): Promise<MediaFolderRecord[]> {
+	await ensureMediaTables(db);
+	const [folderRows, assetRows] = await Promise.all([
+		db
+			.prepare(
+				`SELECT id, folder_path, created_at, updated_at
+				FROM media_folders
+				ORDER BY datetime(created_at) DESC, id DESC`,
+			)
+			.all<MediaFolderRow>(),
+		db
+			.prepare(
+				`SELECT object_key
+				FROM media_assets
+				ORDER BY datetime(created_at) DESC, id DESC`,
+			)
+			.all<{ object_key: string }>(),
+	]);
+
+	const folders = new Map<string, MediaFolderRecord>();
+	for (const row of folderRows.results ?? []) {
+		const normalized = sanitizeMediaFolderPath(row.folder_path);
+		if (!normalized) {
+			continue;
+		}
+
+		folders.set(normalized, {
+			id: row.id,
+			folderPath: normalized,
+			createdAt: new Date(row.created_at),
+			updatedAt: new Date(row.updated_at),
+		});
+	}
+
+	for (const row of assetRows.results ?? []) {
+		const folderPath = getMediaAssetFolderPath(row.object_key);
+		if (!folderPath || folders.has(folderPath)) {
+			continue;
+		}
+
+		folders.set(folderPath, {
+			id: 0,
+			folderPath,
+			createdAt: new Date(0),
+			updatedAt: new Date(0),
+		});
+	}
+
+	return [...folders.values()].sort((left, right) => left.folderPath.localeCompare(right.folderPath));
+}
+
+export async function createMediaFolder(db: D1Database, folderPath: string): Promise<MediaFolderRecord> {
+	await ensureMediaTables(db);
+	const normalized = sanitizeMediaFolderPath(folderPath);
+	if (!normalized) {
+		throw new Error("Folder name is required.");
+	}
+
+	const result = await db
+		.prepare(
+			`INSERT INTO media_folders (folder_path, created_at, updated_at)
+			VALUES (?1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+		)
+		.bind(normalized)
+		.run();
+
+	return {
+		id: Number(result.meta.last_row_id ?? 0),
+		folderPath: normalized,
+		createdAt: new Date(),
+		updatedAt: new Date(),
+	};
+}
+
 export async function createMediaAsset(
 	db: D1Database,
 	input: {
 		storageProvider: Exclude<MediaStorageProvider, "unconfigured">;
 		objectKey: string;
+		folderPath?: string;
 		fileName: string;
 		mimeType: string;
 		sizeBytes: number;
@@ -203,6 +308,7 @@ export function getMediaStorageStatus(locals: App.Locals): MediaStorageStatus {
 export async function uploadMediaObject(
 	locals: App.Locals,
 	file: File,
+	folderPath = "",
 ): Promise<{
 	storageProvider: Exclude<MediaStorageProvider, "unconfigured">;
 	objectKey: string;
@@ -214,7 +320,7 @@ export async function uploadMediaObject(
 	}
 
 	const fileName = sanitizeMediaFileName(file.name || "upload");
-	const objectKey = makeMediaObjectKey(fileName);
+	const objectKey = makeMediaObjectKey(fileName, folderPath);
 	const publicUrl = buildPublicUrl(backend, objectKey);
 
 	if (backend.provider === "r2") {
@@ -286,6 +392,7 @@ function toMediaAsset(row: MediaAssetRow): MediaAsset {
 		id: row.id,
 		storageProvider: row.storage_provider === "s3" ? "s3" : "r2",
 		objectKey: row.object_key,
+		folderPath: getMediaAssetFolderPath(row.object_key),
 		fileName: row.file_name,
 		mimeType: row.mime_type,
 		sizeBytes: Number(row.size_bytes ?? 0),
@@ -530,12 +637,14 @@ function buildMediaResponseHeaders(fileName: string, mimeType: string, size: str
 	return headers;
 }
 
-function makeMediaObjectKey(fileName: string): string {
+function makeMediaObjectKey(fileName: string, folderPath = ""): string {
 	const now = new Date();
 	const year = String(now.getUTCFullYear());
 	const month = String(now.getUTCMonth() + 1).padStart(2, "0");
 	const id = crypto.randomUUID();
-	return `${DEFAULT_MEDIA_PREFIX}/${year}/${month}/${id}-${fileName}`;
+	const folderPrefix = sanitizeMediaFolderPath(folderPath);
+	const folderSegment = folderPrefix ? `${folderPrefix}/` : "";
+	return `${DEFAULT_MEDIA_PREFIX}/${folderSegment}${year}/${month}/${id}-${fileName}`;
 }
 
 function sanitizeMediaFileName(fileName: string): string {
@@ -546,6 +655,41 @@ function sanitizeMediaFileName(fileName: string): string {
 		.replace(/-+/g, "-")
 		.replace(/^-+|-+$/g, "");
 	return normalized || "upload";
+}
+
+function sanitizeMediaFolderPath(folderPath: string): string {
+	const normalized = folderPath
+		.trim()
+		.replace(/^\/+|\/+$/g, "")
+		.split("/")
+		.map((segment) => sanitizeMediaFolderSegment(segment))
+		.filter(Boolean)
+		.join("/");
+	return normalized;
+}
+
+function sanitizeMediaFolderSegment(segment: string): string {
+	return segment
+		.trim()
+		.replace(/\s+/g, "-")
+		.replace(/[^a-zA-Z0-9._-]+/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^-+|-+$/g, "")
+		.toLowerCase();
+}
+
+function getMediaAssetFolderPath(objectKey: string): string {
+	const segments = trimSlashes(objectKey).split("/").filter(Boolean);
+	if (segments[0] !== DEFAULT_MEDIA_PREFIX || segments.length < 4) {
+		return "";
+	}
+
+	const folderSegments = segments.slice(1, -3);
+	if (folderSegments.length === 0) {
+		return "";
+	}
+
+	return sanitizeMediaFolderPath(folderSegments.join("/"));
 }
 
 function sanitizeHeaderValue(value: string): string {

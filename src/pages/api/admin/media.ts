@@ -17,6 +17,7 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 
 	try {
 		const formData = await request.formData();
+		const folderPath = String(formData.get("folderPath") ?? "").trim();
 		const files = formData
 			.getAll("files")
 			.filter((entry): entry is File => entry instanceof File && entry.size > 0);
@@ -32,11 +33,12 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 
 		for (const file of files) {
 			try {
-				const uploaded = await uploadMediaObject(locals, file);
+				const uploaded = await uploadMediaObject(locals, file, folderPath);
 				try {
 					await createMediaAsset(db, {
 						storageProvider: uploaded.storageProvider,
 						objectKey: uploaded.objectKey,
+						folderPath,
 						fileName: file.name || uploaded.objectKey.split("/").pop() || "upload",
 						mimeType: file.type || "application/octet-stream",
 						sizeBytes: file.size,

@@ -1,7 +1,7 @@
 ---
 interface Props {
 	label: string;
-	icon: "edit" | "delete" | "view" | "toggle" | "open";
+	icon: "edit" | "delete" | "view" | "toggle" | "open" | "copy";
 	href?: string;
 	type?: "button" | "submit";
 	variant?: string;
@@ -46,6 +46,12 @@ const icons: Record<Props["icon"], string> = {
 			<path d="M7 17l10-10" />
 			<path d="M10 7h7v7" />
 			<path d="M5 5h4v4" />
+		</svg>
+	`,
+	copy: `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M9 9h10v10H9z" />
+			<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
 		</svg>
 	`,
 };

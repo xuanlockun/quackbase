@@ -4,7 +4,13 @@ export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import IconAction from "../../components/admin/IconAction.astro";
 import { getDb } from "../../lib/blog";
-import { getMediaStorageStatus, listMediaAssets, type MediaAsset } from "../../lib/media";
+import {
+	getMediaStorageStatus,
+	listMediaAssets,
+	listMediaFolders,
+	type MediaAsset,
+	type MediaFolderRecord,
+} from "../../lib/media";
 import { getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
@@ -16,14 +22,23 @@ const canManage = session.isSuperadmin || session.permissions.includes("site.man
 const { t } = getUiTranslations(Astro);
 const storageStatus = getMediaStorageStatus(Astro.locals);
 
-let assets: MediaAsset[] = [];
+const currentFolder = normalizeFolderPath(Astro.url.searchParams.get("folder") ?? "");
+const currentView = Astro.url.searchParams.get("view") === "list" ? "list" : "grid";
+
+let allAssets: MediaAsset[] = [];
+let folders: MediaFolderRecord[] = [];
 let loadError = "";
 
 try {
-	assets = await listMediaAssets(getDb(Astro.locals));
+	const db = getDb(Astro.locals);
+	[allAssets, folders] = await Promise.all([listMediaAssets(db), listMediaFolders(db)]);
 } catch (error) {
 	loadError = error instanceof Error ? error.message : t("messages.mediaLoadFailed");
 }
+
+const visibleAssets = allAssets.filter((asset) => asset.folderPath === currentFolder);
+const folderEntries = buildFolderEntries(folders, allAssets);
+const activeFolderLabel = currentFolder ? formatFolderLabel(currentFolder) : t("messages.allMedia", "All media");
 
 function formatBytes(bytes: number): string {
 	if (!Number.isFinite(bytes) || bytes <= 0) {
@@ -56,6 +71,99 @@ function getAssetPreviewUrl(asset: MediaAsset): string {
 function isImageAsset(asset: MediaAsset): boolean {
 	return asset.mimeType.startsWith("image/");
 }
+
+function isVideoAsset(asset: MediaAsset): boolean {
+	return asset.mimeType.startsWith("video/");
+}
+
+function getAssetKind(asset: MediaAsset): string {
+	if (isImageAsset(asset)) {
+		return "Image";
+	}
+
+	if (isVideoAsset(asset)) {
+		return "Video";
+	}
+
+	return asset.mimeType || "File";
+}
+
+function buildFolderEntries(
+	folderRecords: MediaFolderRecord[],
+	assets: MediaAsset[],
+): Array<{ folderPath: string; label: string; depth: number; count: number; isActive: boolean }> {
+	const folderMap = new Map<string, MediaFolderRecord>();
+	for (const record of folderRecords) {
+		const normalized = normalizeFolderPath(record.folderPath);
+		if (normalized) {
+			folderMap.set(normalized, record);
+		}
+	}
+
+	for (const asset of assets) {
+		if (asset.folderPath && !folderMap.has(asset.folderPath)) {
+			folderMap.set(asset.folderPath, {
+				id: 0,
+				folderPath: asset.folderPath,
+				createdAt: new Date(0),
+				updatedAt: new Date(0),
+			});
+		}
+	}
+
+	const folderPaths = [...folderMap.keys()].sort((left, right) => left.localeCompare(right));
+	return folderPaths.map((folderPath) => {
+		const depth = folderPath.split("/").filter(Boolean).length;
+		const label = folderPath.split("/").filter(Boolean).at(-1) || folderPath;
+		const count = assets.filter((asset) => asset.folderPath === folderPath).length;
+		return {
+			folderPath,
+			label,
+			depth,
+			count,
+			isActive: folderPath === currentFolder,
+		};
+	});
+}
+
+function buildFolderHref(folderPath: string, view = currentView): string {
+	const params = new URLSearchParams();
+	if (folderPath) {
+		params.set("folder", folderPath);
+	}
+	if (view !== "grid") {
+		params.set("view", view);
+	}
+	const query = params.toString();
+	return query ? `/admin/media?${query}` : "/admin/media";
+}
+
+function normalizeFolderPath(value: string): string {
+	return value
+		.trim()
+		.replace(/^\/+|\/+$/g, "")
+		.split("/")
+		.map((segment) =>
+			segment
+				.trim()
+				.replace(/\s+/g, "-")
+				.replace(/[^a-zA-Z0-9._-]+/g, "-")
+				.replace(/-+/g, "-")
+				.replace(/^-+|-+$/g, "")
+				.toLowerCase(),
+		)
+		.filter(Boolean)
+		.join("/");
+}
+
+function formatFolderLabel(folderPath: string): string {
+	const segments = folderPath.split("/").filter(Boolean);
+	if (segments.length === 0) {
+		return t("messages.allMedia", "All media");
+	}
+
+	return segments.join(" / ");
+}
 ---
 
 <AdminLayout
@@ -65,9 +173,10 @@ function isImageAsset(asset: MediaAsset): boolean {
 	pageTitle={t("headings.mediaLibrary")}
 	pageDescription={t("messages.mediaLibraryHelp")}
 >
-	<div class="admin-content-stack">
+	<div class="admin-content-stack media-library-shell">
 		{Astro.url.searchParams.get("uploaded") && <p class="alert alert-success mb-0">{t("messages.mediaUploadSuccess")}</p>}
 		{Astro.url.searchParams.get("deleted") && <p class="alert alert-success mb-0">{t("messages.mediaDeleteSuccess")}</p>}
+		{Astro.url.searchParams.get("folderCreated") && <p class="alert alert-success mb-0">{t("messages.folderCreated", "Folder created.")}</p>}
 		{Astro.url.searchParams.get("errorMessage") ? (
 			<p class="alert alert-danger mb-0">{Astro.url.searchParams.get("errorMessage")}</p>
 		) : (
@@ -75,24 +184,42 @@ function isImageAsset(asset: MediaAsset): boolean {
 		)}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 
-		<section class="card border-0 shadow-sm">
-			<div class="card-body">
-				<div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
-					<div>
-						<p class="text-uppercase letter-spacing-wide text-muted mb-2">{t("labels.status")}</p>
-						<h2 class="h5 mb-1">{storageStatus.label}</h2>
-						<p class="mb-0 text-body-secondary">{storageStatus.details}</p>
-					</div>
-					<div class="text-end">
-						<span class:list={["badge", storageStatus.isConfigured ? "text-bg-success" : "text-bg-warning"]}>
-							{storageStatus.isConfigured ? t("messages.mediaStorageConfigured") : t("messages.mediaStorageUnconfigured")}
-						</span>
-						{storageStatus.publicBaseUrl && (
-							<p class="mt-2 mb-0 small text-body-secondary text-break">{storageStatus.publicBaseUrl}</p>
-						)}
-					</div>
+		<div class="media-library-toolbar admin-form-surface">
+			<div class="d-flex flex-wrap gap-3 justify-content-between align-items-start">
+				<div>
+					<p class="admin-inline-muted text-uppercase mb-2">{t("labels.status")}</p>
+					<h2 class="h5 mb-1">{storageStatus.label}</h2>
+					<p class="mb-0 text-body-secondary">{storageStatus.details}</p>
 				</div>
-				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="mt-4">
+				<div class="text-end">
+					<span class:list={["badge", storageStatus.isConfigured ? "text-bg-success" : "text-bg-warning"]}>
+						{storageStatus.isConfigured ? t("messages.mediaStorageConfigured") : t("messages.mediaStorageUnconfigured")}
+					</span>
+					{storageStatus.publicBaseUrl && <p class="mt-2 mb-0 small text-body-secondary text-break">{storageStatus.publicBaseUrl}</p>}
+				</div>
+			</div>
+
+			<div class="media-library-actions">
+				<form method="post" action="/api/admin/media/folders" class="media-folder-form">
+					<label class="form-label fw-semibold" for="folderPath">{t("actions.createFolder", "Create folder")}</label>
+					<div class="d-flex gap-2 flex-wrap">
+						<input
+							id="folderPath"
+							class="form-control"
+							type="text"
+							name="folderPath"
+							placeholder="images/banners"
+							disabled={!storageStatus.isConfigured || !canManage}
+						/>
+						<button class="btn btn-outline-secondary" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
+							{t("actions.createFolder", "Create folder")}
+						</button>
+					</div>
+					<p class="form-text mb-0">Folders are lightweight prefixes. Use slash-separated names to nest folders.</p>
+				</form>
+
+				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="media-upload-form">
+					<input type="hidden" name="folderPath" value={currentFolder} />
 					<label class="form-label fw-semibold" for="mediaFiles">{t("actions.uploadMedia")}</label>
 					<input
 						id="mediaFiles"
@@ -102,51 +229,196 @@ function isImageAsset(asset: MediaAsset): boolean {
 						multiple
 						disabled={!storageStatus.isConfigured || !canManage}
 					/>
-					<p class="form-text mb-3">{t("messages.mediaUploadHint")}</p>
+					<p class="form-text mb-3">Uploading into <strong>{activeFolderLabel}</strong>.</p>
 					<button class="btn btn-primary" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
 						{t("actions.uploadMedia")}
 					</button>
 				</form>
 			</div>
-		</section>
+		</div>
 
-		<section class="card border-0 shadow-sm">
-			<div class="card-body">
-				<div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-					<h2 class="h5 mb-0">{t("headings.mediaLibrary")}</h2>
-					<span class="text-body-secondary small">{assets.length} items</span>
+		<div class="media-library-layout">
+			<aside class="media-folder-panel admin-form-surface">
+				<div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+					<h2 class="h6 mb-0">Folders</h2>
+					<span class="text-body-secondary small">{folderEntries.length} folders</span>
+				</div>
+				<nav class="media-folder-list" aria-label="Media folders">
+					<a class:list={["media-folder-item", !currentFolder ? "is-active" : ""]} href={buildFolderHref("", currentView)}>
+						<span class="media-folder-title">{t("messages.allMedia", "All media")}</span>
+						<span class="media-folder-count">{allAssets.length}</span>
+					</a>
+					{folderEntries.length === 0 ? (
+						<p class="text-body-secondary small mb-0">No folders yet.</p>
+					) : (
+						folderEntries.map((folder) => (
+							<a
+								class:list={["media-folder-item", folder.isActive ? "is-active" : ""]}
+								href={buildFolderHref(folder.folderPath, currentView)}
+								style={`--folder-depth: ${Math.min(folder.depth, 6)};`}
+							>
+								<span class="media-folder-title text-truncate">{folder.label}</span>
+								<span class="media-folder-count">{folder.count}</span>
+							</a>
+						))
+					)}
+				</nav>
+			</aside>
+
+			<section class="media-content-panel admin-form-surface">
+				<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+					<div>
+						<h2 class="h5 mb-1">{activeFolderLabel}</h2>
+						<p class="admin-inline-muted mb-0">{visibleAssets.length} items in this folder</p>
+					</div>
+					<div class="d-flex flex-wrap gap-2">
+						<a class:list={["btn btn-sm", currentView === "grid" ? "btn-primary" : "btn-outline-secondary"]} href={buildFolderHref(currentFolder, "grid")}>
+							Grid
+						</a>
+						<a class:list={["btn btn-sm", currentView === "list" ? "btn-primary" : "btn-outline-secondary"]} href={buildFolderHref(currentFolder, "list")}>
+							List
+						</a>
+					</div>
 				</div>
 
-				{assets.length === 0 ? (
-					<p class="text-body-secondary mb-0">{t("messages.noMediaYet")}</p>
+				{visibleAssets.length === 0 ? (
+					<div class="media-empty-state">
+						<h3 class="h6 mb-1">No files in this folder yet.</h3>
+						<p class="mb-0 text-body-secondary">Upload media here or create a new folder to organize files.</p>
+					</div>
+				) : currentView === "list" ? (
+					<div class="table-responsive media-table-wrap">
+						<table class="table table-sm align-middle mb-0">
+							<thead>
+								<tr>
+									<th class="media-preview-col">Preview</th>
+									<th>Name</th>
+									<th>Type</th>
+									<th>Size</th>
+									<th>Updated</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								{visibleAssets.map((asset) => {
+									const previewUrl = getAssetPreviewUrl(asset);
+									const publicUrl = asset.publicUrl || previewUrl;
+									return (
+										<tr>
+											<td>
+												<div class="media-list-thumb">
+													{isImageAsset(asset) ? (
+														<img src={previewUrl} alt={asset.fileName} loading="lazy" />
+													) : isVideoAsset(asset) ? (
+														<video src={previewUrl} controls preload="metadata" />
+													) : (
+														<div class="media-fallback-chip">{asset.mimeType || "FILE"}</div>
+													)}
+												</div>
+											</td>
+											<td>
+												<div class="d-grid">
+													<strong class="text-break">{asset.fileName}</strong>
+													<small class="text-body-secondary text-break">{asset.folderPath || "root"}</small>
+												</div>
+											</td>
+											<td>{getAssetKind(asset)}</td>
+											<td>{formatBytes(asset.sizeBytes)}</td>
+											<td>{formatDate(asset.createdAt)}</td>
+											<td>
+												<div class="d-flex flex-wrap gap-2">
+													<IconAction
+														href={previewUrl}
+														icon="view"
+														label={t("actions.view")}
+														attrs={{ target: "_blank", rel: "noopener noreferrer" }}
+													/>
+													<button
+														class="btn btn-sm btn-outline-secondary admin-icon-action"
+														type="button"
+														data-copy-media-url
+														data-copy-url={publicUrl}
+														aria-label={t("actions.copyUrl", "Copy URL")}
+														title={t("actions.copyUrl", "Copy URL")}
+														disabled={!publicUrl}
+													>
+														<span class="admin-icon-action-icon" aria-hidden="true">
+															<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+																<path d="M9 9h10v10H9z" />
+																<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+															</svg>
+														</span>
+														<span class="visually-hidden">{t("actions.copyUrl", "Copy URL")}</span>
+													</button>
+													{storageStatus.isConfigured && canManage && (
+														<form method="post" action={`/api/admin/media/${asset.id}`} class="d-inline">
+															<input type="hidden" name="_action" value="delete" />
+															<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
+														</form>
+													)}
+												</div>
+											</td>
+										</tr>
+									);
+								})}
+							</tbody>
+						</table>
+					</div>
 				) : (
 					<div class="row g-3">
-						{assets.map((asset) => {
+						{visibleAssets.map((asset) => {
 							const previewUrl = getAssetPreviewUrl(asset);
+							const publicUrl = asset.publicUrl || previewUrl;
 							return (
 								<div class="col-12 col-md-6 col-xl-4">
-									<article class="card h-100 border-0 shadow-sm">
-										{isImageAsset(asset) ? (
-											<img src={previewUrl} alt={asset.fileName} class="card-img-top media-preview-image" loading="lazy" />
-										) : (
-											<div class="media-preview-fallback d-flex align-items-center justify-content-center">
-												<span class="text-uppercase fw-semibold text-body-secondary">{asset.mimeType || "FILE"}</span>
+									<article class="media-card">
+										<div class="media-card-preview">
+											{isImageAsset(asset) ? (
+												<img src={previewUrl} alt={asset.fileName} class="media-preview-image" loading="lazy" />
+											) : isVideoAsset(asset) ? (
+												<video src={previewUrl} class="media-preview-video" controls preload="metadata" />
+											) : (
+												<div class="media-preview-fallback d-flex align-items-center justify-content-center">
+													<span class="text-uppercase fw-semibold text-body-secondary">{asset.mimeType || "FILE"}</span>
+												</div>
+											)}
+										</div>
+										<div class="media-card-body">
+											<div class="d-flex align-items-start justify-content-between gap-2">
+												<div class="min-w-0">
+													<h3 class="h6 text-break mb-1">{asset.fileName}</h3>
+													<p class="text-body-secondary small mb-0 text-truncate">{asset.folderPath || "root"}</p>
+												</div>
+												<span class="badge text-bg-light">{getAssetKind(asset)}</span>
 											</div>
-										)}
-										<div class="card-body">
-											<h3 class="h6 text-break mb-2">{asset.fileName}</h3>
-											<ul class="list-unstyled small text-body-secondary mb-3">
-												<li>{asset.mimeType}</li>
-												<li>{formatBytes(asset.sizeBytes)}</li>
-												<li>{formatDate(asset.createdAt)}</li>
-											</ul>
-											<div class="d-flex flex-wrap gap-2">
+											<div class="media-card-meta">
+												<span>{formatBytes(asset.sizeBytes)}</span>
+												<span>{formatDate(asset.createdAt)}</span>
+											</div>
+											<div class="d-flex flex-wrap gap-2 mt-3">
 												<IconAction
 													href={previewUrl}
 													icon="view"
 													label={t("actions.view")}
 													attrs={{ target: "_blank", rel: "noopener noreferrer" }}
 												/>
+												<button
+													class="btn btn-sm btn-outline-secondary admin-icon-action"
+													type="button"
+													data-copy-media-url
+													data-copy-url={publicUrl}
+													aria-label={t("actions.copyUrl", "Copy URL")}
+													title={t("actions.copyUrl", "Copy URL")}
+													disabled={!publicUrl}
+												>
+													<span class="admin-icon-action-icon" aria-hidden="true">
+														<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+															<path d="M9 9h10v10H9z" />
+															<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+														</svg>
+													</span>
+													<span class="visually-hidden">{t("actions.copyUrl", "Copy URL")}</span>
+												</button>
 												{storageStatus.isConfigured && canManage && (
 													<form method="post" action={`/api/admin/media/${asset.id}`} class="d-inline">
 														<input type="hidden" name="_action" value="delete" />
@@ -161,21 +433,202 @@ function isImageAsset(asset: MediaAsset): boolean {
 						})}
 					</div>
 				)}
-			</div>
-		</section>
+			</section>
+		</div>
 	</div>
 </AdminLayout>
 
+<script type="module">
+	const copyButtons = document.querySelectorAll("[data-copy-media-url]");
+
+	copyButtons.forEach((button) => {
+		if (!(button instanceof HTMLButtonElement)) {
+			return;
+		}
+
+		button.addEventListener("click", async () => {
+			const url = button.dataset.copyUrl?.trim() ?? "";
+			if (!url || !navigator.clipboard) {
+				return;
+			}
+
+			try {
+				await navigator.clipboard.writeText(url);
+				const originalLabel = button.getAttribute("aria-label") ?? "Copy URL";
+				button.classList.add("is-copied");
+				button.setAttribute("aria-label", "Copied");
+				button.title = "Copied";
+				window.setTimeout(() => {
+					button.classList.remove("is-copied");
+					button.setAttribute("aria-label", originalLabel);
+					button.title = originalLabel;
+				}, 1200);
+			} catch {
+				// Ignore clipboard failures and keep the button usable.
+			}
+		});
+	});
+</script>
+
 <style>
-	.media-preview-image {
+	.media-library-layout {
+		display: grid;
+		grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+		gap: 1rem;
+		align-items: start;
+	}
+
+	.media-library-toolbar {
+		display: grid;
+		gap: 1.25rem;
+	}
+
+	.media-library-actions {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1rem;
+	}
+
+	.media-folder-form,
+	.media-upload-form {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.media-folder-panel,
+	.media-content-panel {
+		min-width: 0;
+	}
+
+	.media-folder-list {
+		display: grid;
+		gap: 0.375rem;
+	}
+
+	.media-folder-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding: 0.6rem 0.75rem;
+		padding-left: calc(0.75rem + (var(--folder-depth, 0) * 0.65rem));
+		border-radius: 0.75rem;
+		text-decoration: none;
+		color: inherit;
+		background: transparent;
+		transition: background-color 0.15s ease, color 0.15s ease;
+	}
+
+	.media-folder-item:hover,
+	.media-folder-item.is-active {
+		background: rgba(15, 23, 42, 0.06);
+	}
+
+	.media-folder-title {
+		min-width: 0;
+		font-weight: 600;
+	}
+
+	.media-folder-count {
+		flex: 0 0 auto;
+		font-size: 0.75rem;
+		color: var(--bs-secondary-color);
+	}
+
+	.media-empty-state {
+		padding: 1rem;
+		border: 1px dashed rgba(15, 23, 42, 0.15);
+		background: rgba(248, 250, 252, 0.75);
+	}
+
+	.media-card {
+		height: 100%;
+		overflow: hidden;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 0.9rem;
+		background: #fff;
+		box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+	}
+
+	.media-card-preview {
+		background: #f8fafc;
+	}
+
+	.media-preview-image,
+	.media-preview-video {
+		display: block;
 		width: 100%;
 		height: 220px;
 		object-fit: cover;
 		background: #f8fafc;
 	}
 
+	.media-preview-video {
+		object-fit: contain;
+		background: #0f172a;
+	}
+
 	.media-preview-fallback {
 		min-height: 220px;
 		background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(14, 165, 233, 0.12));
+	}
+
+	.media-card-body {
+		display: grid;
+		gap: 0.75rem;
+		padding: 1rem;
+	}
+
+	.media-card-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1rem;
+		font-size: 0.8125rem;
+		color: var(--bs-secondary-color);
+	}
+
+	.media-table-wrap {
+		border-radius: 0.75rem;
+		overflow: hidden;
+	}
+
+	.media-preview-col {
+		width: 112px;
+	}
+
+	.media-list-thumb {
+		width: 96px;
+		height: 72px;
+		overflow: hidden;
+		border-radius: 0.65rem;
+		background: #f8fafc;
+	}
+
+	.media-list-thumb img,
+	.media-list-thumb video {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.media-fallback-chip {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: 100%;
+		padding: 0.5rem;
+		font-size: 0.72rem;
+		font-weight: 600;
+		text-align: center;
+		color: var(--bs-secondary-color);
+	}
+
+	@media (max-width: 991.98px) {
+		.media-library-layout,
+		.media-library-actions {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>
