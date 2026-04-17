@@ -302,7 +302,8 @@ function formatFolderLabel(folderPath: string): string {
 							<tbody>
 								{visibleAssets.map((asset) => {
 									const previewUrl = getAssetPreviewUrl(asset);
-									const publicUrl = asset.publicUrl || previewUrl;
+									const publicUrl = asset.publicUrl.trim();
+									const canCopyPublicUrl = Boolean(publicUrl);
 									return (
 										<tr>
 											<td>
@@ -340,7 +341,7 @@ function formatFolderLabel(folderPath: string): string {
 														data-copy-url={publicUrl}
 														aria-label={t("actions.copyUrl", "Copy URL")}
 														title={t("actions.copyUrl", "Copy URL")}
-														disabled={!publicUrl}
+														disabled={!canCopyPublicUrl}
 													>
 														<span class="admin-icon-action-icon" aria-hidden="true">
 															<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -348,7 +349,7 @@ function formatFolderLabel(folderPath: string): string {
 																<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
 															</svg>
 														</span>
-														<span class="visually-hidden">{t("actions.copyUrl", "Copy URL")}</span>
+														<span class="visually-hidden">{canCopyPublicUrl ? t("actions.copyUrl", "Copy URL") : "No public URL configured"}</span>
 													</button>
 													{storageStatus.isConfigured && canManage && (
 														<form method="post" action={`/api/admin/media/${asset.id}`} class="d-inline">
@@ -368,7 +369,8 @@ function formatFolderLabel(folderPath: string): string {
 					<div class="row g-3">
 						{visibleAssets.map((asset) => {
 							const previewUrl = getAssetPreviewUrl(asset);
-							const publicUrl = asset.publicUrl || previewUrl;
+							const publicUrl = asset.publicUrl.trim();
+							const canCopyPublicUrl = Boolean(publicUrl);
 							return (
 								<div class="col-12 col-md-6 col-xl-4">
 									<article class="media-card">
@@ -409,7 +411,7 @@ function formatFolderLabel(folderPath: string): string {
 													data-copy-url={publicUrl}
 													aria-label={t("actions.copyUrl", "Copy URL")}
 													title={t("actions.copyUrl", "Copy URL")}
-													disabled={!publicUrl}
+													disabled={!canCopyPublicUrl}
 												>
 													<span class="admin-icon-action-icon" aria-hidden="true">
 														<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -417,7 +419,7 @@ function formatFolderLabel(folderPath: string): string {
 															<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
 														</svg>
 													</span>
-													<span class="visually-hidden">{t("actions.copyUrl", "Copy URL")}</span>
+													<span class="visually-hidden">{canCopyPublicUrl ? t("actions.copyUrl", "Copy URL") : "No public URL configured"}</span>
 												</button>
 												{storageStatus.isConfigured && canManage && (
 													<form method="post" action={`/api/admin/media/${asset.id}`} class="d-inline">
@@ -426,6 +428,11 @@ function formatFolderLabel(folderPath: string): string {
 													</form>
 												)}
 											</div>
+											{!canCopyPublicUrl && (
+												<p class="text-body-secondary small mb-0">
+													No public URL is configured for this asset. Set `S3_PUBLIC_BASE_URL`, `R2_PUBLIC_BASE_URL`, or `MEDIA_PUBLIC_BASE_URL`.
+												</p>
+											)}
 										</div>
 									</article>
 								</div>

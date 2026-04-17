@@ -412,6 +412,8 @@ function resolveStorageBackend(locals: App.Locals): StorageBackend {
 			publicBaseUrl: normalizeBaseUrl(
 				typeof env.R2_PUBLIC_BASE_URL === "string"
 					? env.R2_PUBLIC_BASE_URL
+					: typeof env.S3_PUBLIC_BASE_URL === "string"
+						? env.S3_PUBLIC_BASE_URL
 					: typeof env.MEDIA_PUBLIC_BASE_URL === "string"
 						? env.MEDIA_PUBLIC_BASE_URL
 						: "",
