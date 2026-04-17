@@ -154,7 +154,7 @@ const totalItemCount = navRows.length;
 													aria-expanded="true"
 													aria-label={t("labels.collapse", "Collapse")}
 												>
-													<span class="nav-tree-toggle-glyph" aria-hidden="true">▼</span>
+													<span class="nav-tree-toggle-glyph" aria-hidden="true">-</span>
 												</button>
 											) : null}
 										</div>
@@ -370,9 +370,9 @@ const totalItemCount = navRows.length;
 		position: relative;
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
-		gap: 0.2rem;
-		align-items: start;
-		padding: 0.14rem 0.18rem 0.16rem var(--nav-row-padding-left);
+		gap: 0.16rem;
+		align-items: center;
+		padding: 0.12rem 0.16rem 0.12rem var(--nav-row-padding-left);
 		border-radius: 0;
 		border: 0;
 		background: transparent;
@@ -433,27 +433,34 @@ const totalItemCount = navRows.length;
 	.nav-tree-body {
 		min-width: 0;
 		display: grid;
-		gap: 0.14rem;
+		gap: 0;
 	}
 
 	.nav-tree-summary {
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		justify-content: space-between;
-		gap: 0.25rem;
+		gap: 0.22rem;
+		min-width: 0;
 	}
 
 	.nav-tree-summary-copy {
 		min-width: 0;
-		display: grid;
-		gap: 0.02rem;
+		display: flex;
+		align-items: center;
+		gap: 0.18rem;
+		flex-wrap: nowrap;
+		width: 100%;
+		overflow: hidden;
 	}
 
 	.nav-tree-summary-line {
 		display: flex;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
 		align-items: center;
 		gap: 0.16rem;
+		flex: 0 0 auto;
+		min-width: 0;
 	}
 
 	.nav-tree-kind-icon {
@@ -492,8 +499,8 @@ const totalItemCount = navRows.length;
 
 	.nav-tree-toggle {
 		line-height: 1;
-		width: 0.9rem;
-		height: 0.9rem;
+		width: 0.92rem;
+		height: 0.92rem;
 		padding: 0;
 		display: inline-flex;
 		align-items: center;
@@ -505,7 +512,8 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-toggle-glyph {
-		font-size: 0.62rem;
+		font-size: 0.74rem;
+		font-weight: 700;
 		line-height: 1;
 	}
 
@@ -513,13 +521,21 @@ const totalItemCount = navRows.length;
 		font-size: 0.73rem;
 		line-height: 1.2;
 		font-weight: 600;
-		word-break: break-word;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		flex: 1 1 auto;
 	}
 
 	.nav-tree-path {
 		font-size: 0.58rem;
 		color: rgba(15, 23, 42, 0.36);
-		word-break: break-word;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		flex: 0 1 auto;
 	}
 
 	.nav-tree-fields {
@@ -557,6 +573,7 @@ const totalItemCount = navRows.length;
 		justify-content: flex-end;
 		gap: 0.12rem;
 		align-content: start;
+		align-items: center;
 	}
 
 	.nav-action {
@@ -601,11 +618,11 @@ const totalItemCount = navRows.length;
 		}
 
 		.nav-tree-rail {
-			justify-content: flex-start;
+			display: none;
 		}
 
 		.nav-tree-summary {
-			flex-direction: column;
+			flex-direction: row;
 		}
 
 		.nav-tree-fields {
@@ -629,7 +646,7 @@ const totalItemCount = navRows.length;
 		}
 
 		.nav-tree-row {
-			padding: 0.3rem 0.2rem 0.34rem 0.5rem;
+			padding: 0.24rem 0.14rem 0.24rem 0.5rem;
 		}
 
 		.nav-tree-fields {
@@ -776,7 +793,7 @@ const totalItemCount = navRows.length;
 		toggle.setAttribute("aria-label", isCollapsed ? expandLabel : collapseLabel);
 		const glyph = toggle.querySelector(".nav-tree-toggle-glyph");
 		if (glyph instanceof HTMLElement) {
-			glyph.textContent = isCollapsed ? "▶" : "▼";
+			glyph.textContent = isCollapsed ? "+" : "-";
 		}
 	};
 
@@ -1019,7 +1036,7 @@ const totalItemCount = navRows.length;
 		const toggleGlyph = document.createElement("span");
 		toggleGlyph.className = "nav-tree-toggle-glyph";
 		toggleGlyph.setAttribute("aria-hidden", "true");
-		toggleGlyph.textContent = "▼";
+		toggleGlyph.textContent = "-";
 		toggleButton.append(toggleGlyph);
 		summaryLine.append(toggleButton);
 		summaryCopy.append(summaryLine);
