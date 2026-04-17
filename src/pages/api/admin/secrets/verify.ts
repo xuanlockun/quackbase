@@ -38,7 +38,14 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 
 		if (!response.ok || !payload?.success || !payload.result) {
 			const message = payload?.errors?.[0]?.message || "Token verification failed.";
-			return Response.json({ ok: false, error: message }, { status: response.status || 400 });
+			return Response.json(
+				{
+					ok: false,
+					error: message,
+					cloudflareStatus: response.status || 400,
+				},
+				{ status: 200 },
+			);
 		}
 
 		return Response.json({
