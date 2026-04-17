@@ -86,7 +86,7 @@ const translationTabsLabel = t("labels.languages", "Languages");
 					<h2 class="h5 mb-1">Add New Language</h2>
 					<p class="admin-inline-muted mb-0">{t("messages.languageCodeHelp")}</p>
 				</div>
-				<span class="admin-collapsible-hint">Expand</span>
+				<span class="admin-collapsible-toggle" aria-hidden="true"></span>
 			</summary>
 			<div class="admin-collapsible-body">
 				<LanguageForm
@@ -104,7 +104,7 @@ const translationTabsLabel = t("labels.languages", "Languages");
 					<h2 class="h5 mb-1">{translationSectionTitle}</h2>
 					<p class="admin-inline-muted mb-0">{translationHelpText}</p>
 				</div>
-				<span class="admin-collapsible-hint">Expand</span>
+				<span class="admin-collapsible-toggle" aria-hidden="true"></span>
 			</summary>
 			<div class="admin-collapsible-body">
 				<div class="admin-collapsible-toolbar mb-3">
@@ -194,62 +194,4 @@ const translationTabsLabel = t("labels.languages", "Languages");
 
 	<script type="module" src={languageManagerScript} client:load></script>
 	<script type="module" src={translationManagerScript} client:load></script>
-
-	<style>
-		.admin-collapsible-surface {
-			padding: 0;
-		}
-
-		.admin-collapsible-surface > summary {
-			list-style: none;
-		}
-
-		.admin-collapsible-surface > summary::-webkit-details-marker {
-			display: none;
-		}
-
-		.admin-collapsible-summary {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			gap: 1rem;
-			padding: 1rem 1.1rem;
-			cursor: pointer;
-			border-bottom: 1px solid rgba(var(--gray), 0.12);
-		}
-
-		.admin-collapsible-summary h2 {
-			margin-bottom: 0;
-		}
-
-		.admin-collapsible-summary .admin-inline-muted {
-			font-size: 0.9rem;
-		}
-
-		.admin-collapsible-hint {
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			padding: 0.35rem 0.6rem;
-			border: 1px solid rgba(var(--gray), 0.18);
-			font-size: 0.72rem;
-			text-transform: uppercase;
-			letter-spacing: 0.08em;
-			color: rgba(15, 23, 42, 0.68);
-			background: rgba(255, 255, 255, 0.72);
-		}
-
-		.admin-collapsible-body {
-			padding: 1rem 1.1rem 1.1rem;
-		}
-
-		.admin-collapsible-toolbar {
-			display: flex;
-			justify-content: flex-end;
-		}
-
-		.admin-collapsible-surface[open] > .admin-collapsible-summary {
-			background: rgba(15, 23, 42, 0.02);
-		}
-	</style>
 </AdminLayout>
