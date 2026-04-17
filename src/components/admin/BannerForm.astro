@@ -66,7 +66,7 @@ const isActive = banner?.isActive ?? true;
 				<span>{t("labels.order")}</span>
 				<input class="form-control" type="number" min="0" name="sortOrder" value={String(banner?.sortOrder ?? 0)} disabled={isDisabled} />
 			</label>
-			<label class="d-flex align-items-center gap-2 mb-0">
+			<label class="admin-check-row">
 				<input class="form-check-input" type="checkbox" name="isActive" checked={isActive} disabled={isDisabled} />
 				<span>{t("labels.enabled")}</span>
 			</label>

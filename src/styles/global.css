@@ -487,8 +487,8 @@ img {
 .admin-checkbox-field .form-check {
 	display: flex;
 	align-items: center;
-	gap: 0.6rem;
-	padding: 0.75rem 0.85rem;
+	gap: 0.5rem;
+	padding: 0.65rem 0.75rem;
 	border: 1px solid rgba(var(--gray), 0.16);
 	border-radius: 0;
 	background: rgba(255, 255, 255, 0.94);
@@ -503,6 +503,16 @@ img {
 	color: inherit;
 	line-height: 1.35;
 	overflow-wrap: anywhere;
+}
+
+.contact-field-required {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+
+.contact-field-required > span {
+	line-height: 1.3;
 }
 
 .admin-form-section {
@@ -613,8 +623,8 @@ img {
 .admin-check-row {
 	display: flex;
 	align-items: center;
-	gap: 0.65rem;
-	padding: 0.75rem 0.85rem;
+	gap: 0.5rem;
+	padding: 0.65rem 0.75rem;
 	border: 1px solid rgba(var(--gray), 0.18);
 	border-radius: 0;
 	background: rgba(255, 255, 255, 0.92);
@@ -622,10 +632,25 @@ img {
 	height: 100%;
 }
 
-.admin-check-row .form-check-input {
-	flex-shrink: 0;
+.admin-checkbox-field .form-check-input,
+.admin-check-row .form-check-input,
+body.admin-app .form-check-input,
+body.admin-app input[type="checkbox"] {
+	box-sizing: border-box;
+	width: 1rem;
+	height: 1rem;
+	min-width: 1rem;
+	min-height: 1rem;
+	flex: 0 0 1rem;
+	margin: 0;
 	margin-top: 0;
 	border-radius: 0;
+	vertical-align: top;
+	accent-color: var(--accent);
+}
+
+.admin-check-row .form-check-input {
+	flex-shrink: 0;
 }
 
 .admin-check-row > span {
@@ -1493,7 +1518,6 @@ body.admin-app .admin-page-content > * + * {
 body.admin-app .btn,
 body.admin-app .form-control,
 body.admin-app .form-select,
-body.admin-app .form-check-input,
 body.admin-app .admin-form-surface,
 body.admin-app .admin-table-surface,
 body.admin-app .admin-state-surface,
