@@ -26,34 +26,28 @@ const { t } = getUiTranslations(Astro);
 		<div class="admin-table-surface table-responsive">
 			<table class="table table-sm table-hover align-middle mb-0">
 				<thead>
-						<tr>
-							<th>{t("labels.title")}</th>
-							<th>{t("labels.description")}</th>
-							<th>{t("labels.template")}</th>
-							<th>{t("labels.fieldType")}</th>
-							<th>{t("labels.status")}</th>
-							<th>{t("labels.updated")}</th>
-							<th>{t("labels.action")}</th>
-						</tr>
+					<tr>
+						<th>{t("labels.title")}</th>
+						<th>{t("labels.description")}</th>
+						<th>Submissions</th>
+						<th>{t("labels.status")}</th>
+						<th>{t("labels.updated")}</th>
+						<th>{t("labels.action")}</th>
+					</tr>
 				</thead>
 				<tbody>
 					{
 						forms.map((form) => (
 							<tr>
 								<td>
-									<div class="d-grid">
-										<strong>{form.title}</strong>
-										<span class="text-muted small">{form.fields.length} fields</span>
-										<span class="text-muted small">{submissionCounts[form.id] ?? 0} leads</span>
-									</div>
+									<strong>{form.title}</strong>
 								</td>
 								<td>
-									<span class="text-muted small">{form.description || "—"}</span>
+									<span class="text-muted small">{form.description || "â€”"}</span>
 								</td>
 								<td>
-									<span class="badge text-bg-light text-uppercase">{form.layout}</span>
+									<span class="badge text-bg-light">{submissionCounts[form.id] ?? 0}</span>
 								</td>
-								<td><code>{form.fields.length}</code></td>
 								<td>
 									<span class={`badge text-uppercase ${form.isActive ? "bg-success" : "bg-secondary"}`}>
 										{form.isActive ? t("status.active") : t("status.inactive")}
