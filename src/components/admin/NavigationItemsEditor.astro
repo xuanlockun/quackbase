@@ -319,7 +319,7 @@ const totalItemCount = navRows.length;
 
 	.nav-tree-board {
 		display: grid;
-		gap: 0.4rem;
+		gap: 0.3rem;
 		padding: 0.05rem 0;
 		border: 0;
 		border-radius: 0;
@@ -358,13 +358,13 @@ const totalItemCount = navRows.length;
 
 	.nav-tree-row {
 		--nav-indent: calc(var(--nav-depth, 0) * var(--tree-step));
-		--nav-row-padding-left: calc(0.2rem + var(--nav-indent));
+		--nav-row-padding-left: calc(0.1rem + var(--nav-indent));
 		position: relative;
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
-		gap: 0.35rem;
+		gap: 0.2rem;
 		align-items: start;
-		padding: 0.22rem 0.28rem 0.24rem var(--nav-row-padding-left);
+		padding: 0.14rem 0.18rem 0.16rem var(--nav-row-padding-left);
 		border-radius: 0;
 		border: 0;
 		background: transparent;
@@ -379,11 +379,11 @@ const totalItemCount = navRows.length;
 
 	.nav-tree-row:hover {
 		transform: none;
-		background: rgba(15, 23, 42, 0.035);
+		background: rgba(15, 23, 42, 0.028);
 	}
 
 	.nav-tree-row:focus-within {
-		background: rgba(15, 23, 42, 0.045);
+		background: rgba(15, 23, 42, 0.038);
 	}
 
 	.nav-tree-row[data-collapsed="true"] .nav-tree-toggle {
@@ -397,11 +397,7 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-rail {
-		display: flex;
-		align-items: flex-start;
-		justify-content: center;
-		min-width: 0.75rem;
-		padding-top: 0.09rem;
+		display: none;
 	}
 
 	.nav-tree-spine {
@@ -425,62 +421,62 @@ const totalItemCount = navRows.length;
 	.nav-tree-body {
 		min-width: 0;
 		display: grid;
-		gap: 0.2rem;
+		gap: 0.14rem;
 	}
 
 	.nav-tree-summary {
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		gap: 0.35rem;
+		gap: 0.25rem;
 	}
 
 	.nav-tree-summary-copy {
 		min-width: 0;
 		display: grid;
-		gap: 0.04rem;
+		gap: 0.02rem;
 	}
 
 	.nav-tree-summary-line {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.22rem;
+		gap: 0.16rem;
 	}
 
 	.nav-tree-kind-icon {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 0.82rem;
-		height: 0.82rem;
-		color: rgba(15, 23, 42, 0.52);
+		width: 0.72rem;
+		height: 0.72rem;
+		color: rgba(15, 23, 42, 0.45);
 		flex: 0 0 auto;
 	}
 
 	.nav-tree-leaf-pill {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.2rem;
+		gap: 0.15rem;
 		padding: 0;
 		border-radius: 0;
-		font-size: 0.58rem;
-		font-weight: 700;
+		font-size: 0.52rem;
+		font-weight: 600;
 		text-transform: none;
-		letter-spacing: 0.01em;
-		color: rgba(15, 23, 42, 0.48);
+		letter-spacing: 0.02em;
+		color: rgba(15, 23, 42, 0.42);
 		background: transparent;
 	}
 
 	.nav-tree-row[data-depth="0"] .nav-tree-title {
-		font-size: 0.87rem;
-		font-weight: 700;
+		font-size: 0.79rem;
+		font-weight: 650;
 	}
 
 	.nav-tree-toggle {
 		line-height: 1;
-		width: 0.98rem;
-		height: 0.98rem;
+		width: 0.9rem;
+		height: 0.9rem;
 		padding: 0;
 		display: inline-flex;
 		align-items: center;
@@ -492,42 +488,42 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-toggle-glyph {
-		font-size: 0.68rem;
+		font-size: 0.62rem;
 		line-height: 1;
 	}
 
 	.nav-tree-title {
-		font-size: 0.8rem;
+		font-size: 0.73rem;
 		line-height: 1.2;
 		font-weight: 600;
 		word-break: break-word;
 	}
 
 	.nav-tree-path {
-		font-size: 0.64rem;
-		color: rgba(15, 23, 42, 0.42);
+		font-size: 0.58rem;
+		color: rgba(15, 23, 42, 0.36);
 		word-break: break-word;
 	}
 
 	.nav-tree-fields {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-		gap: 0.24rem;
-		padding-top: 0.03rem;
+		grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+		gap: 0.18rem;
+		padding-top: 0;
 		border-top: 0;
 	}
 
 	.nav-tree-field {
 		display: grid;
-		gap: 0.14rem;
+		gap: 0.1rem;
 	}
 
 	.nav-tree-field-label {
-		font-size: 0.54rem;
+		font-size: 0.5rem;
 		font-weight: 700;
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: rgba(15, 23, 42, 0.44);
+		letter-spacing: 0.09em;
+		color: rgba(15, 23, 42, 0.38);
 	}
 
 	.nav-tree-field-link {
@@ -538,7 +534,7 @@ const totalItemCount = navRows.length;
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: flex-end;
-		gap: 0.2rem;
+		gap: 0.12rem;
 		align-content: start;
 	}
 
@@ -547,26 +543,26 @@ const totalItemCount = navRows.length;
 		align-items: center;
 		justify-content: center;
 		gap: 0;
-		width: 1.45rem;
-		height: 1.45rem;
+		width: 1.3rem;
+		height: 1.3rem;
 		padding: 0;
-		border-radius: 0.35rem;
-		font-size: 0.74rem;
+		border-radius: 0.25rem;
+		font-size: 0.68rem;
 	}
 
 	.nav-item-remove {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 1.45rem;
-		height: 1.45rem;
+		width: 1.3rem;
+		height: 1.3rem;
 		padding: 0;
-		border-radius: 0.35rem;
-		font-size: 0.74rem;
+		border-radius: 0.25rem;
+		font-size: 0.68rem;
 	}
 
 	.nav-action-icon {
-		font-size: 0.84rem;
+		font-size: 0.78rem;
 		line-height: 1;
 		font-weight: 700;
 	}
