@@ -58,7 +58,6 @@ const totalItemCount = navRows.length;
 	<div class="nav-tree-editor-header">
 		<div>
 			<h2 class="h5 mb-1">{t("labels.navigationItems")}</h2>
-			<p class="admin-inline-muted mb-0">{t("messages.navStorageHelp")}</p>
 		</div>
 		<div class="nav-tree-editor-meta">
 			<span class="badge text-bg-light border">{rootItemCount} root</span>
@@ -91,6 +90,7 @@ const totalItemCount = navRows.length;
 		data-drag-label={t("labels.dragToReorder")}
 		data-collapse-label={t("actions.collapse", "Collapse")}
 		data-expand-label={t("actions.expand", "Expand")}
+		data-edit-label={t("actions.edit", "Edit")}
 		data-example-label={t("nav.home")}
 	>
 		<div class="nav-tree-board">
@@ -98,7 +98,6 @@ const totalItemCount = navRows.length;
 				<div class="nav-tree-board-copy">
 					<span class="nav-tree-kicker">{t("labels.navigationItems")}</span>
 					<h3 class="h6 mb-1">{t("messages.pageNavigationHub")}</h3>
-					<p class="admin-inline-muted mb-0">{t("messages.pageNavigationHubHelp")}</p>
 				</div>
 				<div class="nav-tree-board-hint">
 					<span class="badge bg-primary-subtle border border-primary-subtle text-primary-emphasis">
@@ -110,7 +109,6 @@ const totalItemCount = navRows.length;
 			<div class="nav-tree-list" data-nav-items-rows role="list">
 				<div class="nav-tree-empty admin-state-surface" data-nav-empty hidden={navRows.length > 0}>
 					<h3 class="h6 mb-2">{t("messages.noNavigationItemsConfigured")}</h3>
-					<p class="mb-0 admin-muted">{t("messages.navStorageHelp")}</p>
 				</div>
 
 				{
@@ -245,10 +243,10 @@ const totalItemCount = navRows.length;
 		</div>
 
 		<div class="nav-tree-footer">
-			<button class="btn btn-outline-secondary" type="button" data-nav-add disabled={Boolean(loadError)}>
-				{t("actions.addRow")}
+			<button class="btn btn-sm btn-outline-secondary nav-tree-add-row" type="button" data-nav-add disabled={Boolean(loadError)}>
+				<span class="nav-action-icon" aria-hidden="true">+</span>
+				<span>{t("actions.addRow")}</span>
 			</button>
-			<p class="admin-muted mb-0">{t("messages.navStorageHelp")}</p>
 		</div>
 	</div>
 
@@ -586,7 +584,16 @@ const totalItemCount = navRows.length;
 	}
 
 	.nav-tree-footer {
+		align-items: center;
 		padding-top: 0.1rem;
+	}
+
+	.nav-tree-add-row {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.28rem;
+		padding-inline: 0.55rem;
+		min-height: 1.55rem;
 	}
 
 	@media (max-width: 992px) {
@@ -650,6 +657,7 @@ const totalItemCount = navRows.length;
 	const dragLabel = editor?.dataset.dragLabel ?? "Drag to reorder";
 	const collapseLabel = editor?.dataset.collapseLabel ?? "Collapse";
 	const expandLabel = editor?.dataset.expandLabel ?? "Expand";
+	const editLabel = editor?.dataset.editLabel ?? "Edit";
 	const isReadOnly = editor?.dataset.disabled === "true";
 	let draggedNavRow = null;
 	const MAX_NAV_DEPTH = 4;
@@ -727,7 +735,7 @@ const totalItemCount = navRows.length;
 		const editButton = row.querySelector("[data-nav-edit]");
 		if (editButton instanceof HTMLButtonElement) {
 			editButton.setAttribute("aria-pressed", nextEditing ? "true" : "false");
-			editButton.setAttribute("aria-label", t("actions.edit", "Edit"));
+			editButton.setAttribute("aria-label", editLabel);
 		}
 
 		const firstInput = row.querySelector("[data-nav-label]");
@@ -1061,7 +1069,7 @@ const totalItemCount = navRows.length;
 		const actions = document.createElement("div");
 		actions.className = "nav-tree-actions";
 		const buttonConfigs = [
-			["navEdit", "✎", t("actions.edit", "Edit"), "btn btn-sm btn-outline-secondary nav-action"],
+			["navEdit", "✎", editLabel, "btn btn-sm btn-outline-secondary nav-action"],
 			["navAddChild", "+", addChildLabel, "btn btn-sm btn-outline-secondary nav-action"],
 			["navIndent", "›", indentLabel, "btn btn-sm btn-outline-secondary nav-action"],
 			["navOutdent", "‹", outdentLabel, "btn btn-sm btn-outline-secondary nav-action"],
