@@ -7,9 +7,10 @@ interface Props {
 		success?: string;
 		error?: string;
 	};
+	showHeader?: boolean;
 }
 
-const { formMessages = {} } = Astro.props as Props;
+const { formMessages = {}, showHeader = true } = Astro.props as Props;
 const { t } = getUiTranslations(Astro);
 const messages = {
 	success: formMessages.success ?? t("messages.languageCreated"),
@@ -25,12 +26,14 @@ const messages = {
 	data-message-success={messages.success}
 	data-message-error={messages.error}
 >
-	<div class="admin-surface-header">
-		<div>
-			<h3 class="h5 mb-1">{t("headings.languages")}</h3>
-			<p class="admin-inline-muted mb-0">{t("messages.languageCodeHelp")}</p>
+	{showHeader && (
+		<div class="admin-surface-header">
+			<div>
+				<h3 class="h5 mb-1">{t("headings.languages")}</h3>
+				<p class="admin-inline-muted mb-0">{t("messages.languageCodeHelp")}</p>
+			</div>
 		</div>
-	</div>
+	)}
 	<div class="admin-form-grid">
 		<label>
 			<span>{t("labels.code")}</span>

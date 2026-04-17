@@ -58,17 +58,15 @@ const texts = {
 			<tr>
 				<th scope="col">{t("labels.code")}</th>
 				<th scope="col">{t("labels.name")}</th>
-				<th scope="col">{t("labels.enabled")}</th>
-				<th scope="col">{t("labels.defaultLanguage")}</th>
-				<th scope="col">{t("status.active")}</th>
-				<th scope="col">{t("actions.editTranslations")}</th>
+				<th scope="col">{t("labels.status")}</th>
+				<th scope="col">{t("labels.action")}</th>
 			</tr>
 		</thead>
 		<tbody>
 			{
 				languages.length === 0 ? (
 					<tr>
-						<td colspan="6" class="text-center text-muted py-4 small">
+						<td colspan="4" class="text-center text-muted py-4 small">
 							{texts.emptyState}
 						</td>
 					</tr>
@@ -79,6 +77,17 @@ const texts = {
 								<code>{language.code}</code>
 							</td>
 							<td>{language.name}</td>
+							<td>
+								<span
+									class:list={[
+										"badge",
+										language.isDefault ? "bg-primary" : language.enabled ? "bg-success" : "bg-secondary",
+									]}
+									data-language-status
+								>
+									{language.isDefault ? texts.defaultLabel : language.enabled ? texts.active : texts.inactive}
+								</span>
+							</td>
 							<td class="admin-action-cell">
 								<div class="admin-action-group">
 									<IconAction
@@ -102,21 +111,6 @@ const texts = {
 									>
 										{language.isDefault ? texts.defaultLabel : texts.setDefault}
 									</button>
-								</div>
-							</td>
-							<td>
-								<span
-									class:list={[
-										"badge",
-										language.isDefault ? "bg-primary" : language.enabled ? "bg-success" : "bg-secondary",
-									]}
-									data-language-status
-								>
-									{language.isDefault ? texts.defaultLabel : language.enabled ? texts.active : texts.inactive}
-								</span>
-							</td>
-							<td class="admin-action-cell">
-								<div class="admin-action-group">
 									<IconAction
 										href={`/admin/languages/${encodeURIComponent(language.code)}`}
 										icon="edit"

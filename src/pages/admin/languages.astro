@@ -78,27 +78,40 @@ const translationTabsLabel = t("labels.languages", "Languages");
 					updateSuccess: t("messages.languageSaved"),
 					error: t("messages.languageRequestFailed"),
 				}}
-			/>
+				/>
 		</div>
-		<div class="admin-form-surface">
-			<LanguageForm
-				formMessages={{
-					success: t("messages.languageCreated"),
-					error: t("messages.languageCreateFailed"),
-				}}
-			/>
-		</div>
-		<div class="admin-form-surface" id="translations">
-			<div class="admin-surface-header mb-3">
+		<details class="admin-collapsible-surface admin-form-surface">
+			<summary class="admin-collapsible-summary">
+				<div>
+					<h2 class="h5 mb-1">Add New Language</h2>
+					<p class="admin-inline-muted mb-0">{t("messages.languageCodeHelp")}</p>
+				</div>
+				<span class="admin-collapsible-hint">Expand</span>
+			</summary>
+			<div class="admin-collapsible-body">
+				<LanguageForm
+					showHeader={false}
+					formMessages={{
+						success: t("messages.languageCreated"),
+						error: t("messages.languageCreateFailed"),
+					}}
+				/>
+			</div>
+		</details>
+		<details class="admin-collapsible-surface admin-form-surface" id="translations">
+			<summary class="admin-collapsible-summary">
 				<div>
 					<h2 class="h5 mb-1">{translationSectionTitle}</h2>
 					<p class="admin-inline-muted mb-0">{translationHelpText}</p>
 				</div>
-				<div class="d-flex align-items-center gap-2">
+				<span class="admin-collapsible-hint">Expand</span>
+			</summary>
+			<div class="admin-collapsible-body">
+				<div class="admin-collapsible-toolbar mb-3">
 					<label class="visually-hidden" for="translation-locale-select">{t("labels.language")}</label>
 					<select
 						id="translation-locale-select"
-						class="form-select form-select-sm"
+						class="form-select form-select-sm w-auto"
 						data-translation-locale-select
 					>
 						{
@@ -110,75 +123,133 @@ const translationTabsLabel = t("labels.languages", "Languages");
 						}
 					</select>
 				</div>
-			</div>
 
-			<div class="mb-3" data-translation-notice aria-live="polite"></div>
-			<form
-				data-translation-form
-				class="row g-3"
-				data-current-locale={selectedLocale}
-				data-language-tabs={JSON.stringify(editorLanguages)}
-				data-api-base-template="/api/admin/languages/__locale__/translations"
-				data-text-add-button={addButtonLabel}
-				data-text-create-success={t("messages.translationCreateSuccess")}
-				data-text-required-key="Translation key is required."
-				data-text-required-values="Enter at least one translation value."
-				data-text-tablist={translationTabsLabel}
-			>
-				<div class="col-12 col-lg-4">
-					<label class="form-label" for="translation-key">{keyLabel}</label>
-					<input class="form-control" id="translation-key" name="key" required />
-				</div>
-				<div class="col-12">
-					<div class="admin-card-surface border rounded-0 p-3">
-						<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-							<strong class="small text-uppercase text-muted">{translationTabsLabel}</strong>
-							<span class="small text-muted">{valueLabel}</span>
-						</div>
-						<ul class="nav nav-tabs flex-wrap gap-1" role="tablist" data-translation-tablist>
-							{
-								editorLanguages.map((entry, index) => (
-									<li class="nav-item" role="presentation">
-										<button
-											type="button"
-											class:list={["nav-link", index === 0 && "active"]}
-											data-translation-tab={entry.code}
-											aria-selected={index === 0 ? "true" : "false"}
+				<div class="mb-3" data-translation-notice aria-live="polite"></div>
+				<form
+					data-translation-form
+					class="row g-3"
+					data-current-locale={selectedLocale}
+					data-language-tabs={JSON.stringify(editorLanguages)}
+					data-api-base-template="/api/admin/languages/__locale__/translations"
+					data-text-add-button={addButtonLabel}
+					data-text-create-success={t("messages.translationCreateSuccess")}
+					data-text-required-key="Translation key is required."
+					data-text-required-values="Enter at least one translation value."
+					data-text-tablist={translationTabsLabel}
+				>
+					<div class="col-12 col-lg-4">
+						<label class="form-label" for="translation-key">{keyLabel}</label>
+						<input class="form-control" id="translation-key" name="key" required />
+					</div>
+					<div class="col-12">
+						<div class="admin-card-surface border rounded-0 p-3">
+							<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+								<strong class="small text-uppercase text-muted">{translationTabsLabel}</strong>
+								<span class="small text-muted">{valueLabel}</span>
+							</div>
+							<ul class="nav nav-tabs flex-wrap gap-1" role="tablist" data-translation-tablist>
+								{
+									editorLanguages.map((entry, index) => (
+										<li class="nav-item" role="presentation">
+											<button
+												type="button"
+												class:list={["nav-link", index === 0 && "active"]}
+												data-translation-tab={entry.code}
+												aria-selected={index === 0 ? "true" : "false"}
+											>
+												{entry.label}
+											</button>
+										</li>
+									))
+								}
+							</ul>
+							<div class="border border-top-0 rounded-0 p-3" data-translation-panels>
+								{
+									editorLanguages.map((entry, index) => (
+										<section
+											class:list={["translation-pane", index === 0 ? "" : "d-none"]}
+											data-translation-panel={entry.code}
 										>
-											{entry.label}
-										</button>
-									</li>
-								))
-							}
-						</ul>
-						<div class="border border-top-0 rounded-0 p-3" data-translation-panels>
-							{
-								editorLanguages.map((entry, index) => (
-									<section
-										class:list={["translation-pane", index === 0 ? "" : "d-none"]}
-										data-translation-panel={entry.code}
-									>
-										<label class="form-label" for={`translation-value-${entry.code}`}>{entry.label}</label>
-										<textarea
-											class="form-control"
-											id={`translation-value-${entry.code}`}
-											name={`value-${entry.code}`}
-											rows="4"
-											placeholder={`${entry.label} ${valueLabel.toLowerCase()}`}
-										></textarea>
-									</section>
-								))
-							}
+											<label class="form-label" for={`translation-value-${entry.code}`}>{entry.label}</label>
+											<textarea
+												class="form-control"
+												id={`translation-value-${entry.code}`}
+												name={`value-${entry.code}`}
+												rows="4"
+												placeholder={`${entry.label} ${valueLabel.toLowerCase()}`}
+											></textarea>
+										</section>
+									))
+								}
+							</div>
 						</div>
 					</div>
-				</div>
-				<div class="col-12 d-flex flex-wrap gap-2">
-					<CreateSubmit label={addButtonLabel} attrs={{ "data-translation-submit": "" }} />
-				</div>
-			</form>
-		</div>
+					<div class="col-12 d-flex flex-wrap gap-2">
+						<CreateSubmit label={addButtonLabel} attrs={{ "data-translation-submit": "" }} />
+					</div>
+				</form>
+			</div>
+		</details>
 	</div>
 
 	<script type="module" src={languageManagerScript} client:load></script>
 	<script type="module" src={translationManagerScript} client:load></script>
+
+	<style>
+		.admin-collapsible-surface {
+			padding: 0;
+		}
+
+		.admin-collapsible-surface > summary {
+			list-style: none;
+		}
+
+		.admin-collapsible-surface > summary::-webkit-details-marker {
+			display: none;
+		}
+
+		.admin-collapsible-summary {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1rem;
+			padding: 1rem 1.1rem;
+			cursor: pointer;
+			border-bottom: 1px solid rgba(var(--gray), 0.12);
+		}
+
+		.admin-collapsible-summary h2 {
+			margin-bottom: 0;
+		}
+
+		.admin-collapsible-summary .admin-inline-muted {
+			font-size: 0.9rem;
+		}
+
+		.admin-collapsible-hint {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			padding: 0.35rem 0.6rem;
+			border: 1px solid rgba(var(--gray), 0.18);
+			font-size: 0.72rem;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: rgba(15, 23, 42, 0.68);
+			background: rgba(255, 255, 255, 0.72);
+		}
+
+		.admin-collapsible-body {
+			padding: 1rem 1.1rem 1.1rem;
+		}
+
+		.admin-collapsible-toolbar {
+			display: flex;
+			justify-content: flex-end;
+		}
+
+		.admin-collapsible-surface[open] > .admin-collapsible-summary {
+			background: rgba(15, 23, 42, 0.02);
+		}
+	</style>
 </AdminLayout>
