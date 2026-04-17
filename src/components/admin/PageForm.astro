@@ -270,42 +270,54 @@ const initialContactFields = [];
 									<td class="section-control">
 										{
 											section.type === "banner_slider" ? (
-												<div class="banner-picker" data-banner-picker>
-													<div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-														<strong>{t("labels.banners")}</strong>
-														<a class="btn btn-outline-secondary btn-sm" href="/admin/banners">{t("actions.manage") ?? "Manage"}</a>
-													</div>
-													{
-														bannerCatalog.length > 0 ? (
-															<div class="banner-picker-grid">
-																{bannerCatalog.map((banner) => (
-																	<label class:list={["banner-picker-card", !banner.isActive && "is-inactive"]}>
-																		<input
-																			type="checkbox"
-																			value={banner.id}
-																			data-banner-choice
-																			checked={selectedBannerIds.has(banner.id)}
-																			disabled={isDisabled}
-																		/>
-																		<span class="banner-picker-preview">
-																			<img src={banner.imageUrl} alt={banner.altText || banner.title} loading="lazy" />
-																		</span>
-																		<span class="banner-picker-copy">
-																			<strong>{banner.title}</strong>
-																			<small class="text-muted">{banner.imageUrl}</small>
-																		</span>
-																	</label>
-																))}
-															</div>
-														) : (
-															<p class="admin-inline-muted mb-0">
-																{t("messages.noBannersYet")}
-																{" "}
-																<a href="/admin/banners/new">{t("actions.createBanner") ?? "Create banner"}</a>
+												<details class="banner-picker-panel">
+													<summary class="banner-picker-summary">
+														<div>
+															<strong>{t("labels.banners")}</strong>
+															<p class="admin-compact-copy mb-0">
+																{selectedBannerIds.size > 0
+																	? `${selectedBannerIds.size} selected`
+																	: t("messages.pageSectionsBannerHelp", "Choose one or more banners for this slider.")}
 															</p>
-														)
-													}
-												</div>
+														</div>
+														<span class="admin-collapsible-toggle" aria-hidden="true"></span>
+													</summary>
+													<div class="banner-picker-body">
+														<div class="banner-picker-head">
+															<a class="btn btn-outline-secondary btn-sm" href="/admin/banners">{t("actions.manage") ?? "Manage"}</a>
+														</div>
+														{
+															bannerCatalog.length > 0 ? (
+																<div class="banner-picker-grid">
+																	{bannerCatalog.map((banner) => (
+																		<label class:list={["banner-picker-card", !banner.isActive && "is-inactive"]}>
+																			<input
+																				type="checkbox"
+																				value={banner.id}
+																				data-banner-choice
+																				checked={selectedBannerIds.has(banner.id)}
+																				disabled={isDisabled}
+																			/>
+																			<span class="banner-picker-thumb">
+																				<img src={banner.imageUrl} alt={banner.altText || banner.title} loading="lazy" />
+																			</span>
+																			<span class="banner-picker-copy">
+																				<strong>{banner.title}</strong>
+																				<small class="text-muted">{banner.imageUrl}</small>
+																			</span>
+																		</label>
+																	))}
+																</div>
+															) : (
+																<p class="admin-inline-muted mb-0">
+																	{t("messages.noBannersYet")}
+																	{" "}
+																	<a href="/admin/banners/new">{t("actions.createBanner") ?? "Create banner"}</a>
+																</p>
+															)
+														}
+													</div>
+												</details>
 											) : section.type === "contact_form" ? (
 												<div class="contact-form-picker" data-contact-form-picker>
 													<div class="d-flex justify-content-between align-items-center gap-2 mb-2">
@@ -516,6 +528,96 @@ const initialContactFields = [];
 
 	.page-sections-actions select {
 		min-width: 200px;
+	}
+
+	.banner-picker-panel {
+		display: grid;
+		gap: 0.75rem;
+		border: 1px solid rgba(var(--gray), 0.14);
+		border-radius: 0;
+		background: rgba(255, 255, 255, 0.88);
+	}
+
+	.banner-picker-panel > summary {
+		list-style: none;
+	}
+
+	.banner-picker-panel > summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.banner-picker-summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 0.85rem 0.95rem;
+		cursor: pointer;
+	}
+
+	.banner-picker-summary strong {
+		display: block;
+		font-size: 0.95rem;
+	}
+
+	.banner-picker-body {
+		display: grid;
+		gap: 0.75rem;
+		padding: 0 0.95rem 0.95rem;
+	}
+
+	.banner-picker-head {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	.banner-picker-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+		gap: 0.65rem;
+	}
+
+	.banner-picker-card {
+		display: grid;
+		gap: 0.5rem;
+		padding: 0.55rem;
+		border: 1px solid rgba(var(--gray), 0.14);
+		border-radius: 0;
+		background: rgba(var(--gray-light), 0.18);
+		cursor: pointer;
+		min-width: 0;
+	}
+
+	.banner-picker-card input {
+		margin: 0;
+	}
+
+	.banner-picker-thumb {
+		display: block;
+		aspect-ratio: 16 / 9;
+		overflow: hidden;
+		border: 1px solid rgba(var(--gray), 0.14);
+		background: #fff;
+	}
+
+	.banner-picker-thumb img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.banner-picker-copy {
+		display: grid;
+		gap: 0.15rem;
+		min-width: 0;
+	}
+
+	.banner-picker-copy strong,
+	.banner-picker-copy small {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.contact-fields-toolbar strong {
@@ -754,26 +856,34 @@ const initialContactFields = [];
 
 		const selectedSet = new Set((selectedIds ?? []).map((id) => Number(id)));
 		return `
-			<div class="banner-picker" data-banner-picker>
-				<div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-					<strong>${escapeHtml(bannerSectionLabel)}</strong>
-					<a class="btn btn-outline-secondary btn-sm" href="${escapeAttribute(bannerManageHref)}">${escapeHtml(bannerManageLabel)}</a>
+			<details class="banner-picker-panel">
+				<summary class="banner-picker-summary">
+					<div>
+						<strong>${escapeHtml(bannerSectionLabel)}</strong>
+						<p class="admin-compact-copy mb-0">${selectedSet.size > 0 ? `${selectedSet.size} selected` : escapeHtml(bannerSectionLabel)}</p>
+					</div>
+					<span class="admin-collapsible-toggle" aria-hidden="true"></span>
+				</summary>
+				<div class="banner-picker-body">
+					<div class="banner-picker-head">
+						<a class="btn btn-outline-secondary btn-sm" href="${escapeAttribute(bannerManageHref)}">${escapeHtml(bannerManageLabel)}</a>
+					</div>
+					<div class="banner-picker-grid">
+						${BANNER_CATALOG.map((banner) => `
+							<label class="banner-picker-card${banner.isActive ? "" : " is-inactive"}">
+								<input type="checkbox" value="${banner.id}" data-banner-choice ${selectedSet.has(banner.id) ? "checked" : ""} ${isDisabled ? "disabled" : ""} />
+								<span class="banner-picker-thumb">
+									<img src="${escapeAttribute(banner.imageUrl)}" alt="${escapeAttribute(banner.altText || banner.title)}" loading="lazy" />
+								</span>
+								<span class="banner-picker-copy">
+									<strong>${escapeHtml(banner.title)}</strong>
+									<small class="text-muted">${escapeHtml(banner.imageUrl)}</small>
+								</span>
+							</label>
+						`).join("")}
+					</div>
 				</div>
-				<div class="banner-picker-grid">
-					${BANNER_CATALOG.map((banner) => `
-						<label class="banner-picker-card${banner.isActive ? "" : " is-inactive"}">
-							<input type="checkbox" value="${banner.id}" data-banner-choice ${selectedSet.has(banner.id) ? "checked" : ""} ${isDisabled ? "disabled" : ""} />
-							<span class="banner-picker-preview">
-								<img src="${escapeAttribute(banner.imageUrl)}" alt="${escapeAttribute(banner.altText || banner.title)}" loading="lazy" />
-							</span>
-							<span class="banner-picker-copy">
-								<strong>${escapeHtml(banner.title)}</strong>
-								<small class="text-muted">${escapeHtml(banner.imageUrl)}</small>
-							</span>
-						</label>
-					`).join("")}
-				</div>
-			</div>
+			</details>
 		`;
 	}
 

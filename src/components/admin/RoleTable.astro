@@ -19,64 +19,102 @@ const { t } = getUiTranslations(Astro);
 			<p class="mb-0 admin-muted">{t("messages.noRolesHelp")}</p>
 		</div>
 	) : (
-		<div class="row g-3">
-			{
-				roles.map((role) => (
-					<article class="col-12">
-						<div class="card admin-resource-card border-0">
-							<div class="card-body">
-								<div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
-									<div>
-										<h2 class="h5 mb-1">{role.label}</h2>
-										<p class="text-muted mb-0">
-											<code>{role.name}</code>
-											{role.isSystem && <span class="ms-2 badge bg-secondary">{t("messages.systemRole")}</span>}
-										</p>
-										{role.description && <p class="text-muted mt-2 mb-0">{role.description}</p>}
-									</div>
-									<div class="admin-action-group" aria-label={t("labels.action")}>
-										<IconAction
-											href={`/admin/roles/${role.id}/edit`}
-											icon="edit"
-											label={t("actions.edit")}
-											variant="btn-outline-primary"
-										/>
-										{
-											!role.isSystem && (
-												<form
-													method="post"
-													action={`/api/admin/roles/${role.id}`}
-													onsubmit={`return confirm('${t("messages.deleteRoleConfirm")}');`}
-													class="d-inline"
-												>
-													<input type="hidden" name="_intent" value="delete" />
-													<IconAction
-														type="submit"
-														icon="delete"
-														label={t("actions.delete")}
-														variant="btn-outline-danger"
-													/>
-												</form>
-											)
-										}
-									</div>
+		<div class="admin-table-surface table-responsive">
+			<table class="table table-sm table-hover align-middle mb-0 roles-table">
+				<thead>
+					<tr>
+						<th scope="col">{t("labels.role")}</th>
+						<th scope="col">{t("labels.description")}</th>
+						<th scope="col">{t("labels.permissions")}</th>
+						<th scope="col">{t("labels.action")}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{roles.map((role) => (
+						<tr>
+							<td class="roles-table-role">
+								<strong>{role.label}</strong>
+								<div class="roles-table-meta">
+									<code>{role.name}</code>
+									{role.isSystem && <span class="badge bg-secondary">{t("messages.systemRole")}</span>}
 								</div>
-								<div class="mt-3 admin-action-group">
+							</td>
+							<td class="roles-table-description">
+								{role.description ? <span>{role.description}</span> : <span class="text-muted small">—</span>}
+							</td>
+							<td>
+								<div class="roles-table-permissions">
+									{role.permissions.length > 0 ? (
+										role.permissions.map((permission) => (
+											<PermissionBadge label={permission.label} resource={permission.resource} />
+										))
+									) : (
+										<span class="text-muted small">{t("messages.noPermissionsAssigned")}</span>
+									)}
+								</div>
+							</td>
+							<td class="admin-action-cell">
+								<div class="admin-action-group">
+									<IconAction
+										href={`/admin/roles/${role.id}/edit`}
+										icon="edit"
+										label={t("actions.edit")}
+										variant="btn-outline-primary"
+									/>
 									{
-										role.permissions.length > 0 ? (
-											role.permissions.map((permission) => (
-												<PermissionBadge label={permission.label} resource={permission.resource} />
-											))
-										) : (
-											<span class="text-muted small">{t("messages.noPermissionsAssigned")}</span>
+										!role.isSystem && (
+											<form
+												method="post"
+												action={`/api/admin/roles/${role.id}`}
+												onsubmit={`return confirm('${t("messages.deleteRoleConfirm")}');`}
+												class="d-inline"
+											>
+												<input type="hidden" name="_intent" value="delete" />
+												<IconAction
+													type="submit"
+													icon="delete"
+													label={t("actions.delete")}
+													variant="btn-outline-danger"
+												/>
+											</form>
 										)
 									}
 								</div>
-							</div>
-						</div>
-					</article>
-				))
-			}
+							</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
 		</div>
 	)
 }
+
+<style>
+	.roles-table th,
+	.roles-table td {
+		vertical-align: top;
+	}
+
+	.roles-table-role {
+		min-width: 14rem;
+	}
+
+	.roles-table-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.45rem;
+		margin-top: 0.25rem;
+	}
+
+	.roles-table-description {
+		max-width: 20rem;
+	}
+
+	.roles-table-permissions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		max-width: 34rem;
+	}
+</style>
