@@ -1,6 +1,7 @@
 ---
 import type { AdminPostDetail } from "../../lib/blog";
 import { getSupportedLanguages } from "../../lib/blog";
+import CreateSubmit from "./CreateSubmit.astro";
 import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
@@ -185,7 +186,11 @@ const isDisabled = Boolean(loadError) || !canSubmit;
 	</div>
 
 	<div class="admin-form-actions">
-		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		{mode === "create" ? (
+			<CreateSubmit label={submitLabel} disabled={isDisabled} />
+		) : (
+			<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		)}
 		{mode === "edit" && post && <a class="btn btn-outline-secondary" href={post.viewHref}>{t("actions.openPost")}</a>}
 	</div>
 </form>

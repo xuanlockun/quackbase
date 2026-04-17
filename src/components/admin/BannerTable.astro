@@ -52,8 +52,8 @@ const { t } = getUiTranslations(Astro);
 									</span>
 								</td>
 								<td><FormattedDate date={banner.updatedAt} /></td>
-								<td>
-									<div class="d-flex flex-wrap gap-2">
+								<td class="admin-action-cell">
+									<div class="admin-action-group">
 										{canUpdate && (
 											<IconAction
 												href={`/admin/banners/${banner.id}/edit`}

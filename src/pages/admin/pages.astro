@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import FilterBar from "../../components/admin/FilterBar.astro";
+import CreateAction from "../../components/admin/CreateAction.astro";
 import PageTable from "../../components/admin/PageTable.astro";
 import NavigationItemsEditor from "../../components/admin/NavigationItemsEditor.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
@@ -75,8 +76,7 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 	pageDescription={t("messages.manageLandingPages")}
 >
 	<div slot="actions" class="admin-page-actions">
-		{canCreate && <a class="btn btn-primary" href="/admin/pages/new">{t("actions.createPage")}</a>}
-		<a class="btn btn-outline-secondary" href={`/${language}/`}>{t("actions.viewSite")}</a>
+		{canCreate && <CreateAction href="/admin/pages/new" label={t("actions.createPage")} />}
 	</div>
 
 	<div class="admin-content-stack">

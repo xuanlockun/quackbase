@@ -3,6 +3,7 @@ export const prerender = false;
 
 import UserTable from "../../components/admin/UserTable.astro";
 import FilterBar from "../../components/admin/FilterBar.astro";
+import CreateAction from "../../components/admin/CreateAction.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { listAdminUsers } from "../../lib/db/admin-users";
 import { getDb } from "../../lib/blog";
@@ -56,7 +57,7 @@ const hasActiveFilters = Boolean(search || status !== "all" || role !== "all");
 	pageDescription={t("messages.manageAdminUsers")}
 >
 	<div slot="actions" class="admin-page-actions">
-		<a class="btn btn-primary" href="/admin/users/new">{t("actions.createUser")}</a>
+		<CreateAction href="/admin/users/new" label={t("actions.createUser")} />
 	</div>
 
 	<div class="admin-content-stack">

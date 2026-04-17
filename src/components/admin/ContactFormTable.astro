@@ -60,8 +60,8 @@ const { t } = getUiTranslations(Astro);
 									</span>
 								</td>
 								<td><FormattedDate date={form.updatedAt} /></td>
-								<td>
-									<div class="d-flex flex-wrap gap-2">
+								<td class="admin-action-cell">
+									<div class="admin-action-group">
 										{canViewLeads && (
 											<IconAction
 												href={`/admin/contact-forms/${form.id}/leads`}

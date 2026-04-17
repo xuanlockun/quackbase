@@ -1,5 +1,6 @@
 ---
 import type { AdminUserSummary, RoleSummary } from "../../lib/auth/types";
+import CreateSubmit from "./CreateSubmit.astro";
 import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
@@ -97,6 +98,10 @@ const selectedRoleIds = new Set(user?.roles.map((role) => role.id) ?? []);
 	</div>
 
 	<div class="admin-form-actions">
-		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		{mode === "create" ? (
+			<CreateSubmit label={submitLabel} disabled={isDisabled} />
+		) : (
+			<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		)}
 	</div>
 </form>

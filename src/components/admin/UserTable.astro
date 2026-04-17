@@ -58,13 +58,15 @@ const { t } = getUiTranslations(Astro);
 										}
 									</div>
 								</td>
-								<td>
-									<IconAction
-										href={`/admin/users/${user.id}/edit`}
-										icon="edit"
-										label={t("actions.edit")}
-										variant="btn-outline-primary"
-									/>
+								<td class="admin-action-cell">
+									<div class="admin-action-group">
+										<IconAction
+											href={`/admin/users/${user.id}/edit`}
+											icon="edit"
+											label={t("actions.edit")}
+											variant="btn-outline-primary"
+										/>
+									</div>
 								</td>
 							</tr>
 						))

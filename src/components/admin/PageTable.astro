@@ -56,8 +56,8 @@ const catalog = getLanguageCatalog(Astro.locals);
 								<td>
 									<code>{page.slug}</code>
 								</td>
-								<td>
-									<div class="d-flex flex-wrap gap-2">
+								<td class="admin-action-cell">
+									<div class="admin-action-group">
 										{canUpdate && (
 											<IconAction href={`/admin/pages/${page.id}/edit`} icon="edit" label={t("actions.edit")} variant="btn-outline-primary" />
 										)}

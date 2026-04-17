@@ -3,6 +3,7 @@ export const prerender = false;
 
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import FilterBar from "../../components/admin/FilterBar.astro";
+import CreateAction from "../../components/admin/CreateAction.astro";
 import PostTable from "../../components/admin/PostTable.astro";
 import { getDb, listAllPosts, toAdminPostSummary } from "../../lib/blog";
 import { getLanguageCatalog, getUiTranslations } from "../../lib/i18n";
@@ -54,9 +55,9 @@ const hasActiveFilters = Boolean(search || status !== "all");
 	pageTitle={t("headings.posts")}
 	pageDescription={t("messages.managePublishedArticles")}
 >
-<div slot="actions" class="admin-page-actions">
-	{canCreate && <a class="btn btn-primary" href="/admin/posts/new">{t("actions.createPost")}</a>}
-</div>
+	<div slot="actions" class="admin-page-actions">
+		{canCreate && <CreateAction href="/admin/posts/new" label={t("actions.createPost")} />}
+	</div>
 
 	<div class="admin-content-stack">
 		<FilterBar

@@ -3,6 +3,7 @@ export const prerender = false;
 
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import IconAction from "../../../components/admin/IconAction.astro";
+import CreateAction from "../../../components/admin/CreateAction.astro";
 import { getDb } from "../../../lib/blog";
 import { getLanguageByCode, listAllLanguages } from "../../../lib/languages";
 import { listTranslationEntriesByLocale } from "../../../lib/translations";
@@ -101,13 +102,11 @@ function buildNamespaceOptions(entries: { translationKey: string }[]): Array<{ l
 					</h2>
 					<p class="admin-inline-muted mb-0">{helpText}</p>
 				</div>
-				<div class="d-flex flex-wrap gap-2">
+				<div class="admin-action-group">
 					<a class="btn btn-outline-secondary btn-sm" href={filterBackLink}>
 						{t("messages.backToLanguages", "Back to languages")}
 					</a>
-					<a class="btn btn-primary btn-sm" href={createLink}>
-						{t("actions.addTranslation", "Create translation entry")}
-					</a>
+					<CreateAction href={createLink} label={t("actions.addTranslation", "Create translation entry")} />
 				</div>
 			</div>
 
@@ -152,7 +151,7 @@ function buildNamespaceOptions(entries: { translationKey: string }[]): Array<{ l
 											<code>{entry.translationKey}</code>
 										</td>
 										<td class="text-break">{entry.translatedValue}</td>
-										<td class="text-end">
+										<td class="text-end admin-action-cell">
 											<IconAction
 												href={`/admin/languages/${encodeURIComponent(selectedLanguage!.code)}/${encodeURIComponent(entry.translationKey)}`}
 												icon="edit"

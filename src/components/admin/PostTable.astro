@@ -55,8 +55,8 @@ const { t } = getUiTranslations(Astro);
 								<td>
 									<code>{post.slug}</code>
 								</td>
-								<td>
-									<div class="d-flex flex-wrap gap-2">
+								<td class="admin-action-cell">
+									<div class="admin-action-group">
 										{canUpdate && (
 											<IconAction href={post.editHref} icon="edit" label={t("actions.editPost")} variant="btn-outline-primary" />
 										)}

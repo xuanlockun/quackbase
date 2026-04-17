@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import RoleTable from "../../components/admin/RoleTable.astro";
+import CreateAction from "../../components/admin/CreateAction.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { listRolesWithPermissions } from "../../lib/db/roles";
 import { getDb } from "../../lib/blog";
@@ -24,7 +25,7 @@ const { t } = getUiTranslations(Astro);
 	pageDescription={t("messages.manageRoleBundles")}
 >
 	<div slot="actions" class="admin-page-actions">
-		<a class="btn btn-primary" href="/admin/roles/new">{t("actions.createRole")}</a>
+		<CreateAction href="/admin/roles/new" label={t("actions.createRole")} />
 	</div>
 
 	<div class="admin-content-stack">

@@ -1,0 +1,14 @@
+---
+interface Props {
+	label: string;
+	disabled?: boolean;
+	attrs?: Record<string, string | boolean | undefined>;
+}
+
+const { label, disabled = false, attrs = {} } = Astro.props as Props;
+---
+
+<button class="btn btn-primary admin-create-action" type="submit" disabled={disabled} {...attrs}>
+	<span class="admin-create-action-icon" aria-hidden="true">+</span>
+	<span class="admin-create-action-label">{label}</span>
+</button>

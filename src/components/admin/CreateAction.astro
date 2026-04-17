@@ -1,0 +1,13 @@
+---
+interface Props {
+	href: string;
+	label: string;
+}
+
+const { href, label } = Astro.props as Props;
+---
+
+<a class="btn btn-primary admin-create-action" href={href}>
+	<span class="admin-create-action-icon" aria-hidden="true">+</span>
+	<span class="admin-create-action-label">{label}</span>
+</a>

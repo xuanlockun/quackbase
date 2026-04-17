@@ -4,6 +4,7 @@ export const prerender = false;
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import LanguageForm from "../../components/admin/LanguageForm.astro";
 import LanguageTable from "../../components/admin/LanguageTable.astro";
+import CreateSubmit from "../../components/admin/CreateSubmit.astro";
 import languageManagerScript from "../../components/admin/language-manager.ts?url";
 import translationManagerScript from "../../components/admin/translation-manager.js?url";
 import { getDb } from "../../lib/blog";
@@ -172,9 +173,7 @@ const translationTabsLabel = t("labels.languages", "Languages");
 					</div>
 				</div>
 				<div class="col-12 d-flex flex-wrap gap-2">
-					<button type="submit" class="btn btn-primary" data-translation-submit>
-						{addButtonLabel}
-					</button>
+					<CreateSubmit label={addButtonLabel} attrs={{ "data-translation-submit": "" }} />
 				</div>
 			</form>
 		</div>

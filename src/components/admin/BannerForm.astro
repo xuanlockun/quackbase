@@ -1,5 +1,6 @@
 ---
 import type { BannerRecord } from "../../lib/banners";
+import CreateSubmit from "./CreateSubmit.astro";
 import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
@@ -73,7 +74,11 @@ const isActive = banner?.isActive ?? true;
 	</div>
 
 	<div class="admin-form-actions">
-		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		{mode === "create" ? (
+			<CreateSubmit label={submitLabel} disabled={isDisabled} />
+		) : (
+			<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		)}
 	</div>
 </form>
 <style>

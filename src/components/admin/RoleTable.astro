@@ -34,7 +34,7 @@ const { t } = getUiTranslations(Astro);
 										</p>
 										{role.description && <p class="text-muted mt-2 mb-0">{role.description}</p>}
 									</div>
-									<div class="d-flex flex-wrap gap-2" aria-label={t("labels.action")}>
+									<div class="admin-action-group" aria-label={t("labels.action")}>
 										<IconAction
 											href={`/admin/roles/${role.id}/edit`}
 											icon="edit"
@@ -61,7 +61,7 @@ const { t } = getUiTranslations(Astro);
 										}
 									</div>
 								</div>
-								<div class="mt-3 d-flex flex-wrap gap-2">
+								<div class="mt-3 admin-action-group">
 									{
 										role.permissions.length > 0 ? (
 											role.permissions.map((permission) => (

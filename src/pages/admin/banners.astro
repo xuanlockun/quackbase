@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import BannerTable from "../../components/admin/BannerTable.astro";
+import CreateAction from "../../components/admin/CreateAction.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getDb } from "../../lib/blog";
 import { listBanners } from "../../lib/banners";
@@ -35,7 +36,7 @@ try {
 	pageDescription={t("messages.manageBannersHelp")}
 >
 	<div slot="actions" class="admin-page-actions">
-		{canCreate && <a class="btn btn-primary" href="/admin/banners/new">{t("actions.createBanner")}</a>}
+		{canCreate && <CreateAction href="/admin/banners/new" label={t("actions.createBanner")} />}
 	</div>
 
 	<div class="admin-content-stack">

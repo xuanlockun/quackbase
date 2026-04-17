@@ -1,5 +1,6 @@
 ---
 import type { ContactFormRecord } from "../../lib/contact-forms";
+import CreateSubmit from "./CreateSubmit.astro";
 import { getLanguageCatalog, getSupportedLanguages, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
@@ -223,7 +224,11 @@ const labelGridColumns = `44px 1fr repeat(${Math.max(labelLanguages.length, 1)},
 	</div>
 
 	<div class="admin-form-actions">
-		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		{mode === "create" ? (
+			<CreateSubmit label={submitLabel} disabled={isDisabled} />
+		) : (
+			<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		)}
 	</div>
 </form>
 

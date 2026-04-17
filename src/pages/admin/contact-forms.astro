@@ -6,6 +6,7 @@ import { getDb } from "../../lib/blog";
 import { listContactForms } from "../../lib/contact-forms";
 import { countFormSubmissionsByContactFormId } from "../../lib/forms";
 import ContactFormTable from "../../components/admin/ContactFormTable.astro";
+import CreateAction from "../../components/admin/CreateAction.astro";
 import { getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
@@ -39,7 +40,7 @@ try {
 	pageDescription={t("messages.manageContactFormsHelp")}
 >
 	<div slot="actions" class="admin-page-actions">
-		{canManage && <a class="btn btn-primary" href="/admin/contact-forms/new">{t("actions.createContactForm")}</a>}
+		{canManage && <CreateAction href="/admin/contact-forms/new" label={t("actions.createContactForm")} />}
 	</div>
 
 	<div class="admin-content-stack">

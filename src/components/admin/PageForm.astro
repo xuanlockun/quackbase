@@ -3,6 +3,7 @@ import type { PageSectionConfig, SitePage } from "../../lib/blog";
 import { getSupportedLanguages, getLocalizedPagePath } from "../../lib/blog";
 import type { BannerRecord } from "../../lib/banners";
 import type { ContactFormRecord } from "../../lib/contact-forms";
+import CreateSubmit from "./CreateSubmit.astro";
 import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
@@ -401,7 +402,11 @@ const initialContactFields = [];
 	</div>
 
 	<div class="admin-form-actions">
-		<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		{mode === "create" ? (
+			<CreateSubmit label={submitLabel} disabled={isDisabled} />
+		) : (
+			<button class="btn btn-primary" type="submit" disabled={isDisabled}>{submitLabel}</button>
+		)}
 		{mode === "edit" && page && <a class="btn btn-outline-secondary" href={getLocalizedPagePath(page.slug, language, catalog)}>{t("actions.openPage")}</a>}
 	</div>
 </form>

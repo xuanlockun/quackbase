@@ -1,4 +1,5 @@
 ---
+import CreateSubmit from "./CreateSubmit.astro";
 import { getUiTranslations } from "../../lib/i18n";
 
 interface Props {
@@ -60,5 +61,5 @@ const messages = {
 			{t("actions.setDefaultLanguage")}
 		</label>
 	</div>
-	<button type="submit" class="btn btn-primary w-100">{t("actions.createLanguage")}</button>
+	<CreateSubmit label={t("actions.createLanguage")} />
 </form>

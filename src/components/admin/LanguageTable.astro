@@ -79,30 +79,30 @@ const texts = {
 								<code>{language.code}</code>
 							</td>
 							<td>{language.name}</td>
-							<td>
-								<IconAction
-									type="button"
-									icon="toggle"
-									label={language.enabled ? "Disable language" : "Enable language"}
-									variant="btn-outline-primary"
-									attrs={{
-										"data-action": "toggle-enabled",
-										"data-code": language.code,
-										"data-enabled": String(language.enabled),
-									}}
-								/>
-							</td>
-							<td>
-								<button
-									type="button"
-									class:list={["btn", "btn-sm", "btn-outline-secondary", language.isDefault && "active"]}
-									aria-pressed={language.isDefault ? "true" : "false"}
-									data-action="set-default"
-									data-code={language.code}
-									data-default={language.isDefault}
-								>
-									{language.isDefault ? texts.defaultLabel : texts.setDefault}
-								</button>
+							<td class="admin-action-cell">
+								<div class="admin-action-group">
+									<IconAction
+										type="button"
+										icon="toggle"
+										label={language.enabled ? "Disable language" : "Enable language"}
+										variant="btn-outline-primary"
+										attrs={{
+											"data-action": "toggle-enabled",
+											"data-code": language.code,
+											"data-enabled": String(language.enabled),
+										}}
+									/>
+									<button
+										type="button"
+										class:list={["btn", "btn-sm", "btn-outline-secondary", language.isDefault && "active"]}
+										aria-pressed={language.isDefault ? "true" : "false"}
+										data-action="set-default"
+										data-code={language.code}
+										data-default={language.isDefault}
+									>
+										{language.isDefault ? texts.defaultLabel : texts.setDefault}
+									</button>
+								</div>
 							</td>
 							<td>
 								<span
@@ -115,12 +115,14 @@ const texts = {
 									{language.isDefault ? texts.defaultLabel : language.enabled ? texts.active : texts.inactive}
 								</span>
 							</td>
-							<td>
-								<IconAction
-									href={`/admin/languages/${encodeURIComponent(language.code)}`}
-									icon="edit"
-									label={t("actions.editTranslations")}
-								/>
+							<td class="admin-action-cell">
+								<div class="admin-action-group">
+									<IconAction
+										href={`/admin/languages/${encodeURIComponent(language.code)}`}
+										icon="edit"
+										label={t("actions.editTranslations")}
+									/>
+								</div>
 							</td>
 						</tr>
 					))
