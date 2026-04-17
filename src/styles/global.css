@@ -557,7 +557,7 @@ img {
 
 .admin-table {
 	width: 100%;
-	border-radius: 1rem;
+	border-radius: 0.75rem;
 	border: 1px solid rgba(var(--gray), 0.18);
 	overflow: hidden;
 	background: rgba(255, 255, 255, 0.9);
@@ -575,8 +575,14 @@ img {
 	font-size: 0.68rem;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
-	background: rgba(15, 23, 42, 0.03);
+	background: #eef1f5;
 	color: rgba(15, 23, 42, 0.66);
+}
+
+.admin-table-surface,
+body.admin-app .table-responsive {
+	border-radius: 0.75rem;
+	overflow: hidden;
 }
 
 .admin-compact-copy {
@@ -1428,7 +1434,6 @@ body.admin-app .localized-editor-panel,
 body.admin-app .admin-check-row {
 	background: #fff;
 	border: 1px solid rgba(15, 23, 42, 0.08);
-	border-radius: 0;
 	box-shadow: none;
 }
 
@@ -1456,8 +1461,9 @@ body.admin-app .admin-table td {
 	border-bottom-color: rgba(15, 23, 42, 0.08);
 }
 
-body.admin-app .admin-table thead th {
-	background: #f8fafc;
+body.admin-app .admin-table thead th,
+body.admin-app .table thead th {
+	background: #eef1f5;
 	color: rgba(15, 23, 42, 0.62);
 	font-size: 11px;
 	letter-spacing: 0.08em;
