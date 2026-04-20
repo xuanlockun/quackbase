@@ -6,7 +6,7 @@ import IconAction from "../../components/admin/IconAction.astro";
 import { getDb } from "../../lib/blog";
 import {
 	getMediaStorageStatus,
-	listMediaAssets,
+	listAllMediaAssets,
 	listMediaFolders,
 	type MediaAsset,
 	type MediaFolderRecord,
@@ -31,7 +31,7 @@ let loadError = "";
 
 try {
 	const db = getDb(Astro.locals);
-	[allAssets, folders] = await Promise.all([listMediaAssets(db), listMediaFolders(db)]);
+	[allAssets, folders] = await Promise.all([listAllMediaAssets(db), listMediaFolders(db)]);
 } catch (error) {
 	loadError = error instanceof Error ? error.message : t("messages.mediaLoadFailed");
 }
