@@ -19,7 +19,7 @@ npm run dev
 
 Use the deploy button above when you are ready to publish to Cloudflare.
 
-> **⚠️ Note:** This repository is the app source for Edge CMS. For a private instance, keep your real Cloudflare values in `wrangler.json`. For a public starter, replace those values with placeholders.
+> **⚠️ Note:** This repository is the app source for Edge CMS. For a private instance, keep your real Cloudflare values in `wrangler.json`. For a public starter, replace those values with placeholders. On a fresh install, the login screen will create the first admin account automatically.
 
 ## 🚀 Features
 
@@ -147,6 +147,15 @@ For a private instance, keep your real values in `wrangler.json`:
 
 For a public starter repo, replace real values with placeholders so others can safely copy the project.
 
+## Database And Migrations
+
+The repository now splits migrations into two folders:
+
+- `migrations/` - real bootstrap migrations for new installs
+- `migrations-dev/` - the old SQL history and local test migrations
+
+Wrangler points at `migrations/` by default, so fresh installs apply the bootstrap file first.
+
 ## 🧩 Admin Areas
 
 - `/admin` - dashboard
@@ -218,6 +227,7 @@ When changing media behavior, verify:
 .
 |-- locales/
 |-- migrations/
+|-- migrations-dev/
 |-- public/
 |-- src/
 |   |-- components/

@@ -5,9 +5,15 @@ import BaseHead from "../../components/BaseHead.astro";
 import Footer from "../../components/Footer.astro";
 import Header from "../../components/Header.astro";
 import { SITE_TITLE } from "../../consts";
+import { getDb } from "../../lib/blog";
 import { getUiTranslations } from "../../lib/i18n";
+import { countAdminUsers } from "../../lib/db/admin-users";
 
 const error = Astro.url.searchParams.get("error");
+const setupError = Astro.url.searchParams.get("setupError");
+const db = getDb(Astro.locals);
+const adminUserCount = await countAdminUsers(db);
+const needsInitialSetup = adminUserCount === 0;
 const { language, t } = getUiTranslations(Astro);
 const errorMessage =
 	error === "access-denied"
@@ -15,6 +21,7 @@ const errorMessage =
 		: error === "invalid"
 			? t("messages.invalidCredentials")
 			: "";
+const setupErrorMessage = setupError || "";
 ---
 
 <!doctype html>
@@ -64,22 +71,49 @@ const errorMessage =
 		<Header />
 		<main class="login-shell">
 			<section class="panel">
-				<h1>{t("headings.adminLogin")}</h1>
-				<p class="muted">{t("messages.signInIntro")}</p>
-				{errorMessage && <p class="error">{errorMessage}</p>}
-				<form method="post" action="/api/admin/auth/login">
-					<label>
-						<span>{t("labels.email")}</span>
-						<input class="form-control" type="email" name="email" autocomplete="username" required />
-					</label>
-					<label>
-						<span>{t("labels.password")}</span>
-						<input class="form-control" type="password" name="password" autocomplete="current-password" required />
-					</label>
-					<div class="login-actions">
-						<button class="btn btn-primary" type="submit">{t("actions.signIn")}</button>
-					</div>
-				</form>
+				{needsInitialSetup ? (
+					<>
+						<h1>Initial setup</h1>
+						<p class="muted">Create the first admin account for this fresh install.</p>
+						{setupErrorMessage && <p class="error">{setupErrorMessage}</p>}
+						<form method="post" action="/api/admin/auth/setup">
+							<label>
+								<span>{t("labels.email")}</span>
+								<input class="form-control" type="email" name="email" autocomplete="username" required />
+							</label>
+							<label>
+								<span>Display name</span>
+								<input class="form-control" type="text" name="displayName" autocomplete="name" required />
+							</label>
+							<label>
+								<span>{t("labels.password")}</span>
+								<input class="form-control" type="password" name="password" autocomplete="new-password" required />
+							</label>
+							<div class="login-actions">
+								<button class="btn btn-primary" type="submit">Create admin account</button>
+							</div>
+						</form>
+					</>
+				) : (
+					<>
+						<h1>{t("headings.adminLogin")}</h1>
+						<p class="muted">{t("messages.signInIntro")}</p>
+						{errorMessage && <p class="error">{errorMessage}</p>}
+						<form method="post" action="/api/admin/auth/login">
+							<label>
+								<span>{t("labels.email")}</span>
+								<input class="form-control" type="email" name="email" autocomplete="username" required />
+							</label>
+							<label>
+								<span>{t("labels.password")}</span>
+								<input class="form-control" type="password" name="password" autocomplete="current-password" required />
+							</label>
+							<div class="login-actions">
+								<button class="btn btn-primary" type="submit">{t("actions.signIn")}</button>
+							</div>
+						</form>
+					</>
+				)}
 			</section>
 		</main>
 		<Footer />

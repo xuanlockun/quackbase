@@ -11,6 +11,11 @@ function normalizeEmail(email: string): string {
 	return email.trim().toLowerCase();
 }
 
+export async function countAdminUsers(db: D1Database): Promise<number> {
+	const row = await db.prepare(`SELECT COUNT(*) as count FROM users`).first<{ count: number }>();
+	return row?.count ?? 0;
+}
+
 export async function findAdminUserByEmail(db: D1Database, email: string): Promise<AdminAuthUser | null> {
 	const user = await db
 		.prepare(
