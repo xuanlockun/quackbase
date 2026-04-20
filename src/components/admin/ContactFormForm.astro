@@ -53,6 +53,10 @@ const initialButtonColor = form?.buttonColor ?? "#4f80ff";
 const labelGridColumns = `2rem minmax(12rem, 16rem) ${labelLanguages
 	.map(() => "minmax(0, 1fr)")
 	.join(" ")} minmax(7rem, auto) minmax(6rem, auto)`;
+const contactFieldPanels = [
+	{ key: "builder", label: t("messages.contactFormBuilderTab", "Builder") },
+	{ key: "preview", label: t("messages.contactFormPreviewTab", "Preview") },
+];
 const titleTranslations = normalizeContactCopyTranslations(form?.titleTranslations ?? initialTitle, defaultLanguageCode, initialTitle);
 const descriptionTranslations = normalizeContactCopyTranslations(
 	form?.descriptionTranslations ?? initialDescription,
@@ -333,86 +337,197 @@ function normalizeContactCopyValue(value: unknown): string {
 			data-text-option={t("labels.textField")}
 			data-email-option={t("labels.emailField")}
 			data-textarea-option={t("labels.textareaField")}
+			data-preview-tab-label={t("messages.contactFormPreviewTab", "Preview")}
+			data-builder-tab-label={t("messages.contactFormBuilderTab", "Builder")}
+			data-preview-only-label={t("messages.contactFormPreviewOnly", "Preview only")}
+			data-preview-status-label={t("messages.contactFormPreviewStatus", "Try the form here to check the field flow and spacing.")}
 		>
 			<div class="contact-fields-toolbar">
-				<strong>{t("headings.contactFormFields")}</strong>
-				<button class="btn btn-outline-secondary btn-sm" type="button" data-contact-field-add data-readonly={String(isDisabled)} disabled={isDisabled}>
-					{t("actions.addField")}
-				</button>
-			</div>
-			<p class="admin-inline-muted mb-0">{t("messages.contactFormBuilderHelp")}</p>
-			<input type="hidden" name="contactFormFields" data-contact-fields-payload value={fieldsJson} />
-			<div class="contact-fields-config">
-				<div class="contact-fields-table" role="table">
-					<div class="contact-fields-header" role="row" style={`grid-template-columns: ${labelGridColumns};`}>
-						<span></span>
-						<span>{t("labels.fieldType")}</span>
-						{labelLanguages.map((entry) => <span>{t("labels.label")} ({entry.code.toUpperCase()})</span>)}
-						<span>{t("labels.required")}</span>
-						<span>{t("labels.action")}</span>
-					</div>
-					<div class="contact-fields-rows" data-contact-fields-rows>
-						{
-							displayFields.map((field) => {
-								const type = field.type ?? "text";
-								const labelValues = labelLanguages.map((entry) => ({
-									code: entry.code,
-									value: field.label?.[entry.code] ?? "",
-								}));
-								return (
-									<div
-										class="contact-field-row"
-										draggable={!isDisabled}
-										data-contact-field
-										data-field-id={String(field.id ?? 1)}
-										style={`grid-template-columns: ${labelGridColumns};`}
-									>
-										<span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
-										<div class="contact-field-meta">
-											<label>
-												<span>{t("labels.fieldType")}</span>
-												<select data-contact-field-type disabled={isDisabled}>
-													<option value="text" selected={type === "text"}>
-														{t("labels.textField")}
-													</option>
-													<option value="email" selected={type === "email"}>
-														{t("labels.emailField")}
-													</option>
-													<option value="textarea" selected={type === "textarea"}>
-														{t("labels.textareaField")}
-													</option>
-												</select>
-											</label>
-											<label class="contact-field-required">
-												<span>{t("labels.required")}</span>
-												<input type="checkbox" data-contact-field-required checked={field.required} disabled={isDisabled} />
-											</label>
-											<button class="admin-ghost-button" type="button" data-contact-field-remove disabled={isDisabled}>
-												{t("actions.remove")}
-											</button>
-										</div>
-										{labelValues.map((entry, index) => (
-											<label>
-												<span>{t("labels.label")} ({entry.code.toUpperCase()})</span>
-												<input
-													type="text"
-													data-contact-field-label
-													data-language-code={entry.code}
-													value={entry.value}
-													disabled={isDisabled}
-													required={index === 0}
-												/>
-											</label>
-										))}
-									</div>
-								);
-							})
-						}
-					</div>
+				<div>
+					<strong>{t("headings.contactFormFields")}</strong>
+					<p class="admin-inline-muted mb-0">{t("messages.contactFormBuilderHelp")}</p>
 				</div>
-				<p class="admin-inline-muted mb-0" data-contact-fields-empty hidden>
-					{t("messages.noContactFieldsConfigured")}
-				</p>
+				<div class="d-flex flex-column align-items-start align-items-sm-end gap-2">
+					<div class="nav nav-pills contact-fields-tabs" role="tablist" aria-label={t("messages.contactFormBuilderTab", "Builder")}>
+						{contactFieldPanels.map((panel) => (
+							<button
+								type="button"
+								class:list={["nav-link contact-fields-tab", panel.key === "builder" && "active"]}
+								data-contact-fields-panel-tab={panel.key}
+								role="tab"
+								aria-selected={panel.key === "builder" ? "true" : "false"}
+								disabled={isDisabled}
+							>
+								{panel.label}
+							</button>
+						))}
+					</div>
+					<button class="btn btn-outline-secondary btn-sm" type="button" data-contact-field-add data-readonly={String(isDisabled)} disabled={isDisabled}>
+						{t("actions.addField")}
+					</button>
+				</div>
+			</div>
+			<input type="hidden" name="contactFormFields" data-contact-fields-payload value={fieldsJson} />
+			<div class="contact-fields-panels">
+				<section class="contact-fields-panel is-active" data-contact-fields-panel="builder">
+					<div class="contact-fields-config">
+						<div class="contact-fields-table" role="table">
+							<div class="contact-fields-header" role="row" style={`grid-template-columns: ${labelGridColumns};`}>
+								<span></span>
+								<span>{t("labels.fieldType")}</span>
+								{labelLanguages.map((entry) => <span>{t("labels.label")} ({entry.code.toUpperCase()})</span>)}
+								<span>{t("labels.required")}</span>
+								<span>{t("labels.action")}</span>
+							</div>
+							<div class="contact-fields-rows" data-contact-fields-rows>
+								{
+									displayFields.map((field) => {
+										const type = field.type ?? "text";
+										const labelValues = labelLanguages.map((entry) => ({
+											code: entry.code,
+											value: field.label?.[entry.code] ?? "",
+										}));
+										return (
+											<div
+												class="contact-field-row"
+												draggable={!isDisabled}
+												data-contact-field
+												data-field-id={String(field.id ?? 1)}
+												style={`grid-template-columns: ${labelGridColumns};`}
+											>
+												<span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
+												<div class="contact-field-meta">
+													<label>
+														<span>{t("labels.fieldType")}</span>
+														<select data-contact-field-type disabled={isDisabled}>
+															<option value="text" selected={type === "text"}>
+																{t("labels.textField")}
+															</option>
+															<option value="email" selected={type === "email"}>
+																{t("labels.emailField")}
+															</option>
+															<option value="textarea" selected={type === "textarea"}>
+																{t("labels.textareaField")}
+															</option>
+														</select>
+													</label>
+													<label class="contact-field-required">
+														<span>{t("labels.required")}</span>
+														<input type="checkbox" data-contact-field-required checked={field.required} disabled={isDisabled} />
+													</label>
+													<button class="admin-ghost-button" type="button" data-contact-field-remove disabled={isDisabled}>
+														{t("actions.remove")}
+													</button>
+												</div>
+												{labelValues.map((entry, index) => (
+													<label>
+														<span>{t("labels.label")} ({entry.code.toUpperCase()})</span>
+														<input
+															type="text"
+															data-contact-field-label
+															data-language-code={entry.code}
+															value={entry.value}
+															disabled={isDisabled}
+															required={index === 0}
+														/>
+													</label>
+												))}
+											</div>
+										);
+									})
+								}
+							</div>
+						</div>
+						<p class="admin-inline-muted mb-0" data-contact-fields-empty hidden>
+							{t("messages.noContactFieldsConfigured")}
+						</p>
+					</div>
+				</section>
+				<section class="contact-fields-panel" data-contact-fields-panel="preview" hidden>
+					<div class="contact-form-preview-shell">
+						<div class="contact-form-preview-header">
+							<div>
+								<strong>{t("messages.contactFormPreviewTitle", "Live preview")}</strong>
+								<p class="admin-inline-muted mb-0">{t("messages.contactFormPreviewStatus", "Try the form here to check the field flow and spacing.")}</p>
+							</div>
+							<div class="nav nav-pills contact-preview-tabs" role="tablist" aria-label={t("labels.language")}>
+								{labelLanguages.map((entry) => (
+									<button
+										type="button"
+										class:list={["nav-link contact-preview-tab", entry.code === initialLanguage && "active"]}
+										data-contact-preview-language-tab={entry.code}
+										role="tab"
+										aria-selected={entry.code === initialLanguage ? "true" : "false"}
+										disabled={isDisabled}
+									>
+										{entry.code.toUpperCase()}
+									</button>
+								))}
+							</div>
+						</div>
+						<div
+							class="contact-form-preview"
+							data-contact-form-preview
+							data-default-language={defaultLanguageCode}
+							data-active-language={initialLanguage}
+							style={`--contact-form-bg: ${initialBackgroundColor}; --contact-submit-bg: ${initialButtonColor};`}
+						>
+							<div class="contact-form card border-0 shadow-sm overflow-hidden" data-contact-form-preview-form role="group" aria-label={t("messages.contactFormPreviewTitle", "Live preview")}>
+								<div class="card-body p-4 p-lg-5">
+									<h3 class="contact-form-title h4 mb-2" data-contact-form-preview-title>
+										{formTitleTranslations[initialLanguage]?.trim() || formTitleTranslations[defaultLanguageCode]?.trim() || t("messages.contactFormPreviewTitle", "Live preview")}
+									</h3>
+									<p class="contact-form-description text-muted mb-4" data-contact-form-preview-description>
+										{formDescriptionTranslations[initialLanguage]?.trim() || formDescriptionTranslations[defaultLanguageCode]?.trim() || ""}
+									</p>
+									<div class="row g-3" data-contact-form-preview-fields>
+										{
+											displayFields.length > 0 ? (
+											displayFields.map((field, index) => {
+													const labelText = field.label?.[initialLanguage]?.trim() || field.label?.[defaultLanguageCode]?.trim() || `Field ${index + 1}`;
+													return (
+														<div class={field.type === "textarea" ? "col-12" : "col-12 col-md-6"}>
+															<label class="form-label fw-medium">
+																{labelText}
+																{field.required && <span class="text-danger ms-1">*</span>}
+															</label>
+															{
+																field.type === "textarea" ? (
+																	<textarea class="form-control form-control-lg" rows="5" placeholder={labelText} />
+																) : (
+																	<input class="form-control form-control-lg" type={field.type} placeholder={labelText} />
+																)
+															}
+														</div>
+													);
+												})
+											) : (
+												<div class="col-12">
+													<div class="alert alert-secondary mb-0">
+														{t("messages.noContactFieldsConfigured")}
+													</div>
+												</div>
+											)
+										}
+									</div>
+									<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mt-4 gap-3">
+										<button class="btn btn-primary btn-lg px-4 contact-form-submit" type="button" data-contact-form-preview-submit>
+											{t("actions.sendMessage")}
+										</button>
+										<p
+											class="mb-0 text-muted small contact-form-preview-status"
+											data-contact-form-preview-status
+											data-preview-message={t("messages.contactFormPreviewOnly", "Preview only. This form does not submit data.")}
+											aria-live="polite"
+										>
+											{t("messages.contactFormPreviewOnly", "Preview only. This form does not submit data.")}
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
 			</div>
 		</div>
 	</div>
@@ -428,6 +543,16 @@ function normalizeContactCopyValue(value: unknown): string {
 
 <style>
 	.contact-fields-config {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.contact-fields-panels {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.contact-fields-panel {
 		display: grid;
 		gap: 1rem;
 	}
@@ -536,13 +661,57 @@ function normalizeContactCopyValue(value: unknown): string {
 
 	.contact-fields-toolbar {
 		display: flex;
-		align-items: flex-end;
+		align-items: flex-start;
 		justify-content: space-between;
 		gap: 1rem;
 	}
 
 	.contact-fields-toolbar strong {
 		font-size: 0.95rem;
+	}
+
+	.contact-fields-tabs,
+	.contact-preview-tabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.contact-fields-tab,
+	.contact-preview-tab {
+		border-radius: 0.75rem;
+		padding: 0.4rem 0.7rem;
+		font-size: 0.78rem;
+	}
+
+	.contact-form-preview-shell {
+		display: grid;
+		gap: 0.85rem;
+	}
+
+	.contact-form-preview-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.contact-form-preview {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.contact-form-preview .contact-form {
+		width: 100%;
+	}
+
+	.contact-form-preview .contact-form .form-control,
+	.contact-form-preview .contact-form .btn {
+		border-radius: 0;
+	}
+
+	.contact-form-preview-status {
+		min-height: 1.25rem;
 	}
 
 	.contact-form-colors {
@@ -633,6 +802,11 @@ function normalizeContactCopyValue(value: unknown): string {
 			align-items: stretch;
 		}
 
+		.contact-form-preview-header {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
 		.contact-form-colors {
 			grid-template-columns: 1fr;
 		}
@@ -656,6 +830,16 @@ function normalizeContactCopyValue(value: unknown): string {
 	let contactPayload;
 	let addContactButton;
 	let contactEmptyState;
+	let contactPreviewForm;
+	let contactPreviewSubmitButton;
+	let contactPreviewTitle;
+	let contactPreviewDescription;
+	let contactPreviewFields;
+	let contactPreviewStatus;
+	let contactPreviewLanguageTabs = [];
+	let contactPreviewLanguage = "en";
+	let contactFieldPanelTabs = [];
+	let contactFieldPanels = [];
 	let isContactReadOnly = false;
 	let nextFieldId = 0;
 	let draggedContactRow = null;
@@ -761,6 +945,15 @@ function normalizeContactCopyValue(value: unknown): string {
 		contactPayload = editor?.querySelector("[data-contact-fields-payload]");
 		addContactButton = editor?.querySelector("[data-contact-field-add]");
 		contactEmptyState = editor?.querySelector("[data-contact-fields-empty]");
+		contactPreviewForm = editor?.querySelector("[data-contact-form-preview-form]");
+		contactPreviewSubmitButton = editor?.querySelector("[data-contact-form-preview-submit]");
+		contactPreviewTitle = editor?.querySelector("[data-contact-form-preview-title]");
+		contactPreviewDescription = editor?.querySelector("[data-contact-form-preview-description]");
+		contactPreviewFields = editor?.querySelector("[data-contact-form-preview-fields]");
+		contactPreviewStatus = editor?.querySelector("[data-contact-form-preview-status]");
+		contactFieldPanelTabs = Array.from(editor?.querySelectorAll("[data-contact-fields-panel-tab]") ?? []);
+		contactFieldPanels = Array.from(editor?.querySelectorAll("[data-contact-fields-panel]") ?? []);
+		contactPreviewLanguageTabs = Array.from(editor?.querySelectorAll("[data-contact-preview-language-tab]") ?? []);
 		isContactReadOnly = addContactButton?.dataset.readonly === "true";
 
 		if (!(contactRows instanceof HTMLElement) || !(contactPayload instanceof HTMLInputElement)) {
@@ -778,7 +971,33 @@ function normalizeContactCopyValue(value: unknown): string {
 				contactRows.append(createContactFieldRow(entry));
 			});
 		}
+		activateContactFieldPanel("builder");
+		activateContactPreviewLanguage(contactPreviewLanguageTabs[0]?.dataset.contactPreviewLanguageTab ?? initialLanguage);
 		syncContactFields();
+
+		contactFieldPanelTabs.forEach((tab) => {
+			if (!(tab instanceof HTMLButtonElement)) {
+				return;
+			}
+			tab.addEventListener("click", () => {
+				const panelKey = tab.dataset.contactFieldsPanelTab;
+				if (panelKey) {
+					activateContactFieldPanel(panelKey);
+				}
+			});
+		});
+
+		contactPreviewLanguageTabs.forEach((tab) => {
+			if (!(tab instanceof HTMLButtonElement)) {
+				return;
+			}
+			tab.addEventListener("click", () => {
+				const languageCode = tab.dataset.contactPreviewLanguageTab;
+				if (languageCode) {
+					activateContactPreviewLanguage(languageCode);
+				}
+			});
+		});
 
 		addContactButton?.addEventListener("click", () => {
 			contactRows.append(createContactFieldRow());
@@ -849,6 +1068,14 @@ function normalizeContactCopyValue(value: unknown): string {
 				draggedContactRow = null;
 			}
 		});
+
+		contactPreviewSubmitButton?.addEventListener("click", () => {
+			if (contactPreviewStatus instanceof HTMLElement) {
+				contactPreviewStatus.textContent = contactPreviewStatus.dataset.previewMessage ?? t("messages.contactFormPreviewOnly", "Preview only. This form does not submit data.");
+			}
+		});
+
+		syncContactPreview();
 	};
 
 	const initializeEditors = () => {
@@ -878,6 +1105,155 @@ function normalizeContactCopyValue(value: unknown): string {
 		} catch {
 			return [];
 		}
+	}
+
+	function activateContactFieldPanel(panelKey) {
+		contactFieldPanelTabs.forEach((tab) => {
+			if (!(tab instanceof HTMLButtonElement)) {
+				return;
+			}
+			const isActive = tab.dataset.contactFieldsPanelTab === panelKey;
+			tab.classList.toggle("active", isActive);
+			tab.setAttribute("aria-selected", isActive ? "true" : "false");
+		});
+		contactFieldPanels.forEach((panel) => {
+			if (!(panel instanceof HTMLElement)) {
+				return;
+			}
+			const isActive = panel.dataset.contactFieldsPanel === panelKey;
+			panel.hidden = !isActive;
+			panel.classList.toggle("is-active", isActive);
+		});
+	}
+
+	function activateContactPreviewLanguage(languageCode) {
+		contactPreviewLanguage = languageCode;
+		if (contactPreviewForm instanceof HTMLElement) {
+			contactPreviewForm.dataset.activeLanguage = languageCode;
+		}
+		contactPreviewLanguageTabs.forEach((tab) => {
+			if (!(tab instanceof HTMLButtonElement)) {
+				return;
+			}
+			const isActive = tab.dataset.contactPreviewLanguageTab === languageCode;
+			tab.classList.toggle("active", isActive);
+			tab.setAttribute("aria-selected", isActive ? "true" : "false");
+		});
+		syncContactPreview();
+	}
+
+	function collectContactFieldState(includeEmptyLabels = false) {
+		if (!(contactRows instanceof HTMLElement)) {
+			return [];
+		}
+
+		return Array.from(contactRows.querySelectorAll("[data-contact-field]"))
+			.map((row, index) => {
+				const typeInput = row.querySelector("[data-contact-field-type]");
+				const requiredInput = row.querySelector("[data-contact-field-required]");
+				const labelInputs = Array.from(row.querySelectorAll("[data-contact-field-label]"));
+				const fieldId = Number(row.dataset.fieldId ?? index + 1);
+				const type = typeInput instanceof HTMLSelectElement ? typeInput.value : "text";
+				const required = requiredInput instanceof HTMLInputElement ? requiredInput.checked : false;
+				const labels = Object.fromEntries(
+					labelInputs
+						.filter((input) => input instanceof HTMLInputElement)
+						.map((input) => [input.dataset.languageCode ?? "", input.value.trim()])
+						.filter(([code, value]) => code && value),
+				);
+				return {
+					id: fieldId,
+					type,
+					label: labels,
+					required,
+					order: index + 1,
+				};
+			})
+			.filter((field) => includeEmptyLabels || Object.keys(field.label).length > 0);
+	}
+
+	function parseTranslationsFromInput(input) {
+		if (!(input instanceof HTMLInputElement)) {
+			return {};
+		}
+
+		try {
+			const parsed = JSON.parse(input.value || "{}");
+			return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+		} catch {
+			return {};
+		}
+	}
+
+	function getLocalizedPreviewValue(translations, fallback) {
+		const currentValue = typeof translations[contactPreviewLanguage] === "string" ? translations[contactPreviewLanguage].trim() : "";
+		if (currentValue) {
+			return currentValue;
+		}
+		const defaultValue = typeof translations[defaultLanguageCode] === "string" ? translations[defaultLanguageCode].trim() : "";
+		if (defaultValue) {
+			return defaultValue;
+		}
+		return fallback;
+	}
+
+	function syncContactPreview() {
+		if (!(contactPreviewForm instanceof HTMLElement) || !(contactPreviewTitle instanceof HTMLElement) || !(contactPreviewFields instanceof HTMLElement)) {
+			return;
+		}
+
+		const titleTranslations = parseTranslationsFromInput(copyTitleField);
+		const descriptionTranslations = parseTranslationsFromInput(copyDescriptionField);
+		const formTitleTranslations = parseTranslationsFromInput(copyFormTitleField);
+		const formDescriptionTranslations = parseTranslationsFromInput(copyFormDescriptionField);
+		const fields = collectContactFieldState(true);
+		const previewTitle = getLocalizedPreviewValue(
+			formTitleTranslations,
+			titleTranslations[defaultLanguageCode]?.trim() || t("messages.contactFormPreviewTitle", "Live preview"),
+		);
+		const previewDescription = getLocalizedPreviewValue(
+			formDescriptionTranslations,
+			descriptionTranslations[defaultLanguageCode]?.trim() || "",
+		);
+
+		contactPreviewTitle.textContent = previewTitle;
+		if (contactPreviewDescription instanceof HTMLElement) {
+			contactPreviewDescription.textContent = previewDescription;
+			contactPreviewDescription.hidden = !previewDescription;
+		}
+
+		if (fields.length === 0) {
+			contactPreviewFields.innerHTML = `
+				<div class="col-12">
+					<div class="alert alert-secondary mb-0">${escapeHtml(t("messages.noContactFieldsConfigured"))}</div>
+				</div>
+			`;
+			return;
+		}
+
+		contactPreviewFields.innerHTML = fields
+			.map((field, index) => {
+				const labelText =
+					typeof field.label?.[contactPreviewLanguage] === "string" && field.label[contactPreviewLanguage].trim()
+						? field.label[contactPreviewLanguage].trim()
+						: typeof field.label?.[defaultLanguageCode] === "string" && field.label[defaultLanguageCode].trim()
+							? field.label[defaultLanguageCode].trim()
+							: `Field ${index + 1}`;
+				const requiredMark = field.required ? '<span class="text-danger ms-1">*</span>' : "";
+				const inputMarkup =
+					field.type === "textarea"
+						? `<textarea class="form-control form-control-lg" rows="5" placeholder="${escapeAttribute(labelText)}"></textarea>`
+						: `<input class="form-control form-control-lg" type="${escapeAttribute(field.type)}" placeholder="${escapeAttribute(labelText)}" />`;
+				return `
+					<div class="${field.type === "textarea" ? "col-12" : "col-12 col-md-6"}">
+						<label class="form-label fw-medium">
+							${escapeHtml(labelText)}${requiredMark}
+						</label>
+						${inputMarkup}
+					</div>
+				`;
+			})
+			.join("");
 	}
 
 	function createContactFieldRow(field = {}) {
@@ -937,31 +1313,10 @@ function normalizeContactCopyValue(value: unknown): string {
 		if (!(contactPayload instanceof HTMLInputElement) || !(contactRows instanceof HTMLElement)) {
 			return;
 		}
-		const fields = Array.from(contactRows.querySelectorAll("[data-contact-field]"))
-			.map((row, index) => {
-				const typeInput = row.querySelector("[data-contact-field-type]");
-				const requiredInput = row.querySelector("[data-contact-field-required]");
-				const labelInputs = Array.from(row.querySelectorAll("[data-contact-field-label]"));
-				const fieldId = Number(row.dataset.fieldId ?? index + 1);
-				const type = typeInput instanceof HTMLSelectElement ? typeInput.value : "text";
-				const required = requiredInput instanceof HTMLInputElement ? requiredInput.checked : false;
-				const labels = Object.fromEntries(
-					labelInputs
-						.filter((input) => input instanceof HTMLInputElement)
-						.map((input) => [input.dataset.languageCode ?? "", input.value.trim()])
-						.filter(([code, value]) => code && value),
-				);
-				return {
-					id: fieldId,
-					type,
-					label: labels,
-					required,
-					order: index + 1,
-				};
-			})
-			.filter((field) => Object.keys(field.label).length > 0);
+		const fields = collectContactFieldState();
 		contactPayload.value = JSON.stringify(fields);
 		updateEmptyState();
+		syncContactPreview();
 	}
 
 	function updateEmptyState() {
@@ -976,6 +1331,15 @@ function normalizeContactCopyValue(value: unknown): string {
 	}
 
 	function escapeAttribute(value) {
+		return String(value)
+			.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll('"', "&quot;")
+			.replaceAll("'", "&#39;");
+	}
+
+	function escapeHtml(value) {
 		return String(value)
 			.replaceAll("&", "&amp;")
 			.replaceAll("<", "&lt;")
