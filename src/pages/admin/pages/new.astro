@@ -17,14 +17,14 @@ const canCreate = session.isSuperadmin || session.permissions.includes("pages.cr
 const hasError = Astro.url.searchParams.get("error");
 const { t, language } = getUiTranslations(Astro);
 const catalog = getLanguageCatalog(Astro.locals);
-const language = Astro.locals.uiLanguage ?? catalog.defaultLanguageCode;
+const currentLanguage = Astro.locals.uiLanguage ?? catalog.defaultLanguageCode;
 let bannerCatalog = [];
 let contactFormCatalog = [];
 
 try {
 	const db = getDb(Astro.locals);
-	bannerCatalog = await listBanners(db, false, language, catalog);
-	contactFormCatalog = await listContactForms(db, false, language, catalog);
+	bannerCatalog = await listBanners(db, false, currentLanguage, catalog);
+	contactFormCatalog = await listContactForms(db, false, currentLanguage, catalog);
 } catch {
 	bannerCatalog = [];
 	contactFormCatalog = [];

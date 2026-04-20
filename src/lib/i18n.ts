@@ -152,9 +152,29 @@ export function normalizeLocalizedText(
 			}
 
 			const trimmed = value.trim();
-			if (trimmed) {
-				entries.push([key, trimmed]);
+			if (!trimmed) {
+				continue;
 			}
+
+			if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+				try {
+					const parsed = JSON.parse(trimmed);
+					const nested = normalizeLocalizedText(parsed, {
+						...options,
+						requireDefault: false,
+						defaultLanguageCode: options?.defaultLanguageCode ?? defaultCode,
+					});
+					const nestedValue = nested[key]?.trim() || nested[defaultCode]?.trim() || Object.values(nested).find((entry) => entry.trim())?.trim() || "";
+					if (nestedValue) {
+						entries.push([key, nestedValue]);
+						continue;
+					}
+				} catch {
+					// Fall through and keep the original string.
+				}
+			}
+
+			entries.push([key, trimmed]);
 		}
 	}
 
