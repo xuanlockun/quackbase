@@ -1,4 +1,6 @@
 ---
+import { getUiTranslations } from "../lib/i18n";
+
 interface BannerSlide {
 	imageUrl: string;
 	title: string;
@@ -13,12 +15,13 @@ interface Props {
 	bannerUrls?: string[];
 }
 
+const { t } = getUiTranslations(Astro);
 const slides =
 	Astro.props.slides ??
 	(Astro.props.bannerUrls ?? []).map((url, index) => ({
 		imageUrl: url,
-		title: `Banner ${index + 1}`,
-		altText: `Banner ${index + 1}`,
+		title: `${t("labels.banner", "Banner")} ${index + 1}`,
+		altText: `${t("labels.banner", "Banner")} ${index + 1}`,
 	}));
 ---
 
@@ -70,11 +73,11 @@ const slides =
 					<>
 						<button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
 							<span class="carousel-control-prev-icon" aria-hidden="true"></span>
-							<span class="visually-hidden">Previous</span>
+							<span class="visually-hidden">{t("actions.previous", "Previous")}</span>
 						</button>
 						<button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
 							<span class="carousel-control-next-icon" aria-hidden="true"></span>
-							<span class="visually-hidden">Next</span>
+							<span class="visually-hidden">{t("actions.next", "Next")}</span>
 						</button>
 						<div class="carousel-indicators">
 							{
@@ -86,7 +89,7 @@ const slides =
 										data-bs-slide-to={index}
 										class:list={[index === 0 && "active"]}
 										aria-current={index === 0 ? "true" : undefined}
-										aria-label={`Slide ${index + 1}`}
+										aria-label={`${t("labels.slide", "Slide")} ${index + 1}`}
 									/>
 								))
 							}

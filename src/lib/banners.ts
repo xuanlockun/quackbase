@@ -1,21 +1,36 @@
+import { loadLanguageCatalog, type LanguageCatalogState } from "./languages";
+import {
+	DEFAULT_LANGUAGE,
+	type LocalizedText,
+	normalizeLocalizedText,
+	resolveLanguage,
+	resolveLocalizedValue,
+	stringifyLocalizedText,
+} from "./i18n";
+
 export interface BannerRecord {
 	id: number;
 	title: string;
+	titleTranslations: LocalizedText;
 	imageUrl: string;
 	headline: string;
+	headlineTranslations: LocalizedText;
 	caption: string;
+	captionTranslations: LocalizedText;
 	altText: string;
 	linkUrl: string;
 	isActive: boolean;
 	sortOrder: number;
 	updatedAt: Date;
+	requestedLanguage: string;
+	resolvedLanguage: string;
 }
 
 export interface BannerInput {
-	title: string;
+	titleTranslations: LocalizedText;
 	imageUrl: string;
-	headline: string;
-	caption: string;
+	headlineTranslations: LocalizedText;
+	captionTranslations: LocalizedText;
 	altText: string;
 	linkUrl: string;
 	isActive: boolean;
@@ -65,10 +80,34 @@ export async function ensureBannerTables(db: D1Database): Promise<void> {
 	if (!bannerColumnNames.has("caption")) {
 		await db.prepare(`ALTER TABLE banners ADD COLUMN caption TEXT NOT NULL DEFAULT ''`).run();
 	}
+
+	await db
+		.prepare(
+			`UPDATE banners
+			SET title = CASE
+				WHEN json_valid(title) THEN title
+				ELSE json_object('en', title)
+			END,
+			headline = CASE
+				WHEN json_valid(headline) THEN headline
+				ELSE json_object('en', headline)
+			END,
+			caption = CASE
+				WHEN json_valid(caption) THEN caption
+				ELSE json_object('en', caption)
+			END`,
+		)
+		.run();
 }
 
-export async function listBanners(db: D1Database, activeOnly = false): Promise<BannerRecord[]> {
+export async function listBanners(
+	db: D1Database,
+	activeOnly = false,
+	language = DEFAULT_LANGUAGE,
+	catalog?: LanguageCatalogState,
+): Promise<BannerRecord[]> {
 	await ensureBannerTables(db);
+	const c = catalog ?? (await loadLanguageCatalog(db));
 	const query = activeOnly
 		? `SELECT id, title, image_url, headline, caption, alt_text, link_url, is_active, sort_order, updated_at
 			FROM banners
@@ -78,11 +117,17 @@ export async function listBanners(db: D1Database, activeOnly = false): Promise<B
 			FROM banners
 			ORDER BY sort_order ASC, id ASC`;
 	const result = await db.prepare(query).all<BannerRow>();
-	return (result.results ?? []).map(toBannerRecord);
+	return (result.results ?? []).map((row) => toBannerRecord(row, language, c));
 }
 
-export async function getBannerById(db: D1Database, id: number): Promise<BannerRecord | null> {
+export async function getBannerById(
+	db: D1Database,
+	id: number,
+	language = DEFAULT_LANGUAGE,
+	catalog?: LanguageCatalogState,
+): Promise<BannerRecord | null> {
 	await ensureBannerTables(db);
+	const c = catalog ?? (await loadLanguageCatalog(db));
 	const row = await db
 		.prepare(
 			`SELECT id, title, image_url, headline, caption, alt_text, link_url, is_active, sort_order, updated_at
@@ -91,21 +136,22 @@ export async function getBannerById(db: D1Database, id: number): Promise<BannerR
 		)
 		.bind(id)
 		.first<BannerRow>();
-	return row ? toBannerRecord(row) : null;
+	return row ? toBannerRecord(row, language, c) : null;
 }
 
 export async function createBanner(db: D1Database, input: BannerInput): Promise<number> {
 	await ensureBannerTables(db);
+	const catalog = await loadLanguageCatalog(db);
 	const result = await db
 		.prepare(
 			`INSERT INTO banners (title, image_url, headline, caption, alt_text, link_url, is_active, sort_order, updated_at)
 			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
-			input.title.trim(),
+			stringifyLocalizedText(input.titleTranslations, catalog),
 			normalizeImageUrl(input.imageUrl),
-			input.headline.trim(),
-			input.caption.trim(),
+			serializeOptionalLocalizedText(input.headlineTranslations, catalog),
+			serializeOptionalLocalizedText(input.captionTranslations, catalog),
 			input.altText.trim(),
 			normalizeLinkUrl(input.linkUrl),
 			input.isActive ? 1 : 0,
@@ -117,6 +163,7 @@ export async function createBanner(db: D1Database, input: BannerInput): Promise<
 
 export async function updateBanner(db: D1Database, id: number, input: BannerInput): Promise<void> {
 	await ensureBannerTables(db);
+	const catalog = await loadLanguageCatalog(db);
 	await db
 		.prepare(
 			`UPDATE banners
@@ -132,10 +179,10 @@ export async function updateBanner(db: D1Database, id: number, input: BannerInpu
 			WHERE id = ?9`,
 		)
 		.bind(
-			input.title.trim(),
+			stringifyLocalizedText(input.titleTranslations, catalog),
 			normalizeImageUrl(input.imageUrl),
-			input.headline.trim(),
-			input.caption.trim(),
+			serializeOptionalLocalizedText(input.headlineTranslations, catalog),
+			serializeOptionalLocalizedText(input.captionTranslations, catalog),
 			input.altText.trim(),
 			normalizeLinkUrl(input.linkUrl),
 			input.isActive ? 1 : 0,
@@ -150,12 +197,12 @@ export async function deleteBanner(db: D1Database, id: number): Promise<void> {
 	await db.prepare("DELETE FROM banners WHERE id = ?1").bind(id).run();
 }
 
-export function parseBannerForm(formData: FormData): BannerInput {
+export function parseBannerForm(formData: FormData, defaultLanguageCode = DEFAULT_LANGUAGE): BannerInput {
 	return {
-		title: requiredString(formData, "title"),
+		titleTranslations: parseLocalizedFieldValue(formData.get("title"), "title", defaultLanguageCode, true),
 		imageUrl: requiredString(formData, "imageUrl"),
-		headline: optionalString(formData, "headline"),
-		caption: optionalString(formData, "caption"),
+		headlineTranslations: parseLocalizedFieldValue(formData.get("headline"), "headline", defaultLanguageCode, false),
+		captionTranslations: parseLocalizedFieldValue(formData.get("caption"), "caption", defaultLanguageCode, false),
 		altText: optionalString(formData, "altText"),
 		linkUrl: optionalString(formData, "linkUrl"),
 		isActive: formData.get("isActive") === "on" || formData.get("isActive") === "true",
@@ -163,18 +210,42 @@ export function parseBannerForm(formData: FormData): BannerInput {
 	};
 }
 
-function toBannerRecord(row: BannerRow): BannerRecord {
+function toBannerRecord(row: BannerRow, requestedLanguage: string, catalog: LanguageCatalogState): BannerRecord {
+	const titleTranslations = normalizeLocalizedText(row.title, {
+		fallbackValue: row.title,
+		defaultLanguageCode: catalog.defaultLanguageCode,
+	});
+	const headlineTranslations = normalizeLocalizedText(row.headline, {
+		fallbackValue: row.headline,
+		defaultLanguageCode: catalog.defaultLanguageCode,
+	});
+	const captionTranslations = normalizeLocalizedText(row.caption, {
+		fallbackValue: row.caption,
+		defaultLanguageCode: catalog.defaultLanguageCode,
+	});
+	const language = resolveLanguage(requestedLanguage, catalog);
 	return {
 		id: row.id,
-		title: row.title,
+		title: resolveLocalizedValue(titleTranslations, language, catalog),
+		titleTranslations,
 		imageUrl: row.image_url,
-		headline: row.headline,
-		caption: row.caption,
+		headline: resolveLocalizedValue(headlineTranslations, language, catalog),
+		headlineTranslations,
+		caption: resolveLocalizedValue(captionTranslations, language, catalog),
+		captionTranslations,
 		altText: row.alt_text,
 		linkUrl: row.link_url,
 		isActive: row.is_active === 1,
 		sortOrder: row.sort_order,
 		updatedAt: new Date(row.updated_at),
+		requestedLanguage: language,
+		resolvedLanguage: (
+			titleTranslations[language]?.trim() ||
+			headlineTranslations[language]?.trim() ||
+			captionTranslations[language]?.trim()
+		)
+			? language
+			: catalog.defaultLanguageCode,
 	};
 }
 
@@ -189,6 +260,41 @@ function requiredString(formData: FormData, key: string): string {
 function optionalString(formData: FormData, key: string): string {
 	const value = formData.get(key);
 	return typeof value === "string" ? value.trim() : "";
+}
+
+function parseLocalizedFieldValue(
+	value: unknown,
+	fieldName: string,
+	defaultLanguageCode: string,
+	requireDefault: boolean,
+): LocalizedText {
+	try {
+		return normalizeLocalizedText(value, {
+			requireDefault,
+			defaultLanguageCode,
+		});
+	} catch {
+		throw new Error(`Invalid localized field: ${fieldName}`);
+	}
+}
+
+function serializeOptionalLocalizedText(translations: LocalizedText, catalog: LanguageCatalogState): string {
+	const normalized = normalizeLocalizedText(translations, {
+		requireDefault: false,
+		defaultLanguageCode: catalog.defaultLanguageCode,
+	});
+	if (Object.keys(normalized).length === 0) {
+		return "";
+	}
+
+	if (!normalized[catalog.defaultLanguageCode]) {
+		const fallback = Object.values(normalized).find((value) => value.trim());
+		if (fallback) {
+			normalized[catalog.defaultLanguageCode] = fallback;
+		}
+	}
+
+	return stringifyLocalizedText(normalized, catalog);
 }
 
 function normalizeImageUrl(value: string): string {

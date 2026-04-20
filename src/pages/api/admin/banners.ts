@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { getDb } from "../../../lib/blog";
 import { createBanner, parseBannerForm, updateBanner } from "../../../lib/banners";
+import { getLanguageCatalog } from "../../../lib/i18n";
 import { requireApiPermission } from "../../../lib/rbac/guards";
 
 export const prerender = false;
@@ -21,7 +22,8 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			return session;
 		}
 
-		const input = parseBannerForm(formData);
+		const defLang = getLanguageCatalog(locals).defaultLanguageCode;
+		const input = parseBannerForm(formData, defLang);
 		const db = getDb(locals);
 
 		if (typeof idValue === "string" && idValue.trim() !== "") {

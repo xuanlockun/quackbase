@@ -6,7 +6,7 @@ import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { getDb } from "../../../lib/blog";
 import { listBanners } from "../../../lib/banners";
 import { listContactForms } from "../../../lib/contact-forms";
-import { getUiTranslations } from "../../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations } from "../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -16,12 +16,14 @@ if (!session) {
 const canCreate = session.isSuperadmin || session.permissions.includes("pages.create");
 const hasError = Astro.url.searchParams.get("error");
 const { t } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const language = Astro.locals.uiLanguage ?? catalog.defaultLanguageCode;
 let bannerCatalog = [];
 let contactFormCatalog = [];
 
 try {
 	const db = getDb(Astro.locals);
-	bannerCatalog = await listBanners(db);
+	bannerCatalog = await listBanners(db, false, language, catalog);
 	contactFormCatalog = await listContactForms(db);
 } catch {
 	bannerCatalog = [];

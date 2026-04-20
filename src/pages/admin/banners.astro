@@ -6,7 +6,7 @@ import CreateAction from "../../components/admin/CreateAction.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getDb } from "../../lib/blog";
 import { listBanners } from "../../lib/banners";
-import { getUiTranslations } from "../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -17,12 +17,14 @@ const canCreate = session.isSuperadmin || session.permissions.includes("banners.
 const canUpdate = session.isSuperadmin || session.permissions.includes("banners.manage");
 const canDelete = session.isSuperadmin || session.permissions.includes("banners.manage");
 const { t } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const language = Astro.locals.uiLanguage ?? catalog.defaultLanguageCode;
 
 let banners = [];
 let loadError = "";
 
 try {
-	banners = await listBanners(getDb(Astro.locals));
+	banners = await listBanners(getDb(Astro.locals), false, language, catalog);
 } catch (error) {
 	loadError = error instanceof Error ? error.message : t("messages.failedToLoadBanners");
 }

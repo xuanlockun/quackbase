@@ -1,7 +1,8 @@
 ---
 import type { BannerRecord } from "../../lib/banners";
+import { getSupportedLanguages } from "../../lib/blog";
 import CreateSubmit from "./CreateSubmit.astro";
-import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
 
 interface Props {
 	mode: "create" | "edit";
@@ -22,9 +23,25 @@ const {
 } = Astro.props;
 
 const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const def = catalog.defaultLanguageCode;
+const supportedLanguages = getSupportedLanguages(catalog);
 const submitLabel = mode === "edit" ? t("actions.saveBanner") : t("actions.createBanner");
 const isDisabled = Boolean(loadError) || !canSubmit;
 const isActive = banner?.isActive ?? true;
+const initialLanguage = banner?.requestedLanguage ?? language;
+const titleTranslations = {
+	[def]: "",
+	...(banner?.titleTranslations ?? {}),
+};
+const headlineTranslations = {
+	[def]: "",
+	...(banner?.headlineTranslations ?? {}),
+};
+const captionTranslations = {
+	[def]: "",
+	...(banner?.captionTranslations ?? {}),
+};
 const backIcon = `
 	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
 		<path d="M14 6l-6 6 6 6" />
@@ -48,20 +65,8 @@ const backIcon = `
 	<div class="admin-form-surface">
 		<div class="admin-form-grid">
 			<label>
-				<span>{t("labels.title")}</span>
-				<input class="form-control" name="title" required value={banner?.title ?? ""} placeholder={t("labels.bannerTitlePlaceholder", "Homepage hero") ?? "Homepage hero"} disabled={isDisabled} />
-			</label>
-			<label>
 				<span>{t("labels.imageUrl")}</span>
 				<input class="form-control" name="imageUrl" required value={banner?.imageUrl ?? ""} placeholder="/images/banner-1.jpg" disabled={isDisabled} />
-			</label>
-			<label>
-				<span>{t("labels.bannerHeadline") ?? "Banner headline"}</span>
-				<input class="form-control" name="headline" value={banner?.headline ?? ""} placeholder="Big summer sale" disabled={isDisabled} />
-			</label>
-			<label class="admin-banner-caption">
-				<span>{t("labels.bannerCaption") ?? "Banner caption"}</span>
-				<textarea class="form-control" name="caption" rows="4" placeholder="Add a short supporting message for this slide." disabled={isDisabled}>{banner?.caption ?? ""}</textarea>
 			</label>
 			<label>
 				<span>{t("labels.altText")}</span>
@@ -82,6 +87,72 @@ const backIcon = `
 		</div>
 	</div>
 
+	<div class="admin-form-section localized-editor" data-localized-editor data-active-language={initialLanguage} data-default-language={def}>
+		<div class="localized-editor-header">
+			<div>
+				<h2>{t("headings.localizedContent")}</h2>
+				<p class="admin-inline-muted mb-0">{t("messages.localizedPostHelp")}</p>
+			</div>
+			<div class="nav nav-pills localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
+				{
+					supportedLanguages.map((supportedLanguage) => (
+						<button
+							type="button"
+							class:list={["nav-link localized-editor-tab", initialLanguage === supportedLanguage.code && "active"]}
+							data-language-tab={supportedLanguage.code}
+							role="tab"
+							aria-selected={initialLanguage === supportedLanguage.code ? "true" : "false"}
+							disabled={isDisabled}
+						>
+							{supportedLanguage.code.toUpperCase()}
+						</button>
+					))
+				}
+			</div>
+		</div>
+
+		<input type="hidden" name="title" data-title-translations value={JSON.stringify(titleTranslations)} />
+		<input type="hidden" name="headline" data-headline-translations value={JSON.stringify(headlineTranslations)} />
+		<input type="hidden" name="caption" data-caption-translations value={JSON.stringify(captionTranslations)} />
+
+		{
+			supportedLanguages.map((supportedLanguage) => (
+				<section class:list={["localized-editor-panel", initialLanguage === supportedLanguage.code && "is-active"]} data-language-panel={supportedLanguage.code} hidden={initialLanguage !== supportedLanguage.code}>
+					<label>
+						<span>{t("labels.title")} ({supportedLanguage.label})</span>
+						<input
+							class="form-control"
+							data-title-input={supportedLanguage.code}
+							value={titleTranslations[supportedLanguage.code] ?? ""}
+							placeholder={supportedLanguage.code === def ? "Homepage hero" : ""}
+							disabled={isDisabled}
+						/>
+					</label>
+					<label>
+						<span>{t("labels.bannerHeadline", "Banner headline")} ({supportedLanguage.label})</span>
+						<input
+							class="form-control"
+							data-headline-input={supportedLanguage.code}
+							value={headlineTranslations[supportedLanguage.code] ?? ""}
+							placeholder={supportedLanguage.code === def ? "Big summer sale" : ""}
+							disabled={isDisabled}
+						/>
+					</label>
+					<label class="admin-banner-caption">
+						<span>{t("labels.bannerCaption", "Banner caption")} ({supportedLanguage.label})</span>
+						<textarea
+							class="form-control"
+							data-caption-input={supportedLanguage.code}
+							rows="4"
+							placeholder={supportedLanguage.code === def ? "Add a short supporting message for this slide." : ""}
+							disabled={isDisabled}
+						>{captionTranslations[supportedLanguage.code] ?? ""}</textarea>
+					</label>
+				</section>
+			))
+		}
+	</div>
+
 	<div class="admin-form-actions">
 		{mode === "create" ? (
 			<CreateSubmit label={submitLabel} disabled={isDisabled} />
@@ -91,7 +162,164 @@ const backIcon = `
 	</div>
 </form>
 <style>
+	.localized-editor {
+		display: grid;
+		gap: 0.9rem;
+	}
+
+	.localized-editor-header {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 0.8rem;
+	}
+
+	.localized-editor-header h2 {
+		margin: 0;
+		font-size: 1.1rem;
+	}
+
+	.localized-editor-tabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.localized-editor-tabs .nav-link {
+		border-radius: 0;
+	}
+
+	.localized-editor-tab {
+		border-radius: 0;
+		padding: 0.3rem 0.65rem;
+		font-size: 0.8rem;
+	}
+
+	.localized-editor-panel {
+		display: grid;
+		gap: 0.85rem;
+		padding: 0.9rem;
+		border-radius: 0;
+		background: rgba(var(--gray-light), 0.2);
+		border: 1px solid rgba(var(--gray), 0.12);
+	}
+
 	.admin-banner-caption {
 		grid-column: 1 / -1;
 	}
+
+	@media (max-width: 720px) {
+		.localized-editor-header {
+			flex-direction: column;
+			align-items: stretch;
+		}
+	}
 </style>
+
+<script is:inline>
+	const syncBannerEditor = (root) => {
+		if (!(root instanceof HTMLElement)) {
+			return;
+		}
+
+		const titleField = root.querySelector("[data-title-translations]");
+		const headlineField = root.querySelector("[data-headline-translations]");
+		const captionField = root.querySelector("[data-caption-translations]");
+		if (
+			!(titleField instanceof HTMLInputElement) ||
+			!(headlineField instanceof HTMLInputElement) ||
+			!(captionField instanceof HTMLInputElement)
+		) {
+			return;
+		}
+
+		const defaultLanguage = root.dataset.defaultLanguage || "en";
+		const titleTranslations = {};
+		const headlineTranslations = {};
+		const captionTranslations = {};
+
+		root.querySelectorAll("[data-title-input]").forEach((input) => {
+			if (!(input instanceof HTMLInputElement)) {
+				return;
+			}
+			const code = input.dataset.titleInput;
+			if (!code) {
+				return;
+			}
+			titleTranslations[code] = input.value;
+		});
+
+		root.querySelectorAll("[data-headline-input]").forEach((input) => {
+			if (!(input instanceof HTMLInputElement)) {
+				return;
+			}
+			const code = input.dataset.headlineInput;
+			if (!code) {
+				return;
+			}
+			headlineTranslations[code] = input.value;
+		});
+
+		root.querySelectorAll("[data-caption-input]").forEach((input) => {
+			if (!(input instanceof HTMLTextAreaElement)) {
+				return;
+			}
+			const code = input.dataset.captionInput;
+			if (!code) {
+				return;
+			}
+			captionTranslations[code] = input.value;
+		});
+
+		const fillFallback = (translations) => {
+			const currentDefault = typeof translations[defaultLanguage] === "string" ? translations[defaultLanguage].trim() : "";
+			const fallback = Object.values(translations).find((value) => typeof value === "string" && value.trim());
+			if (!currentDefault && typeof fallback === "string" && fallback.trim()) {
+				translations[defaultLanguage] = fallback.trim();
+			}
+			return translations;
+		};
+
+		titleField.value = JSON.stringify(fillFallback(titleTranslations));
+		headlineField.value = JSON.stringify(fillFallback(headlineTranslations));
+		captionField.value = JSON.stringify(fillFallback(captionTranslations));
+	};
+
+	document.querySelectorAll("[data-localized-editor]").forEach((root) => {
+		if (!(root instanceof HTMLElement)) {
+			return;
+		}
+
+		const setActiveLanguage = (language) => {
+			root.dataset.activeLanguage = language;
+			root.querySelectorAll("[data-language-tab]").forEach((button) => {
+				if (!(button instanceof HTMLButtonElement)) {
+					return;
+				}
+				const isActive = button.dataset.languageTab === language;
+				button.classList.toggle("active", isActive);
+				button.setAttribute("aria-selected", isActive ? "true" : "false");
+			});
+			root.querySelectorAll("[data-language-panel]").forEach((panel) => {
+				if (!(panel instanceof HTMLElement)) {
+					return;
+				}
+				const isActive = panel.dataset.languagePanel === language;
+				panel.hidden = !isActive;
+				panel.classList.toggle("is-active", isActive);
+			});
+		};
+
+		root.querySelectorAll("[data-language-tab]").forEach((button) => {
+			button.addEventListener("click", () => {
+				if (button instanceof HTMLButtonElement && button.dataset.languageTab) {
+					setActiveLanguage(button.dataset.languageTab);
+				}
+			});
+		});
+
+		root.addEventListener("input", () => syncBannerEditor(root));
+		syncBannerEditor(root);
+		setActiveLanguage(root.dataset.activeLanguage || root.dataset.defaultLanguage || "en");
+	});
+</script>
