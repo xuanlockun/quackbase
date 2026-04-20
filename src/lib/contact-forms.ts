@@ -1,4 +1,12 @@
-import { getLanguageCatalog } from "./i18n";
+import {
+	DEFAULT_LANGUAGE,
+	type LocalizedText,
+	getLanguageCatalog,
+	normalizeLocalizedText,
+	resolveLanguage,
+	resolveLocalizedValue,
+	stringifyLocalizedText,
+} from "./i18n";
 import {
 	type ContactFormField,
 	type ContactFormFieldInput,
@@ -13,11 +21,15 @@ export type ContactFormBackgroundStyle = "solid" | "gradient" | "radial";
 export interface ContactFormRecord {
 	id: number;
 	title: string;
+	titleTranslations: LocalizedText;
 	description: string;
+	descriptionTranslations: LocalizedText;
 	showTitle: boolean;
 	showDescription: boolean;
 	formTitle: string;
+	formTitleTranslations: LocalizedText;
 	formDescription: string;
+	formDescriptionTranslations: LocalizedText;
 	showFormTitle: boolean;
 	showFormDescription: boolean;
 	layout: ContactFormLayout;
@@ -28,15 +40,17 @@ export interface ContactFormRecord {
 	isActive: boolean;
 	sortOrder: number;
 	updatedAt: Date;
+	requestedLanguage: string;
+	resolvedLanguage: string;
 }
 
 export interface ContactFormInput {
-	title: string;
-	description: string;
+	titleTranslations: LocalizedText;
+	descriptionTranslations: LocalizedText;
 	showTitle: boolean;
 	showDescription: boolean;
-	formTitle: string;
-	formDescription: string;
+	formTitleTranslations: LocalizedText;
+	formDescriptionTranslations: LocalizedText;
 	showFormTitle: boolean;
 	showFormDescription: boolean;
 	layout: ContactFormLayout;
@@ -132,10 +146,38 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 	if (!columnNames.has("button_color")) {
 		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN button_color TEXT NOT NULL DEFAULT '#4f80ff'`).run();
 	}
+
+	await db
+		.prepare(
+			`UPDATE contact_forms
+			SET title = CASE WHEN json_valid(title) THEN title ELSE json_object('en', title) END,
+				description = CASE
+					WHEN json_valid(description) THEN description
+					WHEN trim(description) = '' THEN ''
+					ELSE json_object('en', description)
+				END,
+				form_title = CASE
+					WHEN json_valid(form_title) THEN form_title
+					WHEN trim(form_title) = '' THEN ''
+					ELSE json_object('en', form_title)
+				END,
+				form_description = CASE
+					WHEN json_valid(form_description) THEN form_description
+					WHEN trim(form_description) = '' THEN ''
+					ELSE json_object('en', form_description)
+				END`,
+		)
+		.run();
 }
 
-export async function listContactForms(db: D1Database, activeOnly = false): Promise<ContactFormRecord[]> {
+export async function listContactForms(
+	db: D1Database,
+	activeOnly = false,
+	language = DEFAULT_LANGUAGE,
+	catalog?: ReturnType<typeof getLanguageCatalog>,
+): Promise<ContactFormRecord[]> {
 	await ensureContactFormTables(db);
+	const c = catalog ?? getLanguageCatalogForForms();
 	const query = activeOnly
 		? `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
@@ -145,11 +187,17 @@ export async function listContactForms(db: D1Database, activeOnly = false): Prom
 			FROM contact_forms
 			ORDER BY sort_order ASC, id ASC`;
 	const result = await db.prepare(query).all<ContactFormRow>();
-	return (result.results ?? []).map(toContactFormRecord);
+	return (result.results ?? []).map((row) => toContactFormRecord(row, language, c));
 }
 
-export async function getContactFormById(db: D1Database, id: number): Promise<ContactFormRecord | null> {
+export async function getContactFormById(
+	db: D1Database,
+	id: number,
+	language = DEFAULT_LANGUAGE,
+	catalog?: ReturnType<typeof getLanguageCatalog>,
+): Promise<ContactFormRecord | null> {
 	await ensureContactFormTables(db);
+	const c = catalog ?? getLanguageCatalogForForms();
 	const row = await db
 		.prepare(
 			`SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
@@ -158,7 +206,7 @@ export async function getContactFormById(db: D1Database, id: number): Promise<Co
 		)
 		.bind(id)
 		.first<ContactFormRow>();
-	return row ? toContactFormRecord(row) : null;
+	return row ? toContactFormRecord(row, language, c) : null;
 }
 
 export async function createContactForm(db: D1Database, input: ContactFormInput): Promise<number> {
@@ -171,12 +219,12 @@ export async function createContactForm(db: D1Database, input: ContactFormInput)
 			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
-			input.title.trim(),
-			input.description.trim(),
+			serializeLocalizedText(input.titleTranslations, catalog, true),
+			serializeLocalizedText(input.descriptionTranslations, catalog, false),
 			input.showTitle ? 1 : 0,
 			input.showDescription ? 1 : 0,
-			input.formTitle.trim(),
-			input.formDescription.trim(),
+			serializeLocalizedText(input.formTitleTranslations, catalog, false),
+			serializeLocalizedText(input.formDescriptionTranslations, catalog, false),
 			input.showFormTitle ? 1 : 0,
 			input.showFormDescription ? 1 : 0,
 			normalizeContactFormLayout(input.layout),
@@ -217,12 +265,12 @@ export async function updateContactForm(db: D1Database, id: number, input: Conta
 			WHERE id = ?16`,
 		)
 		.bind(
-			input.title.trim(),
-			input.description.trim(),
+			serializeLocalizedText(input.titleTranslations, catalog, true),
+			serializeLocalizedText(input.descriptionTranslations, catalog, false),
 			input.showTitle ? 1 : 0,
 			input.showDescription ? 1 : 0,
-			input.formTitle.trim(),
-			input.formDescription.trim(),
+			serializeLocalizedText(input.formTitleTranslations, catalog, false),
+			serializeLocalizedText(input.formDescriptionTranslations, catalog, false),
 			input.showFormTitle ? 1 : 0,
 			input.showFormDescription ? 1 : 0,
 			normalizeContactFormLayout(input.layout),
@@ -243,13 +291,14 @@ export async function deleteContactForm(db: D1Database, id: number): Promise<voi
 }
 
 export function parseContactFormForm(formData: FormData): ContactFormInput {
+	const catalog = getLanguageCatalogForForms();
 	return {
-		title: requiredString(formData, "title"),
-		description: optionalString(formData, "description"),
+		titleTranslations: parseLocalizedFieldValue(formData.get("title"), "title", catalog.defaultLanguageCode, true),
+		descriptionTranslations: parseLocalizedFieldValue(formData.get("description"), "description", catalog.defaultLanguageCode, false),
 		showTitle: optionalBoolean(formData, "showTitle"),
 		showDescription: optionalBoolean(formData, "showDescription"),
-		formTitle: optionalString(formData, "formTitle"),
-		formDescription: optionalString(formData, "formDescription"),
+		formTitleTranslations: parseLocalizedFieldValue(formData.get("formTitle"), "formTitle", catalog.defaultLanguageCode, false),
+		formDescriptionTranslations: parseLocalizedFieldValue(formData.get("formDescription"), "formDescription", catalog.defaultLanguageCode, false),
 		showFormTitle: optionalBoolean(formData, "showFormTitle"),
 		showFormDescription: optionalBoolean(formData, "showFormDescription"),
 		layout: normalizeContactFormLayout(optionalString(formData, "layout")),
@@ -270,12 +319,12 @@ export function parseContactFormPayload(payload: unknown): ContactFormInput {
 	const record = payload as Record<string, unknown>;
 	const fields = parseFormFieldsPayload(payload, "fields");
 	return {
-		title: typeof record.title === "string" ? record.title.trim() : "",
-		description: typeof record.description === "string" ? record.description.trim() : "",
+		titleTranslations: parseLocalizedFieldValue(record.title, "title", DEFAULT_LANGUAGE, true),
+		descriptionTranslations: parseLocalizedFieldValue(record.description, "description", DEFAULT_LANGUAGE, false),
 		showTitle: parseBoolean(record.showTitle),
 		showDescription: parseBoolean(record.showDescription),
-		formTitle: typeof record.formTitle === "string" ? record.formTitle.trim() : "",
-		formDescription: typeof record.formDescription === "string" ? record.formDescription.trim() : "",
+		formTitleTranslations: parseLocalizedFieldValue(record.formTitle, "formTitle", DEFAULT_LANGUAGE, false),
+		formDescriptionTranslations: parseLocalizedFieldValue(record.formDescription, "formDescription", DEFAULT_LANGUAGE, false),
 		showFormTitle: parseBoolean(record.showFormTitle),
 		showFormDescription: parseBoolean(record.showFormDescription),
 		layout: normalizeContactFormLayout(typeof record.layout === "string" ? record.layout : ""),
@@ -302,19 +351,44 @@ export function getContactFormFields(record: ContactFormRecord | null | undefine
 	return record?.fields ?? [];
 }
 
-function toContactFormRecord(row: ContactFormRow): ContactFormRecord {
-	const title = row.title.trim();
-	const description = row.description.trim();
-	const formTitle = row.form_title.trim() || title;
-	const formDescription = row.form_description.trim() || description;
+function toContactFormRecord(row: ContactFormRow, requestedLanguage: string, catalog: ReturnType<typeof getLanguageCatalog>): ContactFormRecord {
+	const titleTranslations = normalizeLocalizedText(row.title, {
+		fallbackValue: row.title,
+		requireDefault: true,
+		defaultLanguageCode: catalog.defaultLanguageCode,
+	});
+	const descriptionTranslations = normalizeLocalizedText(row.description, {
+		fallbackValue: row.description,
+		requireDefault: false,
+		defaultLanguageCode: catalog.defaultLanguageCode,
+	});
+	const formTitleTranslations = normalizeLocalizedText(row.form_title, {
+		fallbackValue: row.form_title,
+		requireDefault: false,
+		defaultLanguageCode: catalog.defaultLanguageCode,
+	});
+	const formDescriptionTranslations = normalizeLocalizedText(row.form_description, {
+		fallbackValue: row.form_description,
+		requireDefault: false,
+		defaultLanguageCode: catalog.defaultLanguageCode,
+	});
+	const language = resolveLanguage(requestedLanguage, catalog);
+	const title = resolveLocalizedValue(titleTranslations, language, catalog);
+	const description = resolveLocalizedValue(descriptionTranslations, language, catalog);
+	const formTitle = resolveLocalizedValue(formTitleTranslations, language, catalog) || title;
+	const formDescription = resolveLocalizedValue(formDescriptionTranslations, language, catalog) || description;
 	return {
 		id: row.id,
 		title,
+		titleTranslations,
 		description,
+		descriptionTranslations,
 		showTitle: row.show_title === 1,
 		showDescription: row.show_description === 1,
 		formTitle,
+		formTitleTranslations,
 		formDescription,
+		formDescriptionTranslations,
 		showFormTitle: row.show_form_title === 1,
 		showFormDescription: row.show_form_description === 1,
 		layout: normalizeContactFormLayout(row.layout),
@@ -325,6 +399,14 @@ function toContactFormRecord(row: ContactFormRow): ContactFormRecord {
 		isActive: row.is_active === 1,
 		sortOrder: row.sort_order,
 		updatedAt: new Date(row.updated_at),
+		requestedLanguage: language,
+		resolvedLanguage:
+			(titleTranslations[language]?.trim() ||
+				descriptionTranslations[language]?.trim() ||
+				formTitleTranslations[language]?.trim() ||
+				formDescriptionTranslations[language]?.trim())
+				? language
+				: catalog.defaultLanguageCode,
 	};
 }
 
@@ -335,14 +417,6 @@ function parseStoredFieldsJson(value: string): ContactFormField[] {
 	} catch {
 		return [];
 	}
-}
-
-function requiredString(formData: FormData, key: string): string {
-	const value = formData.get(key);
-	if (typeof value !== "string" || value.trim() === "") {
-		throw new Error(`${key} is required.`);
-	}
-	return value.trim();
 }
 
 function optionalString(formData: FormData, key: string): string {
@@ -370,6 +444,41 @@ function parseBoolean(value: unknown): boolean {
 
 function optionalBoolean(formData: FormData, key: string): boolean {
 	return parseBoolean(formData.get(key));
+}
+
+function parseLocalizedFieldValue(
+	value: unknown,
+	fieldName: string,
+	defaultLanguageCode: string,
+	requireDefault: boolean,
+): LocalizedText {
+	try {
+		return normalizeLocalizedText(value, {
+			requireDefault,
+			defaultLanguageCode,
+		});
+	} catch {
+		throw new Error(`Invalid localized field: ${fieldName}`);
+	}
+}
+
+function serializeLocalizedText(translations: LocalizedText, catalog: ReturnType<typeof getLanguageCatalog>, requireDefault: boolean): string {
+	const normalized = normalizeLocalizedText(translations, {
+		requireDefault,
+		defaultLanguageCode: catalog.defaultLanguageCode,
+	});
+	if (Object.keys(normalized).length === 0) {
+		return "";
+	}
+
+	if (!normalized[catalog.defaultLanguageCode]) {
+		const fallback = Object.values(normalized).find((value) => typeof value === "string" && value.trim());
+		if (typeof fallback === "string" && fallback.trim()) {
+			normalized[catalog.defaultLanguageCode] = fallback.trim();
+		}
+	}
+
+	return stringifyLocalizedText(normalized, catalog);
 }
 
 function normalizeContactFormLayout(value: string): ContactFormLayout {

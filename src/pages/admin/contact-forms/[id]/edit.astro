@@ -5,7 +5,7 @@ import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import ContactFormForm from "../../../../components/admin/ContactFormForm.astro";
 import { getDb } from "../../../../lib/blog";
 import { getContactFormById } from "../../../../lib/contact-forms";
-import { getUiTranslations } from "../../../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations } from "../../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -14,7 +14,8 @@ if (!session) {
 
 const canUpdate = session.isSuperadmin || session.permissions.includes("contactForms.manage");
 const { id } = Astro.params;
-const { t } = getUiTranslations(Astro);
+const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
 
 let form = null;
 let loadError = "";
@@ -25,7 +26,7 @@ try {
 	if (!Number.isInteger(formId) || formId <= 0) {
 		notFound = true;
 	} else {
-		form = await getContactFormById(getDb(Astro.locals), formId);
+		form = await getContactFormById(getDb(Astro.locals), formId, language, catalog);
 		notFound = !form;
 	}
 } catch (error) {

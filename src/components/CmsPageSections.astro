@@ -50,7 +50,7 @@ try {
 		banners = await listBanners(db, true, currentLanguage, catalog);
 	}
 	if (pageSections.some((section) => section.type === "contact_form")) {
-		contactForms = await listContactForms(db, true);
+		contactForms = await listContactForms(db, true, currentLanguage, catalog);
 		if (contactForms.length === 0) {
 			legacyContactFields = await listFormFields(db);
 		}

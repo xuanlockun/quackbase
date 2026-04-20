@@ -93,12 +93,15 @@ describe("dynamic form UI contract helpers", () => {
 
 	it("parses contact form section and inside-form copy visibility independently", () => {
 		const formData = new FormData();
-		formData.set("title", "Contact us");
-		formData.set("description", "Reach out to our team.");
+		formData.set("title", JSON.stringify({ en: "Contact us", vi: "Lien he" }));
+		formData.set("description", JSON.stringify({ en: "Reach out to our team.", vi: "Hay lien he voi chung toi." }));
 		formData.set("showTitle", "on");
 		formData.set("showDescription", "on");
-		formData.set("formTitle", "Let's talk");
-		formData.set("formDescription", "Send us a note and we will reply soon.");
+		formData.set("formTitle", JSON.stringify({ en: "Let's talk", vi: "Chung ta tro chuyen nhe" }));
+		formData.set(
+			"formDescription",
+			JSON.stringify({ en: "Send us a note and we will reply soon.", vi: "Gui tin nhan va chung toi se phan hoi som." }),
+		);
 		formData.set("showFormTitle", "true");
 		formData.set("showFormDescription", "false");
 		formData.set("layout", "compact");
@@ -109,12 +112,15 @@ describe("dynamic form UI contract helpers", () => {
 		formData.set("sortOrder", "5");
 
 		expect(parseContactFormForm(formData)).toMatchObject({
-			title: "Contact us",
-			description: "Reach out to our team.",
+			titleTranslations: { en: "Contact us", vi: "Lien he" },
+			descriptionTranslations: { en: "Reach out to our team.", vi: "Hay lien he voi chung toi." },
 			showTitle: true,
 			showDescription: true,
-			formTitle: "Let's talk",
-			formDescription: "Send us a note and we will reply soon.",
+			formTitleTranslations: { en: "Let's talk", vi: "Chung ta tro chuyen nhe" },
+			formDescriptionTranslations: {
+				en: "Send us a note and we will reply soon.",
+				vi: "Gui tin nhan va chung toi se phan hoi som.",
+			},
 			showFormTitle: true,
 			showFormDescription: false,
 			layout: "compact",
@@ -127,12 +133,15 @@ describe("dynamic form UI contract helpers", () => {
 
 		expect(
 			parseContactFormPayload({
-				title: "Contact us",
-				description: "Reach out to our team.",
+				title: { en: "Contact us", vi: "Lien he" },
+				description: { en: "Reach out to our team.", vi: "Hay lien he voi chung toi." },
 				showTitle: false,
 				showDescription: true,
-				formTitle: "Let's talk",
-				formDescription: "Send us a note and we will reply soon.",
+				formTitle: { en: "Let's talk", vi: "Chung ta tro chuyen nhe" },
+				formDescription: {
+					en: "Send us a note and we will reply soon.",
+					vi: "Gui tin nhan va chung toi se phan hoi som.",
+				},
 				showFormTitle: true,
 				showFormDescription: false,
 				layout: "split",
@@ -144,12 +153,15 @@ describe("dynamic form UI contract helpers", () => {
 				sortOrder: 5,
 			}),
 		).toMatchObject({
-			title: "Contact us",
-			description: "Reach out to our team.",
+			titleTranslations: { en: "Contact us", vi: "Lien he" },
+			descriptionTranslations: { en: "Reach out to our team.", vi: "Hay lien he voi chung toi." },
 			showTitle: false,
 			showDescription: true,
-			formTitle: "Let's talk",
-			formDescription: "Send us a note and we will reply soon.",
+			formTitleTranslations: { en: "Let's talk", vi: "Chung ta tro chuyen nhe" },
+			formDescriptionTranslations: {
+				en: "Send us a note and we will reply soon.",
+				vi: "Gui tin nhan va chung toi se phan hoi som.",
+			},
 			showFormTitle: true,
 			showFormDescription: false,
 		});

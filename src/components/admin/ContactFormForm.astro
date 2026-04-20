@@ -1,7 +1,7 @@
 ---
 import type { ContactFormRecord } from "../../lib/contact-forms";
 import CreateSubmit from "./CreateSubmit.astro";
-import { getLanguageCatalog, getSupportedLanguages, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
+import { getLanguageCatalog, getSupportedLanguages, getUiTranslations, localizeAdminHref, type LocalizedText } from "../../lib/i18n";
 
 interface Props {
 	mode: "create" | "edit";
@@ -43,9 +43,28 @@ const initialLayout = form?.layout ?? "split";
 const initialBackgroundStyle = form?.backgroundStyle ?? "solid";
 const initialBackgroundColor = form?.backgroundColor ?? "#f8fbff";
 const initialButtonColor = form?.buttonColor ?? "#4f80ff";
+const titleTranslations: LocalizedText = {
+	[defaultLanguageCode]: initialTitle,
+	...(form?.titleTranslations ?? {}),
+};
+const descriptionTranslations: LocalizedText = {
+	[defaultLanguageCode]: initialDescription,
+	...(form?.descriptionTranslations ?? {}),
+};
+const formTitleTranslations: LocalizedText = {
+	[defaultLanguageCode]: initialFormTitle,
+	...(form?.formTitleTranslations ?? {}),
+};
+const formDescriptionTranslations: LocalizedText = {
+	[defaultLanguageCode]: initialFormDescription,
+	...(form?.formDescriptionTranslations ?? {}),
+};
 const fieldsJson = JSON.stringify(initialFields);
+const titleTranslationsJson = JSON.stringify(titleTranslations);
+const descriptionTranslationsJson = JSON.stringify(descriptionTranslations);
+const formTitleTranslationsJson = JSON.stringify(formTitleTranslations);
+const formDescriptionTranslationsJson = JSON.stringify(formDescriptionTranslations);
 const labelLanguagesJson = JSON.stringify(labelLanguages);
-const labelGridColumns = `44px 1fr repeat(${Math.max(labelLanguages.length, 1)}, minmax(180px, 1fr)) 120px 120px`;
 const backIcon = `
 	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
 		<path d="M14 6l-6 6 6 6" />
@@ -68,76 +87,113 @@ const backIcon = `
 	{mode === "edit" && form && <input type="hidden" name="id" value={form.id} />}
 	<div class="admin-form-surface">
 		<div class="admin-form-grid">
-			<div class="contact-copy-grid">
-				<section class="contact-copy-card">
-					<div class="contact-copy-card-header">
-						<h2 class="h6 mb-0">{t("messages.contactFormOutsideFormTitle", "Outside the form")}</h2>
-						<p class="admin-inline-muted mb-0">{t("messages.contactFormOutsideFormHelp", "Controls the section copy shown around the form.")}</p>
+			<div class="localized-editor contact-copy-editor" data-contact-copy-editor data-default-language={defaultLanguageCode}>
+				<div class="localized-editor-header">
+					<div>
+						<h2>{t("messages.contactFormCopyTranslations", "Contact form copy")}</h2>
+						<p class="admin-inline-muted mb-0">{t("messages.contactFormCopyTranslationsHelp", "Edit the outside and inside text in each language.")}</p>
 					</div>
-					<label>
-						<span>{t("messages.contactFormOutsideTitleLabel", "Section title")}</span>
-						<input
-							class="form-control"
-							name="title"
-							required
-							value={initialTitle}
-							placeholder={t("messages.contactFormTitlePlaceholder", "Main contact form") ?? "Main contact form"}
-							disabled={isDisabled}
-						/>
-					</label>
+					<div class="nav nav-pills localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
+						{labelLanguages.map((supportedLanguage) => (
+							<button
+								type="button"
+								class:list={["nav-link localized-editor-tab", supportedLanguage.code === defaultLanguageCode && "active"]}
+								data-copy-language-tab={supportedLanguage.code}
+								role="tab"
+								aria-selected={supportedLanguage.code === defaultLanguageCode ? "true" : "false"}
+								disabled={isDisabled}
+							>
+								{supportedLanguage.code.toUpperCase()}
+							</button>
+						))}
+					</div>
+				</div>
+
+				<input type="hidden" name="title" data-title-translations value={titleTranslationsJson} />
+				<input type="hidden" name="description" data-description-translations value={descriptionTranslationsJson} />
+				<input type="hidden" name="formTitle" data-form-title-translations value={formTitleTranslationsJson} />
+				<input type="hidden" name="formDescription" data-form-description-translations value={formDescriptionTranslationsJson} />
+				<div class="contact-copy-options">
 					<label class="admin-check-row contact-copy-switch">
 						<input class="form-check-input" type="checkbox" name="showTitle" checked={initialShowTitle} disabled={isDisabled} />
 						<span>{t("messages.contactFormShowSectionTitle", "Show section title")}</span>
-					</label>
-					<label>
-						<span>{t("messages.contactFormOutsideDescriptionLabel", "Section short description")}</span>
-						<textarea
-							class="form-control"
-							name="description"
-							rows="4"
-							placeholder={t("messages.contactFormDescriptionPlaceholder", "Add a short description to support the heading.") ?? "Add a short description to support the heading."}
-							disabled={isDisabled}
-						>{initialDescription}</textarea>
 					</label>
 					<label class="admin-check-row contact-copy-switch">
 						<input class="form-check-input" type="checkbox" name="showDescription" checked={initialShowDescription} disabled={isDisabled} />
 						<span>{t("messages.contactFormShowSectionDescription", "Show section short description")}</span>
 					</label>
-				</section>
-				<section class="contact-copy-card">
-					<div class="contact-copy-card-header">
-						<h2 class="h6 mb-0">{t("messages.contactFormInsideFormTitle", "Inside the form")}</h2>
-						<p class="admin-inline-muted mb-0">{t("messages.contactFormInsideFormHelp", "Controls the heading shown inside the form card.")}</p>
-					</div>
-					<label>
-						<span>{t("messages.contactFormInsideTitleLabel", "Form title")}</span>
-						<input
-							class="form-control"
-							name="formTitle"
-							value={initialFormTitle}
-							placeholder={t("messages.contactFormFormTitlePlaceholder", "Contact us today") ?? "Contact us today"}
-							disabled={isDisabled}
-						/>
-					</label>
 					<label class="admin-check-row contact-copy-switch">
 						<input class="form-check-input" type="checkbox" name="showFormTitle" checked={initialShowFormTitle} disabled={isDisabled} />
 						<span>{t("messages.contactFormShowFormTitle", "Show form title")}</span>
-					</label>
-					<label>
-						<span>{t("messages.contactFormInsideDescriptionLabel", "Form short description")}</span>
-						<textarea
-							class="form-control"
-							name="formDescription"
-							rows="4"
-							placeholder={t("messages.contactFormFormDescriptionPlaceholder", "Help visitors know what to expect.") ?? "Help visitors know what to expect."}
-							disabled={isDisabled}
-						>{initialFormDescription}</textarea>
 					</label>
 					<label class="admin-check-row contact-copy-switch">
 						<input class="form-check-input" type="checkbox" name="showFormDescription" checked={initialShowFormDescription} disabled={isDisabled} />
 						<span>{t("messages.contactFormShowFormDescription", "Show form short description")}</span>
 					</label>
-				</section>
+				</div>
+
+				{labelLanguages.map((supportedLanguage) => (
+					<section
+						class:list={["localized-editor-panel contact-copy-panel", supportedLanguage.code === defaultLanguageCode && "is-active"]}
+						data-copy-language-panel={supportedLanguage.code}
+						hidden={supportedLanguage.code !== defaultLanguageCode}
+					>
+						<div class="contact-copy-grid">
+							<section class="contact-copy-card">
+								<div class="contact-copy-card-header">
+									<h3 class="h6 mb-0">{t("messages.contactFormOutsideFormTitle", "Outside the form")}</h3>
+									<p class="admin-inline-muted mb-0">{t("messages.contactFormOutsideFormHelp", "Controls the section copy shown around the form.")}</p>
+								</div>
+								<label>
+									<span>{t("messages.contactFormOutsideTitleLabel", "Section title")} ({supportedLanguage.label})</span>
+									<input
+										class="form-control"
+										data-title-input={supportedLanguage.code}
+										value={titleTranslations[supportedLanguage.code] ?? ""}
+										placeholder={supportedLanguage.code === defaultLanguageCode ? t("messages.contactFormTitlePlaceholder", "Main contact form") ?? "Main contact form" : ""}
+										disabled={isDisabled}
+									/>
+								</label>
+								<label>
+									<span>{t("messages.contactFormOutsideDescriptionLabel", "Section short description")} ({supportedLanguage.label})</span>
+									<textarea
+										class="form-control"
+										data-description-input={supportedLanguage.code}
+										rows="4"
+										placeholder={supportedLanguage.code === defaultLanguageCode ? t("messages.contactFormDescriptionPlaceholder", "Add a short description to support the heading.") ?? "Add a short description to support the heading." : ""}
+										disabled={isDisabled}
+									>{descriptionTranslations[supportedLanguage.code] ?? ""}</textarea>
+								</label>
+							</section>
+							<section class="contact-copy-card">
+								<div class="contact-copy-card-header">
+									<h3 class="h6 mb-0">{t("messages.contactFormInsideFormTitle", "Inside the form")}</h3>
+									<p class="admin-inline-muted mb-0">{t("messages.contactFormInsideFormHelp", "Controls the heading shown inside the form card.")}</p>
+								</div>
+								<label>
+									<span>{t("messages.contactFormInsideTitleLabel", "Form title")} ({supportedLanguage.label})</span>
+									<input
+										class="form-control"
+										data-form-title-input={supportedLanguage.code}
+										value={formTitleTranslations[supportedLanguage.code] ?? ""}
+										placeholder={supportedLanguage.code === defaultLanguageCode ? t("messages.contactFormFormTitlePlaceholder", "Contact us today") ?? "Contact us today" : ""}
+										disabled={isDisabled}
+									/>
+								</label>
+								<label>
+									<span>{t("messages.contactFormInsideDescriptionLabel", "Form short description")} ({supportedLanguage.label})</span>
+									<textarea
+										class="form-control"
+										data-form-description-input={supportedLanguage.code}
+										rows="4"
+										placeholder={supportedLanguage.code === defaultLanguageCode ? t("messages.contactFormFormDescriptionPlaceholder", "Help visitors know what to expect.") ?? "Help visitors know what to expect." : ""}
+										disabled={isDisabled}
+									>{formDescriptionTranslations[supportedLanguage.code] ?? ""}</textarea>
+								</label>
+							</section>
+						</div>
+					</section>
+				))}
 			</div>
 			<label>
 				<span>{t("labels.template")}</span>
@@ -307,6 +363,58 @@ const backIcon = `
 		gap: 1rem;
 	}
 
+	.localized-editor {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.localized-editor-header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.localized-editor-header h2 {
+		margin: 0;
+		font-size: 1.1rem;
+	}
+
+	.localized-editor-tabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.localized-editor-tab {
+		border-radius: 0;
+		padding: 0.3rem 0.65rem;
+		font-size: 0.8rem;
+	}
+
+	.localized-editor-panel {
+		display: grid;
+		gap: 1rem;
+		padding: 1rem;
+		border: 1px solid rgba(var(--gray), 0.12);
+		border-radius: 1rem;
+		background: rgba(var(--gray-light), 0.2);
+	}
+
+	.contact-copy-panel {
+		overflow: hidden;
+	}
+
+	.contact-copy-options {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.6rem 1rem;
+		padding: 0.9rem 1rem;
+		border: 1px solid rgba(var(--gray), 0.12);
+		border-radius: 1rem;
+		background: rgba(var(--gray-light), 0.16);
+	}
+
 	.contact-copy-card {
 		display: grid;
 		gap: 0.85rem;
@@ -407,6 +515,15 @@ const backIcon = `
 	}
 
 	@media (max-width: 720px) {
+		.localized-editor-header {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.contact-copy-options {
+			grid-template-columns: 1fr;
+		}
+
 		.contact-copy-grid {
 			grid-template-columns: 1fr;
 		}
@@ -427,6 +544,12 @@ const backIcon = `
 </style>
 
 <script type="module">
+	let copyEditor;
+	let copyTitleField;
+	let copyDescriptionField;
+	let copyFormTitleField;
+	let copyFormDescriptionField;
+	let copyDefaultLanguage = "en";
 	let editor;
 	let contactRows;
 	let contactPayload;
@@ -435,6 +558,99 @@ const backIcon = `
 	let isContactReadOnly = false;
 	let nextFieldId = 0;
 	let draggedContactRow = null;
+
+	const initializeContactCopyEditor = () => {
+		copyEditor = document.querySelector("[data-contact-copy-editor]");
+		if (!(copyEditor instanceof HTMLElement)) {
+			return;
+		}
+
+		copyTitleField = copyEditor.querySelector("[data-title-translations]");
+		copyDescriptionField = copyEditor.querySelector("[data-description-translations]");
+		copyFormTitleField = copyEditor.querySelector("[data-form-title-translations]");
+		copyFormDescriptionField = copyEditor.querySelector("[data-form-description-translations]");
+		copyDefaultLanguage = copyEditor.dataset.defaultLanguage || "en";
+
+		const tabs = Array.from(copyEditor.querySelectorAll("[data-copy-language-tab]"));
+		const panels = Array.from(copyEditor.querySelectorAll("[data-copy-language-panel]"));
+
+		const activateLanguage = (languageCode) => {
+			tabs.forEach((tab) => {
+				if (!(tab instanceof HTMLButtonElement)) {
+					return;
+				}
+				const isActive = tab.dataset.copyLanguageTab === languageCode;
+				tab.classList.toggle("active", isActive);
+				tab.setAttribute("aria-selected", isActive ? "true" : "false");
+			});
+			panels.forEach((panel) => {
+				if (!(panel instanceof HTMLElement)) {
+					return;
+				}
+				const isActive = panel.dataset.copyLanguagePanel === languageCode;
+				panel.hidden = !isActive;
+				panel.classList.toggle("is-active", isActive);
+			});
+		};
+
+		const collectTranslations = (selector) => {
+			const translations = {};
+			copyEditor.querySelectorAll(selector).forEach((input) => {
+				if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement)) {
+					return;
+				}
+				const code =
+					input.dataset.titleInput ||
+					input.dataset.descriptionInput ||
+					input.dataset.formTitleInput ||
+					input.dataset.formDescriptionInput;
+				if (!code) {
+					return;
+				}
+				translations[code] = input.value;
+			});
+			const defaultValue = typeof translations[copyDefaultLanguage] === "string" ? translations[copyDefaultLanguage].trim() : "";
+			if (!defaultValue) {
+				const fallback = Object.values(translations).find((value) => typeof value === "string" && value.trim());
+				if (typeof fallback === "string" && fallback.trim()) {
+					translations[copyDefaultLanguage] = fallback.trim();
+				}
+			}
+			return translations;
+		};
+
+		const syncCopyTranslations = () => {
+			if (copyTitleField instanceof HTMLInputElement) {
+				copyTitleField.value = JSON.stringify(collectTranslations("[data-title-input]"));
+			}
+			if (copyDescriptionField instanceof HTMLInputElement) {
+				copyDescriptionField.value = JSON.stringify(collectTranslations("[data-description-input]"));
+			}
+			if (copyFormTitleField instanceof HTMLInputElement) {
+				copyFormTitleField.value = JSON.stringify(collectTranslations("[data-form-title-input]"));
+			}
+			if (copyFormDescriptionField instanceof HTMLInputElement) {
+				copyFormDescriptionField.value = JSON.stringify(collectTranslations("[data-form-description-input]"));
+			}
+		};
+
+		tabs.forEach((tab) => {
+			if (!(tab instanceof HTMLButtonElement)) {
+				return;
+			}
+			tab.addEventListener("click", () => {
+				const languageCode = tab.dataset.copyLanguageTab;
+				if (languageCode) {
+					activateLanguage(languageCode);
+				}
+			});
+		});
+
+		copyEditor.addEventListener("input", syncCopyTranslations);
+		copyEditor.addEventListener("change", syncCopyTranslations);
+		activateLanguage(copyDefaultLanguage);
+		syncCopyTranslations();
+	};
 
 	const initializeContactFormEditor = () => {
 		editor = document.querySelector("[data-contact-fields-editor]");
@@ -532,10 +748,15 @@ const backIcon = `
 		});
 	};
 
-	if (document.readyState === "loading") {
-		document.addEventListener("DOMContentLoaded", initializeContactFormEditor, { once: true });
-	} else {
+	const initializeEditors = () => {
+		initializeContactCopyEditor();
 		initializeContactFormEditor();
+	};
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", initializeEditors, { once: true });
+	} else {
+		initializeEditors();
 	}
 
 	function parseConfig(value) {

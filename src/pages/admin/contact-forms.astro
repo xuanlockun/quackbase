@@ -16,7 +16,7 @@ if (!session) {
 
 const canManage = session.isSuperadmin || session.permissions.includes("contactForms.manage");
 const canView = session.isSuperadmin || session.permissions.includes("contactForms.read") || canManage;
-const { t } = getUiTranslations(Astro);
+const { t, language } = getUiTranslations(Astro);
 
 let forms = [];
 let submissionCounts = {};
@@ -24,7 +24,7 @@ let loadError = "";
 
 try {
 	const db = getDb(Astro.locals);
-	forms = await listContactForms(db);
+	forms = await listContactForms(db, false, language);
 	const counts = await countFormSubmissionsByContactFormId(db);
 	submissionCounts = Object.fromEntries(Array.from(counts.entries()).map(([id, count]) => [String(id), count]));
 } catch (error) {

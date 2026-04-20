@@ -32,7 +32,7 @@ try {
 		const db = getDb(Astro.locals);
 		page = await getPageById(db, pageId, language, catalog);
 		bannerCatalog = await listBanners(db, false, language, catalog);
-		contactFormCatalog = await listContactForms(db);
+		contactFormCatalog = await listContactForms(db, false, language, catalog);
 		notFound = !page;
 	}
 } catch (error) {

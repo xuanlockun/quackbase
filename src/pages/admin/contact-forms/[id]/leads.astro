@@ -6,7 +6,7 @@ import ContactFormSubmissions from "../../../../components/admin/ContactFormSubm
 import { getDb } from "../../../../lib/blog";
 import { getContactFormById } from "../../../../lib/contact-forms";
 import { listFormSubmissions } from "../../../../lib/forms";
-import { getUiTranslations } from "../../../../lib/i18n";
+import { getLanguageCatalog, getUiTranslations } from "../../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
 if (!session) {
@@ -15,7 +15,8 @@ if (!session) {
 
 const canView = session.isSuperadmin || session.permissions.includes("contactForms.read") || session.permissions.includes("contactForms.manage");
 const { id } = Astro.params;
-const { t } = getUiTranslations(Astro);
+const { t, language } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
 
 let form = null;
 let submissions = [];
@@ -28,7 +29,7 @@ try {
 		notFound = true;
 	} else {
 		const db = getDb(Astro.locals);
-		form = await getContactFormById(db, formId);
+		form = await getContactFormById(db, formId, language, catalog);
 		submissions = await listFormSubmissions(db, formId);
 		notFound = !form;
 	}
