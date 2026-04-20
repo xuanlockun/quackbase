@@ -5,7 +5,11 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 import { SITE_TITLE } from "../../consts";
 import { getDb, getSiteConfig } from "../../lib/blog";
 import { getUiTranslations } from "../../lib/i18n";
-import { listAdminSecrets, type AdminSecretRecord } from "../../lib/secrets";
+import {
+	getLatestAdminSecretRecordByType,
+	listAdminSecrets,
+	type AdminSecretRecord,
+} from "../../lib/secrets";
 import SecretsManager from "../../components/admin/SecretsManager.astro";
 
 const session = Astro.locals.adminSession;
@@ -20,9 +24,16 @@ let siteConfig = {
 	siteTitle: SITE_TITLE,
 	faviconUrl: "/favicon.svg",
 	logoUrl: "",
+	mediaStorageSettings: {
+		s3Endpoint: "",
+		s3Bucket: "",
+		s3PublicBaseUrl: "",
+	},
 };
 let secrets: AdminSecretRecord[] = [];
 let secretsLoadError = "";
+let mediaAccessKeyRecord: AdminSecretRecord | null = null;
+let mediaSecretKeyRecord: AdminSecretRecord | null = null;
 
 const db = getDb(Astro.locals);
 
@@ -33,7 +44,11 @@ try {
 }
 
 try {
-	secrets = await listAdminSecrets(db);
+	secrets = await listAdminSecrets(db, { secretTypes: ["cloudflare_api_access_token"] });
+	[mediaAccessKeyRecord, mediaSecretKeyRecord] = await Promise.all([
+		getLatestAdminSecretRecordByType(db, "media_s3_access_key_id"),
+		getLatestAdminSecretRecordByType(db, "media_s3_secret_access_key"),
+	]);
 } catch (error) {
 	secretsLoadError = error instanceof Error ? error.message : t("messages.failedToLoadSecrets");
 }
@@ -52,6 +67,8 @@ try {
 		{Astro.url.searchParams.get("secretSaved") && <p class="alert alert-success mb-0">{t("messages.secretSaved")}</p>}
 		{Astro.url.searchParams.get("secretDeleted") && <p class="alert alert-info mb-0">{t("messages.secretDeleted")}</p>}
 		{Astro.url.searchParams.get("secretError") && <p class="alert alert-danger mb-0">{t("messages.secretRequestFailed")}</p>}
+		{Astro.url.searchParams.get("mediaSaved") && <p class="alert alert-success mb-0">Media storage settings saved.</p>}
+		{Astro.url.searchParams.get("mediaError") && <p class="alert alert-danger mb-0">Media storage settings could not be saved.</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 		<form method="post" action="/api/admin/site" class="admin-form-shell">
 			<input type="hidden" name="successRedirectTo" value="/admin/settings?siteSaved=1" />
@@ -64,6 +81,78 @@ try {
 			<div class="admin-form-section">
 				<p class="admin-muted">{t("messages.siteSettingsHelp")}</p>
 				<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>{t("actions.saveChanges")}</button>
+			</div>
+		</form>
+		<form method="post" action="/api/admin/media/settings" class="admin-form-shell">
+			<div class="admin-form-surface">
+				<div class="admin-surface-header mb-3">
+					<div>
+						<h2 class="h5 mb-1">Media Storage</h2>
+						<p class="admin-inline-muted mb-0">Configure S3-compatible media storage from admin settings.</p>
+					</div>
+				</div>
+				<div class="admin-grid-two">
+					<label>
+						<span>S3 endpoint</span>
+						<input
+							class="form-control"
+							name="s3Endpoint"
+							value={siteConfig.mediaStorageSettings.s3Endpoint}
+							placeholder="https://<account>.r2.cloudflarestorage.com"
+							disabled={Boolean(loadError) || Boolean(secretsLoadError)}
+						/>
+					</label>
+					<label>
+						<span>Bucket name</span>
+						<input
+							class="form-control"
+							name="s3Bucket"
+							value={siteConfig.mediaStorageSettings.s3Bucket}
+							placeholder="media"
+							disabled={Boolean(loadError) || Boolean(secretsLoadError)}
+						/>
+					</label>
+					<label>
+						<span>Public base URL</span>
+						<input
+							class="form-control"
+							name="s3PublicBaseUrl"
+							value={siteConfig.mediaStorageSettings.s3PublicBaseUrl}
+							placeholder="https://cdn.example.com"
+							disabled={Boolean(loadError) || Boolean(secretsLoadError)}
+						/>
+					</label>
+					<label>
+						<span>S3 access key ID</span>
+						<input
+							class="form-control"
+							type="password"
+							name="s3AccessKeyId"
+							autocomplete="off"
+							placeholder={mediaAccessKeyRecord ? mediaAccessKeyRecord.maskedValue : "Enter a new access key ID"}
+							disabled={Boolean(loadError) || Boolean(secretsLoadError)}
+						/>
+					</label>
+					<label style="grid-column: 1 / -1;">
+						<span>S3 secret access key</span>
+						<input
+							class="form-control"
+							type="password"
+							name="s3SecretAccessKey"
+							autocomplete="off"
+							placeholder={mediaSecretKeyRecord ? mediaSecretKeyRecord.maskedValue : "Enter a new secret access key"}
+							disabled={Boolean(loadError) || Boolean(secretsLoadError)}
+						/>
+					</label>
+				</div>
+				<div class="admin-form-section">
+					<p class="admin-muted mb-2">
+						Leave either credential field empty to keep the currently saved encrypted value. Database settings override S3 environment variables when present.
+					</p>
+					<button class="btn btn-primary" type="submit" disabled={Boolean(loadError) || Boolean(secretsLoadError)}>
+						Save media settings
+					</button>
+				</div>
 			</div>
 		</form>
 		<SecretsManager secrets={secrets} canManage={session.isSuperadmin || session.permissions.includes("site.manage")} loadError={secretsLoadError} />

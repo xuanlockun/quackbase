@@ -20,7 +20,7 @@ if (!session) {
 
 const canManage = session.isSuperadmin || session.permissions.includes("site.manage");
 const { t } = getUiTranslations(Astro);
-const storageStatus = getMediaStorageStatus(Astro.locals);
+const storageStatus = await getMediaStorageStatus(Astro.locals);
 
 const currentFolder = normalizeFolderPath(Astro.url.searchParams.get("folder") ?? "");
 const currentView = Astro.url.searchParams.get("view") === "list" ? "list" : "grid";
@@ -430,7 +430,7 @@ function formatFolderLabel(folderPath: string): string {
 											</div>
 											{!canCopyPublicUrl && (
 												<p class="text-body-secondary small mb-0">
-													No public URL is configured for this asset. Set `S3_PUBLIC_BASE_URL`, `R2_PUBLIC_BASE_URL`, or `MEDIA_PUBLIC_BASE_URL`.
+													No public URL is configured for this asset. Add one in Settings or set `S3_PUBLIC_BASE_URL`, `R2_PUBLIC_BASE_URL`, or `MEDIA_PUBLIC_BASE_URL`.
 												</p>
 											)}
 										</div>

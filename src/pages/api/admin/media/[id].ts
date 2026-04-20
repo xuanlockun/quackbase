@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 			return redirect("/admin/media?error=1");
 		}
 
-		if (getMediaStorageStatus(locals).isConfigured) {
+		if ((await getMediaStorageStatus(locals)).isConfigured) {
 			await deleteMediaObject(locals, asset.objectKey);
 		}
 

@@ -209,6 +209,7 @@ export interface SiteConfig {
 	homePageSlug: string;
 	faviconUrl: string;
 	logoUrl: string;
+	mediaStorageSettings: MediaStorageSettings;
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
@@ -221,6 +222,12 @@ export interface SiteConfig {
 	footerTextColor: string;
 	footerTemplateHtml: string;
 	navItems: SiteNavItem[];
+}
+
+export interface MediaStorageSettings {
+	s3Endpoint: string;
+	s3Bucket: string;
+	s3PublicBaseUrl: string;
 }
 
 export interface SitePageRecord {
@@ -512,7 +519,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const settings = await db
 		.prepare(
-			`SELECT site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html, nav_items
+			`SELECT site_title, home_page_slug, favicon_url, logo_url, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html, nav_items
 			FROM site_settings
 			WHERE id = 1`,
 		)
@@ -521,6 +528,9 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			home_page_slug: string;
 			favicon_url: string;
 			logo_url: string;
+			media_s3_endpoint: string;
+			media_s3_bucket: string;
+			media_s3_public_base_url: string;
 			header_background: string;
 			header_text_color: string;
 			header_accent_color: string;
@@ -585,6 +595,11 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 		homePageSlug: settings?.home_page_slug ?? "home",
 		faviconUrl: settings?.favicon_url ?? "/favicon.svg",
 		logoUrl: settings?.logo_url ?? "",
+		mediaStorageSettings: {
+			s3Endpoint: settings?.media_s3_endpoint ?? "",
+			s3Bucket: settings?.media_s3_bucket ?? "",
+			s3PublicBaseUrl: settings?.media_s3_public_base_url ?? "",
+		},
 		headerBackground: settings?.header_background ?? "#ffffff",
 		headerTextColor: settings?.header_text_color ?? "#0f1219",
 		headerAccentColor: settings?.header_accent_color ?? "#2337ff",
@@ -701,6 +716,51 @@ export async function saveSiteSettings(
 			input.siteTitle.trim(),
 			normalizeFaviconUrl(input.faviconUrl),
 			normalizeLogoUrl(input.logoUrl),
+		)
+		.run();
+}
+
+export async function getMediaStorageSettings(db: D1Database): Promise<MediaStorageSettings> {
+	await ensureSiteTables(db);
+	const settings = await db
+		.prepare(
+			`SELECT media_s3_endpoint, media_s3_bucket, media_s3_public_base_url
+			FROM site_settings
+			WHERE id = 1`,
+		)
+		.first<{
+			media_s3_endpoint: string;
+			media_s3_bucket: string;
+			media_s3_public_base_url: string;
+		}>();
+
+	return {
+		s3Endpoint: normalizeStorageUrl(settings?.media_s3_endpoint ?? ""),
+		s3Bucket: settings?.media_s3_bucket?.trim() ?? "",
+		s3PublicBaseUrl: normalizeStorageUrl(settings?.media_s3_public_base_url ?? ""),
+	};
+}
+
+export async function saveMediaStorageSettings(
+	db: D1Database,
+	input: MediaStorageSettings,
+): Promise<void> {
+	await ensureSiteTables(db);
+
+	await db
+		.prepare(
+			`INSERT INTO site_settings (id, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, updated_at)
+			VALUES (1, ?1, ?2, ?3, CURRENT_TIMESTAMP)
+			ON CONFLICT(id) DO UPDATE SET
+				media_s3_endpoint = excluded.media_s3_endpoint,
+				media_s3_bucket = excluded.media_s3_bucket,
+				media_s3_public_base_url = excluded.media_s3_public_base_url,
+				updated_at = CURRENT_TIMESTAMP`,
+		)
+		.bind(
+			normalizeStorageUrl(input.s3Endpoint),
+			input.s3Bucket.trim(),
+			normalizeStorageUrl(input.s3PublicBaseUrl),
 		)
 		.run();
 }
@@ -1070,6 +1130,14 @@ export function parseSiteSettingsForm(formData: FormData): {
 	};
 }
 
+export function parseMediaStorageSettingsForm(formData: FormData): MediaStorageSettings {
+	return {
+		s3Endpoint: optionalString(formData, "s3Endpoint"),
+		s3Bucket: optionalString(formData, "s3Bucket"),
+		s3PublicBaseUrl: optionalString(formData, "s3PublicBaseUrl"),
+	};
+}
+
 export function parseSiteForm(formData: FormData): {
 	siteTitle: string;
 	homePageSlug: string;
@@ -1341,6 +1409,9 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				home_page_slug TEXT NOT NULL DEFAULT 'home',
 				favicon_url TEXT NOT NULL DEFAULT '/favicon.svg',
 				logo_url TEXT NOT NULL DEFAULT '',
+				media_s3_endpoint TEXT NOT NULL DEFAULT '',
+				media_s3_bucket TEXT NOT NULL DEFAULT '',
+				media_s3_public_base_url TEXT NOT NULL DEFAULT '',
 				header_background TEXT NOT NULL DEFAULT '#ffffff',
 				header_text_color TEXT NOT NULL DEFAULT '#0f1219',
 				header_accent_color TEXT NOT NULL DEFAULT '#2337ff',
@@ -1403,6 +1474,18 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	if (!settingsColumnNames.has("logo_url")) {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN logo_url TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("media_s3_endpoint")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN media_s3_endpoint TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("media_s3_bucket")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN media_s3_bucket TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("media_s3_public_base_url")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN media_s3_public_base_url TEXT NOT NULL DEFAULT ''`).run();
 	}
 
 	if (!settingsColumnNames.has("header_template_html")) {
@@ -1789,4 +1872,8 @@ function normalizeFaviconUrl(value: string): string {
 function normalizeLogoUrl(value: string): string {
 	const trimmed = value.trim();
 	return trimmed || "/logo.svg";
+}
+
+function normalizeStorageUrl(value: string): string {
+	return value.trim().replace(/\/+$/g, "");
 }

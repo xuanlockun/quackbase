@@ -1,3 +1,6 @@
+import { getDb, getMediaStorageSettings } from "./blog";
+import { getAdminSecretValueByType } from "./secrets";
+
 export type MediaStorageProvider = "r2" | "s3" | "unconfigured";
 
 export interface MediaAsset {
@@ -60,13 +63,16 @@ type StorageBackend =
 			provider: "r2";
 			bucket: R2StorageBinding;
 			publicBaseUrl: string;
+			source: "binding";
 	  }
 	| {
 			provider: "s3";
 			config: S3StorageConfig;
+			source: "settings" | "environment";
 	  }
 	| {
 			provider: "unconfigured";
+			source: "none";
 	  };
 
 export interface MediaStorageStatus {
@@ -75,6 +81,7 @@ export interface MediaStorageStatus {
 	label: string;
 	details: string;
 	publicBaseUrl: string;
+	source: "settings" | "environment" | "binding" | "none";
 }
 
 const DEFAULT_MEDIA_PREFIX = "media";
@@ -274,15 +281,16 @@ export async function deleteMediaAsset(db: D1Database, id: number): Promise<Medi
 	return asset;
 }
 
-export function getMediaStorageStatus(locals: App.Locals): MediaStorageStatus {
-	const backend = resolveStorageBackend(locals);
+export async function getMediaStorageStatus(locals: App.Locals): Promise<MediaStorageStatus> {
+	const backend = await resolveStorageBackend(locals);
 	if (backend.provider === "unconfigured") {
 		return {
 			provider: "unconfigured",
 			isConfigured: false,
 			label: "Not configured",
-			details: "Set R2_BUCKET or S3_* environment variables to enable uploads.",
+			details: "Set media storage settings or provide R2/S3 environment bindings to enable uploads.",
 			publicBaseUrl: "",
+			source: "none",
 		};
 	}
 
@@ -293,6 +301,7 @@ export function getMediaStorageStatus(locals: App.Locals): MediaStorageStatus {
 			label: "Cloudflare R2",
 			details: "Uploads use the R2 bucket binding on the Worker runtime.",
 			publicBaseUrl: backend.publicBaseUrl,
+			source: backend.source,
 		};
 	}
 
@@ -300,8 +309,12 @@ export function getMediaStorageStatus(locals: App.Locals): MediaStorageStatus {
 		provider: "s3",
 		isConfigured: true,
 		label: "S3-compatible storage",
-		details: `Uploads use ${backend.config.endpoint} / ${backend.config.bucket}.`,
+		details:
+			backend.source === "settings"
+				? `Uploads use settings-managed S3 storage at ${backend.config.endpoint} / ${backend.config.bucket}.`
+				: `Uploads use environment-managed S3 storage at ${backend.config.endpoint} / ${backend.config.bucket}.`,
 		publicBaseUrl: backend.config.publicBaseUrl,
+		source: backend.source,
 	};
 }
 
@@ -314,7 +327,7 @@ export async function uploadMediaObject(
 	objectKey: string;
 	publicUrl: string;
 }> {
-	const backend = resolveStorageBackend(locals);
+	const backend = await resolveStorageBackend(locals);
 	if (backend.provider === "unconfigured") {
 		throw new Error("Media storage is not configured.");
 	}
@@ -339,7 +352,7 @@ export async function uploadMediaObject(
 }
 
 export async function deleteMediaObject(locals: App.Locals, objectKey: string): Promise<void> {
-	const backend = resolveStorageBackend(locals);
+	const backend = await resolveStorageBackend(locals);
 	if (backend.provider === "unconfigured") {
 		throw new Error("Media storage is not configured.");
 	}
@@ -356,7 +369,7 @@ export async function getMediaObjectResponse(
 	locals: App.Locals,
 	asset: MediaAsset,
 ): Promise<Response | null> {
-	const backend = resolveStorageBackend(locals);
+	const backend = await resolveStorageBackend(locals);
 	if (backend.provider === "unconfigured") {
 		return null;
 	}
@@ -402,8 +415,45 @@ function toMediaAsset(row: MediaAssetRow): MediaAsset {
 	};
 }
 
-function resolveStorageBackend(locals: App.Locals): StorageBackend {
+async function resolveStorageBackend(locals: App.Locals): Promise<StorageBackend> {
 	const env = locals.runtime.env as Record<string, unknown>;
+	const db = getDb(locals);
+	const storedSettings = await getMediaStorageSettings(db);
+	const storedAccessKeyId = await getAdminSecretValueByType(db, "media_s3_access_key_id", locals.runtime.env);
+	const storedSecretAccessKey = await getAdminSecretValueByType(db, "media_s3_secret_access_key", locals.runtime.env);
+	const endpoint = storedSettings.s3Endpoint || (typeof env.S3_ENDPOINT === "string" ? env.S3_ENDPOINT.trim() : "");
+	const bucket = storedSettings.s3Bucket || (typeof env.S3_BUCKET === "string" ? env.S3_BUCKET.trim() : "");
+	const accessKeyId =
+		storedAccessKeyId || (typeof env.S3_ACCESS_KEY_ID === "string" ? env.S3_ACCESS_KEY_ID.trim() : "");
+	const secretAccessKey =
+		storedSecretAccessKey || (typeof env.S3_SECRET_ACCESS_KEY === "string" ? env.S3_SECRET_ACCESS_KEY.trim() : "");
+	const publicBaseUrl = normalizeBaseUrl(
+		storedSettings.s3PublicBaseUrl ||
+			(typeof env.S3_PUBLIC_BASE_URL === "string"
+				? env.S3_PUBLIC_BASE_URL
+				: typeof env.MEDIA_PUBLIC_BASE_URL === "string"
+					? env.MEDIA_PUBLIC_BASE_URL
+					: ""),
+	);
+	if (endpoint && bucket && accessKeyId && secretAccessKey) {
+		return {
+			provider: "s3",
+			source: storedSettings.s3Endpoint || storedSettings.s3Bucket || storedAccessKeyId || storedSecretAccessKey ? "settings" : "environment",
+			config: {
+				endpoint: normalizeBaseUrl(endpoint),
+				bucket,
+				accessKeyId,
+				secretAccessKey,
+				region: typeof env.S3_REGION === "string" && env.S3_REGION.trim() ? env.S3_REGION.trim() : "auto",
+				forcePathStyle:
+					typeof env.S3_FORCE_PATH_STYLE === "string"
+						? ["1", "true", "yes"].includes(env.S3_FORCE_PATH_STYLE.trim().toLowerCase())
+						: true,
+				publicBaseUrl,
+			},
+		};
+	}
+
 	const r2Bucket = env.R2_BUCKET as R2StorageBinding | undefined;
 	if (r2Bucket) {
 		return {
@@ -418,38 +468,11 @@ function resolveStorageBackend(locals: App.Locals): StorageBackend {
 						? env.MEDIA_PUBLIC_BASE_URL
 						: "",
 			),
+			source: "binding",
 		};
 	}
 
-	const endpoint = typeof env.S3_ENDPOINT === "string" ? env.S3_ENDPOINT.trim() : "";
-	const bucket = typeof env.S3_BUCKET === "string" ? env.S3_BUCKET.trim() : "";
-	const accessKeyId = typeof env.S3_ACCESS_KEY_ID === "string" ? env.S3_ACCESS_KEY_ID.trim() : "";
-	const secretAccessKey = typeof env.S3_SECRET_ACCESS_KEY === "string" ? env.S3_SECRET_ACCESS_KEY.trim() : "";
-	if (endpoint && bucket && accessKeyId && secretAccessKey) {
-		return {
-			provider: "s3",
-			config: {
-				endpoint: normalizeBaseUrl(endpoint),
-				bucket,
-				accessKeyId,
-				secretAccessKey,
-				region: typeof env.S3_REGION === "string" && env.S3_REGION.trim() ? env.S3_REGION.trim() : "auto",
-				forcePathStyle:
-					typeof env.S3_FORCE_PATH_STYLE === "string"
-						? ["1", "true", "yes"].includes(env.S3_FORCE_PATH_STYLE.trim().toLowerCase())
-						: true,
-				publicBaseUrl: normalizeBaseUrl(
-					typeof env.S3_PUBLIC_BASE_URL === "string"
-						? env.S3_PUBLIC_BASE_URL
-						: typeof env.MEDIA_PUBLIC_BASE_URL === "string"
-							? env.MEDIA_PUBLIC_BASE_URL
-							: "",
-				),
-			},
-		};
-	}
-
-	return { provider: "unconfigured" };
+	return { provider: "unconfigured", source: "none" };
 }
 
 function buildPublicUrl(backend: StorageBackend, objectKey: string): string {
