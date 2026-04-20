@@ -215,7 +215,7 @@ function formatFolderLabel(folderPath: string): string {
 							Refresh from bucket
 						</button>
 					</div>
-					<p class="form-text mb-0">Pull any bucket objects that are missing from D1 into the media library.</p>
+					<p class="form-text mb-0">Pull any bucket objects that are missing from D1 into the media library. Some S3-compatible endpoints do not support bucket listing, so this action may be unavailable.</p>
 				</form>
 				<form method="post" action="/api/admin/media/folders" class="media-folder-form">
 					<label class="form-label fw-semibold" for="folderPath">{t("actions.createFolder", "Create folder")}</label>

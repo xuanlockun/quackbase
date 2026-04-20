@@ -685,6 +685,10 @@ async function listS3MediaObjects(config: S3StorageConfig): Promise<MediaStorage
 		headers: signed,
 	});
 	if (!response.ok) {
+		if (response.status === 501) {
+			throw new Error("Bucket listing is not supported by this S3 endpoint, so media cannot be refreshed from the bucket.");
+		}
+
 		throw new Error(`Failed to list media from S3 (${response.status} ${response.statusText}).`);
 	}
 

@@ -46,6 +46,8 @@ try {
 } catch (error) {
 	secretsLoadError = error instanceof Error ? error.message : t("messages.failedToLoadSecrets");
 }
+
+const formDisabled = Boolean(loadError);
 ---
 
 <AdminLayout
@@ -66,171 +68,259 @@ try {
 			<p class="alert alert-danger mb-0">{Astro.url.searchParams.get("mediaError")}</p>
 		)}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
-		<form method="post" action="/api/admin/site" class="admin-form-shell">
-			<input type="hidden" name="successRedirectTo" value="/admin/settings?siteSaved=1" />
-			<input type="hidden" name="errorRedirectTo" value="/admin/settings?siteError=1" />
-			<div class="admin-grid-two">
-				<label><span>{t("labels.siteTitle")}</span><input class="form-control" name="siteTitle" value={siteConfig.siteTitle} placeholder={SITE_TITLE} disabled={Boolean(loadError)} /></label>
-				<label><span>{t("labels.faviconUrl")}</span><input class="form-control" name="faviconUrl" value={siteConfig.faviconUrl} placeholder="/favicon.svg" disabled={Boolean(loadError)} /></label>
-				<label><span>{t("labels.logoUrl")}</span><input class="form-control" name="logoUrl" value={siteConfig.logoUrl} placeholder="/logo.svg" disabled={Boolean(loadError)} /></label>
-			</div>
-			<div class="admin-form-section">
-				<p class="admin-muted">{t("messages.siteSettingsHelp")}</p>
-				<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>{t("actions.saveChanges")}</button>
-			</div>
-		</form>
-		<form method="post" action="/api/admin/media/settings" class="admin-form-shell" data-media-settings-form>
-			<div class="admin-form-surface">
-				<div class="admin-surface-header mb-3">
-					<div>
-						<h2 class="h5 mb-1">Media Storage</h2>
-						<p class="admin-inline-muted mb-0">Configure S3-compatible media storage from admin settings.</p>
-					</div>
-				</div>
-				<div class="admin-grid-two">
-					<label>
-						<span>S3 upload endpoint</span>
-						<input
-							class="form-control"
-							name="s3Endpoint"
-							value={siteConfig.mediaStorageSettings.s3Endpoint}
-							placeholder="https://<account>.r2.cloudflarestorage.com"
-							disabled={Boolean(loadError)}
-						/>
-					</label>
-					<label>
-						<span>Bucket name</span>
-						<input
-							class="form-control"
-							name="s3Bucket"
-							value={siteConfig.mediaStorageSettings.s3Bucket}
-							placeholder="media"
-							disabled={Boolean(loadError)}
-						/>
-					</label>
-					<label>
-						<span>Public base URL</span>
-						<input
-							class="form-control"
-							name="s3PublicBaseUrl"
-							value={siteConfig.mediaStorageSettings.s3PublicBaseUrl}
-							placeholder="https://pub-...r2.dev or your CDN"
-							disabled={Boolean(loadError)}
-						/>
-					</label>
-					<label>
-						<span>S3 region</span>
-						<input
-							class="form-control"
-							name="s3Region"
-							value={siteConfig.mediaStorageSettings.s3Region}
-							placeholder="auto or us-east-1"
-							disabled={Boolean(loadError)}
-						/>
-					</label>
-					<label class="d-flex align-items-center gap-2 pt-4">
-						<input
-							class="form-check-input mt-0"
-							type="checkbox"
-							name="s3ForcePathStyle"
-							value="1"
-							checked={siteConfig.mediaStorageSettings.s3ForcePathStyle}
-							disabled={Boolean(loadError)}
-						/>
-						<span>Use path-style URLs</span>
-					</label>
-					<div class="media-secret-field">
-						<label for="s3AccessKeyId">
-							<span>S3 access key ID</span>
-							<div class="input-group">
-								<input
-									id="s3AccessKeyId"
-									class="form-control"
-									type="password"
-									name="s3AccessKeyId"
-									value={siteConfig.mediaStorageSettings.s3AccessKeyId}
-									autocomplete="off"
-									placeholder="Enter a new access key ID"
-									disabled={Boolean(loadError)}
-								/>
-								<button
-									class="btn btn-outline-secondary"
-									type="button"
-									data-media-secret-toggle
-									data-media-secret-target="#s3AccessKeyId"
-									aria-label="Show access key ID"
-									title="Show access key ID"
-									disabled={Boolean(loadError)}
-								>
-									<span aria-hidden="true">
-										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
-											<circle cx="12" cy="12" r="3" />
-										</svg>
-									</span>
-								</button>
+		<div class="admin-form-surface settings-tabs-shell">
+			<ul class="nav nav-tabs flex-wrap gap-1 border-bottom px-3 pt-3" role="tablist" aria-label="Admin settings sections" data-settings-tablist>
+				<li class="nav-item" role="presentation">
+					<button
+						type="button"
+						class="nav-link active"
+						role="tab"
+						aria-selected="true"
+						data-settings-tab="site"
+					>
+						Site
+					</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button
+						type="button"
+						class="nav-link"
+						role="tab"
+						aria-selected="false"
+						data-settings-tab="media"
+					>
+						Media
+					</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button
+						type="button"
+						class="nav-link"
+						role="tab"
+						aria-selected="false"
+						data-settings-tab="secrets"
+					>
+						Secrets
+					</button>
+				</li>
+			</ul>
+			<div class="p-3 p-lg-4">
+				<section role="tabpanel" data-settings-panel="site">
+					<form method="post" action="/api/admin/site" class="admin-form-shell mb-0">
+						<input type="hidden" name="successRedirectTo" value="/admin/settings?siteSaved=1" />
+						<input type="hidden" name="errorRedirectTo" value="/admin/settings?siteError=1" />
+						<div class="admin-grid-two">
+							<label><span>{t("labels.siteTitle")}</span><input class="form-control" name="siteTitle" value={siteConfig.siteTitle} placeholder={SITE_TITLE} disabled={formDisabled} /></label>
+							<label><span>{t("labels.faviconUrl")}</span><input class="form-control" name="faviconUrl" value={siteConfig.faviconUrl} placeholder="/favicon.svg" disabled={formDisabled} /></label>
+							<label><span>{t("labels.logoUrl")}</span><input class="form-control" name="logoUrl" value={siteConfig.logoUrl} placeholder="/logo.svg" disabled={formDisabled} /></label>
+						</div>
+						<div class="admin-form-section">
+							<p class="admin-muted">{t("messages.siteSettingsHelp")}</p>
+							<button class="btn btn-primary" type="submit" disabled={formDisabled}>{t("actions.saveChanges")}</button>
+						</div>
+					</form>
+				</section>
+
+				<section class="d-none" role="tabpanel" data-settings-panel="media">
+					<form method="post" action="/api/admin/media/settings" class="admin-form-shell mb-0" data-media-settings-form>
+						<div class="admin-form-surface">
+							<div class="admin-surface-header mb-3">
+								<div>
+									<h2 class="h5 mb-1">Media Storage</h2>
+									<p class="admin-inline-muted mb-0">Configure S3-compatible media storage from admin settings.</p>
+								</div>
 							</div>
-						</label>
-					</div>
-					<div class="media-secret-field" style="grid-column: 1 / -1;">
-						<label for="s3SecretAccessKey">
-							<span>S3 secret access key</span>
-							<div class="input-group">
-								<input
-									id="s3SecretAccessKey"
-									class="form-control"
-									type="password"
-									name="s3SecretAccessKey"
-									value={siteConfig.mediaStorageSettings.s3SecretAccessKey}
-									autocomplete="off"
-									placeholder="Enter a new secret access key"
-									disabled={Boolean(loadError)}
-								/>
-								<button
-									class="btn btn-outline-secondary"
-									type="button"
-									data-media-secret-toggle
-									data-media-secret-target="#s3SecretAccessKey"
-									aria-label="Show secret access key"
-									title="Show secret access key"
-									disabled={Boolean(loadError)}
-								>
-									<span aria-hidden="true">
-										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
-											<circle cx="12" cy="12" r="3" />
-										</svg>
-									</span>
-								</button>
+							<div class="admin-grid-two">
+								<label>
+									<span>S3 upload endpoint</span>
+									<input
+										class="form-control"
+										name="s3Endpoint"
+										value={siteConfig.mediaStorageSettings.s3Endpoint}
+										placeholder="https://<account>.r2.cloudflarestorage.com"
+										disabled={formDisabled}
+									/>
+								</label>
+								<label>
+									<span>Bucket name</span>
+									<input
+										class="form-control"
+										name="s3Bucket"
+										value={siteConfig.mediaStorageSettings.s3Bucket}
+										placeholder="media"
+										disabled={formDisabled}
+									/>
+								</label>
+								<label>
+									<span>Public base URL</span>
+									<input
+										class="form-control"
+										name="s3PublicBaseUrl"
+										value={siteConfig.mediaStorageSettings.s3PublicBaseUrl}
+										placeholder="https://pub-...r2.dev or your CDN"
+										disabled={formDisabled}
+									/>
+								</label>
+								<label>
+									<span>S3 region</span>
+									<input
+										class="form-control"
+										name="s3Region"
+										value={siteConfig.mediaStorageSettings.s3Region}
+										placeholder="auto or us-east-1"
+										disabled={formDisabled}
+									/>
+								</label>
+								<label class="d-flex align-items-center gap-2 pt-4">
+									<input
+										class="form-check-input mt-0"
+										type="checkbox"
+										name="s3ForcePathStyle"
+										value="1"
+										checked={siteConfig.mediaStorageSettings.s3ForcePathStyle}
+										disabled={formDisabled}
+									/>
+									<span>Use path-style URLs</span>
+								</label>
+								<div class="media-secret-field">
+									<label for="s3AccessKeyId">
+										<span>S3 access key ID</span>
+										<div class="input-group">
+											<input
+												id="s3AccessKeyId"
+												class="form-control"
+												type="password"
+												name="s3AccessKeyId"
+												value={siteConfig.mediaStorageSettings.s3AccessKeyId}
+												autocomplete="off"
+												placeholder="Enter a new access key ID"
+												disabled={formDisabled}
+											/>
+											<button
+												class="btn btn-outline-secondary"
+												type="button"
+												data-media-secret-toggle
+												data-media-secret-target="#s3AccessKeyId"
+												aria-label="Show access key ID"
+												title="Show access key ID"
+												disabled={formDisabled}
+											>
+												<span aria-hidden="true">
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+														<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+														<circle cx="12" cy="12" r="3" />
+													</svg>
+												</span>
+											</button>
+										</div>
+									</label>
+								</div>
+								<div class="media-secret-field" style="grid-column: 1 / -1;">
+									<label for="s3SecretAccessKey">
+										<span>S3 secret access key</span>
+										<div class="input-group">
+											<input
+												id="s3SecretAccessKey"
+												class="form-control"
+												type="password"
+												name="s3SecretAccessKey"
+												value={siteConfig.mediaStorageSettings.s3SecretAccessKey}
+												autocomplete="off"
+												placeholder="Enter a new secret access key"
+												disabled={formDisabled}
+											/>
+											<button
+												class="btn btn-outline-secondary"
+												type="button"
+												data-media-secret-toggle
+												data-media-secret-target="#s3SecretAccessKey"
+												aria-label="Show secret access key"
+												title="Show secret access key"
+												disabled={formDisabled}
+											>
+												<span aria-hidden="true">
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+														<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+														<circle cx="12" cy="12" r="3" />
+													</svg>
+												</span>
+											</button>
+										</div>
+									</label>
+								</div>
 							</div>
-						</label>
-					</div>
-				</div>
-				<div class="admin-form-section">
-					<p class="admin-muted mb-2">
-						Leave either credential field empty to keep the currently saved database value. Set the region to your provider's real signing region. For Cloudflare R2, `auto` is usually correct.
-					</p>
-					<div class="d-flex flex-wrap gap-2 align-items-center">
-						<button class="btn btn-outline-secondary" type="button" data-media-test-button disabled={Boolean(loadError)}>
-							Test connection
-						</button>
-						<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>
-							Save media settings
-						</button>
-					</div>
-					<p class="admin-inline-muted mb-0 mt-2" data-media-settings-status aria-live="polite"></p>
-				</div>
+							<div class="admin-form-section">
+								<p class="admin-muted mb-2">
+									Leave either credential field empty to keep the currently saved database value. Set the region to your provider's real signing region. For Cloudflare R2, `auto` is usually correct.
+								</p>
+								<p class="admin-inline-muted mb-2">
+									Some S3-compatible providers support uploads but not bucket listing, so import/refresh from bucket may still be unavailable.
+								</p>
+								<div class="d-flex flex-wrap gap-2 align-items-center">
+									<button class="btn btn-outline-secondary" type="button" data-media-test-button disabled={formDisabled}>
+										Test connection
+									</button>
+									<button class="btn btn-primary" type="submit" disabled={formDisabled}>
+										Save media settings
+									</button>
+								</div>
+								<p class="admin-inline-muted mb-0 mt-2" data-media-settings-status aria-live="polite"></p>
+							</div>
+						</div>
+					</form>
+				</section>
+
+				<section class="d-none" role="tabpanel" data-settings-panel="secrets">
+					<SecretsManager secrets={secrets} canManage={session.isSuperadmin || session.permissions.includes("site.manage")} loadError={secretsLoadError} />
+				</section>
 			</div>
-		</form>
-		<SecretsManager secrets={secrets} canManage={session.isSuperadmin || session.permissions.includes("site.manage")} loadError={secretsLoadError} />
+		</div>
 	</div>
 </AdminLayout>
 
 <script type="module">
+	const tablist = document.querySelector("[data-settings-tablist]");
+	const tabButtons = tablist?.querySelectorAll("[data-settings-tab]");
+	const panels = document.querySelectorAll("[data-settings-panel]");
 	const form = document.querySelector("[data-media-settings-form]");
 	const status = form?.querySelector("[data-media-settings-status]");
 	const testButton = form?.querySelector("[data-media-test-button]");
 	const toggleButtons = form?.querySelectorAll("[data-media-secret-toggle]");
+
+	const setActiveTab = (tabName) => {
+		tabButtons?.forEach((button) => {
+			if (!(button instanceof HTMLButtonElement)) {
+				return;
+			}
+
+			const isActive = button.dataset.settingsTab === tabName;
+			button.classList.toggle("active", isActive);
+			button.setAttribute("aria-selected", isActive ? "true" : "false");
+		});
+
+		panels.forEach((panel) => {
+			if (!(panel instanceof HTMLElement)) {
+				return;
+			}
+
+			panel.classList.toggle("d-none", panel.dataset.settingsPanel !== tabName);
+		});
+	};
+
+	tabButtons?.forEach((button) => {
+		if (!(button instanceof HTMLButtonElement)) {
+			return;
+		}
+
+		button.addEventListener("click", () => {
+			const tabName = button.dataset.settingsTab;
+			if (tabName) {
+				setActiveTab(tabName);
+			}
+		});
+	});
+
+	setActiveTab("site");
 
 	if (
 		form instanceof HTMLFormElement &&
