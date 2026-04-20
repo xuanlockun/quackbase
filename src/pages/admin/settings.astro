@@ -26,6 +26,8 @@ let siteConfig = {
 		s3PublicBaseUrl: "",
 		s3AccessKeyId: "",
 		s3SecretAccessKey: "",
+		s3Region: "auto",
+		s3ForcePathStyle: true,
 	},
 };
 let secrets: AdminSecretRecord[] = [];
@@ -130,6 +132,27 @@ const savedSecretAccessKeyMask = maskSavedSecret(siteConfig.mediaStorageSettings
 						/>
 					</label>
 					<label>
+						<span>S3 region</span>
+						<input
+							class="form-control"
+							name="s3Region"
+							value={siteConfig.mediaStorageSettings.s3Region}
+							placeholder="auto or us-east-1"
+							disabled={Boolean(loadError)}
+						/>
+					</label>
+					<label class="d-flex align-items-center gap-2 pt-4">
+						<input
+							class="form-check-input mt-0"
+							type="checkbox"
+							name="s3ForcePathStyle"
+							value="1"
+							checked={siteConfig.mediaStorageSettings.s3ForcePathStyle}
+							disabled={Boolean(loadError)}
+						/>
+						<span>Use path-style URLs</span>
+					</label>
+					<label>
 						<span>S3 access key ID</span>
 						<input
 							class="form-control"
@@ -154,7 +177,7 @@ const savedSecretAccessKeyMask = maskSavedSecret(siteConfig.mediaStorageSettings
 				</div>
 				<div class="admin-form-section">
 					<p class="admin-muted mb-2">
-						Leave either credential field empty to keep the currently saved database value. Media storage now uses database settings instead of S3 environment variables.
+						Leave either credential field empty to keep the currently saved database value. Set the region to your provider's real signing region. For Cloudflare R2, `auto` is usually correct.
 					</p>
 					<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>
 						Save media settings

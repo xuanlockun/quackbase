@@ -230,6 +230,8 @@ export interface MediaStorageSettings {
 	s3PublicBaseUrl: string;
 	s3AccessKeyId: string;
 	s3SecretAccessKey: string;
+	s3Region: string;
+	s3ForcePathStyle: boolean;
 }
 
 export interface SitePageRecord {
@@ -521,7 +523,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const settings = await db
 		.prepare(
-			`SELECT site_title, home_page_slug, favicon_url, logo_url, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, media_s3_access_key_id, media_s3_secret_access_key, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html, nav_items
+			`SELECT site_title, home_page_slug, favicon_url, logo_url, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, media_s3_access_key_id, media_s3_secret_access_key, media_s3_region, media_s3_force_path_style, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html, nav_items
 			FROM site_settings
 			WHERE id = 1`,
 		)
@@ -535,6 +537,8 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			media_s3_public_base_url: string;
 			media_s3_access_key_id: string;
 			media_s3_secret_access_key: string;
+			media_s3_region: string;
+			media_s3_force_path_style: string;
 			header_background: string;
 			header_text_color: string;
 			header_accent_color: string;
@@ -605,6 +609,8 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			s3PublicBaseUrl: settings?.media_s3_public_base_url ?? "",
 			s3AccessKeyId: settings?.media_s3_access_key_id ?? "",
 			s3SecretAccessKey: settings?.media_s3_secret_access_key ?? "",
+			s3Region: settings?.media_s3_region ?? "auto",
+			s3ForcePathStyle: parseBooleanSetting(settings?.media_s3_force_path_style, true),
 		},
 		headerBackground: settings?.header_background ?? "#ffffff",
 		headerTextColor: settings?.header_text_color ?? "#0f1219",
@@ -730,8 +736,8 @@ export async function getMediaStorageSettings(db: D1Database): Promise<MediaStor
 	await ensureSiteTables(db);
 	const settings = await db
 		.prepare(
-			`SELECT media_s3_endpoint, media_s3_bucket, media_s3_public_base_url
-			, media_s3_access_key_id, media_s3_secret_access_key
+			`SELECT media_s3_endpoint, media_s3_bucket, media_s3_public_base_url,
+				media_s3_access_key_id, media_s3_secret_access_key, media_s3_region, media_s3_force_path_style
 			FROM site_settings
 			WHERE id = 1`,
 		)
@@ -741,6 +747,8 @@ export async function getMediaStorageSettings(db: D1Database): Promise<MediaStor
 			media_s3_public_base_url: string;
 			media_s3_access_key_id: string;
 			media_s3_secret_access_key: string;
+			media_s3_region: string;
+			media_s3_force_path_style: string;
 		}>();
 
 	return {
@@ -749,6 +757,8 @@ export async function getMediaStorageSettings(db: D1Database): Promise<MediaStor
 		s3PublicBaseUrl: normalizeStorageUrl(settings?.media_s3_public_base_url ?? ""),
 		s3AccessKeyId: settings?.media_s3_access_key_id?.trim() ?? "",
 		s3SecretAccessKey: settings?.media_s3_secret_access_key?.trim() ?? "",
+		s3Region: settings?.media_s3_region?.trim() || "auto",
+		s3ForcePathStyle: parseBooleanSetting(settings?.media_s3_force_path_style, true),
 	};
 }
 
@@ -760,14 +770,16 @@ export async function saveMediaStorageSettings(
 
 	await db
 		.prepare(
-			`INSERT INTO site_settings (id, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, media_s3_access_key_id, media_s3_secret_access_key, updated_at)
-			VALUES (1, ?1, ?2, ?3, ?4, ?5, CURRENT_TIMESTAMP)
+			`INSERT INTO site_settings (id, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, media_s3_access_key_id, media_s3_secret_access_key, media_s3_region, media_s3_force_path_style, updated_at)
+			VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)
 			ON CONFLICT(id) DO UPDATE SET
 				media_s3_endpoint = excluded.media_s3_endpoint,
 				media_s3_bucket = excluded.media_s3_bucket,
 				media_s3_public_base_url = excluded.media_s3_public_base_url,
 				media_s3_access_key_id = excluded.media_s3_access_key_id,
 				media_s3_secret_access_key = excluded.media_s3_secret_access_key,
+				media_s3_region = excluded.media_s3_region,
+				media_s3_force_path_style = excluded.media_s3_force_path_style,
 				updated_at = CURRENT_TIMESTAMP`,
 		)
 		.bind(
@@ -776,6 +788,8 @@ export async function saveMediaStorageSettings(
 			normalizeStorageUrl(input.s3PublicBaseUrl),
 			input.s3AccessKeyId.trim(),
 			input.s3SecretAccessKey.trim(),
+			input.s3Region.trim() || "auto",
+			input.s3ForcePathStyle ? "1" : "0",
 		)
 		.run();
 }
@@ -1152,6 +1166,8 @@ export function parseMediaStorageSettingsForm(formData: FormData): MediaStorageS
 		s3PublicBaseUrl: optionalString(formData, "s3PublicBaseUrl"),
 		s3AccessKeyId: optionalString(formData, "s3AccessKeyId"),
 		s3SecretAccessKey: optionalString(formData, "s3SecretAccessKey"),
+		s3Region: optionalString(formData, "s3Region") || "auto",
+		s3ForcePathStyle: isTruthyFormValue(formData.get("s3ForcePathStyle")),
 	};
 }
 
@@ -1431,6 +1447,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				media_s3_public_base_url TEXT NOT NULL DEFAULT '',
 				media_s3_access_key_id TEXT NOT NULL DEFAULT '',
 				media_s3_secret_access_key TEXT NOT NULL DEFAULT '',
+				media_s3_region TEXT NOT NULL DEFAULT 'auto',
+				media_s3_force_path_style TEXT NOT NULL DEFAULT '1',
 				header_background TEXT NOT NULL DEFAULT '#ffffff',
 				header_text_color TEXT NOT NULL DEFAULT '#0f1219',
 				header_accent_color TEXT NOT NULL DEFAULT '#2337ff',
@@ -1513,6 +1531,14 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	if (!settingsColumnNames.has("media_s3_secret_access_key")) {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN media_s3_secret_access_key TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("media_s3_region")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN media_s3_region TEXT NOT NULL DEFAULT 'auto'`).run();
+	}
+
+	if (!settingsColumnNames.has("media_s3_force_path_style")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN media_s3_force_path_style TEXT NOT NULL DEFAULT '1'`).run();
 	}
 
 	if (!settingsColumnNames.has("header_template_html")) {
@@ -1903,4 +1929,24 @@ function normalizeLogoUrl(value: string): string {
 
 function normalizeStorageUrl(value: string): string {
 	return value.trim().replace(/\/+$/g, "");
+}
+
+function isTruthyFormValue(value: FormDataEntryValue | null): boolean {
+	return typeof value === "string" && ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
+function parseBooleanSetting(value: string | undefined, fallback: boolean): boolean {
+	if (typeof value !== "string") {
+		return fallback;
+	}
+
+	const normalized = value.trim().toLowerCase();
+	if (["1", "true", "yes", "on"].includes(normalized)) {
+		return true;
+	}
+	if (["0", "false", "no", "off"].includes(normalized)) {
+		return false;
+	}
+
+	return fallback;
 }

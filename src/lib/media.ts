@@ -80,7 +80,7 @@ export interface MediaStorageStatus {
 	label: string;
 	details: string;
 	publicBaseUrl: string;
-	source: "settings" | "environment" | "binding" | "none";
+	source: "settings" | "binding" | "none";
 }
 
 const DEFAULT_MEDIA_PREFIX = "media";
@@ -413,7 +413,6 @@ function toMediaAsset(row: MediaAssetRow): MediaAsset {
 }
 
 async function resolveStorageBackend(locals: App.Locals): Promise<StorageBackend> {
-	const env = locals.runtime.env as Record<string, unknown>;
 	const db = getDb(locals);
 	const storedSettings = await getMediaStorageSettings(db);
 	const endpoint = storedSettings.s3Endpoint;
@@ -430,16 +429,14 @@ async function resolveStorageBackend(locals: App.Locals): Promise<StorageBackend
 				bucket,
 				accessKeyId,
 				secretAccessKey,
-				region: typeof env.S3_REGION === "string" && env.S3_REGION.trim() ? env.S3_REGION.trim() : "auto",
-				forcePathStyle:
-					typeof env.S3_FORCE_PATH_STYLE === "string"
-						? ["1", "true", "yes"].includes(env.S3_FORCE_PATH_STYLE.trim().toLowerCase())
-						: true,
+				region: storedSettings.s3Region || "auto",
+				forcePathStyle: storedSettings.s3ForcePathStyle,
 				publicBaseUrl,
 			},
 		};
 	}
 
+	const env = locals.runtime.env as Record<string, unknown>;
 	const r2Bucket = env.R2_BUCKET as R2StorageBinding | undefined;
 	if (r2Bucket && !endpoint && !bucket && !accessKeyId && !secretAccessKey) {
 		return {
