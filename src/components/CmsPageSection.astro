@@ -56,11 +56,20 @@ const resolvedContactForm = resolveContactForm(section, contactForms);
 const resolvedContactFields = resolvedContactForm?.fields ?? legacyContactFields;
 const resolvedContactFormTitle = resolvedContactForm?.title ?? "";
 const resolvedContactFormDescription = resolvedContactForm?.description ?? "";
+const resolvedContactFormShowTitle = resolvedContactForm?.showTitle ?? true;
+const resolvedContactFormShowDescription = resolvedContactForm?.showDescription ?? true;
+const resolvedContactFormFormTitle = resolvedContactForm?.formTitle ?? resolvedContactFormTitle;
+const resolvedContactFormFormDescription = resolvedContactForm?.formDescription ?? resolvedContactFormDescription;
+const resolvedContactFormShowFormTitle = resolvedContactForm?.showFormTitle ?? true;
+const resolvedContactFormShowFormDescription = resolvedContactForm?.showFormDescription ?? true;
 const resolvedContactFormLayout = resolvedContactForm?.layout ?? "split";
 const resolvedContactFormBackgroundStyle = resolvedContactForm?.backgroundStyle ?? "solid";
 const resolvedContactFormBackgroundColor = resolvedContactForm?.backgroundColor ?? "#f8fbff";
 const resolvedContactFormButtonColor = resolvedContactForm?.buttonColor ?? "#4f80ff";
 const resolvedContactFormId = resolvedContactForm?.id ?? 0;
+const hasContactFormSectionCopy =
+	(resolvedContactFormShowTitle && resolvedContactFormTitle.trim()) ||
+	(resolvedContactFormShowDescription && resolvedContactFormDescription.trim());
 
 function resolveBannerSlides(section: PageSectionConfig, banners: BannerRecord[]): BannerSlide[] {
 	if (Array.isArray(section.bannerIds) && section.bannerIds.length > 0) {
@@ -151,18 +160,22 @@ function renderBlogFeedSection(): string {
 			{
 				resolvedContactFormLayout === "stacked" ? (
 					<div class="mx-auto" style="max-width: 860px;">
-						<div class="text-center mb-4">
-							<p class="text-uppercase text-muted small mb-2">{t("nav.contactForm")}</p>
-							{resolvedContactFormTitle && <h2 class="display-6 fw-semibold mb-3">{resolvedContactFormTitle}</h2>}
-							{resolvedContactFormDescription && <p class="lead text-muted mb-0">{resolvedContactFormDescription}</p>}
-						</div>
+						{hasContactFormSectionCopy && (
+							<div class="text-center mb-4">
+								<p class="text-uppercase text-muted small mb-2">{t("nav.contactForm")}</p>
+								{resolvedContactFormShowTitle && resolvedContactFormTitle && <h2 class="display-6 fw-semibold mb-3">{resolvedContactFormTitle}</h2>}
+								{resolvedContactFormShowDescription && resolvedContactFormDescription && <p class="lead text-muted mb-0">{resolvedContactFormDescription}</p>}
+							</div>
+						)}
 						<DynamicForm
 							fields={resolvedContactFields}
 							currentLanguage={currentLanguage}
 							sourcePath={currentPath}
 							contactFormId={resolvedContactFormId}
-							title={resolvedContactFormTitle}
-							description={resolvedContactFormDescription}
+							title={resolvedContactFormFormTitle}
+							showTitle={resolvedContactFormShowFormTitle}
+							description={resolvedContactFormFormDescription}
+							showDescription={resolvedContactFormShowFormDescription}
 							backgroundStyle={resolvedContactFormBackgroundStyle}
 							backgroundColor={resolvedContactFormBackgroundColor}
 							buttonColor={resolvedContactFormButtonColor}
@@ -172,18 +185,22 @@ function renderBlogFeedSection(): string {
 					<div class="contact-form-compact card border-0 shadow-sm">
 						<div class="card-body p-4 p-lg-5">
 							<div class="row g-4 align-items-start">
-								<div class="col-lg-4">
-									{resolvedContactFormTitle && <h2 class="h3 mb-3">{resolvedContactFormTitle}</h2>}
-									{resolvedContactFormDescription && <p class="text-muted mb-0">{resolvedContactFormDescription}</p>}
-								</div>
-								<div class="col-lg-8">
+								{hasContactFormSectionCopy && (
+									<div class="col-lg-4">
+										{resolvedContactFormShowTitle && resolvedContactFormTitle && <h2 class="h3 mb-3">{resolvedContactFormTitle}</h2>}
+										{resolvedContactFormShowDescription && resolvedContactFormDescription && <p class="text-muted mb-0">{resolvedContactFormDescription}</p>}
+									</div>
+								)}
+								<div class={hasContactFormSectionCopy ? "col-lg-8" : "col-12"}>
 									<DynamicForm
 										fields={resolvedContactFields}
 										currentLanguage={currentLanguage}
 										sourcePath={currentPath}
 										contactFormId={resolvedContactFormId}
-										title={resolvedContactFormTitle}
-										description={resolvedContactFormDescription}
+										title={resolvedContactFormFormTitle}
+										showTitle={resolvedContactFormShowFormTitle}
+										description={resolvedContactFormFormDescription}
+										showDescription={resolvedContactFormShowFormDescription}
 										backgroundStyle={resolvedContactFormBackgroundStyle}
 										backgroundColor={resolvedContactFormBackgroundColor}
 										buttonColor={resolvedContactFormButtonColor}
@@ -194,18 +211,22 @@ function renderBlogFeedSection(): string {
 					</div>
 				) : (
 					<div class="row align-items-start g-4">
-						<div class="col-lg-5">
-							{resolvedContactFormTitle && <h2 class="h3">{resolvedContactFormTitle}</h2>}
-							{resolvedContactFormDescription && <p class="text-muted mb-0">{resolvedContactFormDescription}</p>}
-						</div>
-						<div class="col-lg-7">
+						{hasContactFormSectionCopy && (
+							<div class="col-lg-5">
+								{resolvedContactFormShowTitle && resolvedContactFormTitle && <h2 class="h3">{resolvedContactFormTitle}</h2>}
+								{resolvedContactFormShowDescription && resolvedContactFormDescription && <p class="text-muted mb-0">{resolvedContactFormDescription}</p>}
+							</div>
+						)}
+						<div class={hasContactFormSectionCopy ? "col-lg-7" : "col-12"}>
 							<DynamicForm
 								fields={resolvedContactFields}
 								currentLanguage={currentLanguage}
 								sourcePath={currentPath}
 								contactFormId={resolvedContactFormId}
-								title={resolvedContactFormTitle}
-								description={resolvedContactFormDescription}
+								title={resolvedContactFormFormTitle}
+								showTitle={resolvedContactFormShowFormTitle}
+								description={resolvedContactFormFormDescription}
+								showDescription={resolvedContactFormShowFormDescription}
 								backgroundStyle={resolvedContactFormBackgroundStyle}
 								backgroundColor={resolvedContactFormBackgroundColor}
 								buttonColor={resolvedContactFormButtonColor}

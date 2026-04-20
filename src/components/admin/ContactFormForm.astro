@@ -33,6 +33,12 @@ const displayFields =
 			: [];
 const initialTitle = form?.title ?? "";
 const initialDescription = form?.description ?? "";
+const initialShowTitle = form?.showTitle ?? true;
+const initialShowDescription = form?.showDescription ?? true;
+const initialFormTitle = form?.formTitle ?? initialTitle;
+const initialFormDescription = form?.formDescription ?? initialDescription;
+const initialShowFormTitle = form?.showFormTitle ?? true;
+const initialShowFormDescription = form?.showFormDescription ?? true;
 const initialLayout = form?.layout ?? "split";
 const initialBackgroundStyle = form?.backgroundStyle ?? "solid";
 const initialBackgroundColor = form?.backgroundColor ?? "#f8fbff";
@@ -62,29 +68,77 @@ const backIcon = `
 	{mode === "edit" && form && <input type="hidden" name="id" value={form.id} />}
 	<div class="admin-form-surface">
 		<div class="admin-form-grid">
-			<label>
-				<span>{t("labels.title")}</span>
-				<input
-					class="form-control"
-					name="title"
-					required
-					value={initialTitle}
-					placeholder={t("messages.contactFormTitlePlaceholder", "Main contact form") ?? "Main contact form"}
-					disabled={isDisabled}
-				/>
-				<p class="admin-inline-muted mb-0">{t("messages.contactFormTitleHelp", "Shown as the public heading of this form.")}</p>
-			</label>
-			<label>
-				<span>{t("labels.description")}</span>
-				<textarea
-					class="form-control"
-					name="description"
-					rows="4"
-					placeholder={t("messages.contactFormDescriptionPlaceholder", "Add a short description to support the heading.") ?? "Add a short description to support the heading."}
-					disabled={isDisabled}
-				>{initialDescription}</textarea>
-				<p class="admin-inline-muted mb-0">{t("messages.contactFormDescriptionHelp", "Optional supporting text shown above or beside the form.")}</p>
-			</label>
+			<div class="contact-copy-grid">
+				<section class="contact-copy-card">
+					<div class="contact-copy-card-header">
+						<h2 class="h6 mb-0">{t("messages.contactFormOutsideFormTitle", "Outside the form")}</h2>
+						<p class="admin-inline-muted mb-0">{t("messages.contactFormOutsideFormHelp", "Controls the section copy shown around the form.")}</p>
+					</div>
+					<label>
+						<span>{t("messages.contactFormOutsideTitleLabel", "Section title")}</span>
+						<input
+							class="form-control"
+							name="title"
+							required
+							value={initialTitle}
+							placeholder={t("messages.contactFormTitlePlaceholder", "Main contact form") ?? "Main contact form"}
+							disabled={isDisabled}
+						/>
+					</label>
+					<label class="admin-check-row contact-copy-switch">
+						<input class="form-check-input" type="checkbox" name="showTitle" checked={initialShowTitle} disabled={isDisabled} />
+						<span>{t("messages.contactFormShowSectionTitle", "Show section title")}</span>
+					</label>
+					<label>
+						<span>{t("messages.contactFormOutsideDescriptionLabel", "Section short description")}</span>
+						<textarea
+							class="form-control"
+							name="description"
+							rows="4"
+							placeholder={t("messages.contactFormDescriptionPlaceholder", "Add a short description to support the heading.") ?? "Add a short description to support the heading."}
+							disabled={isDisabled}
+						>{initialDescription}</textarea>
+					</label>
+					<label class="admin-check-row contact-copy-switch">
+						<input class="form-check-input" type="checkbox" name="showDescription" checked={initialShowDescription} disabled={isDisabled} />
+						<span>{t("messages.contactFormShowSectionDescription", "Show section short description")}</span>
+					</label>
+				</section>
+				<section class="contact-copy-card">
+					<div class="contact-copy-card-header">
+						<h2 class="h6 mb-0">{t("messages.contactFormInsideFormTitle", "Inside the form")}</h2>
+						<p class="admin-inline-muted mb-0">{t("messages.contactFormInsideFormHelp", "Controls the heading shown inside the form card.")}</p>
+					</div>
+					<label>
+						<span>{t("messages.contactFormInsideTitleLabel", "Form title")}</span>
+						<input
+							class="form-control"
+							name="formTitle"
+							value={initialFormTitle}
+							placeholder={t("messages.contactFormFormTitlePlaceholder", "Contact us today") ?? "Contact us today"}
+							disabled={isDisabled}
+						/>
+					</label>
+					<label class="admin-check-row contact-copy-switch">
+						<input class="form-check-input" type="checkbox" name="showFormTitle" checked={initialShowFormTitle} disabled={isDisabled} />
+						<span>{t("messages.contactFormShowFormTitle", "Show form title")}</span>
+					</label>
+					<label>
+						<span>{t("messages.contactFormInsideDescriptionLabel", "Form short description")}</span>
+						<textarea
+							class="form-control"
+							name="formDescription"
+							rows="4"
+							placeholder={t("messages.contactFormFormDescriptionPlaceholder", "Help visitors know what to expect.") ?? "Help visitors know what to expect."}
+							disabled={isDisabled}
+						>{initialFormDescription}</textarea>
+					</label>
+					<label class="admin-check-row contact-copy-switch">
+						<input class="form-check-input" type="checkbox" name="showFormDescription" checked={initialShowFormDescription} disabled={isDisabled} />
+						<span>{t("messages.contactFormShowFormDescription", "Show form short description")}</span>
+					</label>
+				</section>
+			</div>
 			<label>
 				<span>{t("labels.template")}</span>
 				<select class="form-select" name="layout" disabled={isDisabled}>
@@ -247,6 +301,36 @@ const backIcon = `
 		gap: 1rem;
 	}
 
+	.contact-copy-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1rem;
+	}
+
+	.contact-copy-card {
+		display: grid;
+		gap: 0.85rem;
+		padding: 1rem;
+		border: 1px solid rgba(var(--gray), 0.12);
+		border-radius: 1rem;
+		background: rgba(var(--gray-light), 0.24);
+	}
+
+	.contact-copy-card-header {
+		display: grid;
+		gap: 0.2rem;
+	}
+
+	.contact-copy-card label {
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.contact-copy-switch {
+		grid-template-columns: auto 1fr;
+		align-items: center;
+	}
+
 	.contact-fields-toolbar {
 		display: flex;
 		align-items: flex-end;
@@ -323,6 +407,10 @@ const backIcon = `
 	}
 
 	@media (max-width: 720px) {
+		.contact-copy-grid {
+			grid-template-columns: 1fr;
+		}
+
 		.contact-fields-toolbar {
 			flex-direction: column;
 			align-items: stretch;

@@ -6,6 +6,7 @@ import {
 	parseFormFieldsPayload,
 	validateContactFormSubmission,
 } from "../../src/lib/forms";
+import { parseContactFormForm, parseContactFormPayload } from "../../src/lib/contact-forms";
 import { getLanguageSwitchOptions } from "../../src/lib/i18n";
 
 describe("dynamic form UI contract helpers", () => {
@@ -88,5 +89,69 @@ describe("dynamic form UI contract helpers", () => {
 				parseContactFormSubmissionPayload({ language: "en", values: { "2": "not-an-email" } }),
 			),
 		).toThrow("Invalid email field: 2");
+	});
+
+	it("parses contact form section and inside-form copy visibility independently", () => {
+		const formData = new FormData();
+		formData.set("title", "Contact us");
+		formData.set("description", "Reach out to our team.");
+		formData.set("showTitle", "on");
+		formData.set("showDescription", "on");
+		formData.set("formTitle", "Let's talk");
+		formData.set("formDescription", "Send us a note and we will reply soon.");
+		formData.set("showFormTitle", "true");
+		formData.set("showFormDescription", "false");
+		formData.set("layout", "compact");
+		formData.set("backgroundStyle", "gradient");
+		formData.set("backgroundColor", "#abcdef");
+		formData.set("buttonColor", "#123456");
+		formData.set("isActive", "true");
+		formData.set("sortOrder", "5");
+
+		expect(parseContactFormForm(formData)).toMatchObject({
+			title: "Contact us",
+			description: "Reach out to our team.",
+			showTitle: true,
+			showDescription: true,
+			formTitle: "Let's talk",
+			formDescription: "Send us a note and we will reply soon.",
+			showFormTitle: true,
+			showFormDescription: false,
+			layout: "compact",
+			backgroundStyle: "gradient",
+			backgroundColor: "#abcdef",
+			buttonColor: "#123456",
+			isActive: true,
+			sortOrder: 5,
+		});
+
+		expect(
+			parseContactFormPayload({
+				title: "Contact us",
+				description: "Reach out to our team.",
+				showTitle: false,
+				showDescription: true,
+				formTitle: "Let's talk",
+				formDescription: "Send us a note and we will reply soon.",
+				showFormTitle: true,
+				showFormDescription: false,
+				layout: "split",
+				backgroundStyle: "solid",
+				backgroundColor: "#abcdef",
+				buttonColor: "#123456",
+				fields: [],
+				isActive: true,
+				sortOrder: 5,
+			}),
+		).toMatchObject({
+			title: "Contact us",
+			description: "Reach out to our team.",
+			showTitle: false,
+			showDescription: true,
+			formTitle: "Let's talk",
+			formDescription: "Send us a note and we will reply soon.",
+			showFormTitle: true,
+			showFormDescription: false,
+		});
 	});
 });

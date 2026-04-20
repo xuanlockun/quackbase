@@ -14,6 +14,12 @@ export interface ContactFormRecord {
 	id: number;
 	title: string;
 	description: string;
+	showTitle: boolean;
+	showDescription: boolean;
+	formTitle: string;
+	formDescription: string;
+	showFormTitle: boolean;
+	showFormDescription: boolean;
 	layout: ContactFormLayout;
 	backgroundStyle: ContactFormBackgroundStyle;
 	backgroundColor: string;
@@ -27,6 +33,12 @@ export interface ContactFormRecord {
 export interface ContactFormInput {
 	title: string;
 	description: string;
+	showTitle: boolean;
+	showDescription: boolean;
+	formTitle: string;
+	formDescription: string;
+	showFormTitle: boolean;
+	showFormDescription: boolean;
 	layout: ContactFormLayout;
 	backgroundStyle: ContactFormBackgroundStyle;
 	backgroundColor: string;
@@ -40,6 +52,12 @@ interface ContactFormRow {
 	id: number;
 	title: string;
 	description: string;
+	show_title: number;
+	show_description: number;
+	form_title: string;
+	form_description: string;
+	show_form_title: number;
+	show_form_description: number;
 	layout: string;
 	background_style: string;
 	background_color: string;
@@ -57,6 +75,12 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT NOT NULL,
 				description TEXT NOT NULL DEFAULT '',
+				show_title INTEGER NOT NULL DEFAULT 1 CHECK (show_title IN (0, 1)),
+				show_description INTEGER NOT NULL DEFAULT 1 CHECK (show_description IN (0, 1)),
+				form_title TEXT NOT NULL DEFAULT '',
+				form_description TEXT NOT NULL DEFAULT '',
+				show_form_title INTEGER NOT NULL DEFAULT 1 CHECK (show_form_title IN (0, 1)),
+				show_form_description INTEGER NOT NULL DEFAULT 1 CHECK (show_form_description IN (0, 1)),
 				layout TEXT NOT NULL DEFAULT 'split',
 				background_style TEXT NOT NULL DEFAULT 'solid',
 				background_color TEXT NOT NULL DEFAULT '#f8fbff',
@@ -78,6 +102,24 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 	if (!columnNames.has("description")) {
 		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN description TEXT NOT NULL DEFAULT ''`).run();
 	}
+	if (!columnNames.has("show_title")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN show_title INTEGER NOT NULL DEFAULT 1 CHECK (show_title IN (0, 1))`).run();
+	}
+	if (!columnNames.has("show_description")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN show_description INTEGER NOT NULL DEFAULT 1 CHECK (show_description IN (0, 1))`).run();
+	}
+	if (!columnNames.has("form_title")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN form_title TEXT NOT NULL DEFAULT ''`).run();
+	}
+	if (!columnNames.has("form_description")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN form_description TEXT NOT NULL DEFAULT ''`).run();
+	}
+	if (!columnNames.has("show_form_title")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN show_form_title INTEGER NOT NULL DEFAULT 1 CHECK (show_form_title IN (0, 1))`).run();
+	}
+	if (!columnNames.has("show_form_description")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN show_form_description INTEGER NOT NULL DEFAULT 1 CHECK (show_form_description IN (0, 1))`).run();
+	}
 	if (!columnNames.has("layout")) {
 		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN layout TEXT NOT NULL DEFAULT 'split'`).run();
 	}
@@ -95,11 +137,11 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 export async function listContactForms(db: D1Database, activeOnly = false): Promise<ContactFormRecord[]> {
 	await ensureContactFormTables(db);
 	const query = activeOnly
-		? `SELECT id, title, description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
+		? `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			WHERE is_active = 1
 			ORDER BY sort_order ASC, id ASC`
-		: `SELECT id, title, description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
+		: `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			ORDER BY sort_order ASC, id ASC`;
 	const result = await db.prepare(query).all<ContactFormRow>();
@@ -110,7 +152,7 @@ export async function getContactFormById(db: D1Database, id: number): Promise<Co
 	await ensureContactFormTables(db);
 	const row = await db
 		.prepare(
-			`SELECT id, title, description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
+			`SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			WHERE id = ?1`,
 		)
@@ -125,12 +167,18 @@ export async function createContactForm(db: D1Database, input: ContactFormInput)
 	const normalizedFields = normalizeFormFields(input.fields, catalog.defaultLanguageCode);
 	const result = await db
 		.prepare(
-			`INSERT INTO contact_forms (title, description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at)
-			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, CURRENT_TIMESTAMP)`,
+			`INSERT INTO contact_forms (title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at)
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
 			input.title.trim(),
 			input.description.trim(),
+			input.showTitle ? 1 : 0,
+			input.showDescription ? 1 : 0,
+			input.formTitle.trim(),
+			input.formDescription.trim(),
+			input.showFormTitle ? 1 : 0,
+			input.showFormDescription ? 1 : 0,
 			normalizeContactFormLayout(input.layout),
 			normalizeContactFormBackgroundStyle(input.backgroundStyle),
 			normalizeContactFormColor(input.backgroundColor, "#f8fbff"),
@@ -152,19 +200,31 @@ export async function updateContactForm(db: D1Database, id: number, input: Conta
 			`UPDATE contact_forms
 			SET title = ?1,
 				description = ?2,
-				layout = ?3,
-				background_style = ?4,
-				background_color = ?5,
-				button_color = ?6,
-				fields_json = ?7,
-				is_active = ?8,
-				sort_order = ?9,
+				show_title = ?3,
+				show_description = ?4,
+				form_title = ?5,
+				form_description = ?6,
+				show_form_title = ?7,
+				show_form_description = ?8,
+				layout = ?9,
+				background_style = ?10,
+				background_color = ?11,
+				button_color = ?12,
+				fields_json = ?13,
+				is_active = ?14,
+				sort_order = ?15,
 				updated_at = CURRENT_TIMESTAMP
-			WHERE id = ?10`,
+			WHERE id = ?16`,
 		)
 		.bind(
 			input.title.trim(),
 			input.description.trim(),
+			input.showTitle ? 1 : 0,
+			input.showDescription ? 1 : 0,
+			input.formTitle.trim(),
+			input.formDescription.trim(),
+			input.showFormTitle ? 1 : 0,
+			input.showFormDescription ? 1 : 0,
 			normalizeContactFormLayout(input.layout),
 			normalizeContactFormBackgroundStyle(input.backgroundStyle),
 			normalizeContactFormColor(input.backgroundColor, "#f8fbff"),
@@ -186,12 +246,18 @@ export function parseContactFormForm(formData: FormData): ContactFormInput {
 	return {
 		title: requiredString(formData, "title"),
 		description: optionalString(formData, "description"),
+		showTitle: optionalBoolean(formData, "showTitle"),
+		showDescription: optionalBoolean(formData, "showDescription"),
+		formTitle: optionalString(formData, "formTitle"),
+		formDescription: optionalString(formData, "formDescription"),
+		showFormTitle: optionalBoolean(formData, "showFormTitle"),
+		showFormDescription: optionalBoolean(formData, "showFormDescription"),
 		layout: normalizeContactFormLayout(optionalString(formData, "layout")),
 		backgroundStyle: normalizeContactFormBackgroundStyle(optionalString(formData, "backgroundStyle")),
 		backgroundColor: normalizeContactFormColor(optionalString(formData, "backgroundColor"), "#f8fbff"),
 		buttonColor: normalizeContactFormColor(optionalString(formData, "buttonColor"), "#4f80ff"),
 		fields: parseFormFieldsForm(formData),
-		isActive: formData.get("isActive") === "on" || formData.get("isActive") === "true",
+		isActive: optionalBoolean(formData, "isActive"),
 		sortOrder: Number.parseInt(optionalString(formData, "sortOrder") || "0", 10) || 0,
 	};
 }
@@ -206,6 +272,12 @@ export function parseContactFormPayload(payload: unknown): ContactFormInput {
 	return {
 		title: typeof record.title === "string" ? record.title.trim() : "",
 		description: typeof record.description === "string" ? record.description.trim() : "",
+		showTitle: parseBoolean(record.showTitle),
+		showDescription: parseBoolean(record.showDescription),
+		formTitle: typeof record.formTitle === "string" ? record.formTitle.trim() : "",
+		formDescription: typeof record.formDescription === "string" ? record.formDescription.trim() : "",
+		showFormTitle: parseBoolean(record.showFormTitle),
+		showFormDescription: parseBoolean(record.showFormDescription),
 		layout: normalizeContactFormLayout(typeof record.layout === "string" ? record.layout : ""),
 		backgroundStyle: normalizeContactFormBackgroundStyle(
 			typeof record.backgroundStyle === "string" ? record.backgroundStyle : "",
@@ -219,7 +291,7 @@ export function parseContactFormPayload(payload: unknown): ContactFormInput {
 			"#4f80ff",
 		),
 		fields,
-		isActive: Boolean(record.isActive),
+		isActive: parseBoolean(record.isActive),
 		sortOrder: normalizeSortOrder(
 			typeof record.sortOrder === "number" ? record.sortOrder : Number.parseInt(String(record.sortOrder ?? "0"), 10),
 		),
@@ -231,10 +303,20 @@ export function getContactFormFields(record: ContactFormRecord | null | undefine
 }
 
 function toContactFormRecord(row: ContactFormRow): ContactFormRecord {
+	const title = row.title.trim();
+	const description = row.description.trim();
+	const formTitle = row.form_title.trim() || title;
+	const formDescription = row.form_description.trim() || description;
 	return {
 		id: row.id,
-		title: row.title,
-		description: row.description,
+		title,
+		description,
+		showTitle: row.show_title === 1,
+		showDescription: row.show_description === 1,
+		formTitle,
+		formDescription,
+		showFormTitle: row.show_form_title === 1,
+		showFormDescription: row.show_form_description === 1,
 		layout: normalizeContactFormLayout(row.layout),
 		backgroundStyle: normalizeContactFormBackgroundStyle(row.background_style),
 		backgroundColor: normalizeContactFormColor(row.background_color, "#f8fbff"),
@@ -270,6 +352,24 @@ function optionalString(formData: FormData, key: string): string {
 
 function normalizeSortOrder(value: number): number {
 	return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+}
+
+function parseBoolean(value: unknown): boolean {
+	if (typeof value === "boolean") {
+		return value;
+	}
+	if (typeof value === "number") {
+		return value === 1;
+	}
+	if (typeof value === "string") {
+		const normalized = value.trim().toLowerCase();
+		return normalized === "1" || normalized === "true" || normalized === "on" || normalized === "yes";
+	}
+	return false;
+}
+
+function optionalBoolean(formData: FormData, key: string): boolean {
+	return parseBoolean(formData.get(key));
 }
 
 function normalizeContactFormLayout(value: string): ContactFormLayout {

@@ -169,6 +169,12 @@ CREATE TABLE IF NOT EXISTS contact_forms (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	title TEXT NOT NULL,
 	description TEXT NOT NULL DEFAULT '',
+	show_title INTEGER NOT NULL DEFAULT 1 CHECK (show_title IN (0, 1)),
+	show_description INTEGER NOT NULL DEFAULT 1 CHECK (show_description IN (0, 1)),
+	form_title TEXT NOT NULL DEFAULT '',
+	form_description TEXT NOT NULL DEFAULT '',
+	show_form_title INTEGER NOT NULL DEFAULT 1 CHECK (show_form_title IN (0, 1)),
+	show_form_description INTEGER NOT NULL DEFAULT 1 CHECK (show_form_description IN (0, 1)),
 	layout TEXT NOT NULL DEFAULT 'split',
 	background_style TEXT NOT NULL DEFAULT 'solid',
 	background_color TEXT NOT NULL DEFAULT '#f8fbff',
@@ -404,4 +410,3 @@ VALUES (
 	CURRENT_TIMESTAMP,
 	CURRENT_TIMESTAMP
 );
-
