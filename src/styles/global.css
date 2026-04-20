@@ -475,6 +475,18 @@ img {
 	width: 100%;
 }
 
+body.admin-app input[type="hidden"],
+body.admin-app .admin-form-grid input[type="hidden"],
+body.admin-app .admin-form-section input[type="hidden"],
+body.admin-app .localized-editor-panel input[type="hidden"] {
+	display: none !important;
+	width: 0 !important;
+	height: 0 !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	border: 0 !important;
+}
+
 .admin-form-grid .form-control,
 .admin-form-grid .form-select,
 .admin-form-section .form-control,
