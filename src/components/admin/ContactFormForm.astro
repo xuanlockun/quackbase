@@ -337,197 +337,96 @@ function normalizeContactCopyValue(value: unknown): string {
 			data-text-option={t("labels.textField")}
 			data-email-option={t("labels.emailField")}
 			data-textarea-option={t("labels.textareaField")}
-			data-preview-tab-label={t("messages.contactFormPreviewTab", "Preview")}
-			data-builder-tab-label={t("messages.contactFormBuilderTab", "Builder")}
-			data-preview-only-label={t("messages.contactFormPreviewOnly", "Preview only")}
-			data-preview-status-label={t("messages.contactFormPreviewStatus", "Try the form here to check the field flow and spacing.")}
 		>
 			<div class="contact-fields-toolbar">
 				<div>
 					<strong>{t("headings.contactFormFields")}</strong>
 					<p class="admin-inline-muted mb-0">{t("messages.contactFormBuilderHelp")}</p>
 				</div>
-				<div class="d-flex flex-column align-items-start align-items-sm-end gap-2">
-					<div class="nav nav-pills contact-fields-tabs" role="tablist" aria-label={t("messages.contactFormBuilderTab", "Builder")}>
-						{contactFieldPanels.map((panel) => (
-							<button
-								type="button"
-								class:list={["nav-link contact-fields-tab", panel.key === "builder" && "active"]}
-								data-contact-fields-panel-tab={panel.key}
-								role="tab"
-								aria-selected={panel.key === "builder" ? "true" : "false"}
-								disabled={isDisabled}
-							>
-								{panel.label}
-							</button>
-						))}
+			</div>
+			<input type="hidden" name="contactFormFields" data-contact-fields-payload value={fieldsJson} />
+			<div class="contact-fields-config">
+				<div class="contact-fields-live-header">
+					<div>
+						<strong>{t("headings.contactFormFields")}</strong>
+						<p class="admin-inline-muted mb-0">{t("messages.contactFormBuilderHelp")}</p>
 					</div>
 					<button class="btn btn-outline-secondary btn-sm" type="button" data-contact-field-add data-readonly={String(isDisabled)} disabled={isDisabled}>
 						{t("actions.addField")}
 					</button>
 				</div>
-			</div>
-			<input type="hidden" name="contactFormFields" data-contact-fields-payload value={fieldsJson} />
-			<div class="contact-fields-panels">
-				<section class="contact-fields-panel is-active" data-contact-fields-panel="builder">
-					<div class="contact-fields-config">
-						<div class="contact-fields-table" role="table">
-							<div class="contact-fields-header" role="row" style={`grid-template-columns: ${labelGridColumns};`}>
-								<span></span>
-								<span>{t("labels.fieldType")}</span>
-								{labelLanguages.map((entry) => <span>{t("labels.label")} ({entry.code.toUpperCase()})</span>)}
-								<span>{t("labels.required")}</span>
-								<span>{t("labels.action")}</span>
-							</div>
-							<div class="contact-fields-rows" data-contact-fields-rows>
-								{
-									displayFields.map((field) => {
-										const type = field.type ?? "text";
-										const labelValues = labelLanguages.map((entry) => ({
-											code: entry.code,
-											value: field.label?.[entry.code] ?? "",
-										}));
-										return (
-											<div
-												class="contact-field-row"
-												draggable={!isDisabled}
-												data-contact-field
-												data-field-id={String(field.id ?? 1)}
-												style={`grid-template-columns: ${labelGridColumns};`}
-											>
-												<span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
-												<div class="contact-field-meta">
-													<label>
-														<span>{t("labels.fieldType")}</span>
-														<select data-contact-field-type disabled={isDisabled}>
-															<option value="text" selected={type === "text"}>
-																{t("labels.textField")}
-															</option>
-															<option value="email" selected={type === "email"}>
-																{t("labels.emailField")}
-															</option>
-															<option value="textarea" selected={type === "textarea"}>
-																{t("labels.textareaField")}
-															</option>
-														</select>
-													</label>
-													<label class="contact-field-required">
-														<span>{t("labels.required")}</span>
-														<input type="checkbox" data-contact-field-required checked={field.required} disabled={isDisabled} />
-													</label>
-													<button class="admin-ghost-button" type="button" data-contact-field-remove disabled={isDisabled}>
-														{t("actions.remove")}
-													</button>
-												</div>
-												{labelValues.map((entry, index) => (
-													<label>
-														<span>{t("labels.label")} ({entry.code.toUpperCase()})</span>
-														<input
-															type="text"
-															data-contact-field-label
-															data-language-code={entry.code}
-															value={entry.value}
-															disabled={isDisabled}
-															required={index === 0}
-														/>
-													</label>
-												))}
-											</div>
-										);
-									})
-								}
-							</div>
-						</div>
-						<p class="admin-inline-muted mb-0" data-contact-fields-empty hidden>
-							{t("messages.noContactFieldsConfigured")}
-						</p>
-					</div>
-				</section>
-				<section class="contact-fields-panel" data-contact-fields-panel="preview" hidden>
-					<div class="contact-form-preview-shell">
-						<div class="contact-form-preview-header">
-							<div>
-								<strong>{t("messages.contactFormPreviewTitle", "Live preview")}</strong>
-								<p class="admin-inline-muted mb-0">{t("messages.contactFormPreviewStatus", "Try the form here to check the field flow and spacing.")}</p>
-							</div>
-							<div class="nav nav-pills contact-preview-tabs" role="tablist" aria-label={t("labels.language")}>
-								{labelLanguages.map((entry) => (
-									<button
-										type="button"
-										class:list={["nav-link contact-preview-tab", entry.code === initialLanguage && "active"]}
-										data-contact-preview-language-tab={entry.code}
-										role="tab"
-										aria-selected={entry.code === initialLanguage ? "true" : "false"}
-										disabled={isDisabled}
-									>
-										{entry.code.toUpperCase()}
-									</button>
-								))}
-							</div>
-						</div>
-						<div
-							class="contact-form-preview"
-							data-contact-form-preview
-							data-default-language={defaultLanguageCode}
-							data-active-language={initialLanguage}
-							style={`--contact-form-bg: ${initialBackgroundColor}; --contact-submit-bg: ${initialButtonColor};`}
-						>
-							<div class="contact-form card border-0 shadow-sm overflow-hidden" data-contact-form-preview-form role="group" aria-label={t("messages.contactFormPreviewTitle", "Live preview")}>
-								<div class="card-body p-4 p-lg-5">
-									<h3 class="contact-form-title h4 mb-2" data-contact-form-preview-title>
-										{formTitleTranslations[initialLanguage]?.trim() || formTitleTranslations[defaultLanguageCode]?.trim() || t("messages.contactFormPreviewTitle", "Live preview")}
-									</h3>
-									<p class="contact-form-description text-muted mb-4" data-contact-form-preview-description>
-										{formDescriptionTranslations[initialLanguage]?.trim() || formDescriptionTranslations[defaultLanguageCode]?.trim() || ""}
-									</p>
-									<div class="row g-3" data-contact-form-preview-fields>
-										{
-											displayFields.length > 0 ? (
-											displayFields.map((field, index) => {
-													const labelText = field.label?.[initialLanguage]?.trim() || field.label?.[defaultLanguageCode]?.trim() || `Field ${index + 1}`;
-													return (
-														<div class={field.type === "textarea" ? "col-12" : "col-12 col-md-6"}>
-															<label class="form-label fw-medium">
-																{labelText}
-																{field.required && <span class="text-danger ms-1">*</span>}
-															</label>
-															{
-																field.type === "textarea" ? (
-																	<textarea class="form-control form-control-lg" rows="5" placeholder={labelText} />
-																) : (
-																	<input class="form-control form-control-lg" type={field.type} placeholder={labelText} />
-																)
-															}
-														</div>
-													);
-												})
-											) : (
-												<div class="col-12">
-													<div class="alert alert-secondary mb-0">
-														{t("messages.noContactFieldsConfigured")}
-													</div>
-												</div>
-											)
-										}
+				<div class="contact-fields-live-canvas" data-contact-fields-rows>
+					{
+						displayFields.map((field, index) => {
+							const type = field.type ?? "text";
+							const labelValues = labelLanguages.map((entry) => ({
+								code: entry.code,
+								value: field.label?.[entry.code] ?? "",
+							}));
+							const primaryLabel = labelValues[0]?.value?.trim() || `${t("labels.label")} ${index + 1}`;
+							return (
+								<section
+									class="contact-field-card"
+									draggable={!isDisabled}
+									data-contact-field
+									data-field-id={String(field.id ?? 1)}
+								>
+									<div class="contact-field-card-top">
+										<span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
+										<div class="contact-field-card-live">
+											<label class="form-label fw-medium">
+												{primaryLabel}
+												{field.required && <span class="text-danger ms-1">*</span>}
+											</label>
+											{
+												type === "textarea" ? (
+													<textarea class="form-control form-control-lg" rows="4" placeholder={primaryLabel}></textarea>
+												) : (
+													<input class="form-control form-control-lg" type={type} placeholder={primaryLabel} />
+												)
+											}
+										</div>
+										<div class="contact-field-card-meta">
+											<label>
+												<span>{t("labels.fieldType")}</span>
+												<select data-contact-field-type disabled={isDisabled}>
+													<option value="text" selected={type === "text"}>{t("labels.textField")}</option>
+													<option value="email" selected={type === "email"}>{t("labels.emailField")}</option>
+													<option value="textarea" selected={type === "textarea"}>{t("labels.textareaField")}</option>
+												</select>
+											</label>
+											<label class="contact-field-required">
+												<span>{t("labels.required")}</span>
+												<input type="checkbox" data-contact-field-required checked={field.required} disabled={isDisabled} />
+											</label>
+											<button class="admin-ghost-button" type="button" data-contact-field-remove disabled={isDisabled}>
+												{t("actions.remove")}
+											</button>
+										</div>
 									</div>
-									<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mt-4 gap-3">
-										<button class="btn btn-primary btn-lg px-4 contact-form-submit" type="button" data-contact-form-preview-submit>
-											{t("actions.sendMessage")}
-										</button>
-										<p
-											class="mb-0 text-muted small contact-form-preview-status"
-											data-contact-form-preview-status
-											data-preview-message={t("messages.contactFormPreviewOnly", "Preview only. This form does not submit data.")}
-											aria-live="polite"
-										>
-											{t("messages.contactFormPreviewOnly", "Preview only. This form does not submit data.")}
-										</p>
+									<div class="contact-field-card-labels">
+										{labelValues.map((entry, labelIndex) => (
+											<label>
+												<span>{t("labels.label")} ({entry.code.toUpperCase()})</span>
+												<input
+													type="text"
+													data-contact-field-label
+													data-language-code={entry.code}
+													value={entry.value}
+													disabled={isDisabled}
+													required={labelIndex === 0}
+												/>
+											</label>
+										))}
 									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</section>
+								</section>
+							);
+						})
+					}
+				</div>
+				<p class="admin-inline-muted mb-0" data-contact-fields-empty hidden>
+					{t("messages.noContactFieldsConfigured")}
+				</p>
 			</div>
 		</div>
 	</div>
@@ -547,14 +446,70 @@ function normalizeContactCopyValue(value: unknown): string {
 		gap: 1rem;
 	}
 
-	.contact-fields-panels {
+	.contact-fields-live-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.contact-fields-live-canvas {
 		display: grid;
 		gap: 1rem;
 	}
 
-	.contact-fields-panel {
+	.contact-field-card {
 		display: grid;
 		gap: 1rem;
+		padding: 1rem;
+		border: 1px solid rgba(var(--gray), 0.12);
+		background: rgba(var(--gray-light), 0.22);
+		border-radius: 1rem;
+	}
+
+	.contact-field-card-top {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) minmax(16rem, 22rem);
+		gap: 1rem;
+		align-items: start;
+	}
+
+	.contact-field-card-live {
+		display: grid;
+		gap: 0.45rem;
+	}
+
+	.contact-field-card-live .form-label {
+		margin-bottom: 0;
+	}
+
+	.contact-field-card-meta {
+		display: grid;
+		gap: 0.75rem;
+		padding: 0.85rem;
+		border: 1px solid rgba(var(--gray), 0.12);
+		border-radius: 0.85rem;
+		background: rgba(255, 255, 255, 0.62);
+	}
+
+	.contact-field-card-meta label,
+	.contact-field-card-labels label {
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.contact-field-card-labels {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
+	}
+
+	.contact-field-card-labels label span,
+	.contact-field-card-meta label span {
+		display: block;
+		font-size: 0.8rem;
+		font-weight: 600;
+		margin-bottom: 0.2rem;
 	}
 
 	.contact-copy-grid {
@@ -684,36 +639,6 @@ function normalizeContactCopyValue(value: unknown): string {
 		font-size: 0.78rem;
 	}
 
-	.contact-form-preview-shell {
-		display: grid;
-		gap: 0.85rem;
-	}
-
-	.contact-form-preview-header {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 1rem;
-	}
-
-	.contact-form-preview {
-		display: grid;
-		gap: 1rem;
-	}
-
-	.contact-form-preview .contact-form {
-		width: 100%;
-	}
-
-	.contact-form-preview .contact-form .form-control,
-	.contact-form-preview .contact-form .btn {
-		border-radius: 0;
-	}
-
-	.contact-form-preview-status {
-		min-height: 1.25rem;
-	}
-
 	.contact-form-colors {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -744,38 +669,11 @@ function normalizeContactCopyValue(value: unknown): string {
 		gap: 0.7rem;
 	}
 
-	.contact-field-row {
-		display: grid;
-		gap: 0.75rem;
-		padding: 0.85rem;
-		border: 1px solid rgba(var(--gray), 0.12);
-		border-radius: 1rem;
-		background: rgba(var(--gray-light), 0.28);
-		align-items: start;
-	}
-
-	.contact-field-meta {
-		display: grid;
-		gap: 0.75rem;
-	}
-
-	.contact-field-row > label {
-		display: grid;
-		gap: 0.35rem;
-	}
-
 	.contact-field-required {
 		display: grid;
 		grid-template-columns: auto 1fr;
 		align-items: center;
 		gap: 0.4rem;
-	}
-
-	.contact-field-row label span {
-		display: block;
-		font-size: 0.8rem;
-		font-weight: 600;
-		margin-bottom: 0.25rem;
 	}
 
 	@media (max-width: 720px) {
@@ -802,9 +700,17 @@ function normalizeContactCopyValue(value: unknown): string {
 			align-items: stretch;
 		}
 
-		.contact-form-preview-header {
+		.contact-fields-live-header {
 			flex-direction: column;
 			align-items: stretch;
+		}
+
+		.contact-field-card-top {
+			grid-template-columns: 1fr;
+		}
+
+		.contact-field-card-labels {
+			grid-template-columns: 1fr;
 		}
 
 		.contact-form-colors {
