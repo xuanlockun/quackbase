@@ -39,6 +39,7 @@ const initialFormTitle = form?.formTitle ?? initialTitle;
 const initialFormDescription = form?.formDescription ?? initialDescription;
 const initialShowFormTitle = form?.showFormTitle ?? true;
 const initialShowFormDescription = form?.showFormDescription ?? true;
+const initialLanguage = form?.requestedLanguage ?? language;
 const initialLayout = form?.layout ?? "split";
 const initialBackgroundStyle = form?.backgroundStyle ?? "solid";
 const initialBackgroundColor = form?.backgroundColor ?? "#f8fbff";
@@ -87,7 +88,13 @@ const backIcon = `
 	{mode === "edit" && form && <input type="hidden" name="id" value={form.id} />}
 	<div class="admin-form-surface">
 		<div class="admin-form-grid">
-			<div class="localized-editor contact-copy-editor" data-contact-copy-editor data-default-language={defaultLanguageCode}>
+			<div
+				class="admin-form-section localized-editor contact-copy-editor"
+				data-localized-editor
+				data-contact-copy-editor
+				data-active-language={initialLanguage}
+				data-default-language={defaultLanguageCode}
+			>
 				<div class="localized-editor-header">
 					<div>
 						<h2>{t("messages.contactFormCopyTranslations", "Contact form copy")}</h2>
@@ -97,13 +104,14 @@ const backIcon = `
 						{labelLanguages.map((supportedLanguage) => (
 							<button
 								type="button"
-								class:list={["nav-link localized-editor-tab", supportedLanguage.code === defaultLanguageCode && "active"]}
-								data-copy-language-tab={supportedLanguage.code}
+								class:list={["nav-link localized-editor-tab", supportedLanguage.code === initialLanguage && "active"]}
+								data-language-tab={supportedLanguage.code}
 								role="tab"
-								aria-selected={supportedLanguage.code === defaultLanguageCode ? "true" : "false"}
+								aria-selected={supportedLanguage.code === initialLanguage ? "true" : "false"}
 								disabled={isDisabled}
 							>
-								{supportedLanguage.code.toUpperCase()}
+								<span class="localized-editor-tab-code">{supportedLanguage.code.toUpperCase()}</span>
+								<span class="localized-editor-tab-label">{supportedLanguage.label}</span>
 							</button>
 						))}
 					</div>
@@ -134,9 +142,9 @@ const backIcon = `
 
 				{labelLanguages.map((supportedLanguage) => (
 					<section
-						class:list={["localized-editor-panel contact-copy-panel", supportedLanguage.code === defaultLanguageCode && "is-active"]}
-						data-copy-language-panel={supportedLanguage.code}
-						hidden={supportedLanguage.code !== defaultLanguageCode}
+						class:list={["localized-editor-panel contact-copy-panel", supportedLanguage.code === initialLanguage && "is-active"]}
+						data-language-panel={supportedLanguage.code}
+						hidden={supportedLanguage.code !== initialLanguage}
 					>
 						<div class="contact-copy-grid">
 							<section class="contact-copy-card">
@@ -365,14 +373,18 @@ const backIcon = `
 
 	.localized-editor {
 		display: grid;
-		gap: 1rem;
+		gap: 0.9rem;
+		padding: 1rem;
+		border: 1px solid rgba(var(--gray), 0.12);
+		border-radius: 1.25rem;
+		background: linear-gradient(180deg, rgba(var(--gray-light), 0.36), rgba(var(--gray-light), 0.18));
 	}
 
 	.localized-editor-header {
 		display: flex;
-		align-items: flex-end;
+		align-items: end;
 		justify-content: space-between;
-		gap: 1rem;
+		gap: 0.8rem;
 	}
 
 	.localized-editor-header h2 {
@@ -383,13 +395,29 @@ const backIcon = `
 	.localized-editor-tabs {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.35rem;
+		gap: 0.45rem;
 	}
 
 	.localized-editor-tab {
-		border-radius: 0;
-		padding: 0.3rem 0.65rem;
-		font-size: 0.8rem;
+		display: inline-grid;
+		gap: 0.1rem;
+		min-width: 5.1rem;
+		border-radius: 0.9rem;
+		padding: 0.55rem 0.8rem;
+		font-size: 0.78rem;
+		line-height: 1;
+		text-align: center;
+	}
+
+	.localized-editor-tab-code {
+		font-size: 0.76rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+	}
+
+	.localized-editor-tab-label {
+		font-size: 0.72rem;
+		opacity: 0.82;
 	}
 
 	.localized-editor-panel {
@@ -398,7 +426,7 @@ const backIcon = `
 		padding: 1rem;
 		border: 1px solid rgba(var(--gray), 0.12);
 		border-radius: 1rem;
-		background: rgba(var(--gray-light), 0.2);
+		background: rgba(var(--gray-light), 0.22);
 	}
 
 	.contact-copy-panel {
@@ -412,7 +440,7 @@ const backIcon = `
 		padding: 0.9rem 1rem;
 		border: 1px solid rgba(var(--gray), 0.12);
 		border-radius: 1rem;
-		background: rgba(var(--gray-light), 0.16);
+		background: rgba(var(--gray-light), 0.18);
 	}
 
 	.contact-copy-card {
@@ -421,7 +449,7 @@ const backIcon = `
 		padding: 1rem;
 		border: 1px solid rgba(var(--gray), 0.12);
 		border-radius: 1rem;
-		background: rgba(var(--gray-light), 0.24);
+		background: rgba(var(--gray-light), 0.26);
 	}
 
 	.contact-copy-card-header {
@@ -520,6 +548,11 @@ const backIcon = `
 			align-items: stretch;
 		}
 
+		.localized-editor-tab {
+			min-width: 0;
+			width: calc(50% - 0.25rem);
+		}
+
 		.contact-copy-options {
 			grid-template-columns: 1fr;
 		}
@@ -550,6 +583,7 @@ const backIcon = `
 	let copyFormTitleField;
 	let copyFormDescriptionField;
 	let copyDefaultLanguage = "en";
+	let copyActiveLanguage = "en";
 	let editor;
 	let contactRows;
 	let contactPayload;
@@ -570,16 +604,17 @@ const backIcon = `
 		copyFormTitleField = copyEditor.querySelector("[data-form-title-translations]");
 		copyFormDescriptionField = copyEditor.querySelector("[data-form-description-translations]");
 		copyDefaultLanguage = copyEditor.dataset.defaultLanguage || "en";
+		copyActiveLanguage = copyEditor.dataset.activeLanguage || copyDefaultLanguage;
 
-		const tabs = Array.from(copyEditor.querySelectorAll("[data-copy-language-tab]"));
-		const panels = Array.from(copyEditor.querySelectorAll("[data-copy-language-panel]"));
+		const tabs = Array.from(copyEditor.querySelectorAll("[data-language-tab]"));
+		const panels = Array.from(copyEditor.querySelectorAll("[data-language-panel]"));
 
 		const activateLanguage = (languageCode) => {
 			tabs.forEach((tab) => {
 				if (!(tab instanceof HTMLButtonElement)) {
 					return;
 				}
-				const isActive = tab.dataset.copyLanguageTab === languageCode;
+				const isActive = tab.dataset.languageTab === languageCode;
 				tab.classList.toggle("active", isActive);
 				tab.setAttribute("aria-selected", isActive ? "true" : "false");
 			});
@@ -587,10 +622,11 @@ const backIcon = `
 				if (!(panel instanceof HTMLElement)) {
 					return;
 				}
-				const isActive = panel.dataset.copyLanguagePanel === languageCode;
+				const isActive = panel.dataset.languagePanel === languageCode;
 				panel.hidden = !isActive;
 				panel.classList.toggle("is-active", isActive);
 			});
+			copyActiveLanguage = languageCode;
 		};
 
 		const collectTranslations = (selector) => {
@@ -639,7 +675,7 @@ const backIcon = `
 				return;
 			}
 			tab.addEventListener("click", () => {
-				const languageCode = tab.dataset.copyLanguageTab;
+				const languageCode = tab.dataset.languageTab;
 				if (languageCode) {
 					activateLanguage(languageCode);
 				}
@@ -648,7 +684,7 @@ const backIcon = `
 
 		copyEditor.addEventListener("input", syncCopyTranslations);
 		copyEditor.addEventListener("change", syncCopyTranslations);
-		activateLanguage(copyDefaultLanguage);
+		activateLanguage(copyActiveLanguage);
 		syncCopyTranslations();
 	};
 
