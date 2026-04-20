@@ -46,19 +46,6 @@ try {
 } catch (error) {
 	secretsLoadError = error instanceof Error ? error.message : t("messages.failedToLoadSecrets");
 }
-
-function maskSavedSecret(value: string): string {
-	const trimmed = value.trim();
-	if (!trimmed) {
-		return "";
-	}
-
-	const suffix = trimmed.slice(-4);
-	return suffix ? `**** ${suffix}` : "****";
-}
-
-const savedAccessKeyIdMask = maskSavedSecret(siteConfig.mediaStorageSettings.s3AccessKeyId);
-const savedSecretAccessKeyMask = maskSavedSecret(siteConfig.mediaStorageSettings.s3SecretAccessKey);
 ---
 
 <AdminLayout
@@ -92,7 +79,7 @@ const savedSecretAccessKeyMask = maskSavedSecret(siteConfig.mediaStorageSettings
 				<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>{t("actions.saveChanges")}</button>
 			</div>
 		</form>
-		<form method="post" action="/api/admin/media/settings" class="admin-form-shell">
+		<form method="post" action="/api/admin/media/settings" class="admin-form-shell" data-media-settings-form>
 			<div class="admin-form-surface">
 				<div class="admin-surface-header mb-3">
 					<div>
@@ -102,7 +89,7 @@ const savedSecretAccessKeyMask = maskSavedSecret(siteConfig.mediaStorageSettings
 				</div>
 				<div class="admin-grid-two">
 					<label>
-						<span>S3 endpoint</span>
+						<span>S3 upload endpoint</span>
 						<input
 							class="form-control"
 							name="s3Endpoint"
@@ -127,7 +114,7 @@ const savedSecretAccessKeyMask = maskSavedSecret(siteConfig.mediaStorageSettings
 							class="form-control"
 							name="s3PublicBaseUrl"
 							value={siteConfig.mediaStorageSettings.s3PublicBaseUrl}
-							placeholder="https://cdn.example.com"
+							placeholder="https://pub-...r2.dev or your CDN"
 							disabled={Boolean(loadError)}
 						/>
 					</label>
@@ -152,39 +139,180 @@ const savedSecretAccessKeyMask = maskSavedSecret(siteConfig.mediaStorageSettings
 						/>
 						<span>Use path-style URLs</span>
 					</label>
-					<label>
-						<span>S3 access key ID</span>
-						<input
-							class="form-control"
-							type="password"
-							name="s3AccessKeyId"
-							autocomplete="off"
-							placeholder={savedAccessKeyIdMask || "Enter a new access key ID"}
-							disabled={Boolean(loadError)}
-						/>
-					</label>
-					<label style="grid-column: 1 / -1;">
-						<span>S3 secret access key</span>
-						<input
-							class="form-control"
-							type="password"
-							name="s3SecretAccessKey"
-							autocomplete="off"
-							placeholder={savedSecretAccessKeyMask || "Enter a new secret access key"}
-							disabled={Boolean(loadError)}
-						/>
-					</label>
+					<div class="media-secret-field">
+						<label for="s3AccessKeyId">
+							<span>S3 access key ID</span>
+							<div class="input-group">
+								<input
+									id="s3AccessKeyId"
+									class="form-control"
+									type="password"
+									name="s3AccessKeyId"
+									value={siteConfig.mediaStorageSettings.s3AccessKeyId}
+									autocomplete="off"
+									placeholder="Enter a new access key ID"
+									disabled={Boolean(loadError)}
+								/>
+								<button
+									class="btn btn-outline-secondary"
+									type="button"
+									data-media-secret-toggle
+									data-media-secret-target="#s3AccessKeyId"
+									aria-label="Show access key ID"
+									title="Show access key ID"
+									disabled={Boolean(loadError)}
+								>
+									<span aria-hidden="true">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+											<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+											<circle cx="12" cy="12" r="3" />
+										</svg>
+									</span>
+								</button>
+							</div>
+						</label>
+					</div>
+					<div class="media-secret-field" style="grid-column: 1 / -1;">
+						<label for="s3SecretAccessKey">
+							<span>S3 secret access key</span>
+							<div class="input-group">
+								<input
+									id="s3SecretAccessKey"
+									class="form-control"
+									type="password"
+									name="s3SecretAccessKey"
+									value={siteConfig.mediaStorageSettings.s3SecretAccessKey}
+									autocomplete="off"
+									placeholder="Enter a new secret access key"
+									disabled={Boolean(loadError)}
+								/>
+								<button
+									class="btn btn-outline-secondary"
+									type="button"
+									data-media-secret-toggle
+									data-media-secret-target="#s3SecretAccessKey"
+									aria-label="Show secret access key"
+									title="Show secret access key"
+									disabled={Boolean(loadError)}
+								>
+									<span aria-hidden="true">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+											<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+											<circle cx="12" cy="12" r="3" />
+										</svg>
+									</span>
+								</button>
+							</div>
+						</label>
+					</div>
 				</div>
 				<div class="admin-form-section">
 					<p class="admin-muted mb-2">
 						Leave either credential field empty to keep the currently saved database value. Set the region to your provider's real signing region. For Cloudflare R2, `auto` is usually correct.
 					</p>
-					<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>
-						Save media settings
-					</button>
+					<div class="d-flex flex-wrap gap-2 align-items-center">
+						<button class="btn btn-outline-secondary" type="button" data-media-test-button disabled={Boolean(loadError)}>
+							Test connection
+						</button>
+						<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>
+							Save media settings
+						</button>
+					</div>
+					<p class="admin-inline-muted mb-0 mt-2" data-media-settings-status aria-live="polite"></p>
 				</div>
 			</div>
 		</form>
 		<SecretsManager secrets={secrets} canManage={session.isSuperadmin || session.permissions.includes("site.manage")} loadError={secretsLoadError} />
 	</div>
 </AdminLayout>
+
+<script type="module">
+	const form = document.querySelector("[data-media-settings-form]");
+	const status = form?.querySelector("[data-media-settings-status]");
+	const testButton = form?.querySelector("[data-media-test-button]");
+	const toggleButtons = form?.querySelectorAll("[data-media-secret-toggle]");
+
+	if (
+		form instanceof HTMLFormElement &&
+		status instanceof HTMLElement &&
+		testButton instanceof HTMLButtonElement
+	) {
+		const setStatus = (message, isError = false) => {
+			status.textContent = message;
+			status.classList.toggle("text-danger", isError);
+			status.classList.toggle("text-success", !isError);
+		};
+
+		testButton.addEventListener("click", async () => {
+			const payload = new FormData(form);
+			payload.set("intent", "test");
+			testButton.disabled = true;
+			setStatus("Testing media storage connection...");
+
+			try {
+				const response = await fetch(form.action, {
+					method: "POST",
+					credentials: "same-origin",
+					headers: {
+						Accept: "application/json",
+						"X-Requested-With": "fetch",
+					},
+					body: payload,
+				});
+
+				const data = await response.json().catch(() => ({}));
+				if (!response.ok || !data?.ok) {
+					throw new Error(data?.error || "Media storage connection test failed.");
+				}
+
+				setStatus(data.message || "Media storage connection succeeded.");
+			} catch (error) {
+				setStatus(error instanceof Error ? error.message : "Media storage connection test failed.", true);
+			} finally {
+				testButton.disabled = false;
+			}
+		});
+	}
+
+	toggleButtons?.forEach((button) => {
+		if (!(button instanceof HTMLButtonElement)) {
+			return;
+		}
+
+		button.addEventListener("click", () => {
+			const targetSelector = button.dataset.mediaSecretTarget;
+			if (!targetSelector) {
+				return;
+			}
+
+			const target = form?.querySelector(targetSelector);
+			if (!(target instanceof HTMLInputElement)) {
+				return;
+			}
+
+			const willReveal = target.type === "password";
+			target.type = willReveal ? "text" : "password";
+			const label = willReveal ? "Hide" : "Show";
+			const description = target.id === "s3SecretAccessKey" ? "secret access key" : "access key ID";
+			button.setAttribute("aria-label", `${label} ${description}`);
+			button.title = `${label} ${description}`;
+		});
+	});
+</script>
+
+<style>
+	.media-secret-field {
+		display: grid;
+		gap: 0.4rem;
+	}
+
+	.media-secret-field .input-group .btn {
+		width: 3.25rem;
+		justify-content: center;
+	}
+
+	.media-secret-field svg {
+		width: 1rem;
+		height: 1rem;
+	}
+</style>

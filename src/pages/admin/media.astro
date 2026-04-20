@@ -177,6 +177,14 @@ function formatFolderLabel(folderPath: string): string {
 		{Astro.url.searchParams.get("uploaded") && <p class="alert alert-success mb-0">{t("messages.mediaUploadSuccess")}</p>}
 		{Astro.url.searchParams.get("deleted") && <p class="alert alert-success mb-0">{t("messages.mediaDeleteSuccess")}</p>}
 		{Astro.url.searchParams.get("folderCreated") && <p class="alert alert-success mb-0">{t("messages.folderCreated", "Folder created.")}</p>}
+		{Astro.url.searchParams.get("synced") && (
+			<p class="alert alert-success mb-0">
+				Media library refreshed from bucket.
+				{Astro.url.searchParams.get("imported") || Astro.url.searchParams.get("updated")
+					? ` Imported ${Astro.url.searchParams.get("imported") ?? 0}, updated ${Astro.url.searchParams.get("updated") ?? 0}.`
+					: ""}
+			</p>
+		)}
 		{Astro.url.searchParams.get("errorMessage") ? (
 			<p class="alert alert-danger mb-0">{Astro.url.searchParams.get("errorMessage")}</p>
 		) : (
@@ -200,6 +208,15 @@ function formatFolderLabel(folderPath: string): string {
 			</div>
 
 			<div class="media-library-actions">
+				<form method="post" action="/api/admin/media/sync" class="media-folder-form">
+					<label class="form-label fw-semibold" for="syncBucket">Bucket refresh</label>
+					<div class="d-flex gap-2 flex-wrap">
+						<button id="syncBucket" class="btn btn-outline-secondary" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
+							Refresh from bucket
+						</button>
+					</div>
+					<p class="form-text mb-0">Pull any bucket objects that are missing from D1 into the media library.</p>
+				</form>
 				<form method="post" action="/api/admin/media/folders" class="media-folder-form">
 					<label class="form-label fw-semibold" for="folderPath">{t("actions.createFolder", "Create folder")}</label>
 					<div class="d-flex gap-2 flex-wrap">

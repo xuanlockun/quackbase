@@ -1,10 +1,7 @@
 import type { APIRoute } from "astro";
-import {
-	getDb,
-	parseMediaStorageSettingsForm,
-	saveMediaStorageSettings,
-} from "../../../../lib/blog";
+import { getDb, getMediaStorageSettings, parseMediaStorageSettingsForm, saveMediaStorageSettings } from "../../../../lib/blog";
 import { requireApiPermission } from "../../../../lib/rbac/guards";
+import { testMediaStorageConnection } from "../../../../lib/media";
 
 export const prerender = false;
 
@@ -20,33 +17,29 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 
 	try {
 		const formData = await request.formData();
+		const intent = String(formData.get("intent") ?? "save").trim();
 		const db = getDb(locals);
-		const existingSettings = await getExistingSettings(db);
+		const currentSettings = await getMediaStorageSettings(db);
 		const formSettings = parseMediaStorageSettingsForm(formData);
-
-		await saveMediaStorageSettings(db, {
+		const mergedSettings = {
+			...currentSettings,
 			...formSettings,
-			s3AccessKeyId: formSettings.s3AccessKeyId || existingSettings.s3AccessKeyId,
-			s3SecretAccessKey: formSettings.s3SecretAccessKey || existingSettings.s3SecretAccessKey,
-		});
+			s3AccessKeyId: formSettings.s3AccessKeyId || currentSettings.s3AccessKeyId,
+			s3SecretAccessKey: formSettings.s3SecretAccessKey || currentSettings.s3SecretAccessKey,
+		};
 
+		if (intent === "test") {
+			await testMediaStorageConnection(mergedSettings);
+			return Response.json({ ok: true, message: "Media storage connection succeeded." });
+		}
+
+		await saveMediaStorageSettings(db, mergedSettings);
 		return redirect("/admin/settings?mediaSaved=1");
 	} catch (error) {
-		const message = encodeURIComponent(error instanceof Error ? error.message : "Media storage settings could not be saved.");
-		return redirect(`/admin/settings?mediaError=${message}`);
+		const message = error instanceof Error ? error.message : "Media storage settings could not be saved.";
+		if (request.headers.get("x-requested-with") === "fetch" || request.headers.get("accept")?.includes("application/json")) {
+			return Response.json({ ok: false, error: message }, { status: 400 });
+		}
+		return redirect(`/admin/settings?mediaError=${encodeURIComponent(message)}`);
 	}
 };
-
-async function getExistingSettings(db: D1Database) {
-	return db
-		.prepare(
-			`SELECT media_s3_access_key_id, media_s3_secret_access_key
-			FROM site_settings
-			WHERE id = 1`,
-		)
-		.first<{ media_s3_access_key_id: string; media_s3_secret_access_key: string }>()
-		.then((row) => ({
-			s3AccessKeyId: row?.media_s3_access_key_id?.trim() ?? "",
-			s3SecretAccessKey: row?.media_s3_secret_access_key?.trim() ?? "",
-		}));
-}

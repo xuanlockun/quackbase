@@ -1,3 +1,4 @@
+import type { MediaStorageSettings } from "./blog";
 import { getDb, getMediaStorageSettings } from "./blog";
 
 export type MediaStorageProvider = "r2" | "s3" | "unconfigured";
@@ -20,6 +21,16 @@ export interface MediaFolderRecord {
 	folderPath: string;
 	createdAt: Date;
 	updatedAt: Date;
+}
+
+export interface MediaStorageObjectSummary {
+	objectKey: string;
+	fileName: string;
+	mimeType: string;
+	sizeBytes: number;
+	publicUrl: string;
+	storageProvider: Exclude<MediaStorageProvider, "unconfigured">;
+	createdAt: Date;
 }
 
 interface MediaAssetRow {
@@ -148,6 +159,19 @@ export async function getMediaAssetById(db: D1Database, id: number): Promise<Med
 		.first<MediaAssetRow>();
 
 	return row ? toMediaAsset(row) : null;
+}
+
+export async function listAllMediaAssets(db: D1Database): Promise<MediaAsset[]> {
+	await ensureMediaTables(db);
+	const result = await db
+		.prepare(
+			`SELECT id, storage_provider, object_key, file_name, mime_type, size_bytes, public_url, created_at, updated_at
+			FROM media_assets
+			ORDER BY datetime(created_at) DESC, id DESC`,
+		)
+		.all<MediaAssetRow>();
+
+	return (result.results ?? []).map(toMediaAsset);
 }
 
 export async function listMediaFolders(db: D1Database): Promise<MediaFolderRecord[]> {
@@ -280,6 +304,44 @@ export async function deleteMediaAsset(db: D1Database, id: number): Promise<Medi
 	return asset;
 }
 
+export async function upsertMediaAssetRecord(
+	db: D1Database,
+	input: MediaStorageObjectSummary,
+): Promise<void> {
+	await ensureMediaTables(db);
+	await db
+		.prepare(
+			`INSERT INTO media_assets (
+				storage_provider,
+				object_key,
+				file_name,
+				mime_type,
+				size_bytes,
+				public_url,
+				created_at,
+				updated_at
+			)
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7)
+			ON CONFLICT(object_key) DO UPDATE SET
+				storage_provider = excluded.storage_provider,
+				file_name = excluded.file_name,
+				mime_type = excluded.mime_type,
+				size_bytes = excluded.size_bytes,
+				public_url = excluded.public_url,
+				updated_at = CURRENT_TIMESTAMP`,
+		)
+		.bind(
+			input.storageProvider,
+			input.objectKey,
+			input.fileName,
+			input.mimeType,
+			input.sizeBytes,
+			input.publicUrl,
+			input.createdAt.toISOString(),
+		)
+		.run();
+}
+
 export async function getMediaStorageStatus(locals: App.Locals): Promise<MediaStorageStatus> {
 	const backend = await resolveStorageBackend(locals);
 	if (backend.provider === "unconfigured") {
@@ -362,6 +424,75 @@ export async function deleteMediaObject(locals: App.Locals, objectKey: string): 
 	await deleteS3Object(backend.config, objectKey);
 }
 
+export async function listMediaStorageObjects(locals: App.Locals): Promise<MediaStorageObjectSummary[]> {
+	const backend = await resolveStorageBackend(locals);
+	if (backend.provider === "unconfigured") {
+		return [];
+	}
+
+	if (backend.provider === "r2") {
+		const listing = await backend.bucket.list({ prefix: `${DEFAULT_MEDIA_PREFIX}/` });
+		return listing.objects.map((object) => ({
+			objectKey: object.key,
+			fileName: deriveMediaFileName(object.key),
+			mimeType: object.httpMetadata?.contentType ?? "application/octet-stream",
+			sizeBytes: object.size ?? 0,
+			publicUrl: buildPublicUrl(backend, object.key),
+			storageProvider: "r2",
+			createdAt: object.uploaded ?? new Date(0),
+		}));
+	}
+
+	return listS3MediaObjects(backend.config);
+}
+
+export async function syncMediaAssetsFromStorage(
+	db: D1Database,
+	locals: App.Locals,
+): Promise<{ imported: number; updated: number; scanned: number }> {
+	const storageObjects = await listMediaStorageObjects(locals);
+	const existingAssets = await listAllMediaAssets(db);
+	const existingByKey = new Map(existingAssets.map((asset) => [asset.objectKey, asset] as const));
+
+	let imported = 0;
+	let updated = 0;
+	for (const object of storageObjects) {
+		const existing = existingByKey.get(object.objectKey);
+		if (!existing) {
+			await upsertMediaAssetRecord(db, object);
+			imported += 1;
+			continue;
+		}
+
+		if (
+			existing.fileName !== object.fileName ||
+			existing.mimeType !== object.mimeType ||
+			existing.sizeBytes !== object.sizeBytes ||
+			existing.publicUrl !== object.publicUrl
+		) {
+			await upsertMediaAssetRecord(db, object);
+			updated += 1;
+		}
+	}
+
+	return {
+		imported,
+		updated,
+		scanned: storageObjects.length,
+	};
+}
+
+export async function testMediaStorageConnection(settings: MediaStorageSettings): Promise<void> {
+	const config = buildS3StorageConfig(settings);
+	if (!config) {
+		throw new Error("S3 upload endpoint, bucket, access key, and secret key are required.");
+	}
+
+	const testKey = `${DEFAULT_MEDIA_PREFIX}/connection-test/${crypto.randomUUID()}.txt`;
+	await putS3Object(config, testKey, new File(["ok"], "connection-test.txt", { type: "text/plain" }));
+	await deleteS3Object(config, testKey);
+}
+
 export async function getMediaObjectResponse(
 	locals: App.Locals,
 	asset: MediaAsset,
@@ -415,30 +546,18 @@ function toMediaAsset(row: MediaAssetRow): MediaAsset {
 async function resolveStorageBackend(locals: App.Locals): Promise<StorageBackend> {
 	const db = getDb(locals);
 	const storedSettings = await getMediaStorageSettings(db);
-	const endpoint = storedSettings.s3Endpoint;
-	const bucket = storedSettings.s3Bucket;
-	const accessKeyId = storedSettings.s3AccessKeyId;
-	const secretAccessKey = storedSettings.s3SecretAccessKey;
-	const publicBaseUrl = normalizeBaseUrl(storedSettings.s3PublicBaseUrl);
-	if (endpoint && bucket && accessKeyId && secretAccessKey) {
+	const s3Config = buildS3StorageConfig(storedSettings);
+	if (s3Config) {
 		return {
 			provider: "s3",
 			source: "settings",
-			config: {
-				endpoint: normalizeBaseUrl(endpoint),
-				bucket,
-				accessKeyId,
-				secretAccessKey,
-				region: storedSettings.s3Region || "auto",
-				forcePathStyle: storedSettings.s3ForcePathStyle,
-				publicBaseUrl,
-			},
+			config: s3Config,
 		};
 	}
 
 	const env = locals.runtime.env as Record<string, unknown>;
 	const r2Bucket = env.R2_BUCKET as R2StorageBinding | undefined;
-	if (r2Bucket && !endpoint && !bucket && !accessKeyId && !secretAccessKey) {
+	if (r2Bucket && !storedSettings.s3Endpoint && !storedSettings.s3Bucket && !storedSettings.s3AccessKeyId && !storedSettings.s3SecretAccessKey) {
 		return {
 			provider: "r2",
 			bucket: r2Bucket,
@@ -484,7 +603,7 @@ async function putS3Object(config: S3StorageConfig, objectKey: string, file: Fil
 		body,
 	});
 	if (!response.ok) {
-		throw new Error(await formatS3Error("upload", response, url, config, objectKey));
+		throw new Error(`Failed to upload media to S3 (${response.status} ${response.statusText}).`);
 	}
 }
 
@@ -501,7 +620,7 @@ async function deleteS3Object(config: S3StorageConfig, objectKey: string): Promi
 		headers: signed,
 	});
 	if (!response.ok && response.status !== 404) {
-		throw new Error(await formatS3Error("delete", response, url, config, objectKey));
+		throw new Error(`Failed to delete media from S3 (${response.status} ${response.statusText}).`);
 	}
 }
 
@@ -515,6 +634,20 @@ async function fetchS3Object(config: S3StorageConfig, objectKey: string): Promis
 	const signed = await signS3Request(config, "GET", url, headers, headers.get("x-amz-content-sha256") ?? "", "");
 	return fetch(url, {
 		method: "GET",
+		headers: signed,
+	});
+}
+
+async function headS3Object(config: S3StorageConfig, objectKey: string): Promise<Response> {
+	const url = buildS3ObjectUrl(config, objectKey);
+	const headers = new Headers({
+		host: url.host,
+		"x-amz-content-sha256": await sha256Hex(""),
+		"x-amz-date": getAmzDate(),
+	});
+	const signed = await signS3Request(config, "HEAD", url, headers, headers.get("x-amz-content-sha256") ?? "", "");
+	return fetch(url, {
+		method: "HEAD",
 		headers: signed,
 	});
 }
@@ -535,6 +668,77 @@ function buildS3ObjectUrl(config: S3StorageConfig, objectKey: string): URL {
 	}
 
 	return url;
+}
+
+async function listS3MediaObjects(config: S3StorageConfig): Promise<MediaStorageObjectSummary[]> {
+	const url = new URL(config.endpoint);
+	url.searchParams.set("list-type", "2");
+	url.searchParams.set("prefix", `${DEFAULT_MEDIA_PREFIX}/`);
+	const headers = new Headers({
+		host: url.host,
+		"x-amz-content-sha256": await sha256Hex(""),
+		"x-amz-date": getAmzDate(),
+	});
+	const signed = await signS3Request(config, "GET", url, headers, headers.get("x-amz-content-sha256") ?? "", "");
+	const response = await fetch(url, {
+		method: "GET",
+		headers: signed,
+	});
+	if (!response.ok) {
+		throw new Error(`Failed to list media from S3 (${response.status} ${response.statusText}).`);
+	}
+
+	const xml = await response.text();
+	const keys = parseS3ListResponse(xml);
+	const results: MediaStorageObjectSummary[] = [];
+	for (const key of keys) {
+		const head = await headS3Object(config, key).catch(() => null);
+		results.push({
+			objectKey: key,
+			fileName: deriveMediaFileName(key),
+			mimeType: head?.headers.get("content-type") ?? "application/octet-stream",
+			sizeBytes: Number(head?.headers.get("content-length") ?? 0),
+			publicUrl: config.publicBaseUrl ? joinUrl(config.publicBaseUrl, key) : "",
+			storageProvider: "s3",
+			createdAt: head?.headers.get("last-modified") ? new Date(head.headers.get("last-modified") as string) : new Date(0),
+		});
+	}
+	return results;
+}
+
+function parseS3ListResponse(xml: string): string[] {
+	const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map((match) => decodeXmlEntities(match[1]));
+	return keys.filter((key) => key.startsWith(`${DEFAULT_MEDIA_PREFIX}/`));
+}
+
+function decodeXmlEntities(value: string): string {
+	return value.replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&").replaceAll("&quot;", '"').replaceAll("&apos;", "'");
+}
+
+function deriveMediaFileName(objectKey: string): string {
+	const tail = trimSlashes(objectKey).split("/").filter(Boolean).at(-1) ?? objectKey;
+	const match = tail.match(/^[0-9a-f-]{8,}-([^/]+)$/i);
+	return match?.[1] || tail;
+}
+
+function buildS3StorageConfig(settings: MediaStorageSettings): S3StorageConfig | null {
+	const endpoint = normalizeBaseUrl(settings.s3Endpoint);
+	const bucket = settings.s3Bucket.trim();
+	const accessKeyId = settings.s3AccessKeyId.trim();
+	const secretAccessKey = settings.s3SecretAccessKey.trim();
+	if (!endpoint || !bucket || !accessKeyId || !secretAccessKey) {
+		return null;
+	}
+
+	return {
+		endpoint,
+		bucket,
+		accessKeyId,
+		secretAccessKey,
+		region: settings.s3Region.trim() || "auto",
+		forcePathStyle: settings.s3ForcePathStyle,
+		publicBaseUrl: normalizeBaseUrl(settings.s3PublicBaseUrl),
+	};
 }
 
 async function signS3Request(
@@ -729,33 +933,4 @@ function joinUrl(base: string, path: string): string {
 
 function trimSlashes(value: string): string {
 	return value.replace(/^\/+|\/+$/g, "");
-}
-
-async function formatS3Error(
-	action: "upload" | "delete",
-	response: Response,
-	url: URL,
-	config: S3StorageConfig,
-	objectKey: string,
-): Promise<string> {
-	const bodyText = await readResponseText(response);
-	const requestId =
-		response.headers.get("x-amz-request-id") ||
-		response.headers.get("x-amz-id-2") ||
-		response.headers.get("x-amzn-requestid") ||
-		"";
-	const statusLine = `Failed to ${action} media to S3 (${response.status}${response.statusText ? ` ${response.statusText}` : ""}).`;
-	const context = ` endpoint=${config.endpoint} bucket=${config.bucket} region=${config.region} pathStyle=${config.forcePathStyle ? "true" : "false"} url=${url.toString()} key=${objectKey}`;
-	const remote = bodyText ? ` Remote response: ${bodyText}` : "";
-	const request = requestId ? ` Request ID: ${requestId}.` : "";
-	return `${statusLine}${request}${context}${remote}`;
-}
-
-async function readResponseText(response: Response): Promise<string> {
-	try {
-		const text = await response.text();
-		return text.trim();
-	} catch {
-		return "";
-	}
 }

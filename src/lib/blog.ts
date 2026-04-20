@@ -767,6 +767,7 @@ export async function saveMediaStorageSettings(
 	input: MediaStorageSettings,
 ): Promise<void> {
 	await ensureSiteTables(db);
+	validateMediaStorageSettings(input);
 
 	await db
 		.prepare(
@@ -792,6 +793,36 @@ export async function saveMediaStorageSettings(
 			input.s3ForcePathStyle ? "1" : "0",
 		)
 		.run();
+}
+
+function validateMediaStorageSettings(input: MediaStorageSettings): void {
+	const endpoint = normalizeStorageUrl(input.s3Endpoint);
+	if (!endpoint) {
+		throw new Error("S3 upload endpoint is required.");
+	}
+
+	let hostname = "";
+	try {
+		hostname = new URL(endpoint).hostname.toLowerCase();
+	} catch {
+		throw new Error("S3 upload endpoint must be a valid URL.");
+	}
+
+	if (hostname.endsWith(".r2.dev")) {
+		throw new Error(
+			"S3 upload endpoint cannot be the public r2.dev URL. Use the R2 account endpoint for uploads and put the r2.dev URL in Public base URL.",
+		);
+	}
+
+	if (!input.s3Bucket.trim()) {
+		throw new Error("S3 bucket name is required.");
+	}
+	if (!input.s3AccessKeyId.trim()) {
+		throw new Error("S3 access key ID is required.");
+	}
+	if (!input.s3SecretAccessKey.trim()) {
+		throw new Error("S3 secret access key is required.");
+	}
 }
 
 export async function listAllPages(
