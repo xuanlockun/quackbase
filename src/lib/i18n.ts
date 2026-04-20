@@ -134,9 +134,13 @@ export function normalizeLocalizedText(
 
 	if (typeof input === "string") {
 		const trimmed = input.trim();
-		if (trimmed.startsWith("{")) {
+		if (trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.startsWith("\"")) {
 			try {
-				return normalizeLocalizedText(JSON.parse(trimmed), options);
+				const parsed = JSON.parse(trimmed);
+				if (typeof parsed === "string") {
+					return normalizeLocalizedText(parsed, options);
+				}
+				return normalizeLocalizedText(parsed, options);
 			} catch {
 				// Fall through and treat the input as legacy plain text.
 			}
