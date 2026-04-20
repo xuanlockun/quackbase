@@ -484,7 +484,7 @@ async function putS3Object(config: S3StorageConfig, objectKey: string, file: Fil
 		body,
 	});
 	if (!response.ok) {
-		throw new Error(`Failed to upload media to S3 (${response.status}).`);
+		throw new Error(await formatS3Error("upload", response, url, config, objectKey));
 	}
 }
 
@@ -501,7 +501,7 @@ async function deleteS3Object(config: S3StorageConfig, objectKey: string): Promi
 		headers: signed,
 	});
 	if (!response.ok && response.status !== 404) {
-		throw new Error(`Failed to delete media from S3 (${response.status}).`);
+		throw new Error(await formatS3Error("delete", response, url, config, objectKey));
 	}
 }
 
@@ -729,4 +729,33 @@ function joinUrl(base: string, path: string): string {
 
 function trimSlashes(value: string): string {
 	return value.replace(/^\/+|\/+$/g, "");
+}
+
+async function formatS3Error(
+	action: "upload" | "delete",
+	response: Response,
+	url: URL,
+	config: S3StorageConfig,
+	objectKey: string,
+): Promise<string> {
+	const bodyText = await readResponseText(response);
+	const requestId =
+		response.headers.get("x-amz-request-id") ||
+		response.headers.get("x-amz-id-2") ||
+		response.headers.get("x-amzn-requestid") ||
+		"";
+	const statusLine = `Failed to ${action} media to S3 (${response.status}${response.statusText ? ` ${response.statusText}` : ""}).`;
+	const context = ` endpoint=${config.endpoint} bucket=${config.bucket} region=${config.region} pathStyle=${config.forcePathStyle ? "true" : "false"} url=${url.toString()} key=${objectKey}`;
+	const remote = bodyText ? ` Remote response: ${bodyText}` : "";
+	const request = requestId ? ` Request ID: ${requestId}.` : "";
+	return `${statusLine}${request}${context}${remote}`;
+}
+
+async function readResponseText(response: Response): Promise<string> {
+	try {
+		const text = await response.text();
+		return text.trim();
+	} catch {
+		return "";
+	}
 }
