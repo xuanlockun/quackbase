@@ -671,7 +671,7 @@ function buildS3ObjectUrl(config: S3StorageConfig, objectKey: string): URL {
 }
 
 async function listS3MediaObjects(config: S3StorageConfig): Promise<MediaStorageObjectSummary[]> {
-	const url = new URL(config.endpoint);
+	const url = buildS3BucketUrl(config);
 	url.searchParams.set("list-type", "2");
 	url.searchParams.set("prefix", `${DEFAULT_MEDIA_PREFIX}/`);
 	const headers = new Headers({
@@ -708,6 +708,21 @@ async function listS3MediaObjects(config: S3StorageConfig): Promise<MediaStorage
 		});
 	}
 	return results;
+}
+
+function buildS3BucketUrl(config: S3StorageConfig): URL {
+	const base = normalizeBaseUrl(config.endpoint);
+	const url = new URL(base);
+	const bucketPath = encodeURIComponent(config.bucket);
+
+	if (config.forcePathStyle || !url.hostname.includes(config.bucket)) {
+		url.pathname = `${trimSlashes(url.pathname)}/${bucketPath}`;
+	} else {
+		url.hostname = `${config.bucket}.${url.hostname}`;
+		url.pathname = trimSlashes(url.pathname) || "/";
+	}
+
+	return url;
 }
 
 function parseS3ListResponse(xml: string): string[] {
