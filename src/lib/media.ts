@@ -1,5 +1,4 @@
 import { getDb, getMediaStorageSettings } from "./blog";
-import { getAdminSecretValueByType } from "./secrets";
 
 export type MediaStorageProvider = "r2" | "s3" | "unconfigured";
 
@@ -68,7 +67,7 @@ type StorageBackend =
 	| {
 			provider: "s3";
 			config: S3StorageConfig;
-			source: "settings" | "environment";
+			source: "settings";
 	  }
 	| {
 			provider: "unconfigured";
@@ -288,7 +287,7 @@ export async function getMediaStorageStatus(locals: App.Locals): Promise<MediaSt
 			provider: "unconfigured",
 			isConfigured: false,
 			label: "Not configured",
-			details: "Set media storage settings or provide R2/S3 environment bindings to enable uploads.",
+			details: "Set media storage settings in the admin panel to enable uploads.",
 			publicBaseUrl: "",
 			source: "none",
 		};
@@ -310,9 +309,7 @@ export async function getMediaStorageStatus(locals: App.Locals): Promise<MediaSt
 		isConfigured: true,
 		label: "S3-compatible storage",
 		details:
-			backend.source === "settings"
-				? `Uploads use settings-managed S3 storage at ${backend.config.endpoint} / ${backend.config.bucket}.`
-				: `Uploads use environment-managed S3 storage at ${backend.config.endpoint} / ${backend.config.bucket}.`,
+			`Uploads use settings-managed S3 storage at ${backend.config.endpoint} / ${backend.config.bucket}.`,
 		publicBaseUrl: backend.config.publicBaseUrl,
 		source: backend.source,
 	};
@@ -419,26 +416,15 @@ async function resolveStorageBackend(locals: App.Locals): Promise<StorageBackend
 	const env = locals.runtime.env as Record<string, unknown>;
 	const db = getDb(locals);
 	const storedSettings = await getMediaStorageSettings(db);
-	const storedAccessKeyId = await getAdminSecretValueByType(db, "media_s3_access_key_id", locals.runtime.env);
-	const storedSecretAccessKey = await getAdminSecretValueByType(db, "media_s3_secret_access_key", locals.runtime.env);
-	const endpoint = storedSettings.s3Endpoint || (typeof env.S3_ENDPOINT === "string" ? env.S3_ENDPOINT.trim() : "");
-	const bucket = storedSettings.s3Bucket || (typeof env.S3_BUCKET === "string" ? env.S3_BUCKET.trim() : "");
-	const accessKeyId =
-		storedAccessKeyId || (typeof env.S3_ACCESS_KEY_ID === "string" ? env.S3_ACCESS_KEY_ID.trim() : "");
-	const secretAccessKey =
-		storedSecretAccessKey || (typeof env.S3_SECRET_ACCESS_KEY === "string" ? env.S3_SECRET_ACCESS_KEY.trim() : "");
-	const publicBaseUrl = normalizeBaseUrl(
-		storedSettings.s3PublicBaseUrl ||
-			(typeof env.S3_PUBLIC_BASE_URL === "string"
-				? env.S3_PUBLIC_BASE_URL
-				: typeof env.MEDIA_PUBLIC_BASE_URL === "string"
-					? env.MEDIA_PUBLIC_BASE_URL
-					: ""),
-	);
+	const endpoint = storedSettings.s3Endpoint;
+	const bucket = storedSettings.s3Bucket;
+	const accessKeyId = storedSettings.s3AccessKeyId;
+	const secretAccessKey = storedSettings.s3SecretAccessKey;
+	const publicBaseUrl = normalizeBaseUrl(storedSettings.s3PublicBaseUrl);
 	if (endpoint && bucket && accessKeyId && secretAccessKey) {
 		return {
 			provider: "s3",
-			source: storedSettings.s3Endpoint || storedSettings.s3Bucket || storedAccessKeyId || storedSecretAccessKey ? "settings" : "environment",
+			source: "settings",
 			config: {
 				endpoint: normalizeBaseUrl(endpoint),
 				bucket,
@@ -455,7 +441,7 @@ async function resolveStorageBackend(locals: App.Locals): Promise<StorageBackend
 	}
 
 	const r2Bucket = env.R2_BUCKET as R2StorageBinding | undefined;
-	if (r2Bucket) {
+	if (r2Bucket && !endpoint && !bucket && !accessKeyId && !secretAccessKey) {
 		return {
 			provider: "r2",
 			bucket: r2Bucket,
