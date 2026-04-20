@@ -1,7 +1,14 @@
 ---
 import type { ContactFormRecord } from "../../lib/contact-forms";
 import CreateSubmit from "./CreateSubmit.astro";
-import { getLanguageCatalog, getSupportedLanguages, getUiTranslations, localizeAdminHref, type LocalizedText } from "../../lib/i18n";
+import {
+	getLanguageCatalog,
+	getSupportedLanguages,
+	getUiTranslations,
+	localizeAdminHref,
+	normalizeLocalizedText,
+	type LocalizedText,
+} from "../../lib/i18n";
 
 interface Props {
 	mode: "create" | "edit";
@@ -44,22 +51,18 @@ const initialLayout = form?.layout ?? "split";
 const initialBackgroundStyle = form?.backgroundStyle ?? "solid";
 const initialBackgroundColor = form?.backgroundColor ?? "#f8fbff";
 const initialButtonColor = form?.buttonColor ?? "#4f80ff";
-const titleTranslations: LocalizedText = {
-	[defaultLanguageCode]: initialTitle,
-	...(form?.titleTranslations ?? {}),
-};
-const descriptionTranslations: LocalizedText = {
-	[defaultLanguageCode]: initialDescription,
-	...(form?.descriptionTranslations ?? {}),
-};
-const formTitleTranslations: LocalizedText = {
-	[defaultLanguageCode]: initialFormTitle,
-	...(form?.formTitleTranslations ?? {}),
-};
-const formDescriptionTranslations: LocalizedText = {
-	[defaultLanguageCode]: initialFormDescription,
-	...(form?.formDescriptionTranslations ?? {}),
-};
+const titleTranslations = normalizeContactCopyTranslations(form?.titleTranslations ?? initialTitle, defaultLanguageCode, initialTitle);
+const descriptionTranslations = normalizeContactCopyTranslations(
+	form?.descriptionTranslations ?? initialDescription,
+	defaultLanguageCode,
+	initialDescription,
+);
+const formTitleTranslations = normalizeContactCopyTranslations(form?.formTitleTranslations ?? initialFormTitle, defaultLanguageCode, initialFormTitle);
+const formDescriptionTranslations = normalizeContactCopyTranslations(
+	form?.formDescriptionTranslations ?? initialFormDescription,
+	defaultLanguageCode,
+	initialFormDescription,
+);
 const fieldsJson = JSON.stringify(initialFields);
 const titleTranslationsJson = JSON.stringify(titleTranslations);
 const descriptionTranslationsJson = JSON.stringify(descriptionTranslations);
@@ -72,6 +75,59 @@ const backIcon = `
 		<path d="M20 12H8" />
 	</svg>
 `;
+
+function normalizeContactCopyTranslations(
+	input: LocalizedText | string,
+	defaultLanguage: string,
+	fallbackValue = "",
+): LocalizedText {
+	const normalized = normalizeLocalizedText(input, {
+		defaultLanguageCode: defaultLanguage,
+		fallbackValue,
+		requireDefault: false,
+	});
+	const cleaned: LocalizedText = {};
+
+	for (const [code, value] of Object.entries(normalized)) {
+		const cleanedValue = normalizeContactCopyValue(value, defaultLanguage);
+		if (cleanedValue) {
+			cleaned[code] = cleanedValue;
+		}
+	}
+
+	if (!cleaned[defaultLanguage]) {
+		const fallback = Object.values(cleaned).find((value) => typeof value === "string" && value.trim());
+		if (typeof fallback === "string" && fallback.trim()) {
+			cleaned[defaultLanguage] = fallback.trim();
+		}
+	}
+
+	return cleaned;
+}
+
+function normalizeContactCopyValue(value: string, defaultLanguage: string): string {
+	const trimmed = typeof value === "string" ? value.trim() : "";
+	if (!trimmed) {
+		return "";
+	}
+
+	if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+		try {
+			const parsed = JSON.parse(trimmed);
+			if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+				const nested = normalizeLocalizedText(parsed, {
+					defaultLanguageCode: defaultLanguage,
+					requireDefault: false,
+				});
+				return nested[defaultLanguage]?.trim() || Object.values(nested).find((entry) => entry.trim())?.trim() || trimmed;
+			}
+		} catch {
+			// Fall back to the original string below.
+		}
+	}
+
+	return trimmed;
+}
 ---
 
 <div class="admin-surface-header">
