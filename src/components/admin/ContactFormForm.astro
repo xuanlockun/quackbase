@@ -50,6 +50,9 @@ const initialLayout = form?.layout ?? "split";
 const initialBackgroundStyle = form?.backgroundStyle ?? "solid";
 const initialBackgroundColor = form?.backgroundColor ?? "#f8fbff";
 const initialButtonColor = form?.buttonColor ?? "#4f80ff";
+const labelGridColumns = `2rem minmax(12rem, 16rem) ${labelLanguages
+	.map(() => "minmax(0, 1fr)")
+	.join(" ")} minmax(7rem, auto) minmax(6rem, auto)`;
 const titleTranslations = normalizeContactCopyTranslations(form?.titleTranslations ?? initialTitle, defaultLanguageCode, initialTitle);
 const descriptionTranslations = normalizeContactCopyTranslations(
 	form?.descriptionTranslations ?? initialDescription,
