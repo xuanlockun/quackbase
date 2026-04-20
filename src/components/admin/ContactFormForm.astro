@@ -6,7 +6,6 @@ import {
 	getSupportedLanguages,
 	getUiTranslations,
 	localizeAdminHref,
-	normalizeLocalizedText,
 	type LocalizedText,
 } from "../../lib/i18n";
 
@@ -81,48 +80,57 @@ function normalizeContactCopyTranslations(
 	defaultLanguage: string,
 	fallbackValue = "",
 ): LocalizedText {
-	const normalized = normalizeLocalizedText(input, {
-		defaultLanguageCode: defaultLanguage,
-		fallbackValue,
-		requireDefault: false,
-	});
 	const cleaned: LocalizedText = {};
+	const appendValue = (code: string, value: unknown) => {
+		const normalized = normalizeContactCopyValue(value);
+		if (normalized) {
+			cleaned[code] = normalized;
+		}
+	};
 
-	for (const [code, value] of Object.entries(normalized)) {
-		const cleanedValue = normalizeContactCopyValue(value, defaultLanguage);
-		if (cleanedValue) {
-			cleaned[code] = cleanedValue;
+	if (typeof input === "string") {
+		const normalized = normalizeContactCopyValue(input);
+		if (normalized) {
+			cleaned[defaultLanguage] = normalized;
+		}
+	} else if (input && typeof input === "object" && !Array.isArray(input)) {
+		for (const [code, value] of Object.entries(input)) {
+			appendValue(code, value);
 		}
 	}
 
-	if (!cleaned[defaultLanguage]) {
-		const fallback = Object.values(cleaned).find((value) => typeof value === "string" && value.trim());
-		if (typeof fallback === "string" && fallback.trim()) {
-			cleaned[defaultLanguage] = fallback.trim();
-		}
+	if (!cleaned[defaultLanguage] && fallbackValue.trim()) {
+		cleaned[defaultLanguage] = fallbackValue.trim();
 	}
 
 	return cleaned;
 }
 
-function normalizeContactCopyValue(value: string, defaultLanguage: string): string {
+function normalizeContactCopyValue(value: unknown): string {
 	const trimmed = typeof value === "string" ? value.trim() : "";
 	if (!trimmed) {
 		return "";
 	}
 
-	if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+	if (
+		(trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+		(trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+		(trimmed.startsWith("\"") && trimmed.endsWith("\""))
+	) {
 		try {
 			const parsed = JSON.parse(trimmed);
+			if (typeof parsed === "string") {
+				return parsed.trim();
+			}
 			if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-				const nested = normalizeLocalizedText(parsed, {
-					defaultLanguageCode: defaultLanguage,
-					requireDefault: false,
-				});
-				return nested[defaultLanguage]?.trim() || Object.values(nested).find((entry) => entry.trim())?.trim() || trimmed;
+				const values = Object.values(parsed)
+					.filter((entry): entry is string => typeof entry === "string")
+					.map((entry) => entry.trim())
+					.filter(Boolean);
+				return values[0] ?? trimmed;
 			}
 		} catch {
-			// Fall back to the original string below.
+			// Ignore parse errors and return the original string below.
 		}
 	}
 
