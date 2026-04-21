@@ -20,6 +20,11 @@
 	--surface-muted: #f7f9fc;
 	--surface-hover: #eef4ff;
 	--surface-selected: #e6f0ff;
+	--motion-fast: 120ms;
+	--motion-base: 180ms;
+	--motion-slow: 240ms;
+	--motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+	--motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
 }
 
 body {
@@ -29,6 +34,13 @@ body {
 	background: var(--body-bg);
 	color: var(--text-color);
 	min-height: 100vh;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	body.admin-app .admin-workspace,
+	body.admin-app .admin-page-frame {
+		animation: admin-page-enter var(--motion-base) var(--motion-ease-standard) both;
+	}
 }
 
 a {
@@ -582,7 +594,10 @@ body.admin-app .localized-editor-panel input[type="hidden"] {
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	cursor: pointer;
-	transition: transform 0.15s ease, box-shadow 0.15s ease;
+	transition:
+		transform var(--motion-fast) var(--motion-ease-out),
+		box-shadow var(--motion-fast) var(--motion-ease-out),
+		opacity var(--motion-fast) var(--motion-ease-out);
 }
 
 .admin-primary-button:disabled {
@@ -617,6 +632,14 @@ body.admin-app .localized-editor-panel input[type="hidden"] {
 	letter-spacing: 0.06em;
 	background: #eef1f5;
 	color: rgba(15, 23, 42, 0.66);
+}
+
+.admin-table tbody tr {
+	transition: background-color var(--motion-fast) var(--motion-ease-out), transform var(--motion-fast) var(--motion-ease-out);
+}
+
+.admin-table tbody td {
+	transition: background-color var(--motion-fast) var(--motion-ease-out), color var(--motion-fast) var(--motion-ease-out);
 }
 
 .admin-table-surface,
@@ -1550,6 +1573,63 @@ body.admin-app .btn-primary:focus-visible {
 	border-color: #1f649c;
 }
 
+body.admin-app .btn,
+body.admin-app .nav-link,
+body.admin-app .form-control,
+body.admin-app .form-select,
+body.admin-app .dropdown-menu,
+body.admin-app .admin-icon-action,
+body.admin-app .admin-create-action,
+body.admin-app .admin-ghost-button {
+	transition:
+		transform var(--motion-fast) var(--motion-ease-out),
+		background-color var(--motion-fast) var(--motion-ease-out),
+		border-color var(--motion-fast) var(--motion-ease-out),
+		box-shadow var(--motion-fast) var(--motion-ease-out),
+		color var(--motion-fast) var(--motion-ease-out),
+		opacity var(--motion-fast) var(--motion-ease-out);
+}
+
+body.admin-app .btn:hover,
+body.admin-app .btn:focus-visible,
+body.admin-app .admin-ghost-button:hover,
+body.admin-app .admin-ghost-button:focus-visible,
+body.admin-app .admin-create-action:hover,
+body.admin-app .admin-create-action:focus-visible,
+body.admin-app .admin-icon-action:hover,
+body.admin-app .admin-icon-action:focus-visible,
+body.admin-app .nav-link:hover,
+body.admin-app .nav-link:focus-visible {
+	transform: translateY(-1px);
+}
+
+body.admin-app .btn:active,
+body.admin-app .admin-ghost-button:active,
+body.admin-app .admin-create-action:active,
+body.admin-app .admin-icon-action:active,
+body.admin-app .nav-link:active {
+	transform: translateY(0);
+}
+
+body.admin-app .btn:disabled,
+body.admin-app .admin-ghost-button:disabled,
+body.admin-app .admin-create-action:disabled,
+body.admin-app .admin-icon-action:disabled {
+	transform: none;
+}
+
+body.admin-app .admin-sidebar .nav-link:hover,
+body.admin-app .admin-sidebar .nav-link:focus-visible,
+body.admin-app .admin-sidebar-links .nav-link:hover,
+body.admin-app .admin-sidebar-links .nav-link:focus-visible {
+	transform: translateX(2px);
+}
+
+body.admin-app .admin-sidebar .nav-link:active,
+body.admin-app .admin-sidebar-links .nav-link:active {
+	transform: translateX(1px);
+}
+
 body.admin-app .btn-outline-secondary {
 	border-color: rgba(15, 23, 42, 0.16);
 	color: #334155;
@@ -1629,6 +1709,23 @@ body.admin-app .badge.bg-info {
 	background: var(--feedback-info-bg) !important;
 	border: 1px solid var(--feedback-info-border);
 	color: var(--feedback-info-ink) !important;
+}
+
+body.admin-app .table-hover > tbody > tr:hover > * {
+	background-color: rgba(35, 55, 255, 0.04);
+}
+
+body.admin-app .table > tbody > tr[data-selected="true"] > *,
+body.admin-app .table > tbody > tr[aria-selected="true"] > *,
+body.admin-app .table > tbody > tr.table-active > * {
+	background-color: var(--surface-selected);
+}
+
+body.admin-app .table-hover > tbody > tr:hover td:first-child,
+body.admin-app .table > tbody > tr[data-selected="true"] td:first-child,
+body.admin-app .table > tbody > tr[aria-selected="true"] td:first-child,
+body.admin-app .table > tbody > tr.table-active td:first-child {
+	box-shadow: inset 2px 0 0 rgba(35, 55, 255, 0.45);
 }
 
 body.admin-app .badge.bg-primary-subtle {
@@ -1848,6 +1945,26 @@ body.admin-app .modal-backdrop.show {
 	backdrop-filter: blur(4px);
 }
 
+body.admin-app .dropdown-menu {
+	display: block;
+	opacity: 0;
+	transform: translateY(-0.35rem) scale(0.985);
+	transform-origin: top right;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+body.admin-app .dropdown-menu.show {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+	visibility: visible;
+	pointer-events: auto;
+}
+
+body.admin-app .dropdown-menu.shadow {
+	box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12) !important;
+}
+
 @keyframes admin-modal-enter {
 	from {
 		opacity: 0;
@@ -1856,6 +1973,34 @@ body.admin-app .modal-backdrop.show {
 	to {
 		opacity: 1;
 		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes admin-page-enter {
+	from {
+		opacity: 0;
+		transform: translateY(0.35rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes admin-feedback-appear {
+	from {
+		opacity: 0;
+		transform: translateY(-0.25rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes admin-button-spin {
+	to {
+		transform: rotate(360deg);
 	}
 }
 
@@ -1897,6 +2042,33 @@ body.admin-app .admin-feedback-modal-spinner-wrap {
 	align-items: center;
 	justify-content: flex-start;
 	color: var(--accent);
+}
+
+body.admin-app .admin-notice,
+body.admin-app .alert,
+body.admin-app .invalid-feedback {
+	animation: admin-feedback-appear var(--motion-base) var(--motion-ease-out) both;
+}
+
+body.admin-app button[data-admin-loading="true"],
+body.admin-app input[type="submit"][data-admin-loading="true"] {
+	cursor: progress;
+	opacity: 0.88;
+	pointer-events: none;
+}
+
+body.admin-app button[data-admin-loading="true"]::after,
+body.admin-app input[type="submit"][data-admin-loading="true"]::after {
+	content: "";
+	display: inline-block;
+	width: 0.75rem;
+	height: 0.75rem;
+	margin-left: 0.5rem;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 999px;
+	vertical-align: -0.1em;
+	animation: admin-button-spin 0.7s linear infinite;
 }
 
 body.admin-app [data-admin-feedback-modal][data-feedback-tone="info"] .admin-feedback-modal-header {
@@ -2012,6 +2184,40 @@ body.admin-app [data-admin-confirm-modal] .btn-danger:hover,
 body.admin-app [data-admin-confirm-modal] .btn-danger:focus-visible {
 	background: #95211a;
 	border-color: #95211a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.admin-app .admin-workspace,
+	body.admin-app .admin-page-frame,
+	body.admin-app .admin-notice,
+	body.admin-app .alert,
+	body.admin-app .invalid-feedback,
+	body.admin-app .btn,
+	body.admin-app .nav-link,
+	body.admin-app .form-control,
+	body.admin-app .form-select,
+	body.admin-app .dropdown-menu,
+	body.admin-app .admin-icon-action,
+	body.admin-app .admin-create-action,
+	body.admin-app .admin-ghost-button,
+	body.admin-app .table tbody tr,
+	body.admin-app .table tbody td {
+		animation: none !important;
+		transition: none !important;
+	}
+
+	body.admin-app .btn:hover,
+	body.admin-app .btn:focus-visible,
+	body.admin-app .admin-ghost-button:hover,
+	body.admin-app .admin-ghost-button:focus-visible,
+	body.admin-app .admin-create-action:hover,
+	body.admin-app .admin-create-action:focus-visible,
+	body.admin-app .admin-icon-action:hover,
+	body.admin-app .admin-icon-action:focus-visible,
+	body.admin-app .nav-link:hover,
+	body.admin-app .nav-link:focus-visible {
+		transform: none;
+	}
 }
 
 @media (max-width: 991px) {

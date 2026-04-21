@@ -240,6 +240,33 @@ const expandLabel = "Expand sidebar";
 					}
 				});
 			});
+
+			document.addEventListener("submit", (event) => {
+				const form = event.target;
+				if (!(form instanceof HTMLFormElement)) {
+					return;
+				}
+
+				if (!form.matches("form[method='post']")) {
+					return;
+				}
+
+				if (form.matches("[data-admin-confirm-form], [data-translation-form], [data-no-admin-loading]")) {
+					return;
+				}
+
+				const submitButton =
+					form.querySelector("button[type='submit']:not([disabled]), input[type='submit']:not([disabled])") ??
+					form.querySelector("button[type='submit'], input[type='submit']");
+
+				if (submitButton instanceof HTMLElement) {
+					submitButton.dataset.adminLoading = "true";
+					submitButton.setAttribute("aria-busy", "true");
+					if (submitButton instanceof HTMLButtonElement || submitButton instanceof HTMLInputElement) {
+						submitButton.disabled = true;
+					}
+				}
+			});
 		</script>
 	</body>
 </html>

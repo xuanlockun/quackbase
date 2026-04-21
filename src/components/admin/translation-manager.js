@@ -110,12 +110,16 @@
 			return;
 		}
 
+		setSubmitLoading(true);
+
 		try {
 			await createEntry(payload);
 			showNotice(editingKey ? messages.updateSuccess : messages.createSuccess, "success");
 			resetForm();
 		} catch (error) {
 			showNotice(handleError(error), "danger");
+		} finally {
+			setSubmitLoading(false);
 		}
 	});
 
@@ -235,6 +239,15 @@
 			return;
 		}
 		submitButton.textContent = mode === "edit" ? texts.saveButton : texts.addButton;
+	}
+
+	function setSubmitLoading(isLoading) {
+		if (!(submitButton instanceof HTMLButtonElement)) {
+			return;
+		}
+		submitButton.dataset.adminLoading = isLoading ? "true" : "";
+		submitButton.disabled = isLoading;
+		submitButton.setAttribute("aria-busy", isLoading ? "true" : "false");
 	}
 
 	function showNotice(text, variant = "success") {
