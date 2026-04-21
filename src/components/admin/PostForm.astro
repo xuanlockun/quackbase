@@ -72,7 +72,7 @@ const backIcon = `
 
 {loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
 
-<form class="admin-form-shell" method="post" action={action}>
+<form class="admin-form-shell admin-compact-form" method="post" action={action}>
 	{mode === "edit" && post && <input type="hidden" name="id" value={post.id} />}
 	<div class="admin-form-surface">
 		<div class="admin-form-grid">

@@ -7,6 +7,7 @@ import { listContactForms } from "../../lib/contact-forms";
 import { countFormSubmissionsByContactFormId } from "../../lib/forms";
 import ContactFormTable from "../../components/admin/ContactFormTable.astro";
 import CreateAction from "../../components/admin/CreateAction.astro";
+import FeedbackModal from "../../components/admin/FeedbackModal.astro";
 import { getUiTranslations } from "../../lib/i18n";
 
 const session = Astro.locals.adminSession;
@@ -88,6 +89,7 @@ const statCards = [
 		{canManage && <CreateAction href="/admin/contact-forms/new" label={t("actions.createContactForm")} />}
 	</div>
 
+	<FeedbackModal id="contact-forms-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
 		<div class="contact-forms-stats">
 			{statCards.map((card) => (
@@ -100,10 +102,6 @@ const statCards = [
 				</div>
 			))}
 		</div>
-		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.contactFormCreated")}</p>}
-		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.contactFormSaved")}</p>}
-		{Astro.url.searchParams.get("deleted") && <p class="alert alert-info mb-0">{t("messages.contactFormDeleted")}</p>}
-		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.contactFormRequestFailed")}</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 
 		<ContactFormTable forms={forms} canUpdate={canManage} canDelete={canManage} canViewLeads={canView} submissionCounts={submissionCounts} />
@@ -114,14 +112,14 @@ const statCards = [
 	.contact-forms-stats {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-		gap: 0.75rem;
+		gap: 0.6rem;
 	}
 
 	.contact-forms-stat-card {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
-		padding: 0.85rem 0.95rem;
+		gap: 0.65rem;
+		padding: 0.75rem 0.85rem;
 		border: 1px solid color-mix(in srgb, var(--stat-accent, #4f7cff) 18%, rgba(var(--gray), 0.14));
 		background:
 			linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96)),
@@ -132,31 +130,52 @@ const statCards = [
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 2rem;
-		height: 2rem;
+		width: 1.8rem;
+		height: 1.8rem;
 		border: 1px solid color-mix(in srgb, var(--stat-accent, #4f7cff) 28%, rgba(var(--gray), 0.16));
-		border-radius: 0.7rem;
+		border-radius: 0.6rem;
 		flex: 0 0 auto;
 		color: var(--stat-accent, #4f7cff);
 		background: color-mix(in srgb, var(--stat-accent-soft, rgba(79, 124, 255, 0.12)) 72%, white);
 	}
 
 	.contact-forms-stat-icon svg {
-		width: 1rem;
-		height: 1rem;
+		width: 0.95rem;
+		height: 0.95rem;
 	}
 
 	.contact-forms-stat-label {
-		font-size: 0.72rem;
+		font-size: 0.7rem;
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
 		color: rgba(15, 23, 42, 0.6);
 	}
 
 	.contact-forms-stat-value {
-		margin-top: 0.15rem;
-		font-size: 1.1rem;
+		margin-top: 0.1rem;
+		font-size: 1.05rem;
 		font-weight: 600;
 		line-height: 1.1;
 	}
 </style>
+
+<script type="module">
+	const showFeedbackModal = window.showAdminFeedbackModal;
+	const search = new URLSearchParams(window.location.search);
+	const feedbackMap = [
+		["created", { title: "Form created", message: t("messages.contactFormCreated", "The contact form was created successfully.") }],
+		["saved", { title: "Form saved", message: t("messages.contactFormSaved", "The contact form was saved successfully.") }],
+		["deleted", { title: "Form deleted", message: t("messages.contactFormDeleted", "The contact form was deleted.") }],
+		["error", { title: "Action failed", message: t("messages.contactFormRequestFailed", "The contact form request failed.") }],
+	];
+
+	for (const [key, entry] of feedbackMap) {
+		if (search.has(key)) {
+			if (typeof showFeedbackModal === "function") {
+				showFeedbackModal({ title: entry.title, message: entry.message });
+			}
+			window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+			break;
+		}
+	}
+</script>

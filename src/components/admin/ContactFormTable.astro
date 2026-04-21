@@ -23,7 +23,7 @@ const { t } = getUiTranslations(Astro);
 			<p class="mb-0 admin-muted">{t("messages.manageContactForms")}</p>
 		</div>
 	) : (
-		<div class="admin-table-surface table-responsive">
+		<div class="admin-table-surface admin-compact-table table-responsive">
 			<table class="table table-sm table-hover align-middle mb-0">
 				<thead>
 					<tr>
@@ -43,7 +43,7 @@ const { t } = getUiTranslations(Astro);
 									<strong>{form.title}</strong>
 								</td>
 								<td>
-									<span class="text-muted small">{form.description || "â€”"}</span>
+									<span class="text-muted small lh-sm">{form.description || "â€”"}</span>
 								</td>
 								<td>
 									<span class="badge text-bg-light">{submissionCounts[form.id] ?? 0}</span>

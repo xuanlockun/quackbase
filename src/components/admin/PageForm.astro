@@ -104,7 +104,7 @@ const initialContactFields = [];
 
 {loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
 
-<form class="admin-form-shell" method="post" action={action}>
+<form class="admin-form-shell admin-compact-form" method="post" action={action}>
 	{mode === "edit" && page && <input type="hidden" name="id" value={page.id} />}
 	<div class="admin-form-surface">
 		<div class="admin-form-grid">
@@ -260,7 +260,7 @@ const initialContactFields = [];
 		<input type="hidden" name="pageSectionsConfig" data-page-sections-config value={JSON.stringify(initialSections)} />
 
 		<div class="table-responsive">
-			<table class="table admin-sections-table mb-0">
+				<table class="table admin-sections-table admin-compact-table mb-0">
 				<thead>
 					<tr>
 						<th></th>

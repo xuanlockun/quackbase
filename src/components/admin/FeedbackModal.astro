@@ -1,0 +1,68 @@
+---
+interface Props {
+	id: string;
+	title?: string;
+	closeLabel?: string;
+}
+
+const { id, title = "Status update", closeLabel = "Close" } = Astro.props;
+---
+
+<div class="modal fade" id={id} tabindex="-1" aria-hidden="true" data-admin-feedback-modal>
+	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+		<div class="modal-content border-0 shadow-sm">
+			<div class="modal-header py-2 px-3">
+				<h2 class="modal-title h6 mb-0" data-feedback-modal-title>{title}</h2>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label={closeLabel}></button>
+			</div>
+			<div class="modal-body px-3 py-3">
+				<p class="mb-1 fw-medium" data-feedback-modal-message></p>
+				<p class="mb-0 small text-muted" data-feedback-modal-detail hidden></p>
+			</div>
+			<div class="modal-footer py-2 px-3 border-0">
+				<button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">{closeLabel}</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script is:inline define:vars={{ modalId: id }}>
+	(() => {
+		const getModalElement = () => document.getElementById(modalId);
+
+		const showAdminFeedbackModal = ({ title, message, detail } = {}) => {
+			const modalEl = getModalElement();
+			if (!(modalEl instanceof HTMLElement)) {
+				return;
+			}
+
+			const titleEl = modalEl.querySelector("[data-feedback-modal-title]");
+			const messageEl = modalEl.querySelector("[data-feedback-modal-message]");
+			const detailEl = modalEl.querySelector("[data-feedback-modal-detail]");
+
+			if (titleEl instanceof HTMLElement) {
+				titleEl.textContent = title || titleEl.textContent || "Status update";
+			}
+			if (messageEl instanceof HTMLElement) {
+				messageEl.textContent = message || "";
+			}
+			if (detailEl instanceof HTMLElement) {
+				if (detail) {
+					detailEl.textContent = detail;
+					detailEl.hidden = false;
+				} else {
+					detailEl.textContent = "";
+					detailEl.hidden = true;
+				}
+			}
+
+			const bootstrap = window.bootstrap;
+			if (bootstrap?.Modal) {
+				const instance = bootstrap.Modal.getOrCreateInstance(modalEl);
+				instance.show();
+			}
+		};
+
+		window.showAdminFeedbackModal = showAdminFeedbackModal;
+	})();
+</script>

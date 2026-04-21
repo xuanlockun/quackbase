@@ -6,6 +6,7 @@ import { SITE_TITLE } from "../../consts";
 import { getDb, getSiteConfig } from "../../lib/blog";
 import { getUiTranslations } from "../../lib/i18n";
 import { listAdminSecrets, type AdminSecretRecord } from "../../lib/secrets";
+import FeedbackModal from "../../components/admin/FeedbackModal.astro";
 import SecretsManager from "../../components/admin/SecretsManager.astro";
 
 const session = Astro.locals.adminSession;
@@ -57,16 +58,8 @@ const formDisabled = Boolean(loadError);
 	pageTitle={t("nav.settings")}
 	pageDescription={t("messages.settingsHub")}
 >
+	<FeedbackModal id="admin-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("siteSaved") && <p class="alert alert-success mb-0">{t("messages.siteSettingsSaved")}</p>}
-		{Astro.url.searchParams.get("siteError") && <p class="alert alert-danger mb-0">{t("messages.siteSettingsFailed")}</p>}
-		{Astro.url.searchParams.get("secretSaved") && <p class="alert alert-success mb-0">{t("messages.secretSaved")}</p>}
-		{Astro.url.searchParams.get("secretDeleted") && <p class="alert alert-info mb-0">{t("messages.secretDeleted")}</p>}
-		{Astro.url.searchParams.get("secretError") && <p class="alert alert-danger mb-0">{t("messages.secretRequestFailed")}</p>}
-		{Astro.url.searchParams.get("mediaSaved") && <p class="alert alert-success mb-0">Media storage settings saved.</p>}
-		{Astro.url.searchParams.get("mediaError") && (
-			<p class="alert alert-danger mb-0">{Astro.url.searchParams.get("mediaError")}</p>
-		)}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 		<div class="admin-form-surface settings-tabs-shell">
 			<ul class="nav nav-tabs flex-wrap gap-1 border-bottom px-3 pt-3" role="tablist" aria-label="Admin settings sections" data-settings-tablist>
@@ -106,7 +99,7 @@ const formDisabled = Boolean(loadError);
 			</ul>
 			<div class="p-3 p-lg-4">
 				<section role="tabpanel" data-settings-panel="site">
-					<form method="post" action="/api/admin/site" class="admin-form-shell mb-0">
+					<form method="post" action="/api/admin/site" class="admin-form-shell admin-compact-form mb-0">
 						<input type="hidden" name="successRedirectTo" value="/admin/settings?siteSaved=1" />
 						<input type="hidden" name="errorRedirectTo" value="/admin/settings?siteError=1" />
 						<div class="admin-grid-two">
@@ -122,7 +115,7 @@ const formDisabled = Boolean(loadError);
 				</section>
 
 				<section class="d-none" role="tabpanel" data-settings-panel="media">
-					<form method="post" action="/api/admin/media/settings" class="admin-form-shell mb-0" data-media-settings-form>
+					<form method="post" action="/api/admin/media/settings" class="admin-form-shell admin-compact-form mb-0" data-media-settings-form>
 						<div class="admin-form-surface">
 							<div class="admin-surface-header mb-3">
 								<div>
@@ -264,7 +257,6 @@ const formDisabled = Boolean(loadError);
 										Save media settings
 									</button>
 								</div>
-								<p class="admin-inline-muted mb-0 mt-2" data-media-settings-status aria-live="polite"></p>
 							</div>
 						</div>
 					</form>
@@ -278,14 +270,14 @@ const formDisabled = Boolean(loadError);
 	</div>
 </AdminLayout>
 
-<script type="module">
+<script type="module" define:vars={{ loadError }}>
 	const tablist = document.querySelector("[data-settings-tablist]");
 	const tabButtons = tablist?.querySelectorAll("[data-settings-tab]");
 	const panels = document.querySelectorAll("[data-settings-panel]");
 	const form = document.querySelector("[data-media-settings-form]");
-	const status = form?.querySelector("[data-media-settings-status]");
 	const testButton = form?.querySelector("[data-media-test-button]");
 	const toggleButtons = form?.querySelectorAll("[data-media-secret-toggle]");
+	const showFeedbackModal = window.showAdminFeedbackModal;
 
 	const setActiveTab = (tabName) => {
 		tabButtons?.forEach((button) => {
@@ -322,22 +314,44 @@ const formDisabled = Boolean(loadError);
 
 	setActiveTab("site");
 
-	if (
-		form instanceof HTMLFormElement &&
-		status instanceof HTMLElement &&
-		testButton instanceof HTMLButtonElement
-	) {
-		const setStatus = (message, isError = false) => {
-			status.textContent = message;
-			status.classList.toggle("text-danger", isError);
-			status.classList.toggle("text-success", !isError);
-		};
+	const showModal = (title, message, detail = "") => {
+		if (typeof showFeedbackModal === "function") {
+			showFeedbackModal({ title, message, detail });
+		}
+	};
+
+	const showFromQuery = () => {
+		const search = new URLSearchParams(window.location.search);
+		const feedbackMap = [
+			["siteError", { title: "Settings failed", message: t("messages.siteSettingsFailed", "Site settings could not be saved.") }],
+			["siteSaved", { title: "Settings saved", message: t("messages.siteSettingsSaved", "Site settings were saved successfully.") }],
+			["secretError", { title: "Secret failed", message: t("messages.secretRequestFailed", "The secret request failed.") }],
+			["secretDeleted", { title: "Secret deleted", message: t("messages.secretDeleted", "The secret was removed.") }],
+			["secretSaved", { title: "Secret saved", message: t("messages.secretSaved", "The secret was stored successfully.") }],
+			["mediaError", { title: "Connection failed", message: search.get("mediaError") || "Media storage settings could not be saved." }],
+			["mediaSaved", { title: "Settings saved", message: "Media storage settings were saved successfully." }],
+		];
+
+		for (const [key, entry] of feedbackMap) {
+			if (search.has(key)) {
+				showModal(entry.title, entry.message);
+				window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+				break;
+			}
+		}
+	};
+
+	showFromQuery();
+	if (loadError) {
+		showModal("Settings load failed", loadError);
+	}
+
+	if (form instanceof HTMLFormElement && testButton instanceof HTMLButtonElement) {
 
 		testButton.addEventListener("click", async () => {
 			const payload = new FormData(form);
 			payload.set("intent", "test");
 			testButton.disabled = true;
-			setStatus("Testing media storage connection...");
 
 			try {
 				const response = await fetch(form.action, {
@@ -355,9 +369,9 @@ const formDisabled = Boolean(loadError);
 					throw new Error(data?.error || "Media storage connection test failed.");
 				}
 
-				setStatus(data.message || "Media storage connection succeeded.");
+				showModal("Connection successful", data.message || "Media storage connection succeeded.");
 			} catch (error) {
-				setStatus(error instanceof Error ? error.message : "Media storage connection test failed.", true);
+				showModal("Connection failed", error instanceof Error ? error.message : "Media storage connection test failed.");
 			} finally {
 				testButton.disabled = false;
 			}

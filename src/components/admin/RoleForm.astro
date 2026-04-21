@@ -45,7 +45,7 @@ const backIcon = `
 
 {loadError && <p class="admin-notice admin-notice-error">{loadError}</p>}
 
-<form class="admin-form-shell" method="post" action={action}>
+<form class="admin-form-shell admin-compact-form" method="post" action={action}>
 	<div class="admin-form-surface">
 		<div class="admin-form-grid">
 			<label>
@@ -103,12 +103,12 @@ const backIcon = `
 
 <style>
 	.admin-permission-grid {
-		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 	}
 
 	.admin-permission-item {
 		align-items: flex-start;
-		padding: 0.8rem 0.9rem;
+		padding: 0.7rem 0.8rem;
 	}
 
 	.admin-permission-item > span {
