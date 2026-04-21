@@ -66,7 +66,8 @@ export async function sendSmtpEmail(settings: SmtpSettings, message: EmailMessag
 		throw new Error("At least one email recipient is required.");
 	}
 
-	let socket = await connectToSmtp(smtp, smtp.encryption === "ssl");
+	const transport = smtp.encryption === "ssl" ? "on" : "starttls";
+	let socket = await connectToSmtp(smtp, transport);
 	try {
 		const reader = socket.readable.pipeThrough(new TextDecoderStream()).getReader();
 		const writer = socket.writable.getWriter();
@@ -115,11 +116,11 @@ async function sendSmtpEmailOverSocket(
 	await socket.close().catch(() => undefined);
 }
 
-async function connectToSmtp(settings: SmtpSettings, secure = false) {
+async function connectToSmtp(settings: SmtpSettings, transport: "off" | "on" | "starttls") {
 	return connect({
 		hostname: settings.host,
 		port: settings.port,
-		secureTransport: secure ? "on" : "off",
+		secureTransport: transport,
 		allowHalfOpen: false,
 	});
 }
