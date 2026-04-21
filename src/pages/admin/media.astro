@@ -278,6 +278,17 @@ const mediaFeedback = [
 	["folderCreated", { title: "Folder created", message: t("messages.folderCreated", "Folder created."), tone: "success" }],
 	["synced", { title: "Library refreshed", message: "Media library refreshed from bucket.", tone: "success" }],
 ] as const;
+const mediaActionCopy = {
+	renameTitle: t("actions.rename", "Rename file"),
+	moveTitle: t("actions.move", "Move file"),
+	renameMessage: t("messages.mediaRenameHelp", "Update the file name without changing the asset contents."),
+	moveMessage: t("messages.mediaMoveHelp", "Choose a destination folder for this asset."),
+	renameFieldLabel: t("labels.fileName", "File name"),
+	moveFieldLabel: t("labels.destinationFolder", "Destination folder"),
+	cancelLabel: t("actions.cancel", "Cancel"),
+	renameButtonLabel: t("actions.rename", "Rename"),
+	moveButtonLabel: t("actions.move", "Move"),
+} as const;
 ---
 
 <AdminLayout
@@ -316,7 +327,7 @@ const mediaFeedback = [
 			<div class="media-library-actions">
 				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="media-action-form media-action-form-upload">
 					<input type="hidden" name="folderPath" value={currentFolder} />
-					<label class="visually-hidden" for="mediaFiles">Upload files</label>
+					<label class="visually-hidden" for="mediaFiles">{t("actions.uploadFiles", "Upload files")}</label>
 					<input
 						id="mediaFiles"
 						class="form-control visually-hidden media-upload-input"
@@ -327,34 +338,34 @@ const mediaFeedback = [
 					/>
 					<label class:list={["btn btn-primary media-action-button", (!storageStatus.isConfigured || !canManage) && "disabled"]} for="mediaFiles">
 						<span class="media-action-button-icon" aria-hidden="true" set:html={uploadIcon}></span>
-						<span>Upload files</span>
+						<span>{t("actions.uploadFiles", "Upload files")}</span>
 					</label>
 				</form>
 
 				<form method="post" action="/api/admin/media/folders" class="media-action-form">
 					<input type="hidden" name="parentFolderPath" value={currentFolder} />
-					<label class="visually-hidden" for="folderName">Folder name</label>
+					<label class="visually-hidden" for="folderName">{t("labels.folderName", "Folder name")}</label>
 					<div class="media-inline-action">
 						<input
 							id="folderName"
 							class="form-control media-action-input"
 							type="text"
 							name="folderName"
-							placeholder={currentFolder ? "new-folder" : "images"}
+							placeholder={currentFolder ? t("messages.newFolderName", "new-folder") : t("messages.imagesFolderName", "images")}
 							disabled={!storageStatus.isConfigured || !canManage}
 						/>
 						<button class="btn btn-outline-secondary media-action-button" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
 							<span class="media-action-button-icon" aria-hidden="true" set:html={folderIcon}></span>
-							<span>New folder</span>
+							<span>{t("actions.newFolder", "New folder")}</span>
 						</button>
 					</div>
 				</form>
 
 				<form method="post" action="/api/admin/media/sync" class="media-action-form">
-					<label class="visually-hidden" for="syncBucket">Refresh media</label>
+					<label class="visually-hidden" for="syncBucket">{t("actions.refreshMedia", "Refresh media")}</label>
 					<button id="syncBucket" class="btn btn-outline-secondary media-action-button" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
 						<span class="media-action-button-icon" aria-hidden="true" set:html={refreshIcon}></span>
-						<span>Refresh</span>
+						<span>{t("actions.refresh", "Refresh")}</span>
 					</button>
 				</form>
 			</div>
@@ -363,8 +374,8 @@ const mediaFeedback = [
 		<div class="media-library-layout">
 			<aside class="media-folder-panel admin-form-surface">
 				<div class="d-flex align-items-center justify-content-between gap-2 mb-3">
-					<h2 class="h6 mb-0">Folders</h2>
-					<span class="text-body-secondary small">{folderEntries.length} folders</span>
+					<h2 class="h6 mb-0">{t("labels.folders", "Folders")}</h2>
+					<span class="text-body-secondary small">{folderEntries.length} {t("labels.folders", "folders")}</span>
 				</div>
 				<nav class="media-folder-list" aria-label="Media folders">
 					<a class:list={["media-folder-item", !currentFolder ? "is-active" : ""]} href={buildFolderHref("", currentView)}>
@@ -373,7 +384,7 @@ const mediaFeedback = [
 						<span class="media-folder-count">{allAssets.length}</span>
 					</a>
 					{folderEntries.length === 0 ? (
-						<p class="text-body-secondary small mb-0">No folders yet.</p>
+						<p class="text-body-secondary small mb-0">{t("messages.noFoldersYet", "No folders yet.")}</p>
 					) : (
 						folderEntries.map((folder) => (
 							<a
@@ -391,7 +402,7 @@ const mediaFeedback = [
 			</aside>
 
 			<section class="media-content-panel admin-form-surface">
-				<nav class="media-breadcrumbs" aria-label="Breadcrumb">
+				<nav class="media-breadcrumbs" aria-label={t("labels.breadcrumb", "Breadcrumb")}>
 					{breadcrumbs.map((crumb, index) => (
 						<>
 							{index > 0 && <span class="media-breadcrumb-separator" aria-hidden="true">/</span>}
@@ -408,18 +419,18 @@ const mediaFeedback = [
 
 				<div class="media-content-header">
 					<div class="min-w-0">
-						<h2 class="h5 mb-1 text-break">{folderTitle}</h2>
-						<p class="admin-inline-muted mb-0">
-							{visibleAssets.length} files, {childFolderEntries.length} folders
-						</p>
-					</div>
-					<div class="d-flex flex-wrap gap-2 align-items-center">
-						<div class="btn-group btn-group-sm" role="group" aria-label="View mode">
+								<h2 class="h5 mb-1 text-break">{folderTitle}</h2>
+								<p class="admin-inline-muted mb-0">
+							{visibleAssets.length} {t("labels.files", "files")}, {childFolderEntries.length} {t("labels.folders", "folders")}
+								</p>
+							</div>
+							<div class="d-flex flex-wrap gap-2 align-items-center">
+						<div class="btn-group btn-group-sm" role="group" aria-label={t("labels.viewMode", "View mode")}>
 							<a class:list={["btn", currentView === "grid" ? "btn-primary" : "btn-outline-secondary"]} href={buildFolderHref(currentFolder, "grid")}>
-								Grid
+								{t("labels.grid", "Grid")}
 							</a>
 							<a class:list={["btn", currentView === "list" ? "btn-primary" : "btn-outline-secondary"]} href={buildFolderHref(currentFolder, "list")}>
-								List
+								{t("labels.list", "List")}
 							</a>
 						</div>
 					</div>
@@ -429,18 +440,18 @@ const mediaFeedback = [
 					<input type="hidden" name="currentFolder" value={currentFolder} />
 					<input type="hidden" name="assetIds" value="" data-media-selected-ids />
 					<div class="media-selection-summary">
-						<strong><span data-media-selected-count>0</span> selected</strong>
-						<button class="btn btn-link btn-sm p-0" type="button" data-media-clear-selection>Clear</button>
+						<strong><span data-media-selected-count>0</span> {t("messages.selected", "selected")}</strong>
+						<button class="btn btn-link btn-sm p-0" type="button" data-media-clear-selection>{t("actions.clear", "Clear")}</button>
 					</div>
 					<div class="media-selection-actions">
-						<select class="form-select form-select-sm" name="folderPath" aria-label="Move selected files to folder" disabled={!storageStatus.isConfigured || !canManage}>
-							<option value="">Root</option>
+						<select class="form-select form-select-sm" name="folderPath" aria-label={t("actions.moveSelectedFiles", "Move selected files to folder")} disabled={!storageStatus.isConfigured || !canManage}>
+							<option value="">{t("labels.root", "Root")}</option>
 							{folderOptions.map((folder) => (
 								<option value={folder.folderPath}>{formatFolderLabel(folder.folderPath)}</option>
 							))}
 						</select>
 						<button class="btn btn-sm btn-outline-secondary" type="submit" name="_intent" value="bulk-move" disabled={!storageStatus.isConfigured || !canManage}>
-							Move selected
+							{t("actions.moveSelected", "Move selected")}
 						</button>
 						<button
 							class="btn btn-sm btn-outline-danger"
@@ -449,12 +460,12 @@ const mediaFeedback = [
 							value="bulk-delete"
 							disabled={!storageStatus.isConfigured || !canManage}
 							data-admin-confirm-form
-							data-confirm-title="Delete selected files?"
-							data-confirm-message="The selected files will be removed from the media library."
+							data-confirm-title={t("messages.deleteSelectedFilesTitle", "Delete selected files?")}
+							data-confirm-message={t("messages.deleteSelectedFilesBody", "The selected files will be removed from the media library.")}
 							data-confirm-confirm-label={t("actions.delete")}
 							data-confirm-tone="danger"
 						>
-							Delete selected
+							{t("actions.deleteSelected", "Delete selected")}
 						</button>
 					</div>
 				</form>
@@ -462,22 +473,22 @@ const mediaFeedback = [
 				{loadError ? (
 					<div class="media-empty-state">
 						<span class="media-empty-state-icon" aria-hidden="true" set:html={fileIcon}></span>
-						<h3 class="h6 mb-1">Media could not be loaded.</h3>
+						<h3 class="h6 mb-1">{t("messages.mediaCouldNotBeLoaded", "Media could not be loaded.")}</h3>
 						<p class="mb-0 text-body-secondary">{loadError}</p>
 					</div>
 				) : (
 					<>
 						<section class="media-folder-section">
 							<div class="media-section-heading">
-								<h3 class="h6 mb-0">Folders</h3>
-								<span class="small text-body-secondary">{childFolderEntries.length} subfolders</span>
+								<h3 class="h6 mb-0">{t("labels.folders", "Folders")}</h3>
+								<span class="small text-body-secondary">{childFolderEntries.length} {t("labels.subfolders", "subfolders")}</span>
 							</div>
 							{childFolderEntries.length === 0 ? (
 								<div class="media-empty-state media-empty-state-inline">
 									<span class="media-empty-state-icon" aria-hidden="true" set:html={folderIcon}></span>
 									<div>
-										<h3 class="h6 mb-1">No subfolders yet</h3>
-										<p class="mb-0 text-body-secondary">Create a folder to keep files grouped together.</p>
+								<h3 class="h6 mb-1">{t("messages.noSubfoldersYet", "No subfolders yet")}</h3>
+								<p class="mb-0 text-body-secondary">{t("messages.createFolderHint", "Create a folder to keep files grouped together.")}</p>
 									</div>
 								</div>
 							) : currentView === "list" ? (
@@ -521,8 +532,8 @@ const mediaFeedback = [
 								<div class="media-empty-state">
 									<span class="media-empty-state-icon" aria-hidden="true" set:html={fileIcon}></span>
 									<div>
-										<h3 class="h6 mb-1">Empty folder</h3>
-										<p class="mb-0 text-body-secondary">Upload files or create a subfolder.</p>
+									<h3 class="h6 mb-1">{t("messages.emptyFolder", "Empty folder")}</h3>
+									<p class="mb-0 text-body-secondary">{t("messages.uploadOrCreateSubfolder", "Upload files or create a subfolder.")}</p>
 									</div>
 								</div>
 							) : currentView === "list" ? (
@@ -533,12 +544,12 @@ const mediaFeedback = [
 												<th class="media-select-col">
 													<span class="visually-hidden">Select</span>
 												</th>
-												<th class="media-preview-col">Preview</th>
-												<th>Name</th>
-												<th>Type</th>
-												<th>Size</th>
-												<th>Updated</th>
-												<th class="media-action-col">Actions</th>
+											<th class="media-preview-col">{t("labels.preview", "Preview")}</th>
+											<th>{t("labels.name", "Name")}</th>
+											<th>{t("labels.type", "Type")}</th>
+											<th>{t("labels.size", "Size")}</th>
+											<th>{t("labels.updated", "Updated")}</th>
+											<th class="media-action-col">{t("labels.action", "Actions")}</th>
 											</tr>
 										</thead>
 										<tbody>
@@ -585,13 +596,13 @@ const mediaFeedback = [
 																	data-bs-toggle="dropdown"
 																	aria-expanded="false"
 																>
-																	<span class="visually-hidden">Media actions</span>
+																	<span class="visually-hidden">{t("labels.mediaActions", "Media actions")}</span>
 																	<span aria-hidden="true" class="media-more-icon" set:html={moreIcon}></span>
 																</button>
 																<ul class="dropdown-menu dropdown-menu-end">
 																	<li>
 																		<a class="dropdown-item" href={previewUrl} target="_blank" rel="noopener noreferrer">
-																			View
+																			{t("actions.view", "View")}
 																		</a>
 																	</li>
 																	<li>
@@ -603,7 +614,7 @@ const mediaFeedback = [
 																			disabled={!canCopyPublicUrl}
 																			data-copy-label={t("actions.copyUrl", "Copy URL")}
 																		>
-																			Copy URL
+																			{t("actions.copyUrl", "Copy URL")}
 																		</button>
 																	</li>
 																	<li>
@@ -615,7 +626,7 @@ const mediaFeedback = [
 																			data-asset-name={asset.fileName}
 																			data-asset-folder={asset.folderPath}
 																		>
-																			Rename
+																			{t("actions.rename", "Rename")}
 																		</button>
 																	</li>
 																	<li>
@@ -627,7 +638,7 @@ const mediaFeedback = [
 																			data-asset-name={asset.fileName}
 																			data-asset-folder={asset.folderPath}
 																		>
-																			Move
+																			{t("actions.move", "Move")}
 																		</button>
 																	</li>
 																	<li>
@@ -636,8 +647,8 @@ const mediaFeedback = [
 																			action={`/api/admin/media/${asset.id}`}
 																			class="d-inline"
 																			data-admin-confirm-form
-																			data-confirm-title="Delete media file?"
-																			data-confirm-message="This file will be removed from the media library."
+																			data-confirm-title={t("messages.deleteMediaFileTitle", "Delete media file?")}
+																			data-confirm-message={t("messages.deleteMediaFileBody", "This file will be removed from the media library.")}
 																			data-confirm-confirm-label={t("actions.delete")}
 																			data-confirm-tone="danger"
 																		>
@@ -757,14 +768,14 @@ const mediaFeedback = [
 																		action={`/api/admin/media/${asset.id}`}
 																		class="d-inline"
 																		data-admin-confirm-form
-																		data-confirm-title="Delete media file?"
-																		data-confirm-message="This file will be removed from the media library."
+																		data-confirm-title={t("messages.deleteMediaFileTitle", "Delete media file?")}
+																		data-confirm-message={t("messages.deleteMediaFileBody", "This file will be removed from the media library.")}
 																		data-confirm-confirm-label={t("actions.delete")}
 																		data-confirm-tone="danger"
 																	>
 																		<input type="hidden" name="_action" value="delete" />
 																		<button type="submit" class="dropdown-item text-danger">
-																			Delete
+																			{t("actions.delete", "Delete")}
 																		</button>
 																	</form>
 																</li>
@@ -806,39 +817,39 @@ const mediaFeedback = [
 						</span>
 						<div class="min-w-0">
 							<p class="admin-feedback-modal-kicker mb-1">Media action</p>
-							<h2 class="modal-title h5 mb-0 text-break" data-media-action-modal-title>Rename file</h2>
+							<h2 class="modal-title h5 mb-0 text-break" data-media-action-modal-title>{t("actions.rename", "Rename file")}</h2>
 						</div>
 					</div>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body px-3 px-sm-4 py-3">
-					<p class="mb-3 text-body-secondary" data-media-action-modal-message>Update the file name without changing the asset contents.</p>
+					<p class="mb-3 text-body-secondary" data-media-action-modal-message>{t("messages.mediaRenameHelp", "Update the file name without changing the asset contents.")}</p>
 					<div data-media-action-modal-rename>
-						<label class="form-label fw-semibold" for="mediaRenameValue" data-media-action-modal-field-label>File name</label>
+						<label class="form-label fw-semibold" for="mediaRenameValue" data-media-action-modal-rename-label>{t("labels.fileName", "File name")}</label>
 						<input id="mediaRenameValue" class="form-control" type="text" data-media-action-modal-input />
-						<p class="form-text mb-0">Use a clear file name so the asset is easier to find later.</p>
+						<p class="form-text mb-0">{t("messages.mediaRenameHint", "Use a clear file name so the asset is easier to find later.")}</p>
 					</div>
 					<div data-media-action-modal-move hidden>
-						<label class="form-label fw-semibold" for="mediaMoveValue" data-media-action-modal-field-label>Destination folder</label>
+						<label class="form-label fw-semibold" for="mediaMoveValue" data-media-action-modal-move-label>{t("labels.destinationFolder", "Destination folder")}</label>
 						<select id="mediaMoveValue" class="form-select" data-media-action-modal-select>
-							<option value="">Root</option>
+							<option value="">{t("labels.root", "Root")}</option>
 							{mediaFolderChoices.map((folder) => (
 								<option value={folder.folderPath}>{folder.label}</option>
 							))}
 						</select>
-						<p class="form-text mb-0">Choose a folder to keep the media library organized.</p>
+						<p class="form-text mb-0">{t("messages.mediaMoveHint", "Choose a folder to keep the media library organized.")}</p>
 					</div>
 				</div>
 				<div class="modal-footer py-3 px-3 px-sm-4 border-0">
-					<button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" data-media-action-modal-dismiss>Cancel</button>
-					<button type="button" class="btn btn-primary btn-sm" data-media-action-modal-confirm>Save</button>
+					<button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" data-media-action-modal-dismiss>{t("actions.cancel", "Cancel")}</button>
+					<button type="button" class="btn btn-primary btn-sm" data-media-action-modal-confirm>{t("actions.save", "Save")}</button>
 				</div>
 			</div>
 		</div>
 	</div>
 </AdminLayout>
 
-<script type="module" define:vars={{ mediaFeedback, loadError }}>
+<script type="module" define:vars={{ mediaFeedback, loadError, mediaActionCopy }}>
 	const showFeedbackModal = window.showAdminFeedbackModal;
 	const search = new URLSearchParams(window.location.search);
 
@@ -999,9 +1010,10 @@ const mediaFeedback = [
 	const mediaActionModal = document.querySelector("[data-media-action-modal]");
 	const mediaActionModalTitle = mediaActionModal?.querySelector("[data-media-action-modal-title]");
 	const mediaActionModalMessage = mediaActionModal?.querySelector("[data-media-action-modal-message]");
-	const mediaActionModalFieldLabel = mediaActionModal?.querySelector("[data-media-action-modal-field-label]");
 	const mediaActionModalRename = mediaActionModal?.querySelector("[data-media-action-modal-rename]");
 	const mediaActionModalMove = mediaActionModal?.querySelector("[data-media-action-modal-move]");
+	const mediaActionModalRenameLabel = mediaActionModal?.querySelector("[data-media-action-modal-rename-label]");
+	const mediaActionModalMoveLabel = mediaActionModal?.querySelector("[data-media-action-modal-move-label]");
 	const mediaActionModalInput = mediaActionModal?.querySelector("[data-media-action-modal-input]");
 	const mediaActionModalSelect = mediaActionModal?.querySelector("[data-media-action-modal-select]");
 	const mediaActionModalConfirm = mediaActionModal?.querySelector("[data-media-action-modal-confirm]");
@@ -1016,16 +1028,19 @@ const mediaFeedback = [
 		pendingMediaAction = { mode, assetId };
 
 		if (mediaActionModalTitle instanceof HTMLElement) {
-			mediaActionModalTitle.textContent = mode === "rename" ? "Rename file" : "Move file";
+			mediaActionModalTitle.textContent = mode === "rename" ? mediaActionCopy.renameTitle : mediaActionCopy.moveTitle;
 		}
 		if (mediaActionModalMessage instanceof HTMLElement) {
 			mediaActionModalMessage.textContent =
 				mode === "rename"
-					? "Update the file name without changing the asset contents."
-					: "Choose a destination folder for this asset.";
+					? mediaActionCopy.renameMessage
+					: mediaActionCopy.moveMessage;
 		}
-		if (mediaActionModalFieldLabel instanceof HTMLElement) {
-			mediaActionModalFieldLabel.textContent = mode === "rename" ? "File name" : "Destination folder";
+		if (mediaActionModalRenameLabel instanceof HTMLElement) {
+			mediaActionModalRenameLabel.textContent = mediaActionCopy.renameFieldLabel;
+		}
+		if (mediaActionModalMoveLabel instanceof HTMLElement) {
+			mediaActionModalMoveLabel.textContent = mediaActionCopy.moveFieldLabel;
 		}
 		if (mediaActionModalRename instanceof HTMLElement) {
 			mediaActionModalRename.hidden = mode !== "rename";
@@ -1042,10 +1057,10 @@ const mediaFeedback = [
 			mediaActionModalSelect.hidden = mode !== "move";
 		}
 		if (mediaActionModalConfirm instanceof HTMLButtonElement) {
-			mediaActionModalConfirm.textContent = mode === "rename" ? "Rename" : "Move";
+			mediaActionModalConfirm.textContent = mode === "rename" ? mediaActionCopy.renameButtonLabel : mediaActionCopy.moveButtonLabel;
 		}
 		if (mediaActionModalDismiss instanceof HTMLButtonElement) {
-			mediaActionModalDismiss.textContent = "Cancel";
+			mediaActionModalDismiss.textContent = mediaActionCopy.cancelLabel;
 		}
 
 		const bootstrap = window.bootstrap;

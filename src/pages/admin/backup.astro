@@ -21,6 +21,30 @@ const description = t(
 	"messages.backupHelp",
 	"Export the live D1 database as an SQL file for recovery, migration, or archival backups.",
 );
+const exportTitle = t("messages.backupExportTitle", "Export backup");
+const exportHelp = t(
+	"messages.backupExportHelp",
+	"Leave the table list empty to export the full database. Select one or more tables to export only those tables.",
+);
+const tablesLabel = t("labels.tables", "Tables");
+const downloadLabel = t("actions.downloadBackup", "Download backup");
+const downloadFullLabel = t("actions.downloadFullBackup", "Download full backup");
+const importTitle = t("messages.backupImportTitle", "Import SQL");
+const importHelp = t(
+	"messages.backupImportHelp",
+	"Upload an SQL file to import data into the live D1 database. This action blocks the database while it runs.",
+);
+const sqlFileLabel = t("labels.sqlFile", "SQL file");
+const tableSelectHelp = t(
+	"messages.backupTableSelectHelp",
+	"Hold Ctrl on Windows or Command on Mac to select multiple tables.",
+);
+const backupStatusTitle = t("messages.backupStatusTitle", "Status update");
+const tablesAvailableLabel = t("messages.backupTablesAvailable", "{count} tables available for selection");
+const noTableListLabel = t(
+	"messages.backupNoTableList",
+	"Table list unavailable, full export remains available.",
+);
 
 let tableNames: string[] = [];
 let tableLoadError = "";
@@ -32,9 +56,9 @@ try {
 }
 
 const backupFeedback = [
-	["exportError", { title: "Export failed", message: Astro.url.searchParams.get("exportError") || "Backup export failed.", tone: "error" }],
-	["imported", { title: "Import completed", message: "SQL import completed successfully.", tone: "success" }],
-	["importError", { title: "Import failed", message: Astro.url.searchParams.get("importError") || "SQL import failed.", tone: "error" }],
+	["exportError", { title: t("messages.backupExportFailedTitle", "Export failed"), message: Astro.url.searchParams.get("exportError") || t("messages.backupExportFailed", "Backup export failed."), tone: "error" }],
+	["imported", { title: t("messages.backupImportCompletedTitle", "Import completed"), message: t("messages.backupImportCompleted", "SQL import completed successfully."), tone: "success" }],
+	["importError", { title: t("messages.backupImportFailedTitle", "Import failed"), message: Astro.url.searchParams.get("importError") || t("messages.backupImportFailed", "SQL import failed."), tone: "error" }],
 ] as const;
 ---
 
@@ -46,7 +70,7 @@ const backupFeedback = [
 	pageDescription={description}
 >
 	<div class="admin-content-stack">
-		<FeedbackModal id="backup-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
+	<FeedbackModal id="backup-feedback-modal" title={backupStatusTitle} closeLabel={t("actions.close", "Close")} />
 		<div class="admin-form-surface">
 			<div class="admin-surface-header mb-3">
 				<div>
@@ -69,9 +93,9 @@ const backupFeedback = [
 					<div class="backup-card">
 						<div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
 							<div>
-								<h2 class="h5 mb-1">Export backup</h2>
+								<h2 class="h5 mb-1">{exportTitle}</h2>
 								<p class="text-body-secondary mb-0">
-									Leave the table list empty to export the full database. Select one or more tables to export only those tables.
+									{exportHelp}
 								</p>
 							</div>
 							<a class="btn btn-outline-secondary" href="/admin/settings">
@@ -80,7 +104,7 @@ const backupFeedback = [
 						</div>
 
 						<form action="/api/admin/backup/export" method="post" class="admin-form-stack">
-							<label class="form-label fw-semibold" for="backupTables">Tables</label>
+							<label class="form-label fw-semibold" for="backupTables">{tablesLabel}</label>
 							<select
 								id="backupTables"
 								class="form-select"
@@ -91,17 +115,15 @@ const backupFeedback = [
 							>
 								{tableNames.map((tableName) => <option value={tableName}>{tableName}</option>)}
 							</select>
-							<p class="form-text mb-0">
-								Hold Ctrl on Windows or Command on Mac to select multiple tables.
-							</p>
+							<p class="form-text mb-0">{tableSelectHelp}</p>
 							<div class="d-flex flex-wrap gap-2 align-items-center">
 								<button type="submit" class="btn btn-primary" disabled={!backupConfigured}>
-									{tableNames.length > 0 ? "Download backup" : "Download full backup"}
+									{tableNames.length > 0 ? downloadLabel : downloadFullLabel}
 								</button>
 								<span class="text-body-secondary small">
 									{tableNames.length > 0
-										? `${tableNames.length} tables available for selection`
-										: "Table list unavailable, full export remains available."}
+										? tablesAvailableLabel.replace("{count}", String(tableNames.length))
+										: noTableListLabel}
 								</span>
 							</div>
 						</form>
@@ -110,16 +132,16 @@ const backupFeedback = [
 
 				<div class="col-12 col-lg-5">
 					<div class="backup-card">
-						<h2 class="h5 mb-3">Import SQL</h2>
+						<h2 class="h5 mb-3">{importTitle}</h2>
 						<p class="text-body-secondary">
-							Upload an SQL file to import data into the live D1 database. This action blocks the database while it runs.
+							{importHelp}
 						</p>
 						<form action="/api/admin/backup/import" method="post" enctype="multipart/form-data" class="admin-form-stack">
-							<label class="form-label fw-semibold" for="sqlFile">SQL file</label>
+							<label class="form-label fw-semibold" for="sqlFile">{sqlFileLabel}</label>
 							<input id="sqlFile" class="form-control" type="file" name="sqlFile" accept=".sql,text/sql,application/sql" disabled={!backupConfigured} />
 							<p class="form-text mb-0">Use a file exported from D1 or any compatible SQLite SQL dump.</p>
 							<button type="submit" class="btn btn-warning" disabled={!backupConfigured}>
-								Import SQL
+								{importTitle}
 							</button>
 						</form>
 					</div>
@@ -133,8 +155,8 @@ const backupFeedback = [
 				<li>{t("messages.backupIncludesSchema", "The export includes the current D1 schema and data as SQL.")}</li>
 				<li>{t("messages.backupDownloadHint", "When the backup is ready, your browser will download a .sql file directly.")}</li>
 				<li>{t("messages.backupConfigHint", `Current database ID: ${backupConfig?.databaseId ?? "not set"}`)}</li>
-				<li>Selected-table export uses Cloudflare D1 dump options and keeps the SQL importable.</li>
-				<li>SQL import is processed directly by Cloudflare D1 using the uploaded file.</li>
+			<li>{t("messages.backupSelectedTablesNote", "Selected-table export uses Cloudflare D1 dump options and keeps the SQL importable.")}</li>
+			<li>{t("messages.backupImportNote", "SQL import is processed directly by Cloudflare D1 using the uploaded file.")}</li>
 			</ul>
 		</div>
 	</div>
@@ -159,7 +181,11 @@ const backupFeedback = [
 	}
 
 	if (tableLoadError && typeof showFeedbackModal === "function") {
-		showFeedbackModal({ title: "Table list unavailable", message: tableLoadError, tone: "warning" });
+		showFeedbackModal({
+			title: t("messages.backupTableListUnavailableTitle", "Table list unavailable"),
+			message: tableLoadError,
+			tone: "warning",
+		});
 	}
 </script>
 

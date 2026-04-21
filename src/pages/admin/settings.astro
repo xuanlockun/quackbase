@@ -149,7 +149,7 @@ const settingsFeedback = [
 							<div class="admin-surface-header media-settings-header">
 								<div>
 									<h2 class="h5 mb-1">{t("messages.mediaStorage", "Media storage")}</h2>
-									<p class="admin-inline-muted mb-0">Keep storage simple for everyday admin work.</p>
+									<p class="admin-inline-muted mb-0">{t("messages.mediaStorageHelp", "Keep storage simple for everyday admin work.")}</p>
 								</div>
 								<div class="media-status-badges" aria-label="Media storage status">
 									<span class="media-status-badge">{mediaStorageStatusPrimary}</span>
@@ -167,7 +167,7 @@ const settingsFeedback = [
 							<div class="media-settings-advanced">
 								<div class="admin-grid-two media-advanced-grid">
 									<label>
-										<span>S3 upload endpoint</span>
+										<span>{t("labels.s3UploadEndpoint", "S3 upload endpoint")}</span>
 										<input
 											class="form-control"
 											name="s3Endpoint"
@@ -177,7 +177,7 @@ const settingsFeedback = [
 										/>
 									</label>
 									<label>
-										<span>Bucket name</span>
+										<span>{t("labels.bucketName", "Bucket name")}</span>
 										<input
 											class="form-control"
 											name="s3Bucket"
@@ -187,7 +187,7 @@ const settingsFeedback = [
 										/>
 									</label>
 									<label>
-										<span>Public base URL</span>
+										<span>{t("labels.publicBaseUrl", "Public base URL")}</span>
 										<input
 											class="form-control"
 											name="s3PublicBaseUrl"
@@ -197,7 +197,7 @@ const settingsFeedback = [
 										/>
 									</label>
 									<label>
-										<span>S3 region</span>
+										<span>{t("labels.s3Region", "S3 region")}</span>
 										<input
 											class="form-control"
 											name="s3Region"
@@ -228,7 +228,7 @@ const settingsFeedback = [
 													name="s3AccessKeyId"
 													value={siteConfig.mediaStorageSettings.s3AccessKeyId}
 													autocomplete="off"
-													placeholder="Enter a new access key ID"
+													placeholder={t("messages.accessKeyIdPlaceholder", "Enter a new access key ID")}
 													disabled={formDisabled}
 												/>
 												<button
@@ -236,8 +236,8 @@ const settingsFeedback = [
 													type="button"
 													data-media-secret-toggle
 													data-media-secret-target="#s3AccessKeyId"
-													aria-label="Show access key ID"
-													title="Show access key ID"
+													aria-label={t("actions.showAccessKeyId", "Show access key ID")}
+													title={t("actions.showAccessKeyId", "Show access key ID")}
 													disabled={formDisabled}
 												>
 													<span aria-hidden="true">
@@ -261,7 +261,7 @@ const settingsFeedback = [
 													name="s3SecretAccessKey"
 													value={siteConfig.mediaStorageSettings.s3SecretAccessKey}
 													autocomplete="off"
-													placeholder="Enter a new secret access key"
+													placeholder={t("messages.secretAccessKeyPlaceholder", "Enter a new secret access key")}
 													disabled={formDisabled}
 												/>
 												<button
@@ -269,8 +269,8 @@ const settingsFeedback = [
 													type="button"
 													data-media-secret-toggle
 													data-media-secret-target="#s3SecretAccessKey"
-													aria-label="Show secret access key"
-													title="Show secret access key"
+													aria-label={t("actions.showSecretAccessKey", "Show secret access key")}
+													title={t("actions.showSecretAccessKey", "Show secret access key")}
 													disabled={formDisabled}
 												>
 													<span aria-hidden="true">
@@ -284,7 +284,7 @@ const settingsFeedback = [
 										</label>
 									</div>
 								</div>
-								<p class="admin-muted mb-0">Leave a credential field empty to keep the saved value. Use `auto` for Cloudflare R2.</p>
+								<p class="admin-muted mb-0">{t("messages.mediaStorageFieldHelp", "Leave a credential field empty to keep the saved value. Use `auto` for Cloudflare R2.")}</p>
 							</div>
 						</div>
 					</form>
@@ -321,7 +321,7 @@ const settingsFeedback = [
 										class="form-control"
 										name="captchaSiteKey"
 										value={siteConfig.captchaSiteKey}
-										placeholder="Turnstile site key"
+										placeholder={t("messages.captchaSiteKeyPlaceholder", "Turnstile site key")}
 										disabled={formDisabled}
 									/>
 								</label>
@@ -336,7 +336,7 @@ const settingsFeedback = [
 												name="captchaSecretKey"
 												value={siteConfig.captchaSecretKey}
 												autocomplete="off"
-												placeholder="Turnstile secret key"
+													placeholder={t("messages.captchaSecretKeyPlaceholder", "Turnstile secret key")}
 												disabled={formDisabled}
 											/>
 											<button

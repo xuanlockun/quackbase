@@ -41,20 +41,25 @@ const templateOptions = [
 const selectedTemplate = Astro.url.searchParams.get("template");
 const initialHref = templateOptions.find((template) => template.key === selectedTemplate)?.href ?? templateOptions[0].href;
 const initialAdminHref = localizeAdminHref(initialHref);
+const chevronIcon = `
+	<svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+		<path d="M8 5l4 5-4 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+	</svg>
+`;
 ---
 
 <AdminLayout
 	title={t("nav.template")}
-	description="Choose which public template fragment to edit."
+	description={t("messages.templateHubHelp", "Choose which public template fragment to edit.")}
 	session={session}
 	pageEyebrow={t("nav.template")}
 	pageTitle={t("nav.template")}
-	pageDescription="Choose which public template fragment to edit."
+	pageDescription={t("messages.templateHubHelp", "Choose which public template fragment to edit.")}
 >
 	<div class="admin-content-stack">
 		<div class="admin-form-section">
 			<label class="d-grid gap-2">
-				<span>Template to edit</span>
+				<span>{t("labels.templateToEdit", "Template to edit")}</span>
 				<select
 					class="form-select"
 					id="templatePicker"
@@ -85,7 +90,7 @@ const initialAdminHref = localizeAdminHref(initialHref);
 									<strong class="d-block">{template.label}</strong>
 									<p class="mb-0 text-muted">{template.description}</p>
 								</div>
-									<span class="template-card-icon" aria-hidden="true">→</span>
+									<span class="template-card-icon" aria-hidden="true" set:html={chevronIcon}></span>
 								</div>
 							</div>
 						</a>
@@ -113,8 +118,11 @@ const initialAdminHref = localizeAdminHref(initialHref);
 		justify-content: center;
 		width: 1.75rem;
 		height: 1.75rem;
-		font-size: 1rem;
-		line-height: 1;
 		border: 1px solid rgba(255, 255, 255, 0.18);
+	}
+
+	.template-card-icon svg {
+		width: 1rem;
+		height: 1rem;
 	}
 </style>

@@ -331,12 +331,17 @@ function normalizeContactCopyValue(value: unknown): string {
 				</section>
 				<section class="contact-form-settings-card">
 					<div class="contact-form-settings-card-head">
-						<h3>Captcha</h3>
-						<p class="admin-inline-muted mb-0">Use the global captcha configuration in Settings and opt forms in individually.</p>
+						<h3>{t("labels.captcha", "Captcha")}</h3>
+						<p class="admin-inline-muted mb-0">
+							{t(
+								"messages.contactFormCaptchaHelp",
+								"Use the global captcha configuration in Settings and opt forms in individually.",
+							)}
+						</p>
 					</div>
 					<label class="admin-check-row contact-form-switch-row contact-form-captcha-row">
 						<input class="form-check-input" type="checkbox" name="useCaptcha" checked={initialUseCaptcha} disabled={isDisabled} />
-						<span>Require captcha for submissions from this form.</span>
+						<span>{t("messages.contactFormCaptchaToggle", "Require captcha for submissions from this form.")}</span>
 					</label>
 				</section>
 			</div>
@@ -364,7 +369,12 @@ function normalizeContactCopyValue(value: unknown): string {
 				<div class="contact-fields-live-header">
 					<div>
 						<strong>{t("headings.contactFormFields")}</strong>
-						<p class="admin-inline-muted mb-0">Each field is edited as a small card so the builder stays easy to scan.</p>
+						<p class="admin-inline-muted mb-0">
+							{t(
+								"messages.contactFormFieldsHelp",
+								"Each field is edited as a small card so the builder stays easy to scan.",
+							)}
+						</p>
 					</div>
 					<button class="btn btn-outline-secondary btn-sm" type="button" data-contact-field-add data-readonly={String(isDisabled)} disabled={isDisabled}>
 						{t("actions.addField")}
@@ -389,7 +399,7 @@ function normalizeContactCopyValue(value: unknown): string {
 									data-field-id={String(field.id ?? 1)}
 								>
 									<div class="contact-field-card-header">
-										<span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
+										<span class="drag-handle" data-drag-handle aria-label={t("actions.dragField", "Drag field")}></span>
 										<label class="contact-field-main-label">
 											<span>{t("labels.label")} ({defaultLabelCode.toUpperCase()})</span>
 											<input
@@ -1236,7 +1246,7 @@ function normalizeContactCopyValue(value: unknown): string {
 						? field.label[contactPreviewLanguage].trim()
 						: typeof field.label?.[defaultLanguageCode] === "string" && field.label[defaultLanguageCode].trim()
 							? field.label[defaultLanguageCode].trim()
-							: `Field ${index + 1}`;
+							: t("messages.contactFormFieldFallbackLabel", "Field {index}").replace("{index}", String(index + 1));
 				const requiredMark = field.required ? '<span class="text-danger ms-1">*</span>' : "";
 				const inputMarkup =
 					field.type === "textarea"
@@ -1295,7 +1305,7 @@ function normalizeContactCopyValue(value: unknown): string {
 			.join("");
 		row.innerHTML = `
 			<div class="contact-field-card-header">
-				<span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
+				<span class="drag-handle" data-drag-handle aria-label="${escapeAttribute(t("actions.dragField", "Drag field"))}"></span>
 				<label class="contact-field-main-label">
 					<span>${labelCaption} (${escapeAttribute(defaultLanguage.toUpperCase())})</span>
 					<input
