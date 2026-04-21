@@ -49,6 +49,15 @@ try {
 }
 
 const formDisabled = Boolean(loadError);
+const settingsFeedback = [
+	["siteError", { title: "Settings failed", message: t("messages.siteSettingsFailed", "Site settings could not be saved.") }],
+	["siteSaved", { title: "Settings saved", message: t("messages.siteSettingsSaved", "Site settings were saved successfully.") }],
+	["secretError", { title: "Secret failed", message: t("messages.secretRequestFailed", "The secret request failed.") }],
+	["secretDeleted", { title: "Secret deleted", message: t("messages.secretDeleted", "The secret was removed.") }],
+	["secretSaved", { title: "Secret saved", message: t("messages.secretSaved", "The secret was stored successfully.") }],
+	["mediaError", { title: "Connection failed", message: "Media storage settings could not be saved." }],
+	["mediaSaved", { title: "Settings saved", message: "Media storage settings were saved successfully." }],
+] as const;
 ---
 
 <AdminLayout
@@ -270,7 +279,7 @@ const formDisabled = Boolean(loadError);
 	</div>
 </AdminLayout>
 
-<script type="module" define:vars={{ loadError }}>
+<script type="module" define:vars={{ loadError, settingsFeedback }}>
 	const tablist = document.querySelector("[data-settings-tablist]");
 	const tabButtons = tablist?.querySelectorAll("[data-settings-tab]");
 	const panels = document.querySelectorAll("[data-settings-panel]");
@@ -322,19 +331,10 @@ const formDisabled = Boolean(loadError);
 
 	const showFromQuery = () => {
 		const search = new URLSearchParams(window.location.search);
-		const feedbackMap = [
-			["siteError", { title: "Settings failed", message: t("messages.siteSettingsFailed", "Site settings could not be saved.") }],
-			["siteSaved", { title: "Settings saved", message: t("messages.siteSettingsSaved", "Site settings were saved successfully.") }],
-			["secretError", { title: "Secret failed", message: t("messages.secretRequestFailed", "The secret request failed.") }],
-			["secretDeleted", { title: "Secret deleted", message: t("messages.secretDeleted", "The secret was removed.") }],
-			["secretSaved", { title: "Secret saved", message: t("messages.secretSaved", "The secret was stored successfully.") }],
-			["mediaError", { title: "Connection failed", message: search.get("mediaError") || "Media storage settings could not be saved." }],
-			["mediaSaved", { title: "Settings saved", message: "Media storage settings were saved successfully." }],
-		];
-
-		for (const [key, entry] of feedbackMap) {
+		for (const [key, entry] of settingsFeedback) {
 			if (search.has(key)) {
-				showModal(entry.title, entry.message);
+				const message = key === "mediaError" ? search.get("mediaError") || entry.message : entry.message;
+				showModal(entry.title, message);
 				window.history.replaceState({}, "", window.location.pathname + window.location.hash);
 				break;
 			}

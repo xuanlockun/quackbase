@@ -35,6 +35,12 @@ try {
 const totalForms = forms.length;
 const activeForms = forms.filter((form) => form.isActive).length;
 const totalSubmissions = Object.values(submissionCounts).reduce((sum, count) => sum + Number(count || 0), 0);
+const contactFormFeedback = [
+	["created", { title: "Form created", message: t("messages.contactFormCreated", "The contact form was created successfully.") }],
+	["saved", { title: "Form saved", message: t("messages.contactFormSaved", "The contact form was saved successfully.") }],
+	["deleted", { title: "Form deleted", message: t("messages.contactFormDeleted", "The contact form was deleted.") }],
+	["error", { title: "Action failed", message: t("messages.contactFormRequestFailed", "The contact form request failed.") }],
+] as const;
 const statCards = [
 	{
 		label: t("messages.totalForms", "Total Forms"),
@@ -159,17 +165,11 @@ const statCards = [
 	}
 </style>
 
-<script type="module">
+<script type="module" define:vars={{ contactFormFeedback }}>
 	const showFeedbackModal = window.showAdminFeedbackModal;
 	const search = new URLSearchParams(window.location.search);
-	const feedbackMap = [
-		["created", { title: "Form created", message: t("messages.contactFormCreated", "The contact form was created successfully.") }],
-		["saved", { title: "Form saved", message: t("messages.contactFormSaved", "The contact form was saved successfully.") }],
-		["deleted", { title: "Form deleted", message: t("messages.contactFormDeleted", "The contact form was deleted.") }],
-		["error", { title: "Action failed", message: t("messages.contactFormRequestFailed", "The contact form request failed.") }],
-	];
 
-	for (const [key, entry] of feedbackMap) {
+	for (const [key, entry] of contactFormFeedback) {
 		if (search.has(key)) {
 			if (typeof showFeedbackModal === "function") {
 				showFeedbackModal({ title: entry.title, message: entry.message });

@@ -5,6 +5,7 @@ import FilterBar from "../../components/admin/FilterBar.astro";
 import CreateAction from "../../components/admin/CreateAction.astro";
 import PageTable from "../../components/admin/PageTable.astro";
 import NavigationItemsEditor from "../../components/admin/NavigationItemsEditor.astro";
+import FeedbackModal from "../../components/admin/FeedbackModal.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getDb, getSiteConfig, listAllPages } from "../../lib/blog";
 import { getLanguageCatalog, getUiTranslations } from "../../lib/i18n";
@@ -66,6 +67,14 @@ const filteredPages = pages.filter((page) => {
 });
 
 const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
+const pageFeedback = [
+	["created", { title: "Page created", message: t("messages.pageCreated") }],
+	["saved", { title: "Page saved", message: t("messages.pageSaved") }],
+	["navSaved", { title: "Navigation saved", message: t("messages.navigationSaved", "Navigation saved.") }],
+	["navError", { title: "Navigation failed", message: t("messages.navigationFailed", "Navigation could not be saved.") }],
+	["deleted", { title: "Page deleted", message: t("messages.pageDeleted") }],
+	["error", { title: "Action failed", message: t("messages.pageRequestFailed") }],
+] as const;
 ---
 
 <AdminLayout
@@ -79,6 +88,7 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 		{canCreate && <CreateAction href="/admin/pages/new" label={t("actions.createPage")} />}
 	</div>
 
+	<FeedbackModal id="pages-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
 		<details class="admin-collapsible-surface admin-page-hub">
 			<summary class="admin-collapsible-summary">
@@ -119,12 +129,6 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 			]}
 		/>
 
-		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.pageCreated")}</p>}
-		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.pageSaved")}</p>}
-		{Astro.url.searchParams.get("navSaved") && <p class="alert alert-success mb-0">{t("messages.navigationSaved", "Navigation saved.")}</p>}
-		{Astro.url.searchParams.get("navError") && <p class="alert alert-danger mb-0">{t("messages.navigationFailed", "Navigation could not be saved.")}</p>}
-		{Astro.url.searchParams.get("deleted") && <p class="alert alert-info mb-0">{t("messages.pageDeleted")}</p>}
-		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.pageRequestFailed")}</p>}
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 
 		<PageTable
@@ -148,3 +152,18 @@ const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 		max-width: 56rem;
 	}
 </style>
+
+<script type="module" define:vars={{ pageFeedback }}>
+	const showFeedbackModal = window.showAdminFeedbackModal;
+	const search = new URLSearchParams(window.location.search);
+
+	for (const [key, entry] of pageFeedback) {
+		if (search.has(key)) {
+			if (typeof showFeedbackModal === "function") {
+				showFeedbackModal({ title: entry.title, message: entry.message });
+			}
+			window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+			break;
+		}
+	}
+</script>

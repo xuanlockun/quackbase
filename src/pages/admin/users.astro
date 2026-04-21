@@ -4,6 +4,7 @@ export const prerender = false;
 import UserTable from "../../components/admin/UserTable.astro";
 import FilterBar from "../../components/admin/FilterBar.astro";
 import CreateAction from "../../components/admin/CreateAction.astro";
+import FeedbackModal from "../../components/admin/FeedbackModal.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { listAdminUsers } from "../../lib/db/admin-users";
 import { getDb } from "../../lib/blog";
@@ -47,6 +48,11 @@ const filteredUsers = users.filter((user) => {
 });
 
 const hasActiveFilters = Boolean(search || status !== "all" || role !== "all");
+const userFeedback = [
+	["created", { title: "User created", message: t("messages.userCreated") }],
+	["saved", { title: "User saved", message: t("messages.userSaved") }],
+	["error", { title: "Action failed", message: t("messages.userRequestFailed") }],
+] as const;
 ---
 
 <AdminLayout
@@ -60,6 +66,7 @@ const hasActiveFilters = Boolean(search || status !== "all" || role !== "all");
 		<CreateAction href="/admin/users/new" label={t("actions.createUser")} />
 	</div>
 
+	<FeedbackModal id="users-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
 		<FilterBar
 			title=""
@@ -88,9 +95,6 @@ const hasActiveFilters = Boolean(search || status !== "all" || role !== "all");
 				},
 			]}
 		/>
-		{Astro.url.searchParams.get("created") && <p class="alert alert-success mb-0">{t("messages.userCreated")}</p>}
-		{Astro.url.searchParams.get("saved") && <p class="alert alert-success mb-0">{t("messages.userSaved")}</p>}
-		{Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.userRequestFailed")}</p>}
 		{hasActiveFilters && (
 			<p class="text-body-secondary small mb-0">
 				Showing {filteredUsers.length} of {users.length} users.
@@ -103,3 +107,18 @@ const hasActiveFilters = Boolean(search || status !== "all" || role !== "all");
 		/>
 	</div>
 </AdminLayout>
+
+<script type="module" define:vars={{ userFeedback }}>
+	const showFeedbackModal = window.showAdminFeedbackModal;
+	const searchParams = new URLSearchParams(window.location.search);
+
+	for (const [key, entry] of userFeedback) {
+		if (searchParams.has(key)) {
+			if (typeof showFeedbackModal === "function") {
+				showFeedbackModal({ title: entry.title, message: entry.message });
+			}
+			window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+			break;
+		}
+	}
+</script>
