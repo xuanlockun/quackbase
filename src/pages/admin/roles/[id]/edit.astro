@@ -3,7 +3,7 @@ export const prerender = false;
 
 import RoleForm from "../../../../components/admin/RoleForm.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
-import { listPermissionSummaries } from "../../../../lib/db/permissions";
+import { listPermissions } from "../../../../lib/db/permissions";
 import { getRoleById } from "../../../../lib/db/roles";
 import { getDb } from "../../../../lib/blog";
 import { getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
@@ -33,7 +33,7 @@ try {
 	loadError = error instanceof Error ? error.message : t("messages.roleRequestFailed");
 }
 
-const permissions = await listPermissionSummaries(db);
+const permissions = await listPermissions(db);
 
 if (Astro.url.searchParams.get("error")) {
 	loadError = t("messages.roleRequestFailed");

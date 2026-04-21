@@ -30,6 +30,15 @@ let siteConfig = {
 		s3Region: "auto",
 		s3ForcePathStyle: true,
 	},
+	smtpSettings: {
+		host: "",
+		port: 587,
+		username: "",
+		password: "",
+		encryption: "tls",
+		fromEmail: "",
+		fromName: "",
+	},
 	captchaEnabled: false,
 	captchaSiteKey: "",
 	captchaSecretKey: "",
@@ -56,6 +65,9 @@ const mediaStorageConnected =
 	Boolean(siteConfig.mediaStorageSettings.s3Endpoint.trim()) && Boolean(siteConfig.mediaStorageSettings.s3Bucket.trim());
 const mediaStorageStatusPrimary = mediaStorageConnected ? "Storage connected" : "Storage not configured";
 const mediaStorageStatusSecondary = mediaStorageConnected ? "Ready to upload" : "Configure storage";
+const smtpConfigured = Boolean(siteConfig.smtpSettings.host.trim()) && Boolean(siteConfig.smtpSettings.fromEmail.trim());
+const smtpStatusPrimary = smtpConfigured ? "SMTP connected" : "SMTP not configured";
+const smtpStatusSecondary = smtpConfigured ? "Ready to send notifications" : "Configure email";
 const settingsFeedback = [
 	["siteError", { title: "Settings failed", message: t("messages.siteSettingsFailed", "Site settings could not be saved."), tone: "error" }],
 	["siteSaved", { title: "Settings saved", message: t("messages.siteSettingsSaved", "Site settings were saved successfully."), tone: "success" }],
@@ -64,6 +76,8 @@ const settingsFeedback = [
 	["secretSaved", { title: "Secret saved", message: t("messages.secretSaved", "The secret was stored successfully."), tone: "success" }],
 	["mediaError", { title: "Connection failed", message: "Media storage settings could not be saved.", tone: "error" }],
 	["mediaSaved", { title: "Settings saved", message: "Media storage settings were saved successfully.", tone: "success" }],
+	["smtpError", { title: "SMTP failed", message: "SMTP settings could not be saved.", tone: "error" }],
+	["smtpSaved", { title: "SMTP saved", message: "SMTP settings were saved successfully.", tone: "success" }],
 	["captchaError", { title: "Captcha failed", message: "Captcha settings could not be saved.", tone: "error" }],
 	["captchaSaved", { title: "Captcha saved", message: "Captcha settings were saved successfully.", tone: "success" }],
 ] as const;
@@ -101,6 +115,17 @@ const settingsFeedback = [
 						data-settings-tab="media"
 					>
 						{t("nav.media", "Media")}
+					</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button
+						type="button"
+						class="nav-link"
+						role="tab"
+						aria-selected="false"
+						data-settings-tab="smtp"
+					>
+						{t("labels.smtp", "SMTP")}
 					</button>
 				</li>
 				<li class="nav-item" role="presentation">
@@ -290,6 +315,65 @@ const settingsFeedback = [
 					</form>
 				</section>
 
+				<section class="d-none" role="tabpanel" data-settings-panel="smtp">
+					<form method="post" action="/api/admin/smtp" class="admin-form-shell admin-compact-form mb-0" data-smtp-settings-form>
+						<div class="admin-form-surface smtp-settings-shell">
+							<div class="admin-surface-header smtp-settings-header">
+								<div>
+									<h2 class="h5 mb-1">{t("labels.smtp", "SMTP")}</h2>
+									<p class="admin-inline-muted mb-0">{t("messages.smtpSettingsHelp", "Configure outbound email delivery for contact form notifications.")}</p>
+								</div>
+								<div class="smtp-status-badges" aria-label={t("labels.smtp", "SMTP")}>
+									<span class="media-status-badge">{smtpStatusPrimary}</span>
+									<span class="media-status-badge">{smtpStatusSecondary}</span>
+								</div>
+							</div>
+							<div class="smtp-settings-actions">
+								<button class="btn btn-outline-secondary" type="button" data-smtp-test-button disabled={formDisabled}>
+									{t("actions.testEmail", "Test email")}
+								</button>
+								<button class="btn btn-primary" type="submit" disabled={formDisabled}>
+									{t("actions.saveSmtpSettings", "Save SMTP settings")}
+								</button>
+							</div>
+							<div class="smtp-settings-grid admin-grid-two">
+								<label class="grid-span-2">
+									<span>{t("labels.smtpHost", "SMTP host")}</span>
+									<input class="form-control" name="smtpHost" value={siteConfig.smtpSettings.host} placeholder="smtp.example.com" disabled={formDisabled} />
+								</label>
+								<label>
+									<span>{t("labels.smtpPort", "SMTP port")}</span>
+									<input class="form-control" name="smtpPort" type="number" min="1" max="65535" value={String(siteConfig.smtpSettings.port)} placeholder="587" disabled={formDisabled} />
+								</label>
+								<label>
+									<span>{t("labels.smtpEncryption", "Encryption")}</span>
+									<select class="form-select" name="smtpEncryption" disabled={formDisabled}>
+										<option value="tls" selected={siteConfig.smtpSettings.encryption === "tls"}>TLS</option>
+										<option value="ssl" selected={siteConfig.smtpSettings.encryption === "ssl"}>SSL</option>
+									</select>
+								</label>
+								<label>
+									<span>{t("labels.smtpUsername", "Username")}</span>
+									<input class="form-control" name="smtpUsername" value={siteConfig.smtpSettings.username} placeholder={t("messages.smtpUsernamePlaceholder", "Leave empty if your relay does not require auth.")} disabled={formDisabled} />
+								</label>
+								<label>
+									<span>{t("labels.smtpPassword", "Password")}</span>
+									<input class="form-control" name="smtpPassword" type="password" value={siteConfig.smtpSettings.password} placeholder={t("messages.smtpPasswordPlaceholder", "SMTP password")} disabled={formDisabled} />
+								</label>
+								<label>
+									<span>{t("labels.smtpFromEmail", "From email")}</span>
+									<input class="form-control" name="smtpFromEmail" type="email" value={siteConfig.smtpSettings.fromEmail} placeholder="noreply@example.com" disabled={formDisabled} />
+								</label>
+								<label class="grid-span-2">
+									<span>{t("labels.smtpFromName", "From name")}</span>
+									<input class="form-control" name="smtpFromName" value={siteConfig.smtpSettings.fromName} placeholder={SITE_TITLE} disabled={formDisabled} />
+								</label>
+							</div>
+							<p class="admin-muted mb-0">{t("messages.smtpSettingsHelpDetail", "Leave username and password blank if your relay accepts unauthenticated delivery. The test email is sent to the configured from address.")}</p>
+						</div>
+					</form>
+				</section>
+
 				<section class="d-none" role="tabpanel" data-settings-panel="captcha">
 					<form method="post" action="/api/admin/captcha" class="admin-form-shell admin-compact-form mb-0">
 						<div class="admin-form-surface">
@@ -385,6 +469,8 @@ const settingsFeedback = [
 	const panels = document.querySelectorAll("[data-settings-panel]");
 	const form = document.querySelector("[data-media-settings-form]");
 	const testButton = form?.querySelector("[data-media-test-button]");
+	const smtpForm = document.querySelector("[data-smtp-settings-form]");
+	const smtpTestButton = smtpForm?.querySelector("[data-smtp-test-button]");
 	const toggleButtons = form?.querySelectorAll("[data-media-secret-toggle]");
 	const showFeedbackModal = window.showAdminFeedbackModal;
 
@@ -478,6 +564,41 @@ const settingsFeedback = [
 			} finally {
 				testButton.disabled = false;
 				testButton.textContent = originalLabel.trim();
+			}
+		});
+	}
+
+	if (smtpForm instanceof HTMLFormElement && smtpTestButton instanceof HTMLButtonElement) {
+		smtpTestButton.addEventListener("click", async () => {
+			const payload = new FormData(smtpForm);
+			payload.set("intent", "test");
+			smtpTestButton.disabled = true;
+			const originalLabel = smtpTestButton.textContent || "Test email";
+			smtpTestButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Testing...';
+			showModal("Testing email", "Sending a test email using the current SMTP settings.", "", "info", true);
+
+			try {
+				const response = await fetch(smtpForm.action, {
+					method: "POST",
+					credentials: "same-origin",
+					headers: {
+						Accept: "application/json",
+						"X-Requested-With": "fetch",
+					},
+					body: payload,
+				});
+
+				const data = await response.json().catch(() => ({}));
+				if (!response.ok || !data?.ok) {
+					throw new Error(data?.error || "SMTP test failed.");
+				}
+
+				showModal("Test email sent", data.message || "The test email was sent successfully.", "", "success");
+			} catch (error) {
+				showModal("Test email failed", error instanceof Error ? error.message : "SMTP test failed.", "", "error");
+			} finally {
+				smtpTestButton.disabled = false;
+				smtpTestButton.textContent = originalLabel.trim();
 			}
 		});
 	}
@@ -578,6 +699,50 @@ const settingsFeedback = [
 		height: 1rem;
 	}
 
+	.smtp-settings-shell {
+		display: grid;
+		gap: 0.9rem;
+	}
+
+	.smtp-settings-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.9rem;
+	}
+
+	.smtp-status-badges {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 0.35rem;
+	}
+
+	.smtp-settings-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		align-items: center;
+	}
+
+	.smtp-settings-grid {
+		display: grid;
+		gap: 0.85rem;
+		padding: 0.85rem 0.95rem;
+		border: 1px solid rgba(var(--gray), 0.12);
+		border-radius: 0.9rem;
+		background: rgba(var(--gray-light), 0.16);
+	}
+
+	.grid-span-2 {
+		grid-column: 1 / -1;
+	}
+
+	.smtp-settings-grid label {
+		display: grid;
+		gap: 0.35rem;
+	}
+
 	@media (max-width: 720px) {
 		.media-settings-header {
 			flex-direction: column;
@@ -588,6 +753,19 @@ const settingsFeedback = [
 		}
 
 		.media-settings-actions {
+			flex-direction: column;
+			align-items: stretch;
+		}
+
+		.smtp-settings-header {
+			flex-direction: column;
+		}
+
+		.smtp-status-badges {
+			justify-content: flex-start;
+		}
+
+		.smtp-settings-actions {
 			flex-direction: column;
 			align-items: stretch;
 		}

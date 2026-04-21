@@ -42,6 +42,11 @@ const { t } = getUiTranslations(Astro);
 								<td>
 									<strong>{form.title}</strong>
 									{form.useCaptcha && <span class="badge bg-primary-subtle text-uppercase ms-2">{t("labels.captcha", "Captcha")}</span>}
+									{form.notificationEmails.length > 0 && (
+										<span class="badge bg-info-subtle text-uppercase ms-2">
+											{t("labels.adminEmails", "Admin emails")}
+										</span>
+									)}
 								</td>
 								<td>
 									<span class="text-muted small lh-sm">{form.description || "-"}</span>

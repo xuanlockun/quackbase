@@ -51,6 +51,7 @@ const initialBackgroundStyle = form?.backgroundStyle ?? "solid";
 const initialBackgroundColor = form?.backgroundColor ?? "#f8fbff";
 const initialButtonColor = form?.buttonColor ?? "#4f80ff";
 const initialUseCaptcha = form?.useCaptcha ?? false;
+const initialNotificationEmails = form?.notificationEmails?.join(", ") ?? "";
 const labelGridColumns = `2rem minmax(12rem, 16rem) ${labelLanguages
 	.map(() => "minmax(0, 1fr)")
 	.join(" ")} minmax(7rem, auto) minmax(6rem, auto)`;
@@ -296,6 +297,20 @@ function normalizeContactCopyValue(value: unknown): string {
 							<span>{t("labels.enabled")}</span>
 						</label>
 					</div>
+					<label>
+						<span>{t("labels.adminEmails", "Admin emails")}</span>
+						<input
+							class="form-control"
+							type="text"
+							name="notificationEmails"
+							value={initialNotificationEmails}
+							placeholder={t("messages.contactFormAdminEmailsPlaceholder", "admin@example.com, ops@example.com")}
+							disabled={isDisabled}
+						/>
+						<p class="form-text mb-0">
+							{t("messages.contactFormAdminEmailsHelp", "Separate multiple recipients with commas. Leave empty to skip notifications.")}
+						</p>
+					</label>
 				</section>
 				<section class="contact-form-settings-card">
 					<div class="contact-form-settings-card-head">

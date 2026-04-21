@@ -217,6 +217,7 @@ export interface SiteConfig {
 	captchaSiteKey: string;
 	captchaSecretKey: string;
 	mediaStorageSettings: MediaStorageSettings;
+	smtpSettings: SmtpSettings;
 	headerBackground: string;
 	headerTextColor: string;
 	headerAccentColor: string;
@@ -239,6 +240,18 @@ export interface MediaStorageSettings {
 	s3SecretAccessKey: string;
 	s3Region: string;
 	s3ForcePathStyle: boolean;
+}
+
+export type SmtpEncryption = "tls" | "ssl";
+
+export interface SmtpSettings {
+	host: string;
+	port: number;
+	username: string;
+	password: string;
+	encryption: SmtpEncryption;
+	fromEmail: string;
+	fromName: string;
 }
 
 export interface SitePageRecord {
@@ -531,7 +544,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const settings = await db
 		.prepare(
-			`SELECT site_title, home_page_slug, favicon_url, logo_url, captcha_enabled, captcha_site_key, captcha_secret_key, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, media_s3_access_key_id, media_s3_secret_access_key, media_s3_region, media_s3_force_path_style, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html, nav_items
+			`SELECT site_title, home_page_slug, favicon_url, logo_url, captcha_enabled, captcha_site_key, captcha_secret_key, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, media_s3_access_key_id, media_s3_secret_access_key, media_s3_region, media_s3_force_path_style, smtp_host, smtp_port, smtp_username, smtp_password, smtp_encryption, smtp_from_email, smtp_from_name, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html, nav_items
 			FROM site_settings
 			WHERE id = 1`,
 		)
@@ -550,6 +563,13 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			media_s3_secret_access_key: string;
 			media_s3_region: string;
 			media_s3_force_path_style: string;
+			smtp_host: string;
+			smtp_port: number | string;
+			smtp_username: string;
+			smtp_password: string;
+			smtp_encryption: string;
+			smtp_from_email: string;
+			smtp_from_name: string;
 			header_background: string;
 			header_text_color: string;
 			header_accent_color: string;
@@ -625,6 +645,15 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			s3SecretAccessKey: settings?.media_s3_secret_access_key ?? "",
 			s3Region: settings?.media_s3_region ?? "auto",
 			s3ForcePathStyle: parseBooleanSetting(settings?.media_s3_force_path_style, true),
+		},
+		smtpSettings: {
+			host: settings?.smtp_host ?? "",
+			port: parseSmtpPort(settings?.smtp_port ?? 587),
+			username: settings?.smtp_username ?? "",
+			password: settings?.smtp_password ?? "",
+			encryption: parseSmtpEncryption(settings?.smtp_encryption),
+			fromEmail: settings?.smtp_from_email ?? "",
+			fromName: settings?.smtp_from_name ?? "",
 		},
 		headerBackground: settings?.header_background ?? "#ffffff",
 		headerTextColor: settings?.header_text_color ?? "#0f1219",
@@ -849,6 +878,65 @@ export async function saveMediaStorageSettings(
 		.run();
 }
 
+export async function getSmtpSettings(db: D1Database): Promise<SmtpSettings> {
+	await ensureSiteTables(db);
+	const settings = await db
+		.prepare(
+			`SELECT smtp_host, smtp_port, smtp_username, smtp_password, smtp_encryption, smtp_from_email, smtp_from_name
+			FROM site_settings
+			WHERE id = 1`,
+		)
+		.first<{
+			smtp_host: string;
+			smtp_port: number | string;
+			smtp_username: string;
+			smtp_password: string;
+			smtp_encryption: string;
+			smtp_from_email: string;
+			smtp_from_name: string;
+		}>();
+
+	return {
+		host: settings?.smtp_host?.trim() ?? "",
+		port: parseSmtpPort(settings?.smtp_port ?? 587),
+		username: settings?.smtp_username?.trim() ?? "",
+		password: settings?.smtp_password?.trim() ?? "",
+		encryption: parseSmtpEncryption(settings?.smtp_encryption),
+		fromEmail: settings?.smtp_from_email?.trim() ?? "",
+		fromName: settings?.smtp_from_name?.trim() ?? "",
+	};
+}
+
+export async function saveSmtpSettings(db: D1Database, input: SmtpSettings): Promise<void> {
+	await ensureSiteTables(db);
+	validateSmtpSettings(input);
+
+	await db
+		.prepare(
+			`INSERT INTO site_settings (id, smtp_host, smtp_port, smtp_username, smtp_password, smtp_encryption, smtp_from_email, smtp_from_name, updated_at)
+			VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)
+			ON CONFLICT(id) DO UPDATE SET
+				smtp_host = excluded.smtp_host,
+				smtp_port = excluded.smtp_port,
+				smtp_username = excluded.smtp_username,
+				smtp_password = excluded.smtp_password,
+				smtp_encryption = excluded.smtp_encryption,
+				smtp_from_email = excluded.smtp_from_email,
+				smtp_from_name = excluded.smtp_from_name,
+				updated_at = CURRENT_TIMESTAMP`,
+		)
+		.bind(
+			input.host.trim(),
+			normalizeSmtpPort(input.port),
+			input.username.trim(),
+			input.password,
+			input.encryption,
+			input.fromEmail.trim().toLowerCase(),
+			input.fromName.trim(),
+		)
+		.run();
+}
+
 function validateMediaStorageSettings(input: MediaStorageSettings): void {
 	const endpoint = normalizeStorageUrl(input.s3Endpoint);
 	if (!endpoint) {
@@ -876,6 +964,41 @@ function validateMediaStorageSettings(input: MediaStorageSettings): void {
 	}
 	if (!input.s3SecretAccessKey.trim()) {
 		throw new Error("S3 secret access key is required.");
+	}
+}
+
+function parseSmtpPort(value: number | string): number {
+	const numericValue = typeof value === "number" ? value : Number.parseInt(String(value), 10);
+	if (!Number.isFinite(numericValue) || numericValue < 1 || numericValue > 65535) {
+		return 587;
+	}
+
+	return Math.floor(numericValue);
+}
+
+function normalizeSmtpPort(value: number): number {
+	return Number.isFinite(value) && value >= 1 && value <= 65535 ? Math.floor(value) : 587;
+}
+
+function parseSmtpEncryption(value: unknown): SmtpEncryption {
+	return value === "ssl" ? "ssl" : "tls";
+}
+
+function validateSmtpSettings(input: SmtpSettings): void {
+	if (!input.host.trim()) {
+		throw new Error("SMTP host is required.");
+	}
+	if (!Number.isInteger(input.port) || input.port < 1 || input.port > 65535) {
+		throw new Error("SMTP port must be between 1 and 65535.");
+	}
+	if (!input.fromEmail.trim()) {
+		throw new Error("SMTP from email is required.");
+	}
+	if (!input.fromName.trim()) {
+		throw new Error("SMTP from name is required.");
+	}
+	if ((input.username.trim() && !input.password.trim()) || (!input.username.trim() && input.password.trim())) {
+		throw new Error("SMTP username and password must both be provided.");
 	}
 }
 
@@ -1250,6 +1373,19 @@ export function parseSiteSettingsForm(formData: FormData): {
 	};
 }
 
+export function parseSmtpSettingsForm(formData: FormData): SmtpSettings {
+	const smtpPortValue = optionalString(formData, "smtpPort");
+	return {
+		host: optionalString(formData, "smtpHost"),
+		port: smtpPortValue ? Number.parseInt(smtpPortValue, 10) : 587,
+		username: optionalString(formData, "smtpUsername"),
+		password: optionalString(formData, "smtpPassword"),
+		encryption: parseSmtpEncryption(optionalString(formData, "smtpEncryption")),
+		fromEmail: optionalString(formData, "smtpFromEmail"),
+		fromName: optionalString(formData, "smtpFromName"),
+	};
+}
+
 export function parseMediaStorageSettingsForm(formData: FormData): MediaStorageSettings {
 	return {
 		s3Endpoint: optionalString(formData, "s3Endpoint"),
@@ -1543,6 +1679,13 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				media_s3_secret_access_key TEXT NOT NULL DEFAULT '',
 				media_s3_region TEXT NOT NULL DEFAULT 'auto',
 				media_s3_force_path_style TEXT NOT NULL DEFAULT '1',
+				smtp_host TEXT NOT NULL DEFAULT '',
+				smtp_port INTEGER NOT NULL DEFAULT 587,
+				smtp_username TEXT NOT NULL DEFAULT '',
+				smtp_password TEXT NOT NULL DEFAULT '',
+				smtp_encryption TEXT NOT NULL DEFAULT 'tls',
+				smtp_from_email TEXT NOT NULL DEFAULT '',
+				smtp_from_name TEXT NOT NULL DEFAULT '',
 				header_background TEXT NOT NULL DEFAULT '#ffffff',
 				header_text_color TEXT NOT NULL DEFAULT '#0f1219',
 				header_accent_color TEXT NOT NULL DEFAULT '#2337ff',
@@ -1645,6 +1788,34 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	if (!settingsColumnNames.has("media_s3_force_path_style")) {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN media_s3_force_path_style TEXT NOT NULL DEFAULT '1'`).run();
+	}
+
+	if (!settingsColumnNames.has("smtp_host")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN smtp_host TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("smtp_port")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN smtp_port INTEGER NOT NULL DEFAULT 587`).run();
+	}
+
+	if (!settingsColumnNames.has("smtp_username")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN smtp_username TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("smtp_password")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN smtp_password TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("smtp_encryption")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN smtp_encryption TEXT NOT NULL DEFAULT 'tls'`).run();
+	}
+
+	if (!settingsColumnNames.has("smtp_from_email")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN smtp_from_email TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("smtp_from_name")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN smtp_from_name TEXT NOT NULL DEFAULT ''`).run();
 	}
 
 	if (!settingsColumnNames.has("header_template_html")) {

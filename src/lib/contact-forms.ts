@@ -37,6 +37,7 @@ export interface ContactFormRecord {
 	backgroundColor: string;
 	buttonColor: string;
 	useCaptcha: boolean;
+	notificationEmails: string[];
 	fields: ContactFormField[];
 	isActive: boolean;
 	sortOrder: number;
@@ -59,6 +60,7 @@ export interface ContactFormInput {
 	backgroundColor: string;
 	buttonColor: string;
 	useCaptcha: boolean;
+	notificationEmails: string[];
 	fields: ContactFormFieldInput[];
 	isActive: boolean;
 	sortOrder: number;
@@ -79,6 +81,7 @@ interface ContactFormRow {
 	background_color: string;
 	button_color: string;
 	use_captcha: number;
+	notification_emails: string;
 	fields_json: string;
 	is_active: number;
 	sort_order: number;
@@ -103,6 +106,7 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 				background_color TEXT NOT NULL DEFAULT '#f8fbff',
 				button_color TEXT NOT NULL DEFAULT '#4f80ff',
 				use_captcha INTEGER NOT NULL DEFAULT 0 CHECK (use_captcha IN (0, 1)),
+				notification_emails TEXT NOT NULL DEFAULT '',
 				fields_json TEXT NOT NULL DEFAULT '[]',
 				is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
 				sort_order INTEGER NOT NULL DEFAULT 0,
@@ -153,6 +157,9 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 	if (!columnNames.has("use_captcha")) {
 		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN use_captcha INTEGER NOT NULL DEFAULT 0 CHECK (use_captcha IN (0, 1))`).run();
 	}
+	if (!columnNames.has("notification_emails")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN notification_emails TEXT NOT NULL DEFAULT ''`).run();
+	}
 
 	await db
 		.prepare(
@@ -186,11 +193,11 @@ export async function listContactForms(
 	await ensureContactFormTables(db);
 	const c = catalog ?? getLanguageCatalogForForms();
 	const query = activeOnly
-		? `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, fields_json, is_active, sort_order, updated_at
+		? `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, notification_emails, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			WHERE is_active = 1
 			ORDER BY sort_order ASC, id ASC`
-		: `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, fields_json, is_active, sort_order, updated_at
+		: `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, notification_emails, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			ORDER BY sort_order ASC, id ASC`;
 	const result = await db.prepare(query).all<ContactFormRow>();
@@ -207,7 +214,7 @@ export async function getContactFormById(
 	const c = catalog ?? getLanguageCatalogForForms();
 	const row = await db
 		.prepare(
-			`SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, fields_json, is_active, sort_order, updated_at
+			`SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, notification_emails, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			WHERE id = ?1`,
 		)
@@ -222,8 +229,8 @@ export async function createContactForm(db: D1Database, input: ContactFormInput)
 	const normalizedFields = normalizeFormFields(input.fields, catalog.defaultLanguageCode);
 	const result = await db
 		.prepare(
-			`INSERT INTO contact_forms (title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, fields_json, is_active, sort_order, updated_at)
-			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, CURRENT_TIMESTAMP)`,
+			`INSERT INTO contact_forms (title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, notification_emails, fields_json, is_active, sort_order, updated_at)
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
 			serializeLocalizedText(input.titleTranslations, catalog, true),
@@ -239,6 +246,7 @@ export async function createContactForm(db: D1Database, input: ContactFormInput)
 			normalizeContactFormColor(input.backgroundColor, "#f8fbff"),
 			normalizeContactFormColor(input.buttonColor, "#4f80ff"),
 			input.useCaptcha ? 1 : 0,
+			serializeNotificationEmails(input.notificationEmails),
 			JSON.stringify(normalizedFields),
 			input.isActive ? 1 : 0,
 			normalizeSortOrder(input.sortOrder),
@@ -267,11 +275,12 @@ export async function updateContactForm(db: D1Database, id: number, input: Conta
 				background_color = ?11,
 				button_color = ?12,
 				use_captcha = ?13,
-				fields_json = ?14,
-				is_active = ?15,
-				sort_order = ?16,
+				notification_emails = ?14,
+				fields_json = ?15,
+				is_active = ?16,
+				sort_order = ?17,
 				updated_at = CURRENT_TIMESTAMP
-			WHERE id = ?17`,
+			WHERE id = ?18`,
 		)
 		.bind(
 			serializeLocalizedText(input.titleTranslations, catalog, true),
@@ -287,6 +296,7 @@ export async function updateContactForm(db: D1Database, id: number, input: Conta
 			normalizeContactFormColor(input.backgroundColor, "#f8fbff"),
 			normalizeContactFormColor(input.buttonColor, "#4f80ff"),
 			input.useCaptcha ? 1 : 0,
+			serializeNotificationEmails(input.notificationEmails),
 			JSON.stringify(normalizedFields),
 			input.isActive ? 1 : 0,
 			normalizeSortOrder(input.sortOrder),
@@ -316,6 +326,7 @@ export function parseContactFormForm(formData: FormData): ContactFormInput {
 		backgroundColor: normalizeContactFormColor(optionalString(formData, "backgroundColor"), "#f8fbff"),
 		buttonColor: normalizeContactFormColor(optionalString(formData, "buttonColor"), "#4f80ff"),
 		useCaptcha: optionalBoolean(formData, "useCaptcha"),
+		notificationEmails: parseNotificationEmails(optionalString(formData, "notificationEmails"), true),
 		fields: parseFormFieldsForm(formData),
 		isActive: optionalBoolean(formData, "isActive"),
 		sortOrder: Number.parseInt(optionalString(formData, "sortOrder") || "0", 10) || 0,
@@ -351,6 +362,10 @@ export function parseContactFormPayload(payload: unknown): ContactFormInput {
 			"#4f80ff",
 		),
 		useCaptcha: parseBoolean(record.useCaptcha),
+		notificationEmails: parseNotificationEmails(
+			typeof record.notificationEmails === "string" ? record.notificationEmails : "",
+			true,
+		),
 		fields,
 		isActive: parseBoolean(record.isActive),
 		sortOrder: normalizeSortOrder(
@@ -408,6 +423,7 @@ function toContactFormRecord(row: ContactFormRow, requestedLanguage: string, cat
 		backgroundColor: normalizeContactFormColor(row.background_color, "#f8fbff"),
 		buttonColor: normalizeContactFormColor(row.button_color, "#4f80ff"),
 		useCaptcha: row.use_captcha === 1,
+		notificationEmails: parseNotificationEmails(row.notification_emails, false),
 		fields: parseStoredFieldsJson(row.fields_json),
 		isActive: row.is_active === 1,
 		sortOrder: row.sort_order,
@@ -505,6 +521,32 @@ function normalizeContactFormBackgroundStyle(value: string): ContactFormBackgrou
 function normalizeContactFormColor(value: string, fallback: string): string {
 	const trimmed = typeof value === "string" ? value.trim() : "";
 	return /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(trimmed) ? trimmed : fallback;
+}
+
+function parseNotificationEmails(value: string, strict = true): string[] {
+	const normalized = typeof value === "string" ? value : "";
+	if (!normalized.trim()) {
+		return [];
+	}
+
+	const parts = normalized
+		.split(/[,;\n]/)
+		.map((entry) => entry.trim().toLowerCase())
+		.filter(Boolean);
+	const unique = [...new Set(parts)];
+	for (const email of unique) {
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+			if (strict) {
+				throw new Error(`Invalid notification email: ${email}`);
+			}
+		}
+	}
+
+	return unique.filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+}
+
+function serializeNotificationEmails(emails: string[]): string {
+	return parseNotificationEmails(emails.join(",")).join(", ");
 }
 
 function getLanguageCatalogForForms() {

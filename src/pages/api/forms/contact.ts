@@ -1,6 +1,8 @@
 import type { APIRoute } from "astro";
 import { getDb, getSiteConfig } from "../../../lib/blog";
 import { getContactFormById, listContactForms } from "../../../lib/contact-forms";
+import "../../../lib/contact-form-notifications";
+import { emitContactFormSubmissionHooks } from "../../../lib/contact-form-hooks";
 import {
 	createFormSubmission,
 	listFormFields,
@@ -24,9 +26,11 @@ export const POST: APIRoute = async ({ locals, request }) => {
 		const catalog = getLanguageCatalog(locals);
 		const siteConfig = await getSiteConfig(db);
 		const contactForms = await listContactForms(db, true, input.language, catalog);
-		const selectedForm =
+		const explicitForm =
 			typeof input.contactFormId === "number" ? await getContactFormById(db, input.contactFormId, input.language, catalog) : null;
-		const fields = selectedForm?.fields ?? contactForms[0]?.fields ?? (await listFormFields(db));
+		const fallbackForm = contactForms[0] ?? null;
+		const selectedForm = explicitForm ?? fallbackForm;
+		const fields = selectedForm?.fields ?? (await listFormFields(db));
 		if (selectedForm?.useCaptcha) {
 			const captchaSettings = {
 				enabled: siteConfig.captchaEnabled,
@@ -42,7 +46,35 @@ export const POST: APIRoute = async ({ locals, request }) => {
 			);
 		}
 		const validatedInput = validateContactFormSubmission(fields, input, catalog);
-		const submissionId = await createFormSubmission(db, validatedInput);
+		const resolvedInput = {
+			...validatedInput,
+			contactFormId: validatedInput.contactFormId ?? selectedForm?.id ?? 0,
+		};
+		const submissionId = await createFormSubmission(db, resolvedInput);
+
+		if (selectedForm) {
+			await emitContactFormSubmissionHooks({
+				db,
+				siteConfig,
+				contactForm: selectedForm,
+				submission: {
+					id: submissionId,
+					contactFormId: resolvedInput.contactFormId ?? selectedForm.id,
+					language: resolvedInput.language,
+					sourcePath: resolvedInput.sourcePath ?? null,
+					values: resolvedInput.values,
+					submittedAt: new Date(),
+				},
+				requestInfo: {
+					ipAddress:
+						request.headers.get("cf-connecting-ip") ||
+						request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+						undefined,
+					userAgent: request.headers.get("user-agent") ?? undefined,
+					referer: request.headers.get("referer") ?? undefined,
+				},
+			});
+		}
 
 		return Response.json({
 			ok: true,
