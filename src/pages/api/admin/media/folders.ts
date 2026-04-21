@@ -17,7 +17,13 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 
 	try {
 		const formData = await request.formData();
-		const folderPath = String(formData.get("folderPath") ?? "").trim();
+		const parentFolderPath = String(formData.get("parentFolderPath") ?? "").trim();
+		const folderName = String(formData.get("folderName") ?? "").trim();
+		if (!folderName) {
+			return redirect("/admin/media?errorMessage=Please enter a folder name.");
+		}
+
+		const folderPath = parentFolderPath ? `${parentFolderPath}/${folderName}` : folderName;
 		await createMediaFolder(getDb(locals), folderPath);
 		return redirect(`/admin/media?folderCreated=1&folder=${encodeURIComponent(folderPath)}`);
 	} catch (error) {

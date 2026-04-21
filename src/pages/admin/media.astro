@@ -14,6 +14,22 @@ import {
 } from "../../lib/media";
 import { getUiTranslations } from "../../lib/i18n";
 
+type FolderEntry = {
+	folderPath: string;
+	label: string;
+	depth: number;
+	itemCount: number;
+	isActive: boolean;
+	isAncestor: boolean;
+	hasChildren: boolean;
+};
+
+type Breadcrumb = {
+	label: string;
+	folderPath: string;
+	isCurrent: boolean;
+};
+
 const session = Astro.locals.adminSession;
 if (!session) {
 	return Astro.redirect("/admin/login");
@@ -37,9 +53,14 @@ try {
 	loadError = error instanceof Error ? error.message : t("messages.mediaLoadFailed");
 }
 
+const folderIndex = buildFolderIndex(folders, allAssets);
+const folderEntries = buildFolderEntries(folderIndex, allAssets, currentFolder);
+const breadcrumbs = buildBreadcrumbs(currentFolder);
+const currentFolderDepth = currentFolder ? currentFolder.split("/").filter(Boolean).length : 0;
+const childFolderEntries = folderEntries.filter((entry) => entry.depth === currentFolderDepth + 1);
 const visibleAssets = allAssets.filter((asset) => asset.folderPath === currentFolder);
-const folderEntries = buildFolderEntries(folders, allAssets);
-const activeFolderLabel = currentFolder ? formatFolderLabel(currentFolder) : t("messages.allMedia", "All media");
+const folderOptions = [...folderIndex.values()].sort((left, right) => left.folderPath.localeCompare(right.folderPath));
+const folderTitle = currentFolder ? formatFolderLabel(currentFolder) : t("messages.allMedia", "All media");
 
 function formatBytes(bytes: number): string {
 	if (!Number.isFinite(bytes) || bytes <= 0) {
@@ -49,12 +70,10 @@ function formatBytes(bytes: number): string {
 	const units = ["B", "KB", "MB", "GB", "TB"];
 	let value = bytes;
 	let index = 0;
-
 	while (value >= 1024 && index < units.length - 1) {
 		value /= 1024;
 		index++;
 	}
-
 	return `${index === 0 ? Math.round(value) : value.toFixed(1)} ${units[index]}`;
 }
 
@@ -78,32 +97,29 @@ function isVideoAsset(asset: MediaAsset): boolean {
 }
 
 function getAssetKind(asset: MediaAsset): string {
-	if (isImageAsset(asset)) {
-		return "Image";
-	}
-
-	if (isVideoAsset(asset)) {
-		return "Video";
-	}
-
+	if (isImageAsset(asset)) return "Image";
+	if (isVideoAsset(asset)) return "Video";
 	return asset.mimeType || "File";
 }
 
-function buildFolderEntries(
-	folderRecords: MediaFolderRecord[],
-	assets: MediaAsset[],
-): Array<{ folderPath: string; label: string; depth: number; count: number; isActive: boolean }> {
-	const folderMap = new Map<string, MediaFolderRecord>();
+function buildFolderIndex(folderRecords: MediaFolderRecord[], assets: MediaAsset[]): Map<string, MediaFolderRecord> {
+	const map = new Map<string, MediaFolderRecord>();
+
 	for (const record of folderRecords) {
 		const normalized = normalizeFolderPath(record.folderPath);
-		if (normalized) {
-			folderMap.set(normalized, record);
+		if (!normalized) {
+			continue;
 		}
+
+		map.set(normalized, {
+			...record,
+			folderPath: normalized,
+		});
 	}
 
 	for (const asset of assets) {
-		if (asset.folderPath && !folderMap.has(asset.folderPath)) {
-			folderMap.set(asset.folderPath, {
+		if (asset.folderPath && !map.has(asset.folderPath)) {
+			map.set(asset.folderPath, {
 				id: 0,
 				folderPath: asset.folderPath,
 				createdAt: new Date(0),
@@ -112,31 +128,75 @@ function buildFolderEntries(
 		}
 	}
 
-	const folderPaths = [...folderMap.keys()].sort((left, right) => left.localeCompare(right));
-	return folderPaths.map((folderPath) => {
-		const depth = folderPath.split("/").filter(Boolean).length;
-		const label = folderPath.split("/").filter(Boolean).at(-1) || folderPath;
-		const count = assets.filter((asset) => asset.folderPath === folderPath).length;
-		return {
-			folderPath,
-			label,
-			depth,
-			count,
-			isActive: folderPath === currentFolder,
-		};
-	});
+	return map;
 }
 
-function buildFolderHref(folderPath: string, view = currentView): string {
-	const params = new URLSearchParams();
-	if (folderPath) {
-		params.set("folder", folderPath);
+function buildFolderEntries(folderIndex: Map<string, MediaFolderRecord>, assets: MediaAsset[], currentFolderPath: string): FolderEntry[] {
+	const currentSegments = currentFolderPath ? currentFolderPath.split("/").filter(Boolean) : [];
+	const ancestorFolders = new Set<string>();
+	for (let index = 1; index <= currentSegments.length; index++) {
+		ancestorFolders.add(currentSegments.slice(0, index).join("/"));
 	}
-	if (view !== "grid") {
-		params.set("view", view);
+
+	const entries = [...folderIndex.values()].map((folder) => {
+		const depth = folder.folderPath.split("/").filter(Boolean).length;
+		const itemCount = countAssetsInFolder(folder.folderPath, assets);
+		const hasChildren = [...folderIndex.keys()].some(
+			(candidate) => candidate.startsWith(`${folder.folderPath}/`) && candidate !== folder.folderPath,
+		);
+		return {
+			folderPath: folder.folderPath,
+			label: formatFolderLabel(folder.folderPath),
+			depth,
+			itemCount,
+			isActive: folder.folderPath === currentFolderPath,
+			isAncestor: ancestorFolders.has(folder.folderPath),
+			hasChildren,
+		};
+	});
+
+	return entries.sort((left, right) => left.folderPath.localeCompare(right.folderPath));
+}
+
+function buildBreadcrumbs(folderPath: string): Breadcrumb[] {
+	const segments = folderPath.split("/").filter(Boolean);
+	const breadcrumbs: Breadcrumb[] = [
+		{
+			label: t("messages.allMedia", "All media"),
+			folderPath: "",
+			isCurrent: segments.length === 0,
+		},
+	];
+
+	let current = "";
+	for (let index = 0; index < segments.length; index++) {
+		current = current ? `${current}/${segments[index]}` : segments[index];
+		breadcrumbs.push({
+			label: segments[index],
+			folderPath: current,
+			isCurrent: index === segments.length - 1,
+		});
 	}
-	const query = params.toString();
-	return query ? `/admin/media?${query}` : "/admin/media";
+
+	return breadcrumbs;
+}
+
+function countAssetsInFolder(folderPath: string, assets: MediaAsset[]): number {
+	const normalized = normalizeFolderPath(folderPath);
+	if (!normalized) {
+		return assets.length;
+	}
+
+	const prefix = `${normalized}/`;
+	return assets.filter((asset) => asset.folderPath === normalized || asset.folderPath.startsWith(prefix)).length;
+}
+
+function formatFolderLabel(folderPath: string): string {
+	const segments = folderPath.split("/").filter(Boolean);
+	if (segments.length === 0) {
+		return t("messages.allMedia", "All media");
+	}
+	return segments.join(" / ");
 }
 
 function normalizeFolderPath(value: string): string {
@@ -157,17 +217,21 @@ function normalizeFolderPath(value: string): string {
 		.join("/");
 }
 
-function formatFolderLabel(folderPath: string): string {
-	const segments = folderPath.split("/").filter(Boolean);
-	if (segments.length === 0) {
-		return t("messages.allMedia", "All media");
+function buildFolderHref(folderPath: string, view = currentView): string {
+	const params = new URLSearchParams();
+	if (folderPath) {
+		params.set("folder", folderPath);
 	}
-
-	return segments.join(" / ");
+	if (view !== "grid") {
+		params.set("view", view);
+	}
+	const query = params.toString();
+	return query ? `/admin/media?${query}` : "/admin/media";
 }
 
 const mediaFeedback = [
 	["uploaded", { title: "Upload complete", message: t("messages.mediaUploadSuccess"), tone: "success" }],
+	["updated", { title: "Media updated", message: "The file was renamed or moved.", tone: "success" }],
 	["deleted", { title: "Asset deleted", message: t("messages.mediaDeleteSuccess"), tone: "success" }],
 	["folderCreated", { title: "Folder created", message: t("messages.folderCreated", "Folder created."), tone: "success" }],
 	["synced", { title: "Library refreshed", message: "Media library refreshed from bucket.", tone: "success" }],
@@ -185,7 +249,7 @@ const mediaFeedback = [
 		<FeedbackModal id="media-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
 
 		<div class="media-library-toolbar admin-form-surface">
-			<div class="d-flex flex-wrap gap-3 justify-content-between align-items-start">
+			<div class="media-library-summary">
 				<div>
 					<p class="admin-inline-muted text-uppercase mb-2">{t("labels.status")}</p>
 					<h2 class="h5 mb-1">{storageStatus.label}</h2>
@@ -200,34 +264,36 @@ const mediaFeedback = [
 			</div>
 
 			<div class="media-library-actions">
-				<form method="post" action="/api/admin/media/sync" class="media-folder-form">
+				<form method="post" action="/api/admin/media/sync" class="media-action-form">
 					<label class="form-label fw-semibold" for="syncBucket">Bucket refresh</label>
-					<div class="d-flex gap-2 flex-wrap">
-						<button id="syncBucket" class="btn btn-outline-secondary" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
-							Refresh from bucket
-						</button>
-					</div>
-					<p class="form-text mb-0">Pull any bucket objects that are missing from D1 into the media library. Some S3-compatible endpoints do not support bucket listing, so this action may be unavailable.</p>
+					<button id="syncBucket" class="btn btn-outline-secondary w-100" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
+						Refresh from bucket
+					</button>
+					<p class="form-text mb-0">Pull objects from the bucket into the admin library when listing support is available.</p>
 				</form>
-				<form method="post" action="/api/admin/media/folders" class="media-folder-form">
-					<label class="form-label fw-semibold" for="folderPath">{t("actions.createFolder", "Create folder")}</label>
+
+				<form method="post" action="/api/admin/media/folders" class="media-action-form">
+					<input type="hidden" name="parentFolderPath" value={currentFolder} />
+					<label class="form-label fw-semibold" for="folderName">{t("actions.createFolder", "Create folder")}</label>
 					<div class="d-flex gap-2 flex-wrap">
 						<input
-							id="folderPath"
+							id="folderName"
 							class="form-control"
 							type="text"
-							name="folderPath"
-							placeholder="images/banners"
+							name="folderName"
+							placeholder={currentFolder ? "new-folder" : "images"}
 							disabled={!storageStatus.isConfigured || !canManage}
 						/>
 						<button class="btn btn-outline-secondary" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
 							{t("actions.createFolder", "Create folder")}
 						</button>
 					</div>
-					<p class="form-text mb-0">Folders are lightweight prefixes. Use slash-separated names to nest folders.</p>
+					<p class="form-text mb-0">
+						{currentFolder ? `Creates a folder inside ${formatFolderLabel(currentFolder)}.` : "Use simple names for quick nesting."}
+					</p>
 				</form>
 
-				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="media-upload-form">
+				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="media-action-form">
 					<input type="hidden" name="folderPath" value={currentFolder} />
 					<label class="form-label fw-semibold" for="mediaFiles">{t("actions.uploadMedia")}</label>
 					<input
@@ -238,7 +304,7 @@ const mediaFeedback = [
 						multiple
 						disabled={!storageStatus.isConfigured || !canManage}
 					/>
-					<p class="form-text mb-3">Uploading into <strong>{activeFolderLabel}</strong>.</p>
+					<p class="form-text mb-0">Uploading into <strong>{folderTitle}</strong>.</p>
 					<button class="btn btn-primary" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
 						{t("actions.uploadMedia")}
 					</button>
@@ -254,6 +320,11 @@ const mediaFeedback = [
 				</div>
 				<nav class="media-folder-list" aria-label="Media folders">
 					<a class:list={["media-folder-item", !currentFolder ? "is-active" : ""]} href={buildFolderHref("", currentView)}>
+						<span class="media-folder-item-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h4l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19H6A2.5 2.5 0 0 1 3.5 16.5Z" />
+							</svg>
+						</span>
 						<span class="media-folder-title">{t("messages.allMedia", "All media")}</span>
 						<span class="media-folder-count">{allAssets.length}</span>
 					</a>
@@ -262,12 +333,17 @@ const mediaFeedback = [
 					) : (
 						folderEntries.map((folder) => (
 							<a
-								class:list={["media-folder-item", folder.isActive ? "is-active" : ""]}
+								class:list={["media-folder-item", folder.isActive ? "is-active" : "", folder.isAncestor ? "is-ancestor" : ""]}
 								href={buildFolderHref(folder.folderPath, currentView)}
 								style={`--folder-depth: ${Math.min(folder.depth, 6)};`}
 							>
+								<span class="media-folder-item-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h4l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19H6A2.5 2.5 0 0 1 3.5 16.5Z" />
+									</svg>
+								</span>
 								<span class="media-folder-title text-truncate">{folder.label}</span>
-								<span class="media-folder-count">{folder.count}</span>
+								<span class="media-folder-count">{folder.itemCount}</span>
 							</a>
 						))
 					)}
@@ -275,197 +351,399 @@ const mediaFeedback = [
 			</aside>
 
 			<section class="media-content-panel admin-form-surface">
-				<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-					<div>
-						<h2 class="h5 mb-1">{activeFolderLabel}</h2>
-						<p class="admin-inline-muted mb-0">{visibleAssets.length} items in this folder</p>
+				<nav class="media-breadcrumbs" aria-label="Breadcrumb">
+					{breadcrumbs.map((crumb, index) => (
+						<>
+							{index > 0 && <span class="media-breadcrumb-separator" aria-hidden="true">/</span>}
+							{crumb.isCurrent ? (
+								<span class="media-breadcrumb-current">{crumb.label}</span>
+							) : (
+								<a class="media-breadcrumb-link" href={buildFolderHref(crumb.folderPath, currentView)}>
+									{crumb.label}
+								</a>
+							)}
+						</>
+					))}
+				</nav>
+
+				<div class="media-content-header">
+					<div class="min-w-0">
+						<h2 class="h5 mb-1 text-break">{folderTitle}</h2>
+						<p class="admin-inline-muted mb-0">
+							{visibleAssets.length} files / {childFolderEntries.length} folders
+						</p>
 					</div>
-					<div class="d-flex flex-wrap gap-2">
-						<a class:list={["btn btn-sm", currentView === "grid" ? "btn-primary" : "btn-outline-secondary"]} href={buildFolderHref(currentFolder, "grid")}>
-							Grid
-						</a>
-						<a class:list={["btn btn-sm", currentView === "list" ? "btn-primary" : "btn-outline-secondary"]} href={buildFolderHref(currentFolder, "list")}>
-							List
-						</a>
+					<div class="d-flex flex-wrap gap-2 align-items-center">
+						<div class="btn-group btn-group-sm" role="group" aria-label="View mode">
+							<a class:list={["btn", currentView === "grid" ? "btn-primary" : "btn-outline-secondary"]} href={buildFolderHref(currentFolder, "grid")}>
+								Grid
+							</a>
+							<a class:list={["btn", currentView === "list" ? "btn-primary" : "btn-outline-secondary"]} href={buildFolderHref(currentFolder, "list")}>
+								List
+							</a>
+						</div>
 					</div>
 				</div>
 
-				{visibleAssets.length === 0 ? (
-					<div class="media-empty-state">
-						<h3 class="h6 mb-1">No files in this folder yet.</h3>
-						<p class="mb-0 text-body-secondary">Upload media here or create a new folder to organize files.</p>
+				<form class="media-selection-bar" data-media-selection-bar hidden>
+					<input type="hidden" name="currentFolder" value={currentFolder} />
+					<input type="hidden" name="assetIds" value="" data-media-selected-ids />
+					<div class="media-selection-summary">
+						<strong><span data-media-selected-count>0</span> selected</strong>
+						<button class="btn btn-link btn-sm p-0" type="button" data-media-clear-selection>Clear</button>
 					</div>
-				) : currentView === "list" ? (
-					<div class="table-responsive media-table-wrap">
-						<table class="table table-sm align-middle mb-0">
-							<thead>
-								<tr>
-									<th class="media-preview-col">Preview</th>
-									<th>Name</th>
-									<th>Type</th>
-									<th>Size</th>
-									<th>Updated</th>
-									<th>Actions</th>
-								</tr>
-							</thead>
-							<tbody>
-								{visibleAssets.map((asset) => {
-									const previewUrl = getAssetPreviewUrl(asset);
-									const publicUrl = asset.publicUrl.trim();
-									const canCopyPublicUrl = Boolean(publicUrl);
-									return (
-										<tr>
-											<td>
-												<div class="media-list-thumb">
-													{isImageAsset(asset) ? (
-														<img src={previewUrl} alt={asset.fileName} loading="lazy" />
-													) : isVideoAsset(asset) ? (
-														<video src={previewUrl} controls preload="metadata" />
-													) : (
-														<div class="media-fallback-chip">{asset.mimeType || "FILE"}</div>
-													)}
-												</div>
-											</td>
-											<td>
-												<div class="d-grid">
-													<strong class="text-break">{asset.fileName}</strong>
-													<small class="text-body-secondary text-break">{asset.folderPath || "root"}</small>
-												</div>
-											</td>
-											<td>{getAssetKind(asset)}</td>
-											<td>{formatBytes(asset.sizeBytes)}</td>
-											<td>{formatDate(asset.createdAt)}</td>
-											<td>
-												<div class="d-flex flex-wrap gap-2">
-													<IconAction
-														href={previewUrl}
-														icon="view"
-														label={t("actions.view")}
-														attrs={{ target: "_blank", rel: "noopener noreferrer" }}
-													/>
-													<button
-														class="btn btn-sm btn-outline-secondary admin-icon-action"
-														type="button"
-														data-copy-media-url
-														data-copy-url={publicUrl}
-														aria-label={t("actions.copyUrl", "Copy URL")}
-														title={t("actions.copyUrl", "Copy URL")}
-														disabled={!canCopyPublicUrl}
-													>
-														<span class="admin-icon-action-icon" aria-hidden="true">
-															<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-																<path d="M9 9h10v10H9z" />
-																<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
-															</svg>
-														</span>
-														<span class="visually-hidden">{canCopyPublicUrl ? t("actions.copyUrl", "Copy URL") : "No public URL configured"}</span>
-													</button>
-													{storageStatus.isConfigured && canManage && (
-														<form
-															method="post"
-															action={`/api/admin/media/${asset.id}`}
-															class="d-inline"
-															data-admin-confirm-form
-															data-confirm-title="Delete media file?"
-															data-confirm-message="This file will be removed from the media library."
-															data-confirm-confirm-label={t("actions.delete")}
-															data-confirm-tone="danger"
-														>
-															<input type="hidden" name="_action" value="delete" />
-															<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
-														</form>
-													)}
-												</div>
-											</td>
-										</tr>
-									);
-								})}
-							</tbody>
-						</table>
+					<div class="media-selection-actions">
+						<select class="form-select form-select-sm" name="folderPath" aria-label="Move selected files to folder" disabled={!storageStatus.isConfigured || !canManage}>
+							<option value="">Root</option>
+							{folderOptions.map((folder) => (
+								<option value={folder.folderPath}>{formatFolderLabel(folder.folderPath)}</option>
+							))}
+						</select>
+						<button class="btn btn-sm btn-outline-secondary" type="submit" name="_intent" value="bulk-move" disabled={!storageStatus.isConfigured || !canManage}>
+							Move selected
+						</button>
+						<button
+							class="btn btn-sm btn-outline-danger"
+							type="submit"
+							name="_intent"
+							value="bulk-delete"
+							disabled={!storageStatus.isConfigured || !canManage}
+							data-admin-confirm-form
+							data-confirm-title="Delete selected files?"
+							data-confirm-message="The selected files will be removed from the media library."
+							data-confirm-confirm-label={t("actions.delete")}
+							data-confirm-tone="danger"
+						>
+							Delete selected
+						</button>
+					</div>
+				</form>
+
+				{loadError ? (
+					<div class="media-empty-state">
+						<h3 class="h6 mb-1">Media could not be loaded.</h3>
+						<p class="mb-0 text-body-secondary">{loadError}</p>
 					</div>
 				) : (
-					<div class="row g-3">
-						{visibleAssets.map((asset) => {
-							const previewUrl = getAssetPreviewUrl(asset);
-							const publicUrl = asset.publicUrl.trim();
-							const canCopyPublicUrl = Boolean(publicUrl);
-							return (
-								<div class="col-12 col-md-6 col-xl-4">
-									<article class="media-card">
-										<div class="media-card-preview">
-											{isImageAsset(asset) ? (
-												<img src={previewUrl} alt={asset.fileName} class="media-preview-image" loading="lazy" />
-											) : isVideoAsset(asset) ? (
-												<video src={previewUrl} class="media-preview-video" controls preload="metadata" />
-											) : (
-												<div class="media-preview-fallback d-flex align-items-center justify-content-center">
-													<span class="text-uppercase fw-semibold text-body-secondary">{asset.mimeType || "FILE"}</span>
-												</div>
-											)}
-										</div>
-										<div class="media-card-body">
-											<div class="d-flex align-items-start justify-content-between gap-2">
-												<div class="min-w-0">
-													<h3 class="h6 text-break mb-1">{asset.fileName}</h3>
-													<p class="text-body-secondary small mb-0 text-truncate">{asset.folderPath || "root"}</p>
-												</div>
-												<span class="badge text-bg-light">{getAssetKind(asset)}</span>
-											</div>
-											<div class="media-card-meta">
-												<span>{formatBytes(asset.sizeBytes)}</span>
-												<span>{formatDate(asset.createdAt)}</span>
-											</div>
-											<div class="d-flex flex-wrap gap-2 mt-3">
-												<IconAction
-													href={previewUrl}
-													icon="view"
-													label={t("actions.view")}
-													attrs={{ target: "_blank", rel: "noopener noreferrer" }}
-												/>
-												<button
-													class="btn btn-sm btn-outline-secondary admin-icon-action"
-													type="button"
-													data-copy-media-url
-													data-copy-url={publicUrl}
-													aria-label={t("actions.copyUrl", "Copy URL")}
-													title={t("actions.copyUrl", "Copy URL")}
-													disabled={!canCopyPublicUrl}
-												>
-													<span class="admin-icon-action-icon" aria-hidden="true">
-														<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-															<path d="M9 9h10v10H9z" />
-															<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
-														</svg>
-													</span>
-													<span class="visually-hidden">{canCopyPublicUrl ? t("actions.copyUrl", "Copy URL") : "No public URL configured"}</span>
-												</button>
-												{storageStatus.isConfigured && canManage && (
-													<form
-														method="post"
-														action={`/api/admin/media/${asset.id}`}
-														class="d-inline"
-														data-admin-confirm-form
-														data-confirm-title="Delete media file?"
-														data-confirm-message="This file will be removed from the media library."
-														data-confirm-confirm-label={t("actions.delete")}
-														data-confirm-tone="danger"
-													>
-														<input type="hidden" name="_action" value="delete" />
-														<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
-													</form>
-												)}
-											</div>
-											{!canCopyPublicUrl && (
-												<p class="text-body-secondary small mb-0">
-													No public URL is configured for this asset. Add a public base URL in Settings to enable copyable media links.
-												</p>
-											)}
-										</div>
-									</article>
+					<>
+						<section class="media-folder-section">
+							<div class="media-section-heading">
+								<h3 class="h6 mb-0">Folders</h3>
+								<span class="small text-body-secondary">{childFolderEntries.length} subfolders</span>
+							</div>
+							{childFolderEntries.length === 0 ? (
+								<p class="text-body-secondary small mb-0">This folder has no subfolders yet.</p>
+							) : currentView === "list" ? (
+								<div class="table-responsive media-folder-table-wrap">
+									<table class="table table-sm align-middle mb-0">
+										<tbody>
+											{childFolderEntries.map((folder) => (
+												<tr>
+													<td class="media-folder-cell">
+														<a class:list={["media-folder-list-link", folder.isActive ? "is-active" : ""]} href={buildFolderHref(folder.folderPath, currentView)}>
+															<span class="media-folder-item-icon" aria-hidden="true">
+																<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+																	<path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h4l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19H6A2.5 2.5 0 0 1 3.5 16.5Z" />
+																</svg>
+															</span>
+															<span class="text-truncate">{folder.label}</span>
+														</a>
+													</td>
+													<td class="text-body-secondary small text-end">{folder.itemCount} items</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
 								</div>
-							);
-						})}
-					</div>
+							) : (
+								<div class="media-folder-grid">
+									{childFolderEntries.map((folder) => (
+										<a class:list={["media-folder-card", folder.isActive ? "is-active" : ""]} href={buildFolderHref(folder.folderPath, currentView)}>
+											<span class="media-folder-item-icon media-folder-card-icon" aria-hidden="true">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+													<path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h4l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19H6A2.5 2.5 0 0 1 3.5 16.5Z" />
+												</svg>
+											</span>
+											<strong class="text-break">{folder.label}</strong>
+											<span class="text-body-secondary small">{folder.itemCount} items</span>
+										</a>
+									))}
+								</div>
+							)}
+						</section>
+
+						<section class="media-file-section">
+							<div class="media-section-heading">
+								<h3 class="h6 mb-0">Files</h3>
+								<span class="small text-body-secondary">{visibleAssets.length} files</span>
+							</div>
+
+							{visibleAssets.length === 0 ? (
+								<div class="media-empty-state">
+									<h3 class="h6 mb-1">No files in this folder yet.</h3>
+									<p class="mb-0 text-body-secondary">
+										Upload files into this folder or create a child folder to keep the structure tidy.
+									</p>
+								</div>
+							) : currentView === "list" ? (
+								<div class="table-responsive media-table-wrap">
+									<table class="table table-sm align-middle mb-0">
+										<thead>
+											<tr>
+												<th class="media-select-col">
+													<span class="visually-hidden">Select</span>
+												</th>
+												<th class="media-preview-col">Preview</th>
+												<th>Name</th>
+												<th>Type</th>
+												<th>Size</th>
+												<th>Updated</th>
+												<th class="media-action-col">Actions</th>
+											</tr>
+										</thead>
+										<tbody>
+											{visibleAssets.map((asset) => {
+												const previewUrl = getAssetPreviewUrl(asset);
+												const publicUrl = asset.publicUrl.trim();
+												const canCopyPublicUrl = Boolean(publicUrl);
+												return (
+													<tr class="media-item-row" data-media-item data-item-id={asset.id}>
+														<td>
+															<input
+																class="form-check-input media-select-checkbox"
+																type="checkbox"
+																data-media-select
+																data-asset-id={asset.id}
+																aria-label={`Select ${asset.fileName}`}
+															/>
+														</td>
+														<td>
+															<div class="media-list-thumb">
+																{isImageAsset(asset) ? (
+																	<img src={previewUrl} alt={asset.fileName} loading="lazy" />
+																) : isVideoAsset(asset) ? (
+																	<video src={previewUrl} controls preload="metadata" />
+																) : (
+																	<div class="media-fallback-chip">{asset.mimeType || "FILE"}</div>
+																)}
+															</div>
+														</td>
+														<td>
+															<div class="d-grid">
+																<strong class="text-break">{asset.fileName}</strong>
+																<small class="text-body-secondary text-break">{asset.folderPath || "root"}</small>
+															</div>
+														</td>
+														<td>{getAssetKind(asset)}</td>
+														<td>{formatBytes(asset.sizeBytes)}</td>
+														<td>{formatDate(asset.createdAt)}</td>
+														<td>
+															<div class="dropdown">
+																<button
+																	class="btn btn-sm btn-outline-secondary media-more-button dropdown-toggle"
+																	type="button"
+																	data-bs-toggle="dropdown"
+																	aria-expanded="false"
+																>
+																	<span class="visually-hidden">Media actions</span>
+																	<span aria-hidden="true">...</span>
+																</button>
+																<ul class="dropdown-menu dropdown-menu-end">
+																	<li>
+																		<a class="dropdown-item" href={previewUrl} target="_blank" rel="noopener noreferrer">
+																			View
+																		</a>
+																	</li>
+																	<li>
+																		<button
+																			type="button"
+																			class="dropdown-item"
+																			data-copy-media-url
+																			data-copy-url={publicUrl}
+																			disabled={!canCopyPublicUrl}
+																			data-copy-label={t("actions.copyUrl", "Copy URL")}
+																		>
+																			Copy URL
+																		</button>
+																	</li>
+																	<li>
+																		<button
+																			type="button"
+																			class="dropdown-item"
+																			data-media-rename
+																			data-asset-id={asset.id}
+																			data-asset-name={asset.fileName}
+																			data-asset-folder={asset.folderPath}
+																		>
+																			Rename
+																		</button>
+																	</li>
+																	<li>
+																		<button
+																			type="button"
+																			class="dropdown-item"
+																			data-media-move
+																			data-asset-id={asset.id}
+																			data-asset-name={asset.fileName}
+																			data-asset-folder={asset.folderPath}
+																		>
+																			Move
+																		</button>
+																	</li>
+																	<li>
+																		<form
+																			method="post"
+																			action={`/api/admin/media/${asset.id}`}
+																			class="d-inline"
+																			data-admin-confirm-form
+																			data-confirm-title="Delete media file?"
+																			data-confirm-message="This file will be removed from the media library."
+																			data-confirm-confirm-label={t("actions.delete")}
+																			data-confirm-tone="danger"
+																		>
+																			<input type="hidden" name="_action" value="delete" />
+																			<button type="submit" class="dropdown-item text-danger">
+																				Delete
+																			</button>
+																		</form>
+																	</li>
+																</ul>
+															</div>
+														</td>
+													</tr>
+												);
+											})}
+										</tbody>
+									</table>
+								</div>
+							) : (
+								<div class="media-file-grid">
+									{visibleAssets.map((asset) => {
+										const previewUrl = getAssetPreviewUrl(asset);
+										const publicUrl = asset.publicUrl.trim();
+										const canCopyPublicUrl = Boolean(publicUrl);
+										return (
+											<article class="media-card" data-media-item data-item-id={asset.id}>
+												<label class="media-card-select">
+													<input
+														class="form-check-input media-select-checkbox"
+														type="checkbox"
+														data-media-select
+														data-asset-id={asset.id}
+														aria-label={`Select ${asset.fileName}`}
+													/>
+												</label>
+												<div class="media-card-preview">
+													{isImageAsset(asset) ? (
+														<img src={previewUrl} alt={asset.fileName} class="media-preview-image" loading="lazy" />
+													) : isVideoAsset(asset) ? (
+														<video src={previewUrl} class="media-preview-video" controls preload="metadata" />
+													) : (
+														<div class="media-preview-fallback d-flex align-items-center justify-content-center">
+															<span class="text-uppercase fw-semibold text-body-secondary">{asset.mimeType || "FILE"}</span>
+														</div>
+													)}
+												</div>
+												<div class="media-card-body">
+													<div class="d-flex align-items-start justify-content-between gap-2">
+														<div class="min-w-0">
+															<h3 class="h6 text-break mb-1">{asset.fileName}</h3>
+															<p class="text-body-secondary small mb-0 text-truncate">{asset.folderPath || "root"}</p>
+														</div>
+														<span class="badge text-bg-light">{getAssetKind(asset)}</span>
+													</div>
+													<div class="media-card-meta">
+														<span>{formatBytes(asset.sizeBytes)}</span>
+														<span>{formatDate(asset.createdAt)}</span>
+													</div>
+													<div class="d-flex flex-wrap gap-2">
+														<IconAction
+															href={previewUrl}
+															icon="view"
+															label={t("actions.view")}
+															attrs={{ target: "_blank", rel: "noopener noreferrer" }}
+														/>
+														<button
+															class="btn btn-sm btn-outline-secondary admin-icon-action"
+															type="button"
+															data-copy-media-url
+															data-copy-url={publicUrl}
+															data-copy-label={t("actions.copyUrl", "Copy URL")}
+															aria-label={t("actions.copyUrl", "Copy URL")}
+															title={t("actions.copyUrl", "Copy URL")}
+															disabled={!canCopyPublicUrl}
+														>
+															<span class="admin-icon-action-icon" aria-hidden="true">
+																<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+																	<path d="M9 9h10v10H9z" />
+																	<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+																</svg>
+															</span>
+															<span class="visually-hidden">{canCopyPublicUrl ? t("actions.copyUrl", "Copy URL") : "No public URL configured"}</span>
+														</button>
+														<div class="dropdown">
+															<button class="btn btn-sm btn-outline-secondary media-more-button dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+																<span class="visually-hidden">Media actions</span>
+																<span aria-hidden="true">...</span>
+															</button>
+															<ul class="dropdown-menu dropdown-menu-end">
+																<li>
+																	<button
+																		type="button"
+																		class="dropdown-item"
+																		data-media-rename
+																		data-asset-id={asset.id}
+																		data-asset-name={asset.fileName}
+																		data-asset-folder={asset.folderPath}
+																	>
+																		Rename
+																	</button>
+																</li>
+																<li>
+																	<button
+																		type="button"
+																		class="dropdown-item"
+																		data-media-move
+																		data-asset-id={asset.id}
+																		data-asset-name={asset.fileName}
+																		data-asset-folder={asset.folderPath}
+																	>
+																		Move
+																	</button>
+																</li>
+																<li>
+																	<form
+																		method="post"
+																		action={`/api/admin/media/${asset.id}`}
+																		class="d-inline"
+																		data-admin-confirm-form
+																		data-confirm-title="Delete media file?"
+																		data-confirm-message="This file will be removed from the media library."
+																		data-confirm-confirm-label={t("actions.delete")}
+																		data-confirm-tone="danger"
+																	>
+																		<input type="hidden" name="_action" value="delete" />
+																		<button type="submit" class="dropdown-item text-danger">
+																			Delete
+																		</button>
+																	</form>
+																</li>
+															</ul>
+														</div>
+													</div>
+													{!canCopyPublicUrl && (
+														<p class="text-body-secondary small mb-0">
+															No public URL is configured for this asset. Add a public base URL in Settings to enable copyable media links.
+														</p>
+													)}
+												</div>
+											</article>
+										);
+									})}
+								</div>
+							)}
+						</section>
+					</>
 				)}
 			</section>
 		</div>
@@ -489,10 +767,18 @@ const mediaFeedback = [
 		for (const [key, entry] of mediaFeedback) {
 			if (search.has(key)) {
 				if (typeof showFeedbackModal === "function") {
+					const count = search.get(key);
 					const detail =
 						key === "synced" && (search.get("imported") || search.get("updated"))
 							? `Imported ${search.get("imported") ?? 0}, updated ${search.get("updated") ?? 0}.`
-							: "";
+							: count
+								? key === "uploaded"
+									? `${count} file${count === "1" ? "" : "s"} uploaded.`
+									: key === "deleted"
+										? `${count} file${count === "1" ? "" : "s"} deleted.`
+										: key === "updated"
+											? `${count} item${count === "1" ? "" : "s"} updated.`
+											: "";
 					showFeedbackModal({ title: entry.title, message: entry.message, detail, tone: entry.tone });
 				}
 				window.history.replaceState({}, "", window.location.pathname + window.location.hash);
@@ -504,8 +790,13 @@ const mediaFeedback = [
 
 <script type="module">
 	const copyButtons = document.querySelectorAll("[data-copy-media-url]");
+	const selectionBar = document.querySelector("[data-media-selection-bar]");
+	const selectedIdsInput = document.querySelector("[data-media-selected-ids]");
+	const selectedCountNodes = document.querySelectorAll("[data-media-selected-count]");
+	const clearSelectionButton = document.querySelector("[data-media-clear-selection]");
+	const selectionCheckboxes = [...document.querySelectorAll("[data-media-select]")];
 
-	copyButtons.forEach((button) => {
+	const syncCopyButton = (button) => {
 		if (!(button instanceof HTMLButtonElement)) {
 			return;
 		}
@@ -518,7 +809,7 @@ const mediaFeedback = [
 
 			try {
 				await navigator.clipboard.writeText(url);
-				const originalLabel = button.getAttribute("aria-label") ?? "Copy URL";
+				const originalLabel = button.dataset.copyLabel || button.getAttribute("aria-label") || "Copy URL";
 				button.classList.add("is-copied");
 				button.setAttribute("aria-label", "Copied");
 				button.title = "Copied";
@@ -531,32 +822,169 @@ const mediaFeedback = [
 				// Ignore clipboard failures and keep the button usable.
 			}
 		});
+	};
+
+	copyButtons.forEach(syncCopyButton);
+
+	const updateSelectionState = () => {
+		const selectedIds = selectionCheckboxes
+			.filter((checkbox) => checkbox instanceof HTMLInputElement && checkbox.checked)
+			.map((checkbox) => checkbox.dataset.assetId)
+			.filter(Boolean);
+
+		if (selectedIdsInput instanceof HTMLInputElement) {
+			selectedIdsInput.value = selectedIds.join(",");
+		}
+
+		selectedCountNodes.forEach((node) => {
+			if (node instanceof HTMLElement) {
+				node.textContent = String(selectedIds.length);
+			}
+		});
+
+		selectionCheckboxes.forEach((checkbox) => {
+			if (!(checkbox instanceof HTMLInputElement)) {
+				return;
+			}
+
+			const item = checkbox.closest("[data-media-item]");
+			if (item instanceof HTMLElement) {
+				item.classList.toggle("is-selected", checkbox.checked);
+			}
+		});
+
+		if (selectionBar instanceof HTMLElement) {
+			selectionBar.hidden = selectedIds.length === 0;
+		}
+	};
+
+	selectionCheckboxes.forEach((checkbox) => {
+		if (!(checkbox instanceof HTMLInputElement)) {
+			return;
+		}
+
+		checkbox.addEventListener("change", updateSelectionState);
+	});
+
+	clearSelectionButton?.addEventListener("click", () => {
+		selectionCheckboxes.forEach((checkbox) => {
+			if (checkbox instanceof HTMLInputElement) {
+				checkbox.checked = false;
+			}
+		});
+		updateSelectionState();
+	});
+
+	updateSelectionState();
+
+	const submitMediaAction = ({ assetId, fileName, folderPath, intent }) => {
+		const form = document.createElement("form");
+		form.method = "post";
+		form.action = "/api/admin/media";
+		form.style.display = "none";
+
+		const addField = (name, value) => {
+			const input = document.createElement("input");
+			input.type = "hidden";
+			input.name = name;
+			input.value = value;
+			form.append(input);
+		};
+
+		addField("_intent", intent);
+		addField("assetId", String(assetId));
+		if (typeof fileName === "string") {
+			addField("fileName", fileName);
+		}
+		if (typeof folderPath === "string") {
+			addField("folderPath", folderPath);
+		}
+
+		document.body.append(form);
+		if (typeof form.requestSubmit === "function") {
+			form.requestSubmit();
+		} else {
+			form.submit();
+		}
+	};
+
+	document.addEventListener("click", (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLElement)) {
+			return;
+		}
+
+		const renameButton = target.closest("[data-media-rename]");
+		if (renameButton instanceof HTMLElement) {
+			const assetId = renameButton.dataset.assetId;
+			const assetName = renameButton.dataset.assetName || "";
+			if (!assetId) {
+				return;
+			}
+
+			const nextName = window.prompt("Rename file", assetName);
+			if (nextName === null) {
+				return;
+			}
+
+			const trimmed = nextName.trim();
+			if (!trimmed) {
+				return;
+			}
+
+			submitMediaAction({ intent: "update", assetId: Number(assetId), fileName: trimmed });
+			return;
+		}
+
+		const moveButton = target.closest("[data-media-move]");
+		if (moveButton instanceof HTMLElement) {
+			const assetId = moveButton.dataset.assetId;
+			const assetFolder = moveButton.dataset.assetFolder || "";
+			if (!assetId) {
+				return;
+			}
+
+			const nextFolder = window.prompt("Move file to folder", assetFolder);
+			if (nextFolder === null) {
+				return;
+			}
+
+			submitMediaAction({ intent: "update", assetId: Number(assetId), folderPath: nextFolder.trim() });
+		}
 	});
 </script>
 
 <style>
 	.media-library-layout {
 		display: grid;
-		grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+		grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
 		gap: 1rem;
 		align-items: start;
 	}
 
 	.media-library-toolbar {
 		display: grid;
-		gap: 1.25rem;
+		gap: 1rem;
+	}
+
+	.media-library-summary {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
 	}
 
 	.media-library-actions {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 1rem;
 	}
 
-	.media-folder-form,
-	.media-upload-form {
+	.media-action-form,
+	.media-folder-form {
 		display: grid;
-		gap: 0.75rem;
+		gap: 0.65rem;
 	}
 
 	.media-folder-panel,
@@ -566,26 +994,45 @@ const mediaFeedback = [
 
 	.media-folder-list {
 		display: grid;
-		gap: 0.375rem;
+		gap: 0.35rem;
 	}
 
 	.media-folder-item {
-		display: flex;
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
-		justify-content: space-between;
-		gap: 0.75rem;
-		padding: 0.6rem 0.75rem;
-		padding-left: calc(0.75rem + (var(--folder-depth, 0) * 0.65rem));
+		gap: 0.65rem;
+		padding: 0.6rem 0.7rem;
+		padding-left: calc(0.7rem + (var(--folder-depth, 0) * 0.55rem));
 		border-radius: 0.75rem;
 		text-decoration: none;
 		color: inherit;
 		background: transparent;
-		transition: background-color 0.15s ease, color 0.15s ease;
+		transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 	}
 
 	.media-folder-item:hover,
 	.media-folder-item.is-active {
 		background: rgba(15, 23, 42, 0.06);
+	}
+
+	.media-folder-item.is-ancestor {
+		background: rgba(15, 23, 42, 0.03);
+	}
+
+	.media-folder-item-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1rem;
+		height: 1rem;
+		color: var(--bs-secondary-color);
+		flex: 0 0 auto;
+	}
+
+	.media-folder-item-icon svg {
+		width: 100%;
+		height: 100%;
 	}
 
 	.media-folder-title {
@@ -599,19 +1046,196 @@ const mediaFeedback = [
 		color: var(--bs-secondary-color);
 	}
 
-	.media-empty-state {
-		padding: 1rem;
-		border: 1px dashed rgba(15, 23, 42, 0.15);
-		background: rgba(248, 250, 252, 0.75);
+	.media-breadcrumbs {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.35rem;
+		margin-bottom: 0.85rem;
+		font-size: 0.875rem;
+		color: var(--bs-secondary-color);
+	}
+
+	.media-breadcrumb-link {
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.media-breadcrumb-link:hover {
+		color: var(--bs-body-color);
+		text-decoration: underline;
+	}
+
+	.media-breadcrumb-current {
+		font-weight: 600;
+		color: var(--bs-body-color);
+	}
+
+	.media-breadcrumb-separator {
+		opacity: 0.6;
+	}
+
+	.media-content-header,
+	.media-section-heading {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.media-content-header {
+		margin-bottom: 1rem;
+	}
+
+	.media-selection-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+		padding: 0.75rem 0.85rem;
+		margin-bottom: 1rem;
+		border: 1px solid rgba(var(--gray), 0.16);
+		border-radius: 0.9rem;
+		background: rgba(248, 250, 252, 0.9);
+	}
+
+	.media-selection-summary {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.media-selection-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.media-folder-section,
+	.media-file-section {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.media-folder-section {
+		margin-bottom: 1rem;
+	}
+
+	.media-folder-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+		gap: 0.75rem;
+	}
+
+	.media-file-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+		gap: 0.75rem;
+	}
+
+	.media-folder-card,
+	.media-folder-list-link {
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		padding: 0.75rem 0.85rem;
+		border: 1px solid rgba(var(--gray), 0.14);
+		border-radius: 0.9rem;
+		background: #fff;
+		color: inherit;
+		text-decoration: none;
+	}
+
+	.media-folder-card {
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: flex-start;
+		gap: 0.55rem;
+		min-height: 7rem;
+	}
+
+	.media-folder-card:hover,
+	.media-folder-list-link:hover {
+		border-color: rgba(35, 55, 255, 0.22);
+		background: rgba(35, 55, 255, 0.03);
+	}
+
+	.media-folder-card.is-active,
+	.media-folder-list-link.is-active {
+		border-color: rgba(35, 55, 255, 0.34);
+		background: rgba(35, 55, 255, 0.06);
+	}
+
+	.media-folder-card-icon {
+		width: 1.15rem;
+		height: 1.15rem;
+		color: var(--accent);
+	}
+
+	.media-folder-table-wrap {
+		border-radius: 0.85rem;
+		overflow: hidden;
+	}
+
+	.media-folder-cell {
+		min-width: 0;
+	}
+
+	.media-table-wrap {
+		border-radius: 0.85rem;
+		overflow: hidden;
+	}
+
+	.media-select-col {
+		width: 2rem;
+	}
+
+	.media-preview-col {
+		width: 100px;
+	}
+
+	.media-action-col {
+		width: 1%;
+		white-space: nowrap;
+	}
+
+	.media-item-row.is-selected,
+	.media-card.is-selected {
+		background: rgba(35, 55, 255, 0.05);
+		box-shadow: inset 0 0 0 1px rgba(35, 55, 255, 0.18);
+	}
+
+	.media-item-row.is-selected > * {
+		background: rgba(35, 55, 255, 0.03);
 	}
 
 	.media-card {
+		position: relative;
+		display: grid;
 		height: 100%;
 		overflow: hidden;
-		border: 1px solid rgba(15, 23, 42, 0.08);
+		border: 1px solid rgba(var(--gray), 0.14);
 		border-radius: 0.9rem;
 		background: #fff;
-		box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+	}
+
+	.media-card-select {
+		position: absolute;
+		top: 0.65rem;
+		left: 0.65rem;
+		z-index: 2;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.7rem;
+		height: 1.7rem;
+		padding: 0.2rem;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.92);
+		box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 	}
 
 	.media-card-preview {
@@ -622,7 +1246,7 @@ const mediaFeedback = [
 	.media-preview-video {
 		display: block;
 		width: 100%;
-		height: 220px;
+		height: 170px;
 		object-fit: cover;
 		background: #f8fafc;
 	}
@@ -633,36 +1257,27 @@ const mediaFeedback = [
 	}
 
 	.media-preview-fallback {
-		min-height: 220px;
+		min-height: 170px;
 		background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(14, 165, 233, 0.12));
 	}
 
 	.media-card-body {
 		display: grid;
-		gap: 0.75rem;
-		padding: 1rem;
+		gap: 0.7rem;
+		padding: 0.9rem;
 	}
 
 	.media-card-meta {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem 1rem;
+		gap: 0.45rem 0.85rem;
 		font-size: 0.8125rem;
 		color: var(--bs-secondary-color);
 	}
 
-	.media-table-wrap {
-		border-radius: 0.75rem;
-		overflow: hidden;
-	}
-
-	.media-preview-col {
-		width: 112px;
-	}
-
 	.media-list-thumb {
-		width: 96px;
-		height: 72px;
+		width: 92px;
+		height: 68px;
 		overflow: hidden;
 		border-radius: 0.65rem;
 		background: #f8fafc;
@@ -687,6 +1302,17 @@ const mediaFeedback = [
 		font-weight: 600;
 		text-align: center;
 		color: var(--bs-secondary-color);
+	}
+
+	.media-more-button {
+		padding-inline: 0.55rem;
+		min-width: 2rem;
+	}
+
+	.media-empty-state {
+		padding: 1rem;
+		border: 1px dashed rgba(15, 23, 42, 0.15);
+		background: rgba(248, 250, 252, 0.75);
 	}
 
 	@media (max-width: 991.98px) {

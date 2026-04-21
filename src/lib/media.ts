@@ -96,6 +96,27 @@ export interface MediaStorageStatus {
 
 const DEFAULT_MEDIA_PREFIX = "media";
 
+export function sanitizeMediaFileName(fileName: string): string {
+	const normalized = fileName
+		.trim()
+		.replace(/\s+/g, "-")
+		.replace(/[^a-zA-Z0-9._-]+/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^-+|-+$/g, "");
+	return normalized || "upload";
+}
+
+export function sanitizeMediaFolderPath(folderPath: string): string {
+	const normalized = folderPath
+		.trim()
+		.replace(/^\/+|\/+$/g, "")
+		.split("/")
+		.map((segment) => sanitizeMediaFolderSegment(segment))
+		.filter(Boolean)
+		.join("/");
+	return normalized;
+}
+
 export async function ensureMediaTables(db: D1Database): Promise<void> {
 	await db.batch([
 		db.prepare(
@@ -293,6 +314,37 @@ export async function createMediaAsset(
 	return asset;
 }
 
+export async function updateMediaAssetRecord(
+	db: D1Database,
+	id: number,
+	input: {
+		storageProvider: Exclude<MediaStorageProvider, "unconfigured">;
+		objectKey: string;
+		folderPath: string;
+		fileName: string;
+		mimeType: string;
+		sizeBytes: number;
+		publicUrl: string;
+	},
+): Promise<MediaAsset | null> {
+	await ensureMediaTables(db);
+	await db
+		.prepare(
+			`UPDATE media_assets
+			SET storage_provider = ?1,
+				object_key = ?2,
+				file_name = ?3,
+				mime_type = ?4,
+				size_bytes = ?5,
+				public_url = ?6,
+				updated_at = CURRENT_TIMESTAMP
+			WHERE id = ?7`,
+		)
+		.bind(input.storageProvider, input.objectKey, input.fileName, input.mimeType, input.sizeBytes, input.publicUrl, id)
+		.run();
+	return getMediaAssetById(db, id);
+}
+
 export async function deleteMediaAsset(db: D1Database, id: number): Promise<MediaAsset | null> {
 	await ensureMediaTables(db);
 	const asset = await getMediaAssetById(db, id);
@@ -302,6 +354,51 @@ export async function deleteMediaAsset(db: D1Database, id: number): Promise<Medi
 
 	await db.prepare("DELETE FROM media_assets WHERE id = ?1").bind(id).run();
 	return asset;
+}
+
+export async function updateMediaAssetLocation(
+	locals: App.Locals,
+	db: D1Database,
+	assetId: number,
+	input: {
+		folderPath?: string;
+		fileName?: string;
+	},
+): Promise<MediaAsset> {
+	const asset = await getMediaAssetById(db, assetId);
+	if (!asset) {
+		throw new Error("Media asset not found.");
+	}
+
+	const nextFolderPath =
+		input.folderPath === undefined ? asset.folderPath : sanitizeMediaFolderPath(input.folderPath);
+	const nextFileName = input.fileName === undefined ? asset.fileName : sanitizeMediaFileName(input.fileName);
+	const nextObjectKey = rewriteMediaObjectKey(asset.objectKey, nextFolderPath, nextFileName);
+	const backend = await resolveStorageBackend(locals);
+	if (backend.provider === "unconfigured") {
+		throw new Error("Media storage is not configured.");
+	}
+
+	if (nextObjectKey !== asset.objectKey) {
+		await copyMediaObject(backend, asset, nextObjectKey);
+	}
+
+	const publicUrl = buildPublicUrl(backend, nextObjectKey);
+	const updated = await updateMediaAssetRecord(db, asset.id, {
+		storageProvider: asset.storageProvider,
+		objectKey: nextObjectKey,
+		folderPath: nextFolderPath,
+		fileName: nextFileName,
+		mimeType: asset.mimeType,
+		sizeBytes: asset.sizeBytes,
+		publicUrl,
+	});
+
+	if (!updated) {
+		throw new Error("Media asset could not be updated.");
+	}
+
+	return updated;
 }
 
 export async function upsertMediaAssetRecord(
@@ -400,7 +497,7 @@ export async function uploadMediaObject(
 			httpMetadata: { contentType: file.type || "application/octet-stream" },
 		});
 	} else {
-		await putS3Object(backend.config, objectKey, file);
+		await putS3Object(backend.config, objectKey, file, file.type || "application/octet-stream");
 	}
 
 	return {
@@ -528,6 +625,31 @@ export async function getMediaObjectResponse(
 	});
 }
 
+async function copyMediaObject(backend: Exclude<StorageBackend, { provider: "unconfigured" }>, asset: MediaAsset, nextObjectKey: string): Promise<void> {
+	if (backend.provider === "r2") {
+		const object = await backend.bucket.get(asset.objectKey);
+		if (!object) {
+			throw new Error("Media object could not be moved.");
+		}
+
+		const contentType = "httpMetadata" in object ? object.httpMetadata?.contentType ?? asset.mimeType : asset.mimeType;
+		const blob = "body" in object && object.body ? await new Response(object.body).blob() : new Blob();
+		await backend.bucket.put(nextObjectKey, blob, { httpMetadata: { contentType: contentType || "application/octet-stream" } });
+		await backend.bucket.delete(asset.objectKey);
+		return;
+	}
+
+	const response = await fetchS3Object(backend.config, asset.objectKey);
+	if (!response.ok || !response.body) {
+		throw new Error("Media object could not be moved.");
+	}
+
+	const contentType = response.headers.get("content-type") ?? asset.mimeType;
+	const blob = await response.blob();
+	await putS3Object(backend.config, nextObjectKey, blob, contentType || "application/octet-stream");
+	await deleteS3Object(backend.config, asset.objectKey);
+}
+
 function toMediaAsset(row: MediaAssetRow): MediaAsset {
 	return {
 		id: row.id,
@@ -586,21 +708,20 @@ function buildPublicUrl(backend: StorageBackend, objectKey: string): string {
 	return baseUrl ? joinUrl(baseUrl, objectKey) : "";
 }
 
-async function putS3Object(config: S3StorageConfig, objectKey: string, file: File): Promise<void> {
-	const body = await file.arrayBuffer();
+async function putS3Object(config: S3StorageConfig, objectKey: string, body: Blob, contentType: string): Promise<void> {
+	const rawBody = await body.arrayBuffer();
 	const url = buildS3ObjectUrl(config, objectKey);
-	const contentType = file.type || "application/octet-stream";
 	const headers = new Headers({
 		host: url.host,
 		"content-type": contentType,
-		"x-amz-content-sha256": await sha256Hex(body),
+		"x-amz-content-sha256": await sha256Hex(rawBody),
 		"x-amz-date": getAmzDate(),
 	});
-	const signed = await signS3Request(config, "PUT", url, headers, headers.get("x-amz-content-sha256") ?? "", body);
+	const signed = await signS3Request(config, "PUT", url, headers, headers.get("x-amz-content-sha256") ?? "", rawBody);
 	const response = await fetch(url, {
 		method: "PUT",
 		headers: signed,
-		body,
+		body: rawBody,
 	});
 	if (!response.ok) {
 		throw new Error(`Failed to upload media to S3 (${response.status} ${response.statusText}).`);
@@ -878,25 +999,18 @@ function makeMediaObjectKey(fileName: string, folderPath = ""): string {
 	return `${DEFAULT_MEDIA_PREFIX}/${folderSegment}${year}/${month}/${id}-${fileName}`;
 }
 
-function sanitizeMediaFileName(fileName: string): string {
-	const normalized = fileName
-		.trim()
-		.replace(/\s+/g, "-")
-		.replace(/[^a-zA-Z0-9._-]+/g, "-")
-		.replace(/-+/g, "-")
-		.replace(/^-+|-+$/g, "");
-	return normalized || "upload";
-}
+function rewriteMediaObjectKey(objectKey: string, folderPath: string, fileName: string): string {
+	const segments = trimSlashes(objectKey).split("/").filter(Boolean);
+	if (segments[0] !== DEFAULT_MEDIA_PREFIX || segments.length < 4) {
+		throw new Error("Media object path is invalid.");
+	}
 
-function sanitizeMediaFolderPath(folderPath: string): string {
-	const normalized = folderPath
-		.trim()
-		.replace(/^\/+|\/+$/g, "")
-		.split("/")
-		.map((segment) => sanitizeMediaFolderSegment(segment))
-		.filter(Boolean)
-		.join("/");
-	return normalized;
+	const currentName = segments.at(-1) ?? "";
+	const namePrefix = currentName.match(/^([0-9a-f-]+)-(.+)$/i)?.[1];
+	const nextPrefix = namePrefix || currentName.replace(/-.*$/, "") || crypto.randomUUID();
+	const parentSegments = folderPath ? folderPath.split("/").filter(Boolean) : [];
+	const yearMonthSegments = segments.slice(-3, -1);
+	return [DEFAULT_MEDIA_PREFIX, ...parentSegments, ...yearMonthSegments, `${nextPrefix}-${sanitizeMediaFileName(fileName)}`].join("/");
 }
 
 function sanitizeMediaFolderSegment(segment: string): string {
