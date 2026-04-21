@@ -84,8 +84,7 @@ export async function sendSmtpEmail(settings: SmtpSettings, message: EmailMessag
 
 			await sendCommand(writer, "STARTTLS");
 			await expectReply(await readReply(reader), [220], "SMTP STARTTLS");
-			await writer.close().catch(() => undefined);
-			socket = socket.startTls({ expectedServerHostname: smtp.host });
+			socket = socket.startTls();
 			await sendSmtpEmailOverSocket(socket, smtp, recipients, message);
 			return;
 		}
