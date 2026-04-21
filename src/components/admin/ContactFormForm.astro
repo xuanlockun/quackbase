@@ -169,7 +169,6 @@ function normalizeContactCopyValue(value: unknown): string {
 				<div class="localized-editor-header">
 					<div>
 						<h2>{t("messages.contactFormCopyTranslations", "Contact form copy")}</h2>
-						<p class="admin-inline-muted mb-0">{t("messages.contactFormCopyTranslationsHelp", "Edit the outside and inside text in each language.")}</p>
 					</div>
 					<div class="nav nav-pills localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
 						{labelLanguages.map((supportedLanguage) => (
@@ -195,19 +194,19 @@ function normalizeContactCopyValue(value: unknown): string {
 				<div class="contact-copy-options">
 					<label class="admin-check-row contact-copy-switch">
 						<input class="form-check-input" type="checkbox" name="showTitle" checked={initialShowTitle} disabled={isDisabled} />
-						<span>{t("messages.contactFormShowSectionTitle", "Show section title")}</span>
+						<span>{t("messages.contactFormShowSectionTitle", "Section title")}</span>
 					</label>
 					<label class="admin-check-row contact-copy-switch">
 						<input class="form-check-input" type="checkbox" name="showDescription" checked={initialShowDescription} disabled={isDisabled} />
-						<span>{t("messages.contactFormShowSectionDescription", "Show section short description")}</span>
+						<span>{t("messages.contactFormShowSectionDescription", "Section description")}</span>
 					</label>
 					<label class="admin-check-row contact-copy-switch">
 						<input class="form-check-input" type="checkbox" name="showFormTitle" checked={initialShowFormTitle} disabled={isDisabled} />
-						<span>{t("messages.contactFormShowFormTitle", "Show form title")}</span>
+						<span>{t("messages.contactFormShowFormTitle", "Form title")}</span>
 					</label>
 					<label class="admin-check-row contact-copy-switch">
 						<input class="form-check-input" type="checkbox" name="showFormDescription" checked={initialShowFormDescription} disabled={isDisabled} />
-						<span>{t("messages.contactFormShowFormDescription", "Show form short description")}</span>
+						<span>{t("messages.contactFormShowFormDescription", "Form description")}</span>
 					</label>
 				</div>
 
@@ -219,10 +218,6 @@ function normalizeContactCopyValue(value: unknown): string {
 					>
 						<div class="contact-copy-grid">
 							<section class="contact-copy-card">
-								<div class="contact-copy-card-header">
-									<h3 class="h6 mb-0">{t("messages.contactFormOutsideFormTitle", "Outside the form")}</h3>
-									<p class="admin-inline-muted mb-0">{t("messages.contactFormOutsideFormHelp", "Controls the section copy shown around the form.")}</p>
-								</div>
 								<label>
 									<span>{t("messages.contactFormOutsideTitleLabel", "Section title")} ({supportedLanguage.label})</span>
 									<input
@@ -239,16 +234,12 @@ function normalizeContactCopyValue(value: unknown): string {
 										class="form-control"
 										data-description-input={supportedLanguage.code}
 										rows="4"
-										placeholder={supportedLanguage.code === defaultLanguageCode ? t("messages.contactFormDescriptionPlaceholder", "Add a short description to support the heading.") ?? "Add a short description to support the heading." : ""}
+										placeholder={supportedLanguage.code === defaultLanguageCode ? t("messages.contactFormDescriptionPlaceholder", "Short description") ?? "Short description" : ""}
 										disabled={isDisabled}
 									>{descriptionTranslations[supportedLanguage.code] ?? ""}</textarea>
 								</label>
 							</section>
 							<section class="contact-copy-card">
-								<div class="contact-copy-card-header">
-									<h3 class="h6 mb-0">{t("messages.contactFormInsideFormTitle", "Inside the form")}</h3>
-									<p class="admin-inline-muted mb-0">{t("messages.contactFormInsideFormHelp", "Controls the heading shown inside the form card.")}</p>
-								</div>
 								<label>
 									<span>{t("messages.contactFormInsideTitleLabel", "Form title")} ({supportedLanguage.label})</span>
 									<input
@@ -265,7 +256,7 @@ function normalizeContactCopyValue(value: unknown): string {
 										class="form-control"
 										data-form-description-input={supportedLanguage.code}
 										rows="4"
-										placeholder={supportedLanguage.code === defaultLanguageCode ? t("messages.contactFormFormDescriptionPlaceholder", "Help visitors know what to expect.") ?? "Help visitors know what to expect." : ""}
+										placeholder={supportedLanguage.code === defaultLanguageCode ? t("messages.contactFormFormDescriptionPlaceholder", "Form description") ?? "Form description" : ""}
 										disabled={isDisabled}
 									>{formDescriptionTranslations[supportedLanguage.code] ?? ""}</textarea>
 								</label>
@@ -284,11 +275,10 @@ function normalizeContactCopyValue(value: unknown): string {
 						<option value="stacked" selected={initialLayout === "stacked"}>
 							{t("messages.contactFormTemplateStacked", "Stacked layout")}
 						</option>
-						<option value="compact" selected={initialLayout === "compact"}>
+					<option value="compact" selected={initialLayout === "compact"}>
 							{t("messages.contactFormTemplateCompact", "Compact layout")}
 						</option>
 					</select>
-					<p class="admin-inline-muted mb-0">{t("messages.contactFormTemplateHelp", "Choose a preset layout for the public contact section.")}</p>
 				</label>
 				<label>
 					<span>{t("messages.contactFormBackgroundStyle", "Background style")}</span>
@@ -299,11 +289,10 @@ function normalizeContactCopyValue(value: unknown): string {
 						<option value="gradient" selected={initialBackgroundStyle === "gradient"}>
 							{t("messages.contactFormBackgroundGradient", "Gradient")}
 						</option>
-						<option value="radial" selected={initialBackgroundStyle === "radial"}>
+					<option value="radial" selected={initialBackgroundStyle === "radial"}>
 							{t("messages.contactFormBackgroundRadial", "Radial")}
 						</option>
 					</select>
-					<p class="admin-inline-muted mb-0">{t("messages.contactFormBackgroundStyleHelp", "Choose how the background color is painted.")}</p>
 				</label>
 				<div class="contact-form-colors">
 					<label>
@@ -342,11 +331,10 @@ function normalizeContactCopyValue(value: unknown): string {
 		>
 			<input type="hidden" name="contactFormFields" data-contact-fields-payload value={fieldsJson} />
 			<div class="contact-fields-config">
-				<div class="contact-fields-live-header">
-					<div>
-						<strong>{t("headings.contactFormFields")}</strong>
-						<p class="admin-inline-muted mb-0">{t("messages.contactFormBuilderHelp")}</p>
-					</div>
+					<div class="contact-fields-live-header">
+						<div>
+							<strong>{t("headings.contactFormFields")}</strong>
+						</div>
 					<button class="btn btn-outline-secondary btn-sm" type="button" data-contact-field-add data-readonly={String(isDisabled)} disabled={isDisabled}>
 						{t("actions.addField")}
 					</button>
@@ -486,10 +474,10 @@ function normalizeContactCopyValue(value: unknown): string {
 	.contact-field-card {
 		display: grid;
 		gap: 0.75rem;
-		padding: 0.85rem;
-		border: 1px solid rgba(var(--gray), 0.12);
-		background: rgba(var(--gray-light), 0.18);
-		border-radius: 0.85rem;
+		padding: 0.8rem;
+		border: 1px solid rgba(var(--gray), 0.08);
+		background: transparent;
+		border-radius: 0.75rem;
 	}
 
 	.contact-field-card-top {
@@ -513,10 +501,7 @@ function normalizeContactCopyValue(value: unknown): string {
 		grid-column: 1 / -1;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 0.65rem;
-		padding: 0.75rem;
-		border: 1px solid rgba(var(--gray), 0.12);
-		border-radius: 0.75rem;
-		background: rgba(255, 255, 255, 0.72);
+		padding: 0.15rem 0 0;
 	}
 
 	.contact-field-card-meta label,
@@ -549,9 +534,9 @@ function normalizeContactCopyValue(value: unknown): string {
 		display: grid;
 		gap: 0.8rem;
 		padding: 0.875rem;
-		border: 1px solid rgba(var(--gray), 0.12);
+		border: 1px solid rgba(var(--gray), 0.1);
 		border-radius: 0.9rem;
-		background: linear-gradient(180deg, rgba(var(--gray-light), 0.36), rgba(var(--gray-light), 0.18));
+		background: rgba(var(--gray-light), 0.18);
 	}
 
 	.localized-editor-header {
@@ -620,15 +605,10 @@ function normalizeContactCopyValue(value: unknown): string {
 	.contact-copy-card {
 		display: grid;
 		gap: 0.75rem;
-		padding: 0.85rem;
-		border: 1px solid rgba(var(--gray), 0.12);
-		border-radius: 0.85rem;
-		background: rgba(var(--gray-light), 0.22);
-	}
-
-	.contact-copy-card-header {
-		display: grid;
-		gap: 0.2rem;
+		padding: 0.8rem;
+		border: 1px solid rgba(var(--gray), 0.08);
+		border-radius: 0.8rem;
+		background: transparent;
 	}
 
 	.contact-copy-card label {

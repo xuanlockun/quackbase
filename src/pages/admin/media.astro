@@ -269,12 +269,11 @@ const mediaFeedback = [
 					<button id="syncBucket" class="btn btn-outline-secondary w-100" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
 						Refresh from bucket
 					</button>
-					<p class="form-text mb-0">Pull objects from the bucket into the admin library when listing support is available.</p>
 				</form>
 
 				<form method="post" action="/api/admin/media/folders" class="media-action-form">
 					<input type="hidden" name="parentFolderPath" value={currentFolder} />
-					<label class="form-label fw-semibold" for="folderName">{t("actions.createFolder", "Create folder")}</label>
+					<label class="form-label fw-semibold" for="folderName">New folder</label>
 					<div class="d-flex gap-2 flex-wrap">
 						<input
 							id="folderName"
@@ -285,17 +284,14 @@ const mediaFeedback = [
 							disabled={!storageStatus.isConfigured || !canManage}
 						/>
 						<button class="btn btn-outline-secondary" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
-							{t("actions.createFolder", "Create folder")}
+							Create
 						</button>
 					</div>
-					<p class="form-text mb-0">
-						{currentFolder ? `Creates a folder inside ${formatFolderLabel(currentFolder)}.` : "Use simple names for quick nesting."}
-					</p>
 				</form>
 
 				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="media-action-form">
 					<input type="hidden" name="folderPath" value={currentFolder} />
-					<label class="form-label fw-semibold" for="mediaFiles">{t("actions.uploadMedia")}</label>
+					<label class="form-label fw-semibold" for="mediaFiles">Upload files</label>
 					<input
 						id="mediaFiles"
 						class="form-control"
@@ -304,9 +300,8 @@ const mediaFeedback = [
 						multiple
 						disabled={!storageStatus.isConfigured || !canManage}
 					/>
-					<p class="form-text mb-0">Uploading into <strong>{folderTitle}</strong>.</p>
 					<button class="btn btn-primary" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
-						{t("actions.uploadMedia")}
+						Upload
 					</button>
 				</form>
 			</div>
@@ -328,7 +323,7 @@ const mediaFeedback = [
 						<span class="media-folder-title">{t("messages.allMedia", "All media")}</span>
 						<span class="media-folder-count">{allAssets.length}</span>
 					</a>
-					{folderEntries.length === 0 ? (
+							{folderEntries.length === 0 ? (
 						<p class="text-body-secondary small mb-0">No folders yet.</p>
 					) : (
 						folderEntries.map((folder) => (
@@ -480,10 +475,8 @@ const mediaFeedback = [
 
 							{visibleAssets.length === 0 ? (
 								<div class="media-empty-state">
-									<h3 class="h6 mb-1">No files in this folder yet.</h3>
-									<p class="mb-0 text-body-secondary">
-										Upload files into this folder or create a child folder to keep the structure tidy.
-									</p>
+									<h3 class="h6 mb-1">Empty folder</h3>
+									<p class="mb-0 text-body-secondary">Upload files or create a subfolder.</p>
 								</div>
 							) : currentView === "list" ? (
 								<div class="table-responsive media-table-wrap">
@@ -731,11 +724,6 @@ const mediaFeedback = [
 															</ul>
 														</div>
 													</div>
-													{!canCopyPublicUrl && (
-														<p class="text-body-secondary small mb-0">
-															No public URL is configured for this asset. Add a public base URL in Settings to enable copyable media links.
-														</p>
-													)}
 												</div>
 											</article>
 										);

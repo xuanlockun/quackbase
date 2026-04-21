@@ -73,9 +73,9 @@ const userFeedback = [
 			description=""
 			searchName="q"
 			searchValue={search}
-			searchPlaceholder="Search users"
+			searchPlaceholder="Search"
 			resetHref={hasActiveFilters ? "/admin/users" : ""}
-			submitLabel="Apply filters"
+			submitLabel="Filter"
 			selects={[
 				{
 					name: "status",
@@ -96,14 +96,12 @@ const userFeedback = [
 			]}
 		/>
 		{hasActiveFilters && (
-			<p class="text-body-secondary small mb-0">
-				Showing {filteredUsers.length} of {users.length} users.
-			</p>
+			<p class="text-body-secondary small mb-0">{filteredUsers.length} of {users.length} users</p>
 		)}
 		<UserTable
 			users={filteredUsers}
 			emptyTitle={hasActiveFilters ? "No users match your filters" : undefined}
-			emptyDescription={hasActiveFilters ? "Try clearing the filters or broadening the search." : undefined}
+			emptyDescription={hasActiveFilters ? "Clear filters or broaden the search." : undefined}
 		/>
 	</div>
 </AdminLayout>
@@ -113,10 +111,10 @@ const userFeedback = [
 	const searchParams = new URLSearchParams(window.location.search);
 
 	for (const [key, entry] of userFeedback) {
-			if (searchParams.has(key)) {
-				if (typeof showFeedbackModal === "function") {
-					showFeedbackModal({ title: entry.title, message: entry.message, tone: entry.tone });
-				}
+		if (searchParams.has(key)) {
+			if (typeof showFeedbackModal === "function") {
+				showFeedbackModal({ title: entry.title, message: entry.message, tone: entry.tone });
+			}
 			window.history.replaceState({}, "", window.location.pathname + window.location.hash);
 			break;
 		}

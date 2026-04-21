@@ -104,9 +104,6 @@ const backIcon = `
 			<div>
 				<h2>{t("headings.localizedContent")}</h2>
 				<p class="admin-inline-muted mb-0">{t("messages.localizedPostHelp")}</p>
-				<p class="admin-inline-muted mb-0">
-					Use <code>::: columns</code> blocks with <code>::: column</code> to build multi-column layouts inside Markdown.
-				</p>
 			</div>
 			<div class="nav nav-pills localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
 				{
@@ -144,21 +141,21 @@ const backIcon = `
 							class="form-control"
 							data-title-input={language.code}
 							value={titleTranslations[language.code] ?? ""}
-							placeholder={language.code === def ? "Hello world" : language.code === "vi" ? "Xin chao" : ""}
+							placeholder={language.code === def ? "Hello world" : ""}
 							disabled={isDisabled}
 						/>
 					</label>
 					<label>
 						<span>{t("labels.slug")} ({language.label})</span>
 						<div class="localized-slug-row">
-							<input
-								class="form-control"
-								data-slug-input={language.code}
-								value={slugTranslations[language.code] ?? ""}
-								placeholder={language.code === def ? "hello-world" : language.code === "vi" ? "xin-chao" : ""}
-								pattern="[a-z0-9-]+"
-								disabled={isDisabled}
-							/>
+						<input
+							class="form-control"
+							data-slug-input={language.code}
+							value={slugTranslations[language.code] ?? ""}
+							placeholder={language.code === def ? "hello-world" : ""}
+							pattern="[a-z0-9-]+"
+							disabled={isDisabled}
+						/>
 							<button
 								type="button"
 								class="btn btn-outline-secondary"
@@ -175,7 +172,7 @@ const backIcon = `
 							class="form-control"
 							data-description-input={language.code}
 							value={descriptionTranslations[language.code] ?? ""}
-							placeholder={language.code === def ? "Short summary" : language.code === "vi" ? "Tom tat ngan" : ""}
+							placeholder={language.code === def ? "Short summary" : ""}
 							disabled={isDisabled}
 						/>
 					</label>

@@ -144,7 +144,7 @@ const initialContactFields = [];
 						disabled={isDisabled}
 					/>
 					<label class="form-check-label" for={showTitleId}>
-						{t("labels.showPageTitleHelp", "Display the page title above the content.")}
+						{t("labels.showPageTitleHelp", "Show page title")}
 					</label>
 				</div>
 			</div>
@@ -168,9 +168,6 @@ const initialContactFields = [];
 			<div>
 				<h2>{t("headings.localizedContent")}</h2>
 				<p class="admin-inline-muted mb-0">{t("messages.localizedPageHelp")}</p>
-				<p class="admin-inline-muted mb-0">
-					Use <code>::: columns</code> blocks with <code>::: column</code> to build multi-column layouts inside Markdown.
-				</p>
 			</div>
 			<div class="nav nav-pills localized-editor-tabs" role="tablist" aria-label={t("labels.language")}>
 				{
@@ -245,7 +242,6 @@ const initialContactFields = [];
 		<div class="page-sections-heading">
 			<div>
 				<h2>{t("headings.pageSections")}</h2>
-				<p class="admin-inline-muted mb-0">{t("messages.pageSectionsHelp")}</p>
 			</div>
 			<div class="page-sections-actions">
 				<select class="form-select" data-section-select data-section-add-label={addSectionLabel} disabled={isDisabled}>
@@ -288,16 +284,12 @@ const initialContactFields = [];
 									<td class="section-control">
 										{
 											section.type === "banner_slider" ? (
-												<details class="banner-picker-panel">
-													<summary class="banner-picker-summary">
-														<div>
-															<strong>{t("labels.banners")}</strong>
-															<p class="admin-compact-copy mb-0">
-																{selectedBannerIds.size > 0
-																	? `${selectedBannerIds.size} selected`
-																	: t("messages.pageSectionsBannerHelp", "Choose one or more banners for this slider.")}
-															</p>
-														</div>
+										<details class="banner-picker-panel">
+											<summary class="banner-picker-summary">
+												<div>
+													<strong>{t("labels.banners")}</strong>
+													<p class="admin-compact-copy mb-0">{selectedBannerIds.size > 0 ? `${selectedBannerIds.size} selected` : ""}</p>
+												</div>
 														<span class="admin-collapsible-toggle" aria-hidden="true"></span>
 													</summary>
 													<div class="banner-picker-body">

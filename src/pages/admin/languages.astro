@@ -49,12 +49,7 @@ const editorLanguages = [
 ];
 const selectedLocale = editorLanguages[0]?.code ?? "";
 const headingTitle = t("headings.languages");
-const helpText = t("messages.manageLanguagesHelp");
 const translationSectionTitle = t("labels.translationEntry", "Create translation entry");
-const translationHelpText = t(
-	"messages.manageTranslationsHelp",
-	"Fill the key and every language tab, then create a new translation entry.",
-);
 const addButtonLabel = t("actions.addTranslation", "Create translation entry");
 const keyLabel = t("labels.translationKey");
 const valueLabel = t("labels.translationValue");
@@ -63,10 +58,10 @@ const translationTabsLabel = t("labels.languages", "Languages");
 
 <AdminLayout
 	title={headingTitle}
-	description={helpText}
+	description={t("messages.manageLanguagesHelp")}
 	session={session}
 	pageTitle={headingTitle}
-	pageDescription={helpText}
+	pageDescription={t("messages.manageLanguagesHelp")}
 >
 	<div class="admin-content-stack">
 		{loadError && <p class="alert alert-warning mb-0">{loadError}</p>}
@@ -83,8 +78,7 @@ const translationTabsLabel = t("labels.languages", "Languages");
 		<details class="admin-collapsible-surface admin-form-surface">
 			<summary class="admin-collapsible-summary">
 				<div>
-					<h2 class="h5 mb-1">Add New Language</h2>
-					<p class="admin-inline-muted mb-0">{t("messages.languageCodeHelp")}</p>
+					<h2 class="h5 mb-0">Add language</h2>
 				</div>
 				<span class="admin-collapsible-toggle" aria-hidden="true"></span>
 			</summary>
@@ -98,11 +92,10 @@ const translationTabsLabel = t("labels.languages", "Languages");
 				/>
 			</div>
 		</details>
-		<details class="admin-collapsible-surface admin-form-surface" id="translations">
+			<details class="admin-collapsible-surface admin-form-surface" id="translations">
 			<summary class="admin-collapsible-summary">
 				<div>
 					<h2 class="h5 mb-1">{translationSectionTitle}</h2>
-					<p class="admin-inline-muted mb-0">{translationHelpText}</p>
 				</div>
 				<span class="admin-collapsible-toggle" aria-hidden="true"></span>
 			</summary>
@@ -142,8 +135,8 @@ const translationTabsLabel = t("labels.languages", "Languages");
 						<input class="form-control" id="translation-key" name="key" required />
 					</div>
 					<div class="col-12">
-						<div class="admin-card-surface border rounded-0 p-3">
-							<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+						<div class="admin-form-surface p-3">
+							<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
 								<strong class="small text-uppercase text-muted">{translationTabsLabel}</strong>
 								<span class="small text-muted">{valueLabel}</span>
 							</div>
@@ -163,7 +156,7 @@ const translationTabsLabel = t("labels.languages", "Languages");
 									))
 								}
 							</ul>
-							<div class="border border-top-0 rounded-0 p-3" data-translation-panels>
+							<div class="p-0 pt-3" data-translation-panels>
 								{
 									editorLanguages.map((entry, index) => (
 										<section
@@ -176,7 +169,6 @@ const translationTabsLabel = t("labels.languages", "Languages");
 												id={`translation-value-${entry.code}`}
 												name={`value-${entry.code}`}
 												rows="4"
-												placeholder={`${entry.label} ${valueLabel.toLowerCase()}`}
 											></textarea>
 										</section>
 									))

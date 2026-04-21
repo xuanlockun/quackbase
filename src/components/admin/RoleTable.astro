@@ -40,14 +40,19 @@ const { t } = getUiTranslations(Astro);
 								</div>
 							</td>
 							<td class="roles-table-description">
-								{role.description ? <span>{role.description}</span> : <span class="text-muted small">—</span>}
+								{role.description ? <span>{role.description}</span> : <span class="text-muted small">-</span>}
 							</td>
 							<td>
 								<div class="roles-table-permissions">
 									{role.permissions.length > 0 ? (
-										role.permissions.map((permission) => (
-											<PermissionBadge label={permission.label} resource={permission.resource} />
-										))
+										<>
+											{role.permissions.slice(0, 4).map((permission) => (
+												<PermissionBadge label={permission.label} resource={permission.resource} />
+											))}
+											{role.permissions.length > 4 && (
+												<span class="text-muted small">+{role.permissions.length - 4}</span>
+											)}
+										</>
 									) : (
 										<span class="text-muted small">{t("messages.noPermissionsAssigned")}</span>
 									)}
@@ -112,7 +117,7 @@ const { t } = getUiTranslations(Astro);
 	}
 
 	.roles-table-description {
-		max-width: 20rem;
+		max-width: 18rem;
 	}
 
 	.roles-table-permissions {

@@ -128,8 +128,7 @@ const settingsFeedback = [
 						<div class="admin-form-surface">
 							<div class="admin-surface-header mb-3">
 								<div>
-									<h2 class="h5 mb-1">Media Storage</h2>
-									<p class="admin-inline-muted mb-0">Configure S3-compatible media storage from admin settings.</p>
+									<h2 class="h5 mb-0">Media storage</h2>
 								</div>
 							</div>
 							<div class="admin-grid-two">
@@ -252,12 +251,7 @@ const settingsFeedback = [
 								</div>
 							</div>
 							<div class="admin-form-section">
-								<p class="admin-muted mb-2">
-									Leave either credential field empty to keep the currently saved database value. Set the region to your provider's real signing region. For Cloudflare R2, `auto` is usually correct.
-								</p>
-								<p class="admin-inline-muted mb-2">
-									Some S3-compatible providers support uploads but not bucket listing, so import/refresh from bucket may still be unavailable.
-								</p>
+								<p class="admin-muted mb-2">Leave a credential field empty to keep the saved value. Use `auto` for Cloudflare R2.</p>
 								<div class="d-flex flex-wrap gap-2 align-items-center">
 									<button class="btn btn-outline-secondary" type="button" data-media-test-button disabled={formDisabled}>
 										Test connection

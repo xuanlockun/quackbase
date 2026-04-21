@@ -34,61 +34,59 @@ const {
 } = Astro.props;
 ---
 
-<section class="card border-0 shadow-sm admin-filter-bar">
-	<div class="card-body">
-		{(title || description || resetHref) && (
-			<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-				{(title || description) && (
-					<div>
-						{title && <h2 class="h6 mb-1">{title}</h2>}
-						{description && <p class="mb-0 text-body-secondary small">{description}</p>}
-					</div>
-				)}
-				{resetHref && (
-					<a class="btn btn-sm btn-outline-secondary" href={resetHref}>
-						Clear
-					</a>
-				)}
-			</div>
-		)}
-
-		<form method="get" class="row g-3 align-items-end">
-			<div class="col-12 col-lg-4">
-				<label class="form-label fw-semibold" for={`filter-${searchName}`}>{searchPlaceholder}</label>
-				<input
-					id={`filter-${searchName}`}
-					class="form-control"
-					type="search"
-					name={searchName}
-					value={searchValue}
-					placeholder={searchPlaceholder}
-				/>
-			</div>
-			{selects.map((select) => (
-				<div class="col-12 col-md-6 col-lg-3">
-					<label class="form-label fw-semibold" for={`filter-${select.name}`}>
-						{select.label}
-					</label>
-					<select id={`filter-${select.name}`} class="form-select" name={select.name} value={select.value}>
-						{select.options.map((option) => (
-							<option value={option.value} selected={option.value === select.value}>
-								{option.label}
-							</option>
-						))}
-					</select>
+<section class="admin-form-surface admin-filter-bar">
+	{(title || description || resetHref) && (
+		<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+			{(title || description) && (
+				<div>
+					{title && <h2 class="h6 mb-1">{title}</h2>}
+					{description && <p class="mb-0 text-body-secondary small">{description}</p>}
 				</div>
-			))}
-			<div class="col-12 col-lg-auto">
-				<button class="btn btn-primary w-100 admin-filter-submit" type="submit">
-					<span class="admin-filter-submit-icon" aria-hidden="true">
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-							<circle cx="11" cy="11" r="6.5" />
-							<path d="M16 16l5 5" />
-						</svg>
-					</span>
-					{submitLabel}
-				</button>
+			)}
+			{resetHref && (
+				<a class="btn btn-sm btn-outline-secondary" href={resetHref}>
+					Clear
+				</a>
+			)}
+		</div>
+	)}
+
+	<form method="get" class="row g-3 align-items-end">
+		<div class="col-12 col-lg-4">
+			<label class="visually-hidden" for={`filter-${searchName}`}>{searchPlaceholder}</label>
+			<input
+				id={`filter-${searchName}`}
+				class="form-control"
+				type="search"
+				name={searchName}
+				value={searchValue}
+				placeholder={searchPlaceholder}
+			/>
+		</div>
+		{selects.map((select) => (
+			<div class="col-12 col-md-6 col-lg-3">
+				<label class="visually-hidden" for={`filter-${select.name}`}>
+					{select.label}
+				</label>
+				<select id={`filter-${select.name}`} class="form-select" name={select.name} value={select.value}>
+					{select.options.map((option) => (
+						<option value={option.value} selected={option.value === select.value}>
+							{option.label}
+						</option>
+					))}
+				</select>
 			</div>
-		</form>
-	</div>
+		))}
+		<div class="col-12 col-lg-auto">
+			<button class="btn btn-primary w-100 admin-filter-submit" type="submit">
+				<span class="admin-filter-submit-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="11" cy="11" r="6.5" />
+						<path d="M16 16l5 5" />
+					</svg>
+				</span>
+				{submitLabel}
+			</button>
+		</div>
+	</form>
 </section>
