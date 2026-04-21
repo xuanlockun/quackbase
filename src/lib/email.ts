@@ -99,6 +99,7 @@ export async function sendSmtpEmail(settings: SmtpSettings, message: EmailMessag
 			}
 			await sendCommand(writer, "STARTTLS");
 			await expectReply(await readReply(reader), [220], "SMTP STARTTLS");
+			await writer.close().catch(() => undefined);
 			try {
 				socket = socket.startTls();
 			} catch (error) {
