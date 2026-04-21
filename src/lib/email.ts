@@ -78,6 +78,10 @@ export async function sendSmtpEmail(settings: SmtpSettings, message: EmailMessag
 	}
 	let socket = await connectToSmtp(smtp, transport);
 	try {
+		await socket.opened;
+		if (debug) {
+			console.log("[smtp] socket opened");
+		}
 		const reader = socket.readable.pipeThrough(new TextDecoderStream()).getReader();
 		const writer = socket.writable.getWriter();
 
@@ -111,6 +115,10 @@ export async function sendSmtpEmail(settings: SmtpSettings, message: EmailMessag
 			if (debug) {
 				console.log("[smtp] tls upgrade complete");
 			}
+			await socket.opened;
+			if (debug) {
+				console.log("[smtp] upgraded socket opened");
+			}
 			await sendSmtpEmailOverSocket(socket, smtp, recipients, message, debug);
 			return;
 		}
@@ -132,6 +140,7 @@ async function sendSmtpEmailOverSocket(
 	message: EmailMessage,
 	debug = false,
 ): Promise<void> {
+	await socket.opened;
 	const reader = socket.readable.pipeThrough(new TextDecoderStream()).getReader();
 	const writer = socket.writable.getWriter();
 	await sendCommand(writer, `EHLO ${getClientHostname(settings.host)}`);
