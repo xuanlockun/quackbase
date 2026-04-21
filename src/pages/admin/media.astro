@@ -66,19 +66,6 @@ const storageReadyLabel = storageStatus.isConfigured ? "Ready to upload" : "Conn
 const storageSummaryText = storageStatus.isConfigured
 	? "Uploads are ready and the media library is available."
 	: "Connect storage in settings to enable uploads and syncing.";
-const storageProviderLabel =
-	storageStatus.provider === "r2"
-		? "Cloudflare R2"
-		: storageStatus.provider === "s3"
-			? "S3-compatible storage"
-			: "Storage service";
-const storageConnectionLabel =
-	storageStatus.source === "binding"
-		? "Connected through the Worker runtime."
-		: storageStatus.source === "settings"
-			? "Configured in admin settings."
-			: "Not connected.";
-const storageAdvancedSummary = storageStatus.publicBaseUrl ? "Public access enabled." : "No public URL exposed.";
 const uploadIcon = `
 	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
 		<path d="M12 16V4" />
@@ -367,30 +354,6 @@ const mediaFeedback = [
 					</button>
 				</form>
 			</div>
-
-			<details class="media-advanced-details">
-				<summary>Advanced storage details</summary>
-				<div class="media-advanced-grid">
-					<div>
-						<span>Provider</span>
-						<strong>{storageProviderLabel}</strong>
-					</div>
-					<div>
-						<span>Connection</span>
-						<strong>{storageConnectionLabel}</strong>
-					</div>
-					<div>
-						<span>Status</span>
-						<strong>{storageAdvancedSummary}</strong>
-					</div>
-					{storageStatus.publicBaseUrl && (
-						<div class="media-advanced-full">
-							<span>Public base URL</span>
-							<code>{storageStatus.publicBaseUrl}</code>
-						</div>
-					)}
-				</div>
-			</details>
 		</div>
 
 		<div class="media-library-layout">
@@ -1145,54 +1108,6 @@ const mediaFeedback = [
 		overflow: hidden;
 		clip: rect(0, 0, 0, 0);
 		border: 0;
-	}
-
-	.media-advanced-details {
-		padding: 0.85rem 1rem;
-		border: 1px solid rgba(15, 23, 42, 0.08);
-		border-radius: 0.9rem;
-		background: rgba(248, 250, 252, 0.72);
-	}
-
-	.media-advanced-details summary {
-		cursor: pointer;
-		list-style: none;
-		font-size: 0.9rem;
-		font-weight: 600;
-		color: var(--bs-body-color);
-	}
-
-	.media-advanced-details summary::-webkit-details-marker {
-		display: none;
-	}
-
-	.media-advanced-grid {
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 0.75rem;
-		margin-top: 0.85rem;
-	}
-
-	.media-advanced-grid > div,
-	.media-advanced-full {
-		display: grid;
-		gap: 0.2rem;
-		min-width: 0;
-	}
-
-	.media-advanced-grid > div span,
-	.media-advanced-full span {
-		font-size: 0.72rem;
-		font-weight: 700;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: rgba(15, 23, 42, 0.55);
-	}
-
-	.media-advanced-grid > div strong,
-	.media-advanced-full code {
-		font-size: 0.9rem;
-		word-break: break-word;
 	}
 
 	.media-folder-panel,

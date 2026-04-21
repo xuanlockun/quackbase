@@ -164,8 +164,7 @@ const settingsFeedback = [
 									Save media settings
 								</button>
 							</div>
-							<details class="media-advanced-details">
-								<summary>Advanced storage settings</summary>
+							<div class="media-settings-advanced">
 								<div class="admin-grid-two media-advanced-grid">
 									<label>
 										<span>S3 upload endpoint</span>
@@ -286,7 +285,7 @@ const settingsFeedback = [
 									</div>
 								</div>
 								<p class="admin-muted mb-0">Leave a credential field empty to keep the saved value. Use `auto` for Cloudflare R2.</p>
-							</details>
+							</div>
 						</div>
 					</form>
 				</section>
@@ -547,7 +546,7 @@ const settingsFeedback = [
 		align-items: center;
 	}
 
-	.media-advanced-details {
+	.media-settings-advanced {
 		display: grid;
 		gap: 0.9rem;
 		padding: 0.85rem 0.95rem;
@@ -556,22 +555,8 @@ const settingsFeedback = [
 		background: rgba(var(--gray-light), 0.16);
 	}
 
-	.media-advanced-details > summary {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.75rem;
-		cursor: pointer;
-		font-weight: 600;
-		list-style: none;
-	}
-
-	.media-advanced-details > summary::-webkit-details-marker {
-		display: none;
-	}
-
 	.media-advanced-grid {
-		padding-top: 0.25rem;
+		padding-top: 0.15rem;
 	}
 
 	.media-secret-field {
