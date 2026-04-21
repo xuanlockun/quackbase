@@ -99,7 +99,14 @@ export async function sendSmtpEmail(settings: SmtpSettings, message: EmailMessag
 			}
 			await sendCommand(writer, "STARTTLS");
 			await expectReply(await readReply(reader), [220], "SMTP STARTTLS");
-			socket = socket.startTls();
+			try {
+				socket = socket.startTls();
+			} catch (error) {
+				if (debug) {
+					console.error("[smtp] startTls failed", error);
+				}
+				throw error;
+			}
 			if (debug) {
 				console.log("[smtp] tls upgrade complete");
 			}
