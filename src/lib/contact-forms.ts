@@ -36,6 +36,7 @@ export interface ContactFormRecord {
 	backgroundStyle: ContactFormBackgroundStyle;
 	backgroundColor: string;
 	buttonColor: string;
+	useCaptcha: boolean;
 	fields: ContactFormField[];
 	isActive: boolean;
 	sortOrder: number;
@@ -57,6 +58,7 @@ export interface ContactFormInput {
 	backgroundStyle: ContactFormBackgroundStyle;
 	backgroundColor: string;
 	buttonColor: string;
+	useCaptcha: boolean;
 	fields: ContactFormFieldInput[];
 	isActive: boolean;
 	sortOrder: number;
@@ -76,6 +78,7 @@ interface ContactFormRow {
 	background_style: string;
 	background_color: string;
 	button_color: string;
+	use_captcha: number;
 	fields_json: string;
 	is_active: number;
 	sort_order: number;
@@ -99,6 +102,7 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 				background_style TEXT NOT NULL DEFAULT 'solid',
 				background_color TEXT NOT NULL DEFAULT '#f8fbff',
 				button_color TEXT NOT NULL DEFAULT '#4f80ff',
+				use_captcha INTEGER NOT NULL DEFAULT 0 CHECK (use_captcha IN (0, 1)),
 				fields_json TEXT NOT NULL DEFAULT '[]',
 				is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
 				sort_order INTEGER NOT NULL DEFAULT 0,
@@ -146,6 +150,9 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 	if (!columnNames.has("button_color")) {
 		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN button_color TEXT NOT NULL DEFAULT '#4f80ff'`).run();
 	}
+	if (!columnNames.has("use_captcha")) {
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN use_captcha INTEGER NOT NULL DEFAULT 0 CHECK (use_captcha IN (0, 1))`).run();
+	}
 
 	await db
 		.prepare(
@@ -179,11 +186,11 @@ export async function listContactForms(
 	await ensureContactFormTables(db);
 	const c = catalog ?? getLanguageCatalogForForms();
 	const query = activeOnly
-		? `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
+		? `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			WHERE is_active = 1
 			ORDER BY sort_order ASC, id ASC`
-		: `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
+		: `SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			ORDER BY sort_order ASC, id ASC`;
 	const result = await db.prepare(query).all<ContactFormRow>();
@@ -200,7 +207,7 @@ export async function getContactFormById(
 	const c = catalog ?? getLanguageCatalogForForms();
 	const row = await db
 		.prepare(
-			`SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at
+			`SELECT id, title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, fields_json, is_active, sort_order, updated_at
 			FROM contact_forms
 			WHERE id = ?1`,
 		)
@@ -215,8 +222,8 @@ export async function createContactForm(db: D1Database, input: ContactFormInput)
 	const normalizedFields = normalizeFormFields(input.fields, catalog.defaultLanguageCode);
 	const result = await db
 		.prepare(
-			`INSERT INTO contact_forms (title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, fields_json, is_active, sort_order, updated_at)
-			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, CURRENT_TIMESTAMP)`,
+			`INSERT INTO contact_forms (title, description, show_title, show_description, form_title, form_description, show_form_title, show_form_description, layout, background_style, background_color, button_color, use_captcha, fields_json, is_active, sort_order, updated_at)
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
 			serializeLocalizedText(input.titleTranslations, catalog, true),
@@ -231,6 +238,7 @@ export async function createContactForm(db: D1Database, input: ContactFormInput)
 			normalizeContactFormBackgroundStyle(input.backgroundStyle),
 			normalizeContactFormColor(input.backgroundColor, "#f8fbff"),
 			normalizeContactFormColor(input.buttonColor, "#4f80ff"),
+			input.useCaptcha ? 1 : 0,
 			JSON.stringify(normalizedFields),
 			input.isActive ? 1 : 0,
 			normalizeSortOrder(input.sortOrder),
@@ -258,11 +266,12 @@ export async function updateContactForm(db: D1Database, id: number, input: Conta
 				background_style = ?10,
 				background_color = ?11,
 				button_color = ?12,
-				fields_json = ?13,
-				is_active = ?14,
-				sort_order = ?15,
+				use_captcha = ?13,
+				fields_json = ?14,
+				is_active = ?15,
+				sort_order = ?16,
 				updated_at = CURRENT_TIMESTAMP
-			WHERE id = ?16`,
+			WHERE id = ?17`,
 		)
 		.bind(
 			serializeLocalizedText(input.titleTranslations, catalog, true),
@@ -277,6 +286,7 @@ export async function updateContactForm(db: D1Database, id: number, input: Conta
 			normalizeContactFormBackgroundStyle(input.backgroundStyle),
 			normalizeContactFormColor(input.backgroundColor, "#f8fbff"),
 			normalizeContactFormColor(input.buttonColor, "#4f80ff"),
+			input.useCaptcha ? 1 : 0,
 			JSON.stringify(normalizedFields),
 			input.isActive ? 1 : 0,
 			normalizeSortOrder(input.sortOrder),
@@ -305,6 +315,7 @@ export function parseContactFormForm(formData: FormData): ContactFormInput {
 		backgroundStyle: normalizeContactFormBackgroundStyle(optionalString(formData, "backgroundStyle")),
 		backgroundColor: normalizeContactFormColor(optionalString(formData, "backgroundColor"), "#f8fbff"),
 		buttonColor: normalizeContactFormColor(optionalString(formData, "buttonColor"), "#4f80ff"),
+		useCaptcha: optionalBoolean(formData, "useCaptcha"),
 		fields: parseFormFieldsForm(formData),
 		isActive: optionalBoolean(formData, "isActive"),
 		sortOrder: Number.parseInt(optionalString(formData, "sortOrder") || "0", 10) || 0,
@@ -339,6 +350,7 @@ export function parseContactFormPayload(payload: unknown): ContactFormInput {
 			typeof record.buttonColor === "string" ? record.buttonColor : "",
 			"#4f80ff",
 		),
+		useCaptcha: parseBoolean(record.useCaptcha),
 		fields,
 		isActive: parseBoolean(record.isActive),
 		sortOrder: normalizeSortOrder(
@@ -395,6 +407,7 @@ function toContactFormRecord(row: ContactFormRow, requestedLanguage: string, cat
 		backgroundStyle: normalizeContactFormBackgroundStyle(row.background_style),
 		backgroundColor: normalizeContactFormColor(row.background_color, "#f8fbff"),
 		buttonColor: normalizeContactFormColor(row.button_color, "#4f80ff"),
+		useCaptcha: row.use_captcha === 1,
 		fields: parseStoredFieldsJson(row.fields_json),
 		isActive: row.is_active === 1,
 		sortOrder: row.sort_order,

@@ -17,6 +17,9 @@ interface Props {
 	backgroundStyle?: "solid" | "gradient" | "radial";
 	backgroundColor?: string;
 	buttonColor?: string;
+	useCaptcha?: boolean;
+	captchaEnabled?: boolean;
+	captchaSiteKey?: string;
 }
 
 const catalog = getLanguageCatalog(Astro.locals);
@@ -32,11 +35,15 @@ const {
 	backgroundStyle = "solid",
 	backgroundColor = "#f8fbff",
 	buttonColor = "#4f80ff",
+	useCaptcha = false,
+	captchaEnabled = false,
+	captchaSiteKey = "",
 } = Astro.props;
 const { t } = getUiTranslations(Astro);
 const renderableFields = getRenderableFormFields(fields, currentLanguage, catalog);
 const formStyle = `--contact-form-bg: ${backgroundColor}; --contact-submit-bg: ${buttonColor};`;
 const formBackgroundStyle = backgroundStyle;
+const captchaIsAvailable = useCaptcha && captchaEnabled && Boolean(captchaSiteKey.trim());
 ---
 
 {
@@ -93,6 +100,12 @@ const formBackgroundStyle = backgroundStyle;
 					}
 				</div>
 
+				{captchaIsAvailable && (
+					<div class="contact-form-captcha mt-4">
+						<div class="cf-turnstile" data-sitekey={captchaSiteKey}></div>
+					</div>
+				)}
+
 				<div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mt-4 gap-3">
 					<button class="btn btn-primary btn-lg px-4 contact-form-submit" type="submit">{t("actions.sendMessage")}</button>
 					<p class="mb-0 text-muted small" data-contact-form-status aria-live="polite"></p>
@@ -122,6 +135,7 @@ const formBackgroundStyle = backgroundStyle;
 				language: String(formData.get("language") || "en"),
 				sourcePath: String(formData.get("sourcePath") || "/"),
 				contactFormId: Number(formData.get("contactFormId") || 0),
+				captchaToken: String(formData.get("cf-turnstile-response") || ""),
 				values: {},
 			};
 
@@ -168,6 +182,10 @@ const formBackgroundStyle = backgroundStyle;
 		});
 	});
 </script>
+
+{captchaIsAvailable && (
+	<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+)}
 
 <style>
 	.contact-form {

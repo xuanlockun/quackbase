@@ -30,6 +30,9 @@ let siteConfig = {
 		s3Region: "auto",
 		s3ForcePathStyle: true,
 	},
+	captchaEnabled: false,
+	captchaSiteKey: "",
+	captchaSecretKey: "",
 };
 let secrets: AdminSecretRecord[] = [];
 let secretsLoadError = "";
@@ -57,6 +60,8 @@ const settingsFeedback = [
 	["secretSaved", { title: "Secret saved", message: t("messages.secretSaved", "The secret was stored successfully."), tone: "success" }],
 	["mediaError", { title: "Connection failed", message: "Media storage settings could not be saved.", tone: "error" }],
 	["mediaSaved", { title: "Settings saved", message: "Media storage settings were saved successfully.", tone: "success" }],
+	["captchaError", { title: "Captcha failed", message: "Captcha settings could not be saved.", tone: "error" }],
+	["captchaSaved", { title: "Captcha saved", message: "Captcha settings were saved successfully.", tone: "success" }],
 ] as const;
 ---
 
@@ -92,6 +97,17 @@ const settingsFeedback = [
 						data-settings-tab="media"
 					>
 						Media
+					</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button
+						type="button"
+						class="nav-link"
+						role="tab"
+						aria-selected="false"
+						data-settings-tab="captcha"
+					>
+						Captcha
 					</button>
 				</li>
 				<li class="nav-item" role="presentation">
@@ -258,6 +274,87 @@ const settingsFeedback = [
 									</button>
 									<button class="btn btn-primary" type="submit" disabled={formDisabled}>
 										Save media settings
+									</button>
+								</div>
+							</div>
+						</div>
+					</form>
+				</section>
+
+				<section class="d-none" role="tabpanel" data-settings-panel="captcha">
+					<form method="post" action="/api/admin/captcha" class="admin-form-shell admin-compact-form mb-0">
+						<div class="admin-form-surface">
+							<div class="admin-surface-header mb-3">
+								<div>
+									<h2 class="h5 mb-0">Captcha</h2>
+								</div>
+							</div>
+							<div class="admin-form-grid">
+								<label class="admin-checkbox-field" style="grid-column: 1 / -1;">
+									<span>Captcha usage</span>
+									<div class="form-check form-switch">
+										<input
+											class="form-check-input"
+											type="checkbox"
+											name="captchaEnabled"
+											value="1"
+											checked={siteConfig.captchaEnabled}
+											disabled={formDisabled}
+										/>
+										<label class="form-check-label">
+											Enable captcha verification for contact forms that opt in.
+										</label>
+									</div>
+								</label>
+								<label>
+									<span>Captcha site key</span>
+									<input
+										class="form-control"
+										name="captchaSiteKey"
+										value={siteConfig.captchaSiteKey}
+										placeholder="Turnstile site key"
+										disabled={formDisabled}
+									/>
+								</label>
+								<div class="media-secret-field" style="grid-column: 1 / -1;">
+									<label for="captchaSecretKey">
+										<span>Captcha secret key</span>
+										<div class="input-group">
+											<input
+												id="captchaSecretKey"
+												class="form-control"
+												type="password"
+												name="captchaSecretKey"
+												value={siteConfig.captchaSecretKey}
+												autocomplete="off"
+												placeholder="Turnstile secret key"
+												disabled={formDisabled}
+											/>
+											<button
+												class="btn btn-outline-secondary"
+												type="button"
+												data-media-secret-toggle
+												data-media-secret-target="#captchaSecretKey"
+												aria-label="Show captcha secret key"
+												title="Show captcha secret key"
+												disabled={formDisabled}
+											>
+												<span aria-hidden="true">
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+														<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+														<circle cx="12" cy="12" r="3" />
+													</svg>
+												</span>
+											</button>
+										</div>
+									</label>
+								</div>
+							</div>
+							<div class="admin-form-section">
+								<p class="admin-muted mb-2">Configure the captcha keys here, then opt individual contact forms in where needed.</p>
+								<div class="d-flex flex-wrap gap-2 align-items-center">
+									<button class="btn btn-primary" type="submit" disabled={formDisabled}>
+										Save captcha settings
 									</button>
 								</div>
 							</div>

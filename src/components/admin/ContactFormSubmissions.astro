@@ -1,5 +1,6 @@
 ---
 import FormattedDate from "../FormattedDate.astro";
+import IconAction from "./IconAction.astro";
 import type { ContactFormRecord } from "../../lib/contact-forms";
 import type { ContactFormSubmissionRecord } from "../../lib/forms";
 import { getLanguageCatalog, getUiTranslations, resolveLocalizedLabel } from "../../lib/i18n";
@@ -7,9 +8,10 @@ import { getLanguageCatalog, getUiTranslations, resolveLocalizedLabel } from "..
 interface Props {
 	form: ContactFormRecord;
 	submissions: ContactFormSubmissionRecord[];
+	canDelete: boolean;
 }
 
-const { form, submissions } = Astro.props;
+const { form, submissions, canDelete } = Astro.props;
 const { t, language } = getUiTranslations(Astro);
 const catalog = getLanguageCatalog(Astro.locals);
 ---
@@ -50,8 +52,22 @@ const catalog = getLanguageCatalog(Astro.locals);
 									{submission.sourcePath ? <span> · {submission.sourcePath}</span> : null}
 								</div>
 							</div>
-							<div class="d-flex flex-wrap gap-2">
+							<div class="d-flex flex-wrap gap-2 align-items-center">
 								<span class="badge text-bg-light text-uppercase">{submission.language}</span>
+								{canDelete && (
+									<form
+										class="d-inline"
+										method="post"
+										action={`/api/admin/contact-forms/${form.id}/leads/${submission.id}/delete`}
+										data-admin-confirm-form
+										data-confirm-title="Delete lead?"
+										data-confirm-message="This submitted lead will be removed permanently."
+										data-confirm-confirm-label={t("actions.delete")}
+										data-confirm-tone="danger"
+									>
+										<IconAction type="submit" icon="delete" label="Delete lead" variant="btn-outline-danger" />
+									</form>
+								)}
 							</div>
 						</div>
 						<div class="card-body">

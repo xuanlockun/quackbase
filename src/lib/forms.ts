@@ -43,6 +43,7 @@ export interface ContactFormSubmissionInput {
 	language: string;
 	sourcePath?: string;
 	contactFormId?: number;
+	captchaToken?: string;
 	values: Record<string, string>;
 }
 
@@ -198,6 +199,14 @@ export async function listFormSubmissions(
 	}));
 }
 
+export async function deleteFormSubmission(db: D1Database, contactFormId: number, submissionId: number): Promise<void> {
+	await ensureFormTables(db);
+	await db
+		.prepare("DELETE FROM form_submissions WHERE id = ?1 AND contact_form_id = ?2")
+		.bind(submissionId, contactFormId)
+		.run();
+}
+
 export async function countFormSubmissionsByContactFormId(db: D1Database): Promise<Map<number, number>> {
 	await ensureFormTables(db);
 	const result = await db
@@ -237,6 +246,7 @@ export function parseContactFormSubmissionForm(formData: FormData): ContactFormS
 			typeof formData.get("language") === "string" ? String(formData.get("language")) : DEFAULT_LANGUAGE,
 		sourcePath: typeof formData.get("sourcePath") === "string" ? String(formData.get("sourcePath")) : undefined,
 		contactFormId: parsePositiveInteger(formData.get("contactFormId")),
+		captchaToken: typeof formData.get("cf-turnstile-response") === "string" ? String(formData.get("cf-turnstile-response")) : undefined,
 		values,
 	};
 }
@@ -268,6 +278,7 @@ export function parseContactFormSubmissionPayload(payload: unknown): ContactForm
 		language: typeof record.language === "string" ? record.language : DEFAULT_LANGUAGE,
 		sourcePath,
 		contactFormId: parsePositiveInteger(record.contactFormId),
+		captchaToken: typeof record.captchaToken === "string" ? record.captchaToken.trim() : undefined,
 		values,
 	};
 }

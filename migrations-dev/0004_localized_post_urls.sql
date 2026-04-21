@@ -9,12 +9,13 @@ CREATE TABLE posts (
 	description TEXT NOT NULL,
 	content TEXT NOT NULL,
 	hero_image TEXT,
+	is_pinned INTEGER NOT NULL DEFAULT 0,
 	status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
 	pub_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO posts (id, slug, title, description, content, hero_image, status, pub_date, updated_date)
+INSERT INTO posts (id, slug, title, description, content, hero_image, is_pinned, status, pub_date, updated_date)
 SELECT
 	id,
 	CASE
@@ -34,6 +35,7 @@ SELECT
 		ELSE json_object('en', content)
 	END,
 	hero_image,
+	0,
 	status,
 	pub_date,
 	updated_date

@@ -50,6 +50,7 @@ const initialLayout = form?.layout ?? "split";
 const initialBackgroundStyle = form?.backgroundStyle ?? "solid";
 const initialBackgroundColor = form?.backgroundColor ?? "#f8fbff";
 const initialButtonColor = form?.buttonColor ?? "#4f80ff";
+const initialUseCaptcha = form?.useCaptcha ?? false;
 const labelGridColumns = `2rem minmax(12rem, 16rem) ${labelLanguages
 	.map(() => "minmax(0, 1fr)")
 	.join(" ")} minmax(7rem, auto) minmax(6rem, auto)`;
@@ -307,6 +308,15 @@ function normalizeContactCopyValue(value: unknown): string {
 				<label>
 					<span>{t("labels.order")}</span>
 					<input class="form-control" type="number" min="0" name="sortOrder" value={String(form?.sortOrder ?? 0)} disabled={isDisabled} />
+				</label>
+				<label class="admin-checkbox-field">
+					<span>Captcha</span>
+					<div class="form-check form-switch">
+						<input class="form-check-input" type="checkbox" name="useCaptcha" checked={initialUseCaptcha} disabled={isDisabled} />
+						<label class="form-check-label">
+							Require captcha for submissions from this form.
+						</label>
+					</div>
 				</label>
 				<label class="admin-check-row">
 					<input class="form-check-input" type="checkbox" name="isActive" checked={form?.isActive ?? true} disabled={isDisabled} />

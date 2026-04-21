@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS posts (
 	description TEXT NOT NULL,
 	content_markdown TEXT NOT NULL,
 	hero_image TEXT,
+	is_pinned INTEGER NOT NULL DEFAULT 0,
 	status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
 	pub_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP

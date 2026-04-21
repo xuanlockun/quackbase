@@ -25,14 +25,11 @@ export const DEFAULT_NAVIGATION_TEMPLATE_HTML = `<div class="d-flex flex-column 
   </div>
 </div>`;
 
-export const DEFAULT_BLOG_FEED_TEMPLATE_HTML = `<section class="mb-5">
-  <div class="d-flex justify-content-between align-items-center mb-3">
+export const DEFAULT_BLOG_FEED_TEMPLATE_HTML = `<section class="blog-feed-section mb-5">
+  <div class="mb-3">
     <h2 class="h4 mb-0">{{heading}}</h2>
-    <a class="btn btn-sm btn-outline-primary" href="{{viewAllHref}}">{{viewAllLabel}}</a>
   </div>
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    {{posts}}
-  </div>
+  {{posts}}
 </section>`;
 
 export function escapeHtml(value: string): string {

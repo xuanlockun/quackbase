@@ -26,6 +26,7 @@ export interface BlogPostRecord {
 	description: string;
 	content: string;
 	hero_image: string | null;
+	is_pinned: number;
 	status: string;
 	pub_date: string;
 	updated_date: string;
@@ -43,6 +44,7 @@ export interface BlogPost {
 	contentTranslations: LocalizedText;
 	contentHtml: string;
 	heroImage?: string;
+	isPinned: boolean;
 	status: string;
 	pubDate: Date;
 	updatedDate?: Date;
@@ -56,6 +58,7 @@ export interface BlogPostInput {
 	descriptionTranslations: LocalizedText;
 	contentTranslations: LocalizedText;
 	heroImage?: string;
+	isPinned?: boolean;
 	status: string;
 	pubDate?: string;
 }
@@ -70,6 +73,7 @@ export interface AdminPostSummary {
 	slugTranslations: LocalizedText;
 	status: string;
 	updatedAt: string;
+	isPinned: boolean;
 	viewHref: string;
 	editHref: string;
 }
@@ -209,6 +213,9 @@ export interface SiteConfig {
 	homePageSlug: string;
 	faviconUrl: string;
 	logoUrl: string;
+	captchaEnabled: boolean;
+	captchaSiteKey: string;
+	captchaSecretKey: string;
 	mediaStorageSettings: MediaStorageSettings;
 	headerBackground: string;
 	headerTextColor: string;
@@ -486,6 +493,7 @@ export function toBlogPost(
 		contentTranslations,
 		contentHtml: renderMarkdown(content),
 		heroImage: row.hero_image ?? undefined,
+		isPinned: row.is_pinned !== 0,
 		status: row.status,
 		pubDate: new Date(row.pub_date),
 		updatedDate: row.updated_date ? new Date(row.updated_date) : undefined,
@@ -507,10 +515,10 @@ export async function listPublishedPosts(
 
 	const result = await db
 		.prepare(
-			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
+			`SELECT id, slug, title, description, content, hero_image, is_pinned, status, pub_date, updated_date
 			FROM posts
 			WHERE status = 'published'
-			ORDER BY datetime(pub_date) DESC, id DESC`,
+			ORDER BY is_pinned DESC, datetime(pub_date) DESC, id DESC`,
 		)
 		.all<BlogPostRecord>();
 
@@ -523,7 +531,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const settings = await db
 		.prepare(
-			`SELECT site_title, home_page_slug, favicon_url, logo_url, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, media_s3_access_key_id, media_s3_secret_access_key, media_s3_region, media_s3_force_path_style, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html, nav_items
+			`SELECT site_title, home_page_slug, favicon_url, logo_url, captcha_enabled, captcha_site_key, captcha_secret_key, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, media_s3_access_key_id, media_s3_secret_access_key, media_s3_region, media_s3_force_path_style, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html, nav_items
 			FROM site_settings
 			WHERE id = 1`,
 		)
@@ -532,6 +540,9 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			home_page_slug: string;
 			favicon_url: string;
 			logo_url: string;
+			captcha_enabled: string;
+			captcha_site_key: string;
+			captcha_secret_key: string;
 			media_s3_endpoint: string;
 			media_s3_bucket: string;
 			media_s3_public_base_url: string;
@@ -603,6 +614,9 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 		homePageSlug: settings?.home_page_slug ?? "home",
 		faviconUrl: settings?.favicon_url ?? "/favicon.svg",
 		logoUrl: settings?.logo_url ?? "",
+		captchaEnabled: parseBooleanSetting(settings?.captcha_enabled, false),
+		captchaSiteKey: settings?.captcha_site_key ?? "",
+		captchaSecretKey: settings?.captcha_secret_key ?? "",
 		mediaStorageSettings: {
 			s3Endpoint: settings?.media_s3_endpoint ?? "",
 			s3Bucket: settings?.media_s3_bucket ?? "",
@@ -727,7 +741,47 @@ export async function saveSiteSettings(
 		.bind(
 			input.siteTitle.trim(),
 			normalizeFaviconUrl(input.faviconUrl),
-			normalizeLogoUrl(input.logoUrl),
+		normalizeLogoUrl(input.logoUrl),
+	)
+	.run();
+}
+
+export interface CaptchaSettingsInput {
+	enabled: boolean;
+	siteKey: string;
+	secretKey: string;
+}
+
+export function parseCaptchaSettingsForm(formData: FormData): CaptchaSettingsInput {
+	return {
+		enabled: isTruthyFormValue(formData.get("captchaEnabled")),
+		siteKey: optionalString(formData, "captchaSiteKey"),
+		secretKey: optionalString(formData, "captchaSecretKey"),
+	};
+}
+
+export async function saveCaptchaSettings(db: D1Database, input: CaptchaSettingsInput): Promise<void> {
+	await ensureSiteTables(db);
+	if (input.enabled) {
+		if (!input.siteKey.trim() || !input.secretKey.trim()) {
+			throw new Error("Captcha site key and secret key are required.");
+		}
+	}
+
+	await db
+		.prepare(
+			`INSERT INTO site_settings (id, captcha_enabled, captcha_site_key, captcha_secret_key, updated_at)
+			VALUES (1, ?1, ?2, ?3, CURRENT_TIMESTAMP)
+			ON CONFLICT(id) DO UPDATE SET
+				captcha_enabled = excluded.captcha_enabled,
+				captcha_site_key = excluded.captcha_site_key,
+				captcha_secret_key = excluded.captcha_secret_key,
+				updated_at = CURRENT_TIMESTAMP`,
+		)
+		.bind(
+			input.enabled ? "1" : "0",
+			input.siteKey.trim(),
+			input.secretKey.trim(),
 		)
 		.run();
 }
@@ -984,7 +1038,7 @@ export async function listAllPosts(
 
 	const result = await db
 		.prepare(
-			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
+			`SELECT id, slug, title, description, content, hero_image, is_pinned, status, pub_date, updated_date
 			FROM posts
 			ORDER BY datetime(updated_date) DESC, id DESC`,
 		)
@@ -1004,7 +1058,7 @@ export async function getPostById(
 
 	const result = await db
 		.prepare(
-			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
+			`SELECT id, slug, title, description, content, hero_image, is_pinned, status, pub_date, updated_date
 			FROM posts
 			WHERE id = ?1
 			LIMIT 1`,
@@ -1031,6 +1085,7 @@ export function toAdminPostSummary(
 		slugTranslations: post.slugTranslations,
 		status: post.status,
 		updatedAt: (post.updatedDate ?? post.pubDate).toISOString(),
+		isPinned: post.isPinned,
 		viewHref: getLocalizedPostPath(post.slugTranslations, language, c),
 		editHref: `/admin/posts/${post.id}/edit`,
 	};
@@ -1064,10 +1119,10 @@ export async function getPublishedPostBySlug(
 
 	const result = await db
 		.prepare(
-			`SELECT id, slug, title, description, content, hero_image, status, pub_date, updated_date
+			`SELECT id, slug, title, description, content, hero_image, is_pinned, status, pub_date, updated_date
 			FROM posts
 			WHERE status = 'published'
-			ORDER BY datetime(pub_date) DESC, id DESC`,
+			ORDER BY is_pinned DESC, datetime(pub_date) DESC, id DESC`,
 		)
 		.all<BlogPostRecord>();
 
@@ -1084,8 +1139,8 @@ export async function createPost(db: D1Database, input: BlogPostInput): Promise<
 
 	const result = await db
 		.prepare(
-			`INSERT INTO posts (slug, title, description, content, hero_image, status, pub_date, updated_date)
-			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)`,
+			`INSERT INTO posts (slug, title, description, content, hero_image, is_pinned, status, pub_date, updated_date)
+			VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, CURRENT_TIMESTAMP)`,
 		)
 		.bind(
 			stringifyLocalizedText(input.slugTranslations, catalog),
@@ -1093,6 +1148,7 @@ export async function createPost(db: D1Database, input: BlogPostInput): Promise<
 			stringifyLocalizedText(input.descriptionTranslations, catalog),
 			stringifyLocalizedText(input.contentTranslations, catalog),
 			normalizeOptionalString(input.heroImage),
+			input.isPinned ? 1 : 0,
 			input.status,
 			normalizePubDate(input.pubDate),
 		)
@@ -1120,10 +1176,11 @@ export async function updatePost(
 				description = ?3,
 				content = ?4,
 				hero_image = ?5,
-				status = ?6,
-				pub_date = ?7,
+				is_pinned = ?6,
+				status = ?7,
+				pub_date = ?8,
 				updated_date = CURRENT_TIMESTAMP
-			WHERE id = ?8`,
+			WHERE id = ?9`,
 		)
 		.bind(
 			stringifyLocalizedText(input.slugTranslations, catalog),
@@ -1131,6 +1188,7 @@ export async function updatePost(
 			stringifyLocalizedText(input.descriptionTranslations, catalog),
 			stringifyLocalizedText(input.contentTranslations, catalog),
 			normalizeOptionalString(input.heroImage),
+			input.isPinned ? 1 : 0,
 			input.status,
 			normalizePubDate(input.pubDate),
 			id,
@@ -1152,6 +1210,7 @@ export function parsePostForm(formData: FormData, defaultLanguageCode?: string):
 		descriptionTranslations: parseLocalizedFieldFromForm(formData, "description", "description", def),
 		contentTranslations: parseLocalizedFieldFromForm(formData, "content", "content_en", def),
 		heroImage: optionalString(formData, "heroImage") || undefined,
+		isPinned: isTruthyFormValue(formData.get("isPinned")),
 		status: normalizeStatus(requiredString(formData, "status")),
 		pubDate: optionalString(formData, "pubDate") || undefined,
 	};
@@ -1169,6 +1228,7 @@ export function parsePostPayload(payload: unknown, defaultLanguageCode?: string)
 		descriptionTranslations: parseLocalizedFieldValue((payload as Record<string, unknown>).description, "description", def),
 		contentTranslations: parseLocalizedFieldValue((payload as Record<string, unknown>).content, "content", def),
 		heroImage: optionalPayloadString(payload, "heroImage") || undefined,
+		isPinned: isTruthyPayloadValue(payload, "isPinned"),
 		status: normalizeStatus(requiredPayloadString(payload, "status")),
 		pubDate: optionalPayloadString(payload, "pubDate") || undefined,
 	};
@@ -1473,6 +1533,9 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				home_page_slug TEXT NOT NULL DEFAULT 'home',
 				favicon_url TEXT NOT NULL DEFAULT '/favicon.svg',
 				logo_url TEXT NOT NULL DEFAULT '',
+				captcha_enabled TEXT NOT NULL DEFAULT '0',
+				captcha_site_key TEXT NOT NULL DEFAULT '',
+				captcha_secret_key TEXT NOT NULL DEFAULT '',
 				media_s3_endpoint TEXT NOT NULL DEFAULT '',
 				media_s3_bucket TEXT NOT NULL DEFAULT '',
 				media_s3_public_base_url TEXT NOT NULL DEFAULT '',
@@ -1542,6 +1605,18 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	if (!settingsColumnNames.has("logo_url")) {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN logo_url TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("captcha_enabled")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN captcha_enabled TEXT NOT NULL DEFAULT '0'`).run();
+	}
+
+	if (!settingsColumnNames.has("captcha_site_key")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN captcha_site_key TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("captcha_secret_key")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN captcha_secret_key TEXT NOT NULL DEFAULT ''`).run();
 	}
 
 	if (!settingsColumnNames.has("media_s3_endpoint")) {
@@ -1633,8 +1708,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	await db.batch([
 		db.prepare(
-			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html)
-			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '', '#ffffff', '#0f1219', '#2337ff', '', '', '${DEFAULT_PAGE_TEMPLATE_HTML.replace(/'/g, "''")}', '${DEFAULT_BLOG_FEED_TEMPLATE_HTML.replace(/'/g, "''")}')
+			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, captcha_enabled, captcha_site_key, captcha_secret_key, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html)
+			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '', '0', '', '', '#ffffff', '#0f1219', '#2337ff', '', '', '${DEFAULT_PAGE_TEMPLATE_HTML.replace(/'/g, "''")}', '${DEFAULT_BLOG_FEED_TEMPLATE_HTML.replace(/'/g, "''")}')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(
@@ -1670,6 +1745,7 @@ async function ensurePostTables(db: D1Database): Promise<void> {
 				description TEXT NOT NULL,
 				content_markdown TEXT NOT NULL,
 				hero_image TEXT,
+				is_pinned INTEGER NOT NULL DEFAULT 0,
 				status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
 				pub_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				updated_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -1683,6 +1759,10 @@ async function ensurePostTables(db: D1Database): Promise<void> {
 
 	if (!columnNames.has("content") && columnNames.has("content_markdown")) {
 		await db.prepare(`ALTER TABLE posts RENAME COLUMN content_markdown TO content`).run();
+	}
+
+	if (!columnNames.has("is_pinned")) {
+		await db.prepare(`ALTER TABLE posts ADD COLUMN is_pinned INTEGER NOT NULL DEFAULT 0`).run();
 	}
 
 	await db
@@ -1923,6 +2003,15 @@ function requiredPayloadString(payload: unknown, key: string): string {
 function optionalPayloadString(payload: unknown, key: string): string {
 	const value = (payload as Record<string, unknown>)[key];
 	return typeof value === "string" ? value.trim() : "";
+}
+
+function isTruthyPayloadValue(payload: unknown, key: string): boolean {
+	const value = (payload as Record<string, unknown>)[key];
+	if (typeof value === "boolean") {
+		return value;
+	}
+
+	return typeof value === "string" && ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 }
 
 function sanitizeHexColor(value: string, fallback: string): string {

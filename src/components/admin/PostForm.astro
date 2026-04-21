@@ -45,6 +45,7 @@ const contentTranslations = {
 	...(post?.contentTranslations ?? {}),
 };
 const heroImage = post?.heroImage ?? "";
+const isPinned = post?.isPinned ?? false;
 const status = post?.status ?? "draft";
 const formatDateTimeLocal = (value: Date | string) => {
 	const date = value instanceof Date ? value : new Date(value);
@@ -80,6 +81,15 @@ const backIcon = `
 				<span>{t("labels.heroImageUrl")}</span>
 				<input class="form-control" name="heroImage" value={heroImage} placeholder="/blog-placeholder-1.jpg" disabled={isDisabled} />
 			</label>
+			<div class="admin-checkbox-field">
+				<span>{t("labels.pinned", "Pinned")}</span>
+				<div class="form-check form-switch">
+					<input class="form-check-input" type="checkbox" name="isPinned" id="post-is-pinned" value="1" checked={isPinned} disabled={isDisabled} />
+					<label class="form-check-label" for="post-is-pinned">
+						Show this post first in the blog feed.
+					</label>
+				</div>
+			</div>
 			<label>
 				<span>{t("labels.status")}</span>
 				<select class="form-select" name="status" disabled={isDisabled}>

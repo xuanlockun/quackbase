@@ -40,7 +40,10 @@ const { t } = getUiTranslations(Astro);
 							<tr>
 								<td>
 									<div class="d-flex flex-column gap-1">
-										<strong>{post.title}</strong>
+										<div class="d-flex flex-wrap align-items-center gap-2">
+											<strong>{post.title}</strong>
+											{post.isPinned && <span class="badge bg-primary-subtle text-uppercase">Pinned</span>}
+										</div>
 										<span class="text-muted small">{post.description}</span>
 									</div>
 								</td>

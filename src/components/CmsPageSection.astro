@@ -20,10 +20,13 @@ interface Props {
 		heroImage?: string | null;
 		title: string;
 		description: string;
+		isPinned: boolean;
 	}>;
 	banners: BannerRecord[];
 	contactForms: ContactFormRecord[];
 	legacyContactFields: ContactFormField[];
+	captchaEnabled: boolean;
+	captchaSiteKey: string;
 }
 
 interface BannerSlide {
@@ -48,6 +51,8 @@ const {
 	banners,
 	contactForms,
 	legacyContactFields,
+	captchaEnabled,
+	captchaSiteKey,
 } = Astro.props;
 const catalog = getLanguageCatalog(Astro.locals);
 const { t } = getUiTranslations(Astro);
@@ -66,6 +71,7 @@ const resolvedContactFormLayout = resolvedContactForm?.layout ?? "split";
 const resolvedContactFormBackgroundStyle = resolvedContactForm?.backgroundStyle ?? "solid";
 const resolvedContactFormBackgroundColor = resolvedContactForm?.backgroundColor ?? "#f8fbff";
 const resolvedContactFormButtonColor = resolvedContactForm?.buttonColor ?? "#4f80ff";
+const resolvedContactFormUseCaptcha = resolvedContactForm?.useCaptcha ?? false;
 const resolvedContactFormId = resolvedContactForm?.id ?? 0;
 const hasContactFormSectionCopy =
 	(resolvedContactFormShowTitle && resolvedContactFormTitle.trim()) ||
@@ -113,34 +119,66 @@ function renderPageTemplate(templateHtml: string, content: string): string {
 }
 
 function renderBlogFeedSection(): string {
-	const cardsHtml = posts
-		.slice(0, 6)
-		.map((post) => {
-			const href = escapeHtml(getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog));
-			const title = escapeHtml(post.title);
-			const description = escapeHtml(post.description);
-			const heroImage = escapeHtml(post.heroImage || "/blog-placeholder-1.jpg");
-
-			return `<a class="col text-decoration-none" href="${href}">
-				<article class="blog-card card h-100 shadow-sm border-0 overflow-hidden">
-					<div class="post-thumbnail" style="aspect-ratio: 16 / 10;">
-						<img src="${heroImage}" class="post-image" alt="" loading="lazy" />
-					</div>
-					<div class="blog-card-body card-body post-content">
-						<h3 class="h5 card-title post-title">${title}</h3>
-						<p class="text-muted small mb-0 card-text post-excerpt">${description}</p>
-					</div>
-				</article>
-			</a>`;
-		})
-		.join("");
+	const [featuredPost, ...gridPosts] = posts;
+	const featuredHtml = featuredPost ? renderBlogPostFeature(featuredPost) : "";
+	const gridItemsHtml = gridPosts.slice(0, 6).map((post) => renderBlogPostCard(post)).join("");
+	const gridHtml = gridItemsHtml ? `<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">${gridItemsHtml}</div>` : "";
 
 	return renderBlogFeedTemplate(blogFeedTemplateHtml, {
 		heading: escapeHtml(t("headings.latestPosts")),
-		viewAllHref: escapeHtml("/blog"),
-		viewAllLabel: escapeHtml(t("actions.viewAll")),
-		posts: cardsHtml,
+		posts: `${featuredHtml}${gridHtml}`,
 	});
+}
+
+function renderBlogPostFeature(post: (typeof posts)[number]): string {
+	const href = escapeHtml(getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog));
+	const title = escapeHtml(post.title);
+	const description = escapeHtml(post.description);
+	const heroImage = escapeHtml(post.heroImage || "/blog-placeholder-1.jpg");
+
+	return `<a class="blog-feed-featured-link text-decoration-none d-block mb-4" href="${href}">
+		<article class="blog-feed-featured card border-0 overflow-hidden">
+			<div class="row g-0 align-items-stretch">
+				<div class="col-lg-5 blog-feed-featured-copy">
+					<div class="card-body p-4 p-lg-5 h-100 d-flex flex-column justify-content-center gap-3">
+						<div class="d-flex flex-wrap align-items-center gap-2">
+							<span class="badge bg-primary-subtle text-uppercase">Featured</span>
+							${post.isPinned ? `<span class="badge text-bg-light text-uppercase">Pinned</span>` : ""}
+						</div>
+						<h3 class="display-6 fw-semibold mb-0 blog-feed-title">${title}</h3>
+						<p class="lead text-muted mb-0 blog-feed-excerpt">${description}</p>
+					</div>
+				</div>
+				<div class="col-lg-7">
+					<div class="blog-feed-featured-media">
+						<img src="${heroImage}" class="blog-feed-image" alt="" loading="eager" fetchpriority="high" />
+					</div>
+				</div>
+			</div>
+		</article>
+	</a>`;
+}
+
+function renderBlogPostCard(post: (typeof posts)[number]): string {
+	const href = escapeHtml(getLocalizedPostPath(post.slugTranslations, currentLanguage, catalog));
+	const title = escapeHtml(post.title);
+	const description = escapeHtml(post.description);
+	const heroImage = escapeHtml(post.heroImage || "/blog-placeholder-1.jpg");
+
+	return `<a class="col text-decoration-none" href="${href}">
+		<article class="blog-feed-card card h-100 border-0 overflow-hidden">
+			<div class="blog-feed-card-media">
+				<img src="${heroImage}" class="blog-feed-image" alt="" loading="lazy" />
+			</div>
+			<div class="card-body p-3 p-lg-4 blog-feed-card-body">
+				<div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+					${post.isPinned ? `<span class="badge text-bg-light text-uppercase">Pinned</span>` : ""}
+				</div>
+				<h3 class="h5 card-title mb-2 blog-feed-title">${title}</h3>
+				<p class="text-muted small mb-0 blog-feed-excerpt">${description}</p>
+			</div>
+		</article>
+	</a>`;
 }
 ---
 
@@ -179,6 +217,9 @@ function renderBlogFeedSection(): string {
 							backgroundStyle={resolvedContactFormBackgroundStyle}
 							backgroundColor={resolvedContactFormBackgroundColor}
 							buttonColor={resolvedContactFormButtonColor}
+							useCaptcha={resolvedContactFormUseCaptcha}
+							captchaEnabled={captchaEnabled}
+							captchaSiteKey={captchaSiteKey}
 						/>
 					</div>
 				) : resolvedContactFormLayout === "compact" ? (
@@ -204,6 +245,9 @@ function renderBlogFeedSection(): string {
 										backgroundStyle={resolvedContactFormBackgroundStyle}
 										backgroundColor={resolvedContactFormBackgroundColor}
 										buttonColor={resolvedContactFormButtonColor}
+										useCaptcha={resolvedContactFormUseCaptcha}
+										captchaEnabled={captchaEnabled}
+										captchaSiteKey={captchaSiteKey}
 									/>
 								</div>
 							</div>
@@ -230,6 +274,9 @@ function renderBlogFeedSection(): string {
 								backgroundStyle={resolvedContactFormBackgroundStyle}
 								backgroundColor={resolvedContactFormBackgroundColor}
 								buttonColor={resolvedContactFormButtonColor}
+								useCaptcha={resolvedContactFormUseCaptcha}
+								captchaEnabled={captchaEnabled}
+								captchaSiteKey={captchaSiteKey}
 							/>
 						</div>
 					</div>
@@ -238,3 +285,70 @@ function renderBlogFeedSection(): string {
 		</section>
 	)
 }
+
+<style>
+	:global(.blog-feed-section) {
+		display: grid;
+		gap: 1rem;
+	}
+
+	:global(.blog-feed-featured-link),
+	:global(.blog-feed-featured-link:hover) {
+		color: inherit;
+	}
+
+	:global(.blog-feed-featured),
+	:global(.blog-feed-card) {
+		background: #fff;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		box-shadow: none;
+	}
+
+	:global(.blog-feed-featured) {
+		min-height: 100%;
+	}
+
+	:global(.blog-feed-featured-media),
+	:global(.blog-feed-card-media) {
+		position: relative;
+		overflow: hidden;
+		background: rgba(148, 163, 184, 0.08);
+	}
+
+	:global(.blog-feed-featured-media) {
+		aspect-ratio: 16 / 10;
+	}
+
+	:global(.blog-feed-card-media) {
+		aspect-ratio: 4 / 3;
+	}
+
+	:global(.blog-feed-image) {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	:global(.blog-feed-card-body),
+	:global(.blog-feed-featured-copy .card-body) {
+		min-height: 0;
+	}
+
+	:global(.blog-feed-title) {
+		line-height: 1.15;
+	}
+
+	:global(.blog-feed-excerpt) {
+		display: -webkit-box;
+		-webkit-line-clamp: 4;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	@media (max-width: 991.98px) {
+		:global(.blog-feed-featured-media) {
+			aspect-ratio: 16 / 9;
+		}
+	}
+</style>
