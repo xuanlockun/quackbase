@@ -52,6 +52,48 @@ const navEntries = navRows.map(({ item, depth }, index) => ({
 }));
 const rootItemCount = navRows.filter(({ depth }) => depth === 0).length;
 const totalItemCount = navRows.length;
+const navActionIcons = {
+	edit: `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M12 20h9" />
+			<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+		</svg>
+	`,
+	addChild: `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M12 5v14" />
+			<path d="M5 12h14" />
+		</svg>
+	`,
+	indent: `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M5 7h14" />
+			<path d="M5 12h8" />
+			<path d="M5 17h14" />
+			<path d="M13 9l4 3-4 3" />
+		</svg>
+	`,
+	outdent: `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M5 7h14" />
+			<path d="M5 12h8" />
+			<path d="M5 17h14" />
+			<path d="M9 9l-4 3 4 3" />
+		</svg>
+	`,
+	remove: `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M6 6l12 12" />
+			<path d="M18 6L6 18" />
+		</svg>
+	`,
+	addRow: `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M12 5v14" />
+			<path d="M5 12h14" />
+		</svg>
+	`,
+};
 ---
 
 <div class="admin-form-section nav-tree-editor">
@@ -133,15 +175,21 @@ const totalItemCount = navRows.length;
 									<div class="nav-tree-summary-copy">
 										<div class="nav-tree-summary-line">
 											{hasChildren ? (
-												<button
-													class="btn btn-sm btn-outline-secondary nav-tree-toggle"
-													type="button"
-													data-nav-toggle
-													aria-expanded="true"
-													aria-label={t("labels.collapse", "Collapse")}
-												>
-													<span class="nav-tree-toggle-glyph" aria-hidden="true">-</span>
-												</button>
+								<button
+									class="btn btn-sm btn-outline-secondary nav-tree-toggle"
+									type="button"
+									data-nav-toggle
+									aria-expanded="true"
+									aria-label={t("labels.collapse", "Collapse")}
+								>
+									<span class="nav-tree-toggle-glyph" aria-hidden="true">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+											<path d="M4 12h16" />
+											<path d="M4 7h4" />
+											<path d="M4 17h4" />
+										</svg>
+									</span>
+								</button>
 											) : null}
 										</div>
 										<strong class="nav-tree-title" data-nav-preview-title>{resolveNavPreviewLabel(item.labelTranslations, item.label)}</strong>
@@ -192,7 +240,7 @@ const totalItemCount = navRows.length;
 									aria-label={t("actions.edit")}
 									aria-pressed="false"
 								>
-									<span class="nav-action-icon" aria-hidden="true">✎</span>
+									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.edit}></span>
 									<span class="visually-hidden">{t("actions.edit")}</span>
 								</button>
 								<button
@@ -202,7 +250,7 @@ const totalItemCount = navRows.length;
 									disabled={Boolean(loadError)}
 									aria-label={t("actions.addChild")}
 								>
-									<span class="nav-action-icon" aria-hidden="true">+</span>
+									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addChild}></span>
 									<span class="visually-hidden">{t("actions.addChild")}</span>
 								</button>
 								<button
@@ -212,7 +260,7 @@ const totalItemCount = navRows.length;
 									disabled={Boolean(loadError)}
 									aria-label={t("actions.indent")}
 								>
-									<span class="nav-action-icon" aria-hidden="true">›</span>
+									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.indent}></span>
 									<span class="visually-hidden">{t("actions.indent")}</span>
 								</button>
 								<button
@@ -222,7 +270,7 @@ const totalItemCount = navRows.length;
 									disabled={Boolean(loadError)}
 									aria-label={t("actions.outdent")}
 								>
-									<span class="nav-action-icon" aria-hidden="true">‹</span>
+									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.outdent}></span>
 									<span class="visually-hidden">{t("actions.outdent")}</span>
 								</button>
 								<button
@@ -232,7 +280,7 @@ const totalItemCount = navRows.length;
 									disabled={Boolean(loadError)}
 									aria-label={t("actions.remove")}
 								>
-									<span class="nav-action-icon" aria-hidden="true">×</span>
+									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.remove}></span>
 									<span class="visually-hidden">{t("actions.remove")}</span>
 								</button>
 							</div>
@@ -244,7 +292,7 @@ const totalItemCount = navRows.length;
 
 		<div class="nav-tree-footer">
 			<button class="btn btn-sm btn-outline-secondary nav-tree-add-row" type="button" data-nav-add disabled={Boolean(loadError)}>
-				<span class="nav-action-icon" aria-hidden="true">+</span>
+				<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addRow}></span>
 				<span>{t("actions.addRow")}</span>
 			</button>
 		</div>
@@ -659,6 +707,42 @@ const totalItemCount = navRows.length;
 	const expandLabel = editor?.dataset.expandLabel ?? "Expand";
 	const editLabel = editor?.dataset.editLabel ?? "Edit";
 	const isReadOnly = editor?.dataset.disabled === "true";
+	const navActionIcons = {
+		edit: `
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M12 20h9" />
+				<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+			</svg>
+		`,
+		addChild: `
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M12 5v14" />
+				<path d="M5 12h14" />
+			</svg>
+		`,
+		indent: `
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M5 7h14" />
+				<path d="M5 12h8" />
+				<path d="M5 17h14" />
+				<path d="M13 9l4 3-4 3" />
+			</svg>
+		`,
+		outdent: `
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M5 7h14" />
+				<path d="M5 12h8" />
+				<path d="M5 17h14" />
+				<path d="M9 9l-4 3 4 3" />
+			</svg>
+		`,
+		remove: `
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M6 6l12 12" />
+				<path d="M18 6L6 18" />
+			</svg>
+		`,
+	};
 	let draggedNavRow = null;
 	const MAX_NAV_DEPTH = 4;
 	const defaultNavLabel = editor?.dataset.exampleLabel ?? "New item";
@@ -769,7 +853,11 @@ const totalItemCount = navRows.length;
 			toggle.setAttribute("aria-label", collapseLabel);
 			const glyph = toggle.querySelector(".nav-tree-toggle-glyph");
 			if (glyph instanceof HTMLElement) {
-				glyph.textContent = "•";
+				glyph.innerHTML = `
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M7 12h10" />
+					</svg>
+				`;
 			}
 			return;
 		}
@@ -779,7 +867,18 @@ const totalItemCount = navRows.length;
 		toggle.setAttribute("aria-label", isCollapsed ? expandLabel : collapseLabel);
 		const glyph = toggle.querySelector(".nav-tree-toggle-glyph");
 		if (glyph instanceof HTMLElement) {
-			glyph.textContent = isCollapsed ? "+" : "-";
+			glyph.innerHTML = isCollapsed
+				? `
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M4 12h16" />
+						<path d="M12 4v16" />
+					</svg>
+				`
+				: `
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M4 12h16" />
+					</svg>
+				`;
 		}
 	};
 
@@ -1069,13 +1168,13 @@ const totalItemCount = navRows.length;
 		const actions = document.createElement("div");
 		actions.className = "nav-tree-actions";
 		const buttonConfigs = [
-			["navEdit", "✎", editLabel, "btn btn-sm btn-outline-secondary nav-action"],
-			["navAddChild", "+", addChildLabel, "btn btn-sm btn-outline-secondary nav-action"],
-			["navIndent", "›", indentLabel, "btn btn-sm btn-outline-secondary nav-action"],
-			["navOutdent", "‹", outdentLabel, "btn btn-sm btn-outline-secondary nav-action"],
+			["navEdit", navActionIcons.edit, editLabel, "btn btn-sm btn-outline-secondary nav-action"],
+			["navAddChild", navActionIcons.addChild, addChildLabel, "btn btn-sm btn-outline-secondary nav-action"],
+			["navIndent", navActionIcons.indent, indentLabel, "btn btn-sm btn-outline-secondary nav-action"],
+			["navOutdent", navActionIcons.outdent, outdentLabel, "btn btn-sm btn-outline-secondary nav-action"],
 		];
 
-		for (const [datasetKey, symbol, label, className] of buttonConfigs) {
+		for (const [datasetKey, iconMarkup, label, className] of buttonConfigs) {
 			const button = document.createElement("button");
 			button.type = "button";
 			button.className = className;
@@ -1084,7 +1183,7 @@ const totalItemCount = navRows.length;
 			if (datasetKey === "navEdit") {
 				button.setAttribute("aria-pressed", "false");
 			}
-			button.textContent = symbol;
+			button.innerHTML = `${iconMarkup}<span class="visually-hidden">${label}</span>`;
 			if (isReadOnly) {
 				button.disabled = true;
 			}
@@ -1096,7 +1195,7 @@ const totalItemCount = navRows.length;
 		removeButton.className = "btn btn-sm btn-outline-danger nav-item-remove";
 		removeButton.dataset.navRemove = "";
 		removeButton.setAttribute("aria-label", removeLabel);
-		removeButton.innerHTML = `<span class="nav-action-icon" aria-hidden="true">×</span><span class="visually-hidden">${removeLabel}</span>`;
+		removeButton.innerHTML = `${navActionIcons.remove}<span class="visually-hidden">${removeLabel}</span>`;
 		if (isReadOnly) {
 			removeButton.disabled = true;
 		}
