@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import PageForm from "../../../../components/admin/PageForm.astro";
+import FeedbackModal from "../../../../components/admin/FeedbackModal.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
 import { getDb, getPageById } from "../../../../lib/blog";
 import { listBanners } from "../../../../lib/banners";
@@ -42,9 +43,13 @@ try {
 if (Astro.url.searchParams.get("error")) {
 	loadError = t("messages.pageRequestFailed");
 }
+
+const pageEditFeedback = [
+	["error", { title: "Page update failed", message: t("messages.pageRequestFailed"), tone: "error" }],
+] as const;
 ---
 
-<AdminLayout
+	<AdminLayout
 	title={t("actions.edit")}
 	description={t("messages.saveEditPage")}
 	session={session}
@@ -52,6 +57,7 @@ if (Astro.url.searchParams.get("error")) {
 	pageDescription={t("messages.editPageDescription")}
 >
 	<div class="admin-content-stack">
+		<FeedbackModal id="page-edit-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
 		{
 			notFound ? (
 				<div class="admin-empty-state">
@@ -83,3 +89,22 @@ if (Astro.url.searchParams.get("error")) {
 		}
 	</div>
 </AdminLayout>
+
+<script type="module" define:vars={{ pageEditFeedback, loadError }}>
+	const showFeedbackModal = window.showAdminFeedbackModal;
+	const search = new URLSearchParams(window.location.search);
+
+	for (const [key, entry] of pageEditFeedback) {
+		if (search.has(key)) {
+			if (typeof showFeedbackModal === "function") {
+				showFeedbackModal({ title: entry.title, message: entry.message, tone: entry.tone });
+			}
+			window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+			break;
+		}
+	}
+
+	if (loadError && typeof showFeedbackModal === "function") {
+		showFeedbackModal({ title: "Page load failed", message: loadError, tone: "error" });
+	}
+</script>

@@ -49,9 +49,9 @@ const filteredUsers = users.filter((user) => {
 
 const hasActiveFilters = Boolean(search || status !== "all" || role !== "all");
 const userFeedback = [
-	["created", { title: "User created", message: t("messages.userCreated") }],
-	["saved", { title: "User saved", message: t("messages.userSaved") }],
-	["error", { title: "Action failed", message: t("messages.userRequestFailed") }],
+	["created", { title: "User created", message: t("messages.userCreated"), tone: "success" }],
+	["saved", { title: "User saved", message: t("messages.userSaved"), tone: "success" }],
+	["error", { title: "Action failed", message: t("messages.userRequestFailed"), tone: "error" }],
 ] as const;
 ---
 
@@ -113,10 +113,10 @@ const userFeedback = [
 	const searchParams = new URLSearchParams(window.location.search);
 
 	for (const [key, entry] of userFeedback) {
-		if (searchParams.has(key)) {
-			if (typeof showFeedbackModal === "function") {
-				showFeedbackModal({ title: entry.title, message: entry.message });
-			}
+			if (searchParams.has(key)) {
+				if (typeof showFeedbackModal === "function") {
+					showFeedbackModal({ title: entry.title, message: entry.message, tone: entry.tone });
+				}
 			window.history.replaceState({}, "", window.location.pathname + window.location.hash);
 			break;
 		}

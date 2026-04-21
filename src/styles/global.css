@@ -5,6 +5,21 @@
 	--gray-light: #f1f3f5;
 	--body-bg: #f8fafc;
 	--text-color: #0f172a;
+	--feedback-info-bg: #e8f2ff;
+	--feedback-info-border: #6aa8ff;
+	--feedback-info-ink: #1f5fbf;
+	--feedback-success-bg: #eaf7ef;
+	--feedback-success-border: #57b76b;
+	--feedback-success-ink: #1f7a3f;
+	--feedback-warning-bg: #fff6e6;
+	--feedback-warning-border: #f0b24a;
+	--feedback-warning-ink: #9a6400;
+	--feedback-error-bg: #fdecec;
+	--feedback-error-border: #e06a6a;
+	--feedback-error-ink: #b42318;
+	--surface-muted: #f7f9fc;
+	--surface-hover: #eef4ff;
+	--surface-selected: #e6f0ff;
 }
 
 body {
@@ -1524,6 +1539,111 @@ body.admin-app .admin-check-row {
 	box-shadow: none;
 }
 
+body.admin-app .btn-primary {
+	background: #2271b1;
+	border-color: #2271b1;
+}
+
+body.admin-app .btn-primary:hover,
+body.admin-app .btn-primary:focus-visible {
+	background: #1f649c;
+	border-color: #1f649c;
+}
+
+body.admin-app .btn-outline-secondary {
+	border-color: rgba(15, 23, 42, 0.16);
+	color: #334155;
+	background: #fff;
+}
+
+body.admin-app .btn-outline-secondary:hover,
+body.admin-app .btn-outline-secondary:focus-visible {
+	background: rgba(15, 23, 42, 0.03);
+	border-color: rgba(15, 23, 42, 0.24);
+	color: #0f172a;
+}
+
+body.admin-app .btn-outline-danger {
+	border-color: rgba(220, 38, 38, 0.3);
+	color: #b42318;
+	background: rgba(253, 236, 236, 0.2);
+}
+
+body.admin-app .btn-outline-danger:hover,
+body.admin-app .btn-outline-danger:focus-visible {
+	background: rgba(253, 236, 236, 0.72);
+	border-color: rgba(220, 38, 38, 0.45);
+	color: #8f1f1f;
+}
+
+body.admin-app .btn-warning {
+	background: #f0b24a;
+	border-color: #f0b24a;
+	color: #3f2d00;
+}
+
+body.admin-app .btn-warning:hover,
+body.admin-app .btn-warning:focus-visible {
+	background: #e6a02f;
+	border-color: #e6a02f;
+	color: #241800;
+}
+
+body.admin-app .badge.text-bg-light {
+	background: rgba(148, 163, 184, 0.14) !important;
+	color: #334155 !important;
+	border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+body.admin-app .badge.bg-success {
+	background: var(--feedback-success-bg) !important;
+	border: 1px solid var(--feedback-success-border);
+	color: var(--feedback-success-ink) !important;
+}
+
+body.admin-app .badge.bg-secondary {
+	background: rgba(100, 116, 139, 0.14) !important;
+	border: 1px solid rgba(100, 116, 139, 0.22);
+	color: #475569 !important;
+}
+
+body.admin-app .badge.bg-primary {
+	background: rgba(35, 55, 255, 0.12) !important;
+	border: 1px solid rgba(35, 55, 255, 0.2);
+	color: #1e40af !important;
+}
+
+body.admin-app .badge.bg-warning {
+	background: var(--feedback-warning-bg) !important;
+	border: 1px solid var(--feedback-warning-border);
+	color: var(--feedback-warning-ink) !important;
+}
+
+body.admin-app .badge.bg-danger {
+	background: var(--feedback-error-bg) !important;
+	border: 1px solid var(--feedback-error-border);
+	color: var(--feedback-error-ink) !important;
+}
+
+body.admin-app .badge.bg-info {
+	background: var(--feedback-info-bg) !important;
+	border: 1px solid var(--feedback-info-border);
+	color: var(--feedback-info-ink) !important;
+}
+
+body.admin-app .badge.bg-primary-subtle {
+	background: rgba(35, 55, 255, 0.12) !important;
+	border: 1px solid rgba(35, 55, 255, 0.18);
+	color: #1e40af !important;
+}
+
+body.admin-app .btn-check:checked + .btn,
+body.admin-app .btn.active,
+body.admin-app .btn.show,
+body.admin-app .btn:active {
+	filter: saturate(0.98);
+}
+
 body.admin-app .admin-form-surface,
 body.admin-app .admin-state-surface,
 body.admin-app .admin-resource-card,
@@ -1700,6 +1820,131 @@ body.admin-app .btn {
 body.admin-app .admin-ghost-button,
 body.admin-app .admin-primary-button {
 	border-radius: 0.8rem;
+}
+
+body.admin-app .admin-feedback-modal-shell {
+	overflow: hidden;
+	border-radius: 1rem;
+}
+
+body.admin-app .admin-feedback-modal-header {
+	border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+body.admin-app .admin-feedback-modal-body {
+	display: grid;
+	gap: 0.65rem;
+}
+
+body.admin-app .admin-feedback-modal-spinner-wrap {
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-start;
+	color: var(--accent);
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="info"] .admin-feedback-modal-header {
+	background: var(--feedback-info-bg);
+	color: var(--feedback-info-ink);
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="success"] .admin-feedback-modal-header {
+	background: var(--feedback-success-bg);
+	color: var(--feedback-success-ink);
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="warning"] .admin-feedback-modal-header {
+	background: var(--feedback-warning-bg);
+	color: var(--feedback-warning-ink);
+}
+
+body.admin-app [data-admin-confirm-modal][data-confirm-tone="warning"] .admin-feedback-modal-header {
+	background: var(--feedback-warning-bg);
+	color: var(--feedback-warning-ink);
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="error"],
+body.admin-app [data-admin-confirm-modal][data-confirm-tone="danger"] {
+	--modal-accent-bg: var(--feedback-error-bg);
+	--modal-accent-border: var(--feedback-error-border);
+	--modal-accent-ink: var(--feedback-error-ink);
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="error"] .admin-feedback-modal-header,
+body.admin-app [data-admin-confirm-modal][data-confirm-tone="danger"] .admin-feedback-modal-header {
+	background: var(--feedback-error-bg);
+	color: var(--feedback-error-ink);
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="info"] .admin-feedback-modal-icon {
+	background: var(--feedback-info-bg);
+	color: var(--feedback-info-ink);
+	border-color: color-mix(in srgb, var(--feedback-info-border) 28%, rgba(15, 23, 42, 0.08));
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="success"] .admin-feedback-modal-icon {
+	background: var(--feedback-success-bg);
+	color: var(--feedback-success-ink);
+	border-color: color-mix(in srgb, var(--feedback-success-border) 28%, rgba(15, 23, 42, 0.08));
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="warning"] .admin-feedback-modal-icon,
+body.admin-app [data-admin-confirm-modal][data-confirm-tone="warning"] .admin-feedback-modal-icon {
+	background: var(--feedback-warning-bg);
+	color: var(--feedback-warning-ink);
+	border-color: color-mix(in srgb, var(--feedback-warning-border) 28%, rgba(15, 23, 42, 0.08));
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="error"] .admin-feedback-modal-icon,
+body.admin-app [data-admin-confirm-modal][data-confirm-tone="danger"] .admin-feedback-modal-icon {
+	background: var(--feedback-error-bg);
+	color: var(--feedback-error-ink);
+	border-color: color-mix(in srgb, var(--feedback-error-border) 28%, rgba(15, 23, 42, 0.08));
+}
+
+body.admin-app .admin-feedback-modal-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	border-radius: 999px;
+	border: 1px solid rgba(15, 23, 42, 0.08);
+	flex: 0 0 auto;
+}
+
+body.admin-app .admin-feedback-modal-icon svg {
+	width: 0.95rem;
+	height: 0.95rem;
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="info"] .admin-feedback-modal-body {
+	background: linear-gradient(180deg, rgba(232, 242, 255, 0.45), rgba(255, 255, 255, 0.96));
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="success"] .admin-feedback-modal-body {
+	background: linear-gradient(180deg, rgba(234, 247, 239, 0.5), rgba(255, 255, 255, 0.96));
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="warning"] .admin-feedback-modal-body,
+body.admin-app [data-admin-confirm-modal][data-confirm-tone="warning"] .admin-feedback-modal-body {
+	background: linear-gradient(180deg, rgba(255, 246, 230, 0.56), rgba(255, 255, 255, 0.96));
+}
+
+body.admin-app [data-admin-feedback-modal][data-feedback-tone="error"] .admin-feedback-modal-body,
+body.admin-app [data-admin-confirm-modal][data-confirm-tone="danger"] .admin-feedback-modal-body {
+	background: linear-gradient(180deg, rgba(253, 236, 236, 0.58), rgba(255, 255, 255, 0.96));
+}
+
+body.admin-app [data-admin-confirm-modal] .btn-danger {
+	background: var(--feedback-error-ink);
+	border-color: var(--feedback-error-ink);
+}
+
+body.admin-app [data-admin-confirm-modal] .btn-danger:hover,
+body.admin-app [data-admin-confirm-modal] .btn-danger:focus-visible {
+	background: #95211a;
+	border-color: #95211a;
 }
 
 @media (max-width: 991px) {

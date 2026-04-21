@@ -50,13 +50,13 @@ try {
 
 const formDisabled = Boolean(loadError);
 const settingsFeedback = [
-	["siteError", { title: "Settings failed", message: t("messages.siteSettingsFailed", "Site settings could not be saved.") }],
-	["siteSaved", { title: "Settings saved", message: t("messages.siteSettingsSaved", "Site settings were saved successfully.") }],
-	["secretError", { title: "Secret failed", message: t("messages.secretRequestFailed", "The secret request failed.") }],
-	["secretDeleted", { title: "Secret deleted", message: t("messages.secretDeleted", "The secret was removed.") }],
-	["secretSaved", { title: "Secret saved", message: t("messages.secretSaved", "The secret was stored successfully.") }],
-	["mediaError", { title: "Connection failed", message: "Media storage settings could not be saved." }],
-	["mediaSaved", { title: "Settings saved", message: "Media storage settings were saved successfully." }],
+	["siteError", { title: "Settings failed", message: t("messages.siteSettingsFailed", "Site settings could not be saved."), tone: "error" }],
+	["siteSaved", { title: "Settings saved", message: t("messages.siteSettingsSaved", "Site settings were saved successfully."), tone: "success" }],
+	["secretError", { title: "Secret failed", message: t("messages.secretRequestFailed", "The secret request failed."), tone: "error" }],
+	["secretDeleted", { title: "Secret deleted", message: t("messages.secretDeleted", "The secret was removed."), tone: "success" }],
+	["secretSaved", { title: "Secret saved", message: t("messages.secretSaved", "The secret was stored successfully."), tone: "success" }],
+	["mediaError", { title: "Connection failed", message: "Media storage settings could not be saved.", tone: "error" }],
+	["mediaSaved", { title: "Settings saved", message: "Media storage settings were saved successfully.", tone: "success" }],
 ] as const;
 ---
 
@@ -323,9 +323,9 @@ const settingsFeedback = [
 
 	setActiveTab("site");
 
-	const showModal = (title, message, detail = "") => {
+	const showModal = (title, message, detail = "", tone = "info", busy = false) => {
 		if (typeof showFeedbackModal === "function") {
-			showFeedbackModal({ title, message, detail });
+			showFeedbackModal({ title, message, detail, tone, busy });
 		}
 	};
 
@@ -334,7 +334,7 @@ const settingsFeedback = [
 		for (const [key, entry] of settingsFeedback) {
 			if (search.has(key)) {
 				const message = key === "mediaError" ? search.get("mediaError") || entry.message : entry.message;
-				showModal(entry.title, message);
+				showModal(entry.title, message, "", entry.tone);
 				window.history.replaceState({}, "", window.location.pathname + window.location.hash);
 				break;
 			}
@@ -343,7 +343,7 @@ const settingsFeedback = [
 
 	showFromQuery();
 	if (loadError) {
-		showModal("Settings load failed", loadError);
+		showModal("Settings load failed", loadError, "", "error");
 	}
 
 	if (form instanceof HTMLFormElement && testButton instanceof HTMLButtonElement) {
@@ -352,6 +352,9 @@ const settingsFeedback = [
 			const payload = new FormData(form);
 			payload.set("intent", "test");
 			testButton.disabled = true;
+			const originalLabel = testButton.textContent || "Test connection";
+			testButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Testing...';
+			showModal("Testing connection", "Checking the media storage connection.", "", "info", true);
 
 			try {
 				const response = await fetch(form.action, {
@@ -369,11 +372,12 @@ const settingsFeedback = [
 					throw new Error(data?.error || "Media storage connection test failed.");
 				}
 
-				showModal("Connection successful", data.message || "Media storage connection succeeded.");
+				showModal("Connection successful", data.message || "Media storage connection succeeded.", "", "success");
 			} catch (error) {
-				showModal("Connection failed", error instanceof Error ? error.message : "Media storage connection test failed.");
+				showModal("Connection failed", error instanceof Error ? error.message : "Media storage connection test failed.", "", "error");
 			} finally {
 				testButton.disabled = false;
+				testButton.textContent = originalLabel.trim();
 			}
 		});
 	}

@@ -62,7 +62,16 @@ const { t } = getUiTranslations(Astro);
 										)}
 										<IconAction href={post.viewHref} icon="view" label={t("actions.view")} />
 										{canDelete && (
-											<form method="post" action="/api/admin/posts/delete" class="d-inline">
+											<form
+												method="post"
+												action="/api/admin/posts/delete"
+												class="d-inline"
+												data-admin-confirm-form
+												data-confirm-title="Delete post?"
+												data-confirm-message="This post will be removed from the site."
+												data-confirm-confirm-label={t("actions.delete")}
+												data-confirm-tone="danger"
+											>
 												<input type="hidden" name="id" value={post.id} />
 												<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
 											</form>

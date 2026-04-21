@@ -1,0 +1,163 @@
+---
+interface Props {
+	id: string;
+	title?: string;
+	message?: string;
+	confirmLabel?: string;
+	cancelLabel?: string;
+	tone?: "danger" | "warning";
+}
+
+const {
+	id,
+	title = "Confirm action",
+	message = "Are you sure you want to continue?",
+	confirmLabel = "Confirm",
+	cancelLabel = "Cancel",
+	tone = "danger",
+} = Astro.props;
+---
+
+<div class="modal fade" id={id} tabindex="-1" aria-hidden="true" data-admin-confirm-modal data-confirm-tone={tone}>
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content border-0 shadow-sm admin-feedback-modal-shell">
+			<div class="modal-header py-2 px-3 admin-feedback-modal-header">
+				<div class="d-flex align-items-center gap-2 min-w-0">
+					<span class="admin-feedback-modal-icon" data-confirm-modal-icon aria-hidden="true"></span>
+					<h2 class="modal-title h6 mb-0 text-truncate" data-confirm-modal-title>{title}</h2>
+				</div>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label={cancelLabel}></button>
+			</div>
+			<div class="modal-body px-3 py-3 admin-feedback-modal-body">
+				<p class="mb-1 fw-medium" data-confirm-modal-message>{message}</p>
+				<p class="mb-0 small text-muted" data-confirm-modal-detail hidden></p>
+			</div>
+			<div class="modal-footer py-2 px-3 border-0">
+				<button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{cancelLabel}</button>
+				<button type="button" class="btn btn-danger btn-sm" data-confirm-modal-confirm>{confirmLabel}</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script is:inline define:vars={{ modalId: id }}>
+	(() => {
+		const toneIcons = {
+			danger: `
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="12" r="9" />
+					<path d="M9 9l6 6" />
+					<path d="M15 9l-6 6" />
+				</svg>
+			`,
+			warning: `
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M12 4.5 20 19H4L12 4.5Z" />
+					<path d="M12 9v4.25" />
+					<path d="M12 16.5h.01" />
+				</svg>
+			`,
+		};
+
+		const getModalElement = () => document.getElementById(modalId);
+		let pendingForm = null;
+
+		const setContent = (modalEl, { title, message, detail, confirmLabel, tone }) => {
+			const titleEl = modalEl.querySelector("[data-confirm-modal-title]");
+			const messageEl = modalEl.querySelector("[data-confirm-modal-message]");
+			const detailEl = modalEl.querySelector("[data-confirm-modal-detail]");
+			const iconEl = modalEl.querySelector("[data-confirm-modal-icon]");
+			const confirmButton = modalEl.querySelector("[data-confirm-modal-confirm]");
+
+			if (titleEl instanceof HTMLElement) {
+				titleEl.textContent = title || titleEl.textContent || "Confirm action";
+			}
+			if (messageEl instanceof HTMLElement) {
+				messageEl.textContent = message || "";
+			}
+			if (detailEl instanceof HTMLElement) {
+				if (detail) {
+					detailEl.textContent = detail;
+					detailEl.hidden = false;
+				} else {
+					detailEl.textContent = "";
+					detailEl.hidden = true;
+				}
+			}
+			if (iconEl instanceof HTMLElement) {
+				iconEl.innerHTML = toneIcons[tone] || toneIcons.danger;
+			}
+			if (confirmButton instanceof HTMLButtonElement) {
+				confirmButton.textContent = confirmLabel || "Confirm";
+			}
+			modalEl.dataset.confirmTone = tone || "danger";
+		};
+
+		const showAdminConfirmModal = (payload = {}) => {
+			const modalEl = getModalElement();
+			if (!(modalEl instanceof HTMLElement)) {
+				return;
+			}
+
+			setContent(modalEl, payload);
+
+			const bootstrap = window.bootstrap;
+			if (bootstrap?.Modal) {
+				const instance = bootstrap.Modal.getOrCreateInstance(modalEl);
+				instance.show();
+			}
+		};
+
+		window.showAdminConfirmModal = showAdminConfirmModal;
+
+		document.addEventListener("submit", (event) => {
+			const form = event.target;
+			if (!(form instanceof HTMLFormElement) || !form.matches("[data-admin-confirm-form]")) {
+				return;
+			}
+
+			if (form.dataset.adminConfirmAccepted === "1") {
+				delete form.dataset.adminConfirmAccepted;
+				return;
+			}
+
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			pendingForm = form;
+
+			const modalEl = getModalElement();
+			const payload = {
+				title: form.dataset.confirmTitle || "Delete item?",
+				message: form.dataset.confirmMessage || "This action cannot be undone.",
+				detail: form.dataset.confirmDetail || "",
+				confirmLabel: form.dataset.confirmConfirmLabel || "Delete",
+				tone: form.dataset.confirmTone || "danger",
+			};
+
+			showAdminConfirmModal(payload);
+
+			if (modalEl instanceof HTMLElement) {
+				const confirmButton = modalEl.querySelector("[data-confirm-modal-confirm]");
+				if (confirmButton instanceof HTMLButtonElement) {
+					confirmButton.onclick = () => {
+						if (!(pendingForm instanceof HTMLFormElement)) {
+							return;
+						}
+						const form = pendingForm;
+						form.dataset.adminConfirmAccepted = "1";
+						const submit = form.requestSubmit?.bind(form);
+						pendingForm = null;
+						if (submit) {
+							submit();
+						} else {
+							form.submit();
+						}
+						window.setTimeout(() => {
+							delete form.dataset.adminConfirmAccepted;
+						}, 0);
+					};
+				}
+			}
+		}, true);
+	})();
+</script>

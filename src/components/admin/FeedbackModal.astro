@@ -3,19 +3,26 @@ interface Props {
 	id: string;
 	title?: string;
 	closeLabel?: string;
+	tone?: "info" | "success" | "warning" | "error";
 }
 
-const { id, title = "Status update", closeLabel = "Close" } = Astro.props;
+const { id, title = "Status update", closeLabel = "Close", tone = "info" } = Astro.props;
 ---
 
-<div class="modal fade" id={id} tabindex="-1" aria-hidden="true" data-admin-feedback-modal>
+<div class="modal fade" id={id} tabindex="-1" aria-hidden="true" data-admin-feedback-modal data-feedback-tone={tone}>
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-		<div class="modal-content border-0 shadow-sm">
-			<div class="modal-header py-2 px-3">
-				<h2 class="modal-title h6 mb-0" data-feedback-modal-title>{title}</h2>
+		<div class="modal-content border-0 shadow-sm admin-feedback-modal-shell">
+			<div class="modal-header py-2 px-3 admin-feedback-modal-header">
+				<div class="d-flex align-items-center gap-2 min-w-0">
+					<span class="admin-feedback-modal-icon" data-feedback-modal-icon aria-hidden="true"></span>
+					<h2 class="modal-title h6 mb-0 text-truncate" data-feedback-modal-title>{title}</h2>
+				</div>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label={closeLabel}></button>
 			</div>
-			<div class="modal-body px-3 py-3">
+			<div class="modal-body px-3 py-3 admin-feedback-modal-body">
+				<div class="admin-feedback-modal-spinner-wrap" data-feedback-modal-spinner hidden>
+					<div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+				</div>
 				<p class="mb-1 fw-medium" data-feedback-modal-message></p>
 				<p class="mb-0 small text-muted" data-feedback-modal-detail hidden></p>
 			</div>
@@ -28,9 +35,39 @@ const { id, title = "Status update", closeLabel = "Close" } = Astro.props;
 
 <script is:inline define:vars={{ modalId: id }}>
 	(() => {
+		const toneIcons = {
+			info: `
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="12" r="9" />
+					<path d="M12 10.5v5" />
+					<path d="M12 7.5h.01" />
+				</svg>
+			`,
+			success: `
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="12" r="9" />
+					<path d="M8 12.5l2.5 2.5L16.5 9" />
+				</svg>
+			`,
+			warning: `
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M12 4.5 20 19H4L12 4.5Z" />
+					<path d="M12 9v4.25" />
+					<path d="M12 16.5h.01" />
+				</svg>
+			`,
+			error: `
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="12" r="9" />
+					<path d="M9 9l6 6" />
+					<path d="M15 9l-6 6" />
+				</svg>
+			`,
+		};
+
 		const getModalElement = () => document.getElementById(modalId);
 
-		const showAdminFeedbackModal = ({ title, message, detail } = {}) => {
+		const showAdminFeedbackModal = ({ tone = "info", title, message, detail, busy = false } = {}) => {
 			const modalEl = getModalElement();
 			if (!(modalEl instanceof HTMLElement)) {
 				return;
@@ -39,6 +76,8 @@ const { id, title = "Status update", closeLabel = "Close" } = Astro.props;
 			const titleEl = modalEl.querySelector("[data-feedback-modal-title]");
 			const messageEl = modalEl.querySelector("[data-feedback-modal-message]");
 			const detailEl = modalEl.querySelector("[data-feedback-modal-detail]");
+			const iconEl = modalEl.querySelector("[data-feedback-modal-icon]");
+			const spinnerEl = modalEl.querySelector("[data-feedback-modal-spinner]");
 
 			if (titleEl instanceof HTMLElement) {
 				titleEl.textContent = title || titleEl.textContent || "Status update";
@@ -55,6 +94,14 @@ const { id, title = "Status update", closeLabel = "Close" } = Astro.props;
 					detailEl.hidden = true;
 				}
 			}
+			if (iconEl instanceof HTMLElement) {
+				iconEl.innerHTML = toneIcons[tone] || toneIcons.info;
+			}
+			if (spinnerEl instanceof HTMLElement) {
+				spinnerEl.hidden = !busy;
+			}
+
+			modalEl.dataset.feedbackTone = tone;
 
 			const bootstrap = window.bootstrap;
 			if (bootstrap?.Modal) {

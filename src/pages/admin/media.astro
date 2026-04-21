@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import AdminLayout from "../../layouts/AdminLayout.astro";
+import FeedbackModal from "../../components/admin/FeedbackModal.astro";
 import IconAction from "../../components/admin/IconAction.astro";
 import { getDb } from "../../lib/blog";
 import {
@@ -164,6 +165,13 @@ function formatFolderLabel(folderPath: string): string {
 
 	return segments.join(" / ");
 }
+
+const mediaFeedback = [
+	["uploaded", { title: "Upload complete", message: t("messages.mediaUploadSuccess"), tone: "success" }],
+	["deleted", { title: "Asset deleted", message: t("messages.mediaDeleteSuccess"), tone: "success" }],
+	["folderCreated", { title: "Folder created", message: t("messages.folderCreated", "Folder created."), tone: "success" }],
+	["synced", { title: "Library refreshed", message: "Media library refreshed from bucket.", tone: "success" }],
+] as const;
 ---
 
 <AdminLayout
@@ -174,23 +182,7 @@ function formatFolderLabel(folderPath: string): string {
 	pageDescription={t("messages.mediaLibraryHelp")}
 >
 	<div class="admin-content-stack media-library-shell">
-		{Astro.url.searchParams.get("uploaded") && <p class="alert alert-success mb-0">{t("messages.mediaUploadSuccess")}</p>}
-		{Astro.url.searchParams.get("deleted") && <p class="alert alert-success mb-0">{t("messages.mediaDeleteSuccess")}</p>}
-		{Astro.url.searchParams.get("folderCreated") && <p class="alert alert-success mb-0">{t("messages.folderCreated", "Folder created.")}</p>}
-		{Astro.url.searchParams.get("synced") && (
-			<p class="alert alert-success mb-0">
-				Media library refreshed from bucket.
-				{Astro.url.searchParams.get("imported") || Astro.url.searchParams.get("updated")
-					? ` Imported ${Astro.url.searchParams.get("imported") ?? 0}, updated ${Astro.url.searchParams.get("updated") ?? 0}.`
-					: ""}
-			</p>
-		)}
-		{Astro.url.searchParams.get("errorMessage") ? (
-			<p class="alert alert-danger mb-0">{Astro.url.searchParams.get("errorMessage")}</p>
-		) : (
-			Astro.url.searchParams.get("error") && <p class="alert alert-danger mb-0">{t("messages.mediaRequestFailed")}</p>
-		)}
-		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
+		<FeedbackModal id="media-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
 
 		<div class="media-library-toolbar admin-form-surface">
 			<div class="d-flex flex-wrap gap-3 justify-content-between align-items-start">
@@ -369,7 +361,16 @@ function formatFolderLabel(folderPath: string): string {
 														<span class="visually-hidden">{canCopyPublicUrl ? t("actions.copyUrl", "Copy URL") : "No public URL configured"}</span>
 													</button>
 													{storageStatus.isConfigured && canManage && (
-														<form method="post" action={`/api/admin/media/${asset.id}`} class="d-inline">
+														<form
+															method="post"
+															action={`/api/admin/media/${asset.id}`}
+															class="d-inline"
+															data-admin-confirm-form
+															data-confirm-title="Delete media file?"
+															data-confirm-message="This file will be removed from the media library."
+															data-confirm-confirm-label={t("actions.delete")}
+															data-confirm-tone="danger"
+														>
 															<input type="hidden" name="_action" value="delete" />
 															<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
 														</form>
@@ -439,7 +440,16 @@ function formatFolderLabel(folderPath: string): string {
 													<span class="visually-hidden">{canCopyPublicUrl ? t("actions.copyUrl", "Copy URL") : "No public URL configured"}</span>
 												</button>
 												{storageStatus.isConfigured && canManage && (
-													<form method="post" action={`/api/admin/media/${asset.id}`} class="d-inline">
+													<form
+														method="post"
+														action={`/api/admin/media/${asset.id}`}
+														class="d-inline"
+														data-admin-confirm-form
+														data-confirm-title="Delete media file?"
+														data-confirm-message="This file will be removed from the media library."
+														data-confirm-confirm-label={t("actions.delete")}
+														data-confirm-tone="danger"
+													>
 														<input type="hidden" name="_action" value="delete" />
 														<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
 													</form>
@@ -461,6 +471,36 @@ function formatFolderLabel(folderPath: string): string {
 		</div>
 	</div>
 </AdminLayout>
+
+<script type="module" define:vars={{ mediaFeedback, loadError }}>
+	const showFeedbackModal = window.showAdminFeedbackModal;
+	const search = new URLSearchParams(window.location.search);
+
+	const errorMessage = search.get("errorMessage");
+	if (errorMessage && typeof showFeedbackModal === "function") {
+		showFeedbackModal({ title: "Action failed", message: errorMessage, tone: "error" });
+		window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+	} else if (search.has("error") && typeof showFeedbackModal === "function") {
+		showFeedbackModal({ title: "Action failed", message: "Media request failed.", tone: "error" });
+		window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+	} else if (loadError && typeof showFeedbackModal === "function") {
+		showFeedbackModal({ title: "Media load failed", message: loadError, tone: "error" });
+	} else {
+		for (const [key, entry] of mediaFeedback) {
+			if (search.has(key)) {
+				if (typeof showFeedbackModal === "function") {
+					const detail =
+						key === "synced" && (search.get("imported") || search.get("updated"))
+							? `Imported ${search.get("imported") ?? 0}, updated ${search.get("updated") ?? 0}.`
+							: "";
+					showFeedbackModal({ title: entry.title, message: entry.message, detail, tone: entry.tone });
+				}
+				window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+				break;
+			}
+		}
+	}
+</script>
 
 <script type="module">
 	const copyButtons = document.querySelectorAll("[data-copy-media-url]");

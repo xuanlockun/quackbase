@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import AdminLayout from "../../layouts/AdminLayout.astro";
+import FeedbackModal from "../../components/admin/FeedbackModal.astro";
 import { getDb } from "../../lib/blog";
 import { getUiTranslations } from "../../lib/i18n";
 import { getD1BackupConfig, isD1BackupConfigured, listD1TableNames } from "../../lib/backup";
@@ -29,6 +30,12 @@ try {
 } catch (error) {
 	tableLoadError = error instanceof Error ? error.message : "Failed to load table names.";
 }
+
+const backupFeedback = [
+	["exportError", { title: "Export failed", message: Astro.url.searchParams.get("exportError") || "Backup export failed.", tone: "error" }],
+	["imported", { title: "Import completed", message: "SQL import completed successfully.", tone: "success" }],
+	["importError", { title: "Import failed", message: Astro.url.searchParams.get("importError") || "SQL import failed.", tone: "error" }],
+] as const;
 ---
 
 <AdminLayout
@@ -39,15 +46,7 @@ try {
 	pageDescription={description}
 >
 	<div class="admin-content-stack">
-		{Astro.url.searchParams.get("exportError") && (
-			<p class="alert alert-danger mb-0">{Astro.url.searchParams.get("exportError")}</p>
-		)}
-		{Astro.url.searchParams.get("imported") && (
-			<p class="alert alert-success mb-0">SQL import completed successfully.</p>
-		)}
-		{Astro.url.searchParams.get("importError") && (
-			<p class="alert alert-danger mb-0">{Astro.url.searchParams.get("importError")}</p>
-		)}
+		<FeedbackModal id="backup-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
 		<div class="admin-form-surface">
 			<div class="admin-surface-header mb-3">
 				<div>
@@ -64,8 +63,6 @@ try {
 					)}
 				</div>
 			)}
-
-			{tableLoadError && <div class="alert alert-warning mb-3">{tableLoadError}</div>}
 
 			<div class="row g-4">
 				<div class="col-12 col-lg-7">
@@ -142,6 +139,29 @@ try {
 		</div>
 	</div>
 </AdminLayout>
+
+<script type="module" define:vars={{ backupFeedback, tableLoadError }}>
+	const showFeedbackModal = window.showAdminFeedbackModal;
+	const search = new URLSearchParams(window.location.search);
+
+	for (const [key, entry] of backupFeedback) {
+		if (search.has(key)) {
+			if (typeof showFeedbackModal === "function") {
+				const detail =
+					key === "imported"
+						? `Imported ${search.get("imported") ?? 0}, updated ${search.get("updated") ?? 0}.`
+						: "";
+				showFeedbackModal({ title: entry.title, message: entry.message, detail, tone: entry.tone });
+			}
+			window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+			break;
+		}
+	}
+
+	if (tableLoadError && typeof showFeedbackModal === "function") {
+		showFeedbackModal({ title: "Table list unavailable", message: tableLoadError, tone: "warning" });
+	}
+</script>
 
 <style>
 	.backup-card {

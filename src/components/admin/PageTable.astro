@@ -67,7 +67,16 @@ const catalog = getLanguageCatalog(Astro.locals);
 											label={t("actions.view")}
 										/>
 										{canDelete && (
-											<form class="d-inline" method="post" action="/api/admin/pages/delete">
+											<form
+												class="d-inline"
+												method="post"
+												action="/api/admin/pages/delete"
+												data-admin-confirm-form
+												data-confirm-title="Delete page?"
+												data-confirm-message="This page will be removed from the site."
+												data-confirm-confirm-label={t("actions.delete")}
+												data-confirm-tone="danger"
+											>
 												<input type="hidden" name="id" value={page.id} />
 												<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
 											</form>

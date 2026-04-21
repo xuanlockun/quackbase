@@ -1,5 +1,6 @@
 ---
 import BaseHead from "../components/BaseHead.astro";
+import ConfirmModal from "../components/admin/ConfirmModal.astro";
 import Sidebar from "../components/admin/Sidebar.astro";
 import LanguageSwitch from "../components/LanguageSwitch.astro";
 import { SITE_TITLE } from "../consts";
@@ -176,6 +177,14 @@ const expandLabel = "Expand sidebar";
 				</main>
 			</div>
 		</div>
+		<ConfirmModal
+			id="admin-confirm-modal"
+			title="Confirm action"
+			message="Are you sure you want to continue?"
+			confirmLabel="Delete"
+			cancelLabel="Cancel"
+			tone="danger"
+		/>
 		<script is:inline define:vars={{ collapseLabel, expandLabel }}>
 			const sidebarToggle = document.querySelector("[data-admin-sidebar-toggle]");
 			const syncSidebarToggle = () => {

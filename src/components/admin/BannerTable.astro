@@ -63,7 +63,16 @@ const { t } = getUiTranslations(Astro);
 											/>
 										)}
 										{canDelete && (
-											<form class="d-inline" method="post" action="/api/admin/banners/delete">
+											<form
+												class="d-inline"
+												method="post"
+												action="/api/admin/banners/delete"
+												data-admin-confirm-form
+												data-confirm-title="Delete banner?"
+												data-confirm-message="This banner will be removed from the site."
+												data-confirm-confirm-label={t("actions.delete")}
+												data-confirm-tone="danger"
+											>
 												<input type="hidden" name="id" value={banner.id} />
 												<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
 											</form>

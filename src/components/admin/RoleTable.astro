@@ -66,8 +66,12 @@ const { t } = getUiTranslations(Astro);
 											<form
 												method="post"
 												action={`/api/admin/roles/${role.id}`}
-												onsubmit={`return confirm('${t("messages.deleteRoleConfirm")}');`}
 												class="d-inline"
+												data-admin-confirm-form
+												data-confirm-title="Delete role?"
+												data-confirm-message={t("messages.deleteRoleConfirm")}
+												data-confirm-confirm-label={t("actions.delete")}
+												data-confirm-tone="danger"
 											>
 												<input type="hidden" name="_intent" value="delete" />
 												<IconAction

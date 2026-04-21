@@ -72,7 +72,16 @@ const { t } = getUiTranslations(Astro);
 											/>
 										)}
 										{canDelete && (
-											<form class="d-inline" method="post" action="/api/admin/contact-forms/delete">
+											<form
+												class="d-inline"
+												method="post"
+												action="/api/admin/contact-forms/delete"
+												data-admin-confirm-form
+												data-confirm-title="Delete contact form?"
+												data-confirm-message="This contact form and its configuration will be removed."
+												data-confirm-confirm-label={t("actions.delete")}
+												data-confirm-tone="danger"
+											>
 												<input type="hidden" name="id" value={form.id} />
 												<IconAction type="submit" icon="delete" label={t("actions.delete")} variant="btn-outline-danger" />
 											</form>
