@@ -90,12 +90,12 @@ const texts = {
 							</td>
 							<td class="admin-action-cell">
 								<div class="admin-action-group">
-									<IconAction
-										type="button"
-										icon="toggle"
-										label={language.enabled ? "Disable language" : "Enable language"}
-										variant="btn-outline-primary"
-										attrs={{
+								<IconAction
+									type="button"
+									icon="toggle"
+									label={language.enabled ? t("actions.disableLanguage", "Disable language") : t("actions.enableLanguage", "Enable language")}
+									variant="btn-outline-primary"
+									attrs={{
 											"data-action": "toggle-enabled",
 											"data-code": language.code,
 											"data-enabled": String(language.enabled),

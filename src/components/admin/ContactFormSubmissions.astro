@@ -65,7 +65,7 @@ const catalog = getLanguageCatalog(Astro.locals);
 										data-confirm-confirm-label={t("actions.delete")}
 										data-confirm-tone="danger"
 									>
-										<IconAction type="submit" icon="delete" label="Delete lead" variant="btn-outline-danger" />
+											<IconAction type="submit" icon="delete" label={t("actions.deleteLead", "Delete lead")} variant="btn-outline-danger" />
 									</form>
 								)}
 							</div>

@@ -60,6 +60,10 @@ const currentFolderDepth = currentFolder ? currentFolder.split("/").filter(Boole
 const childFolderEntries = folderEntries.filter((entry) => entry.depth === currentFolderDepth + 1);
 const visibleAssets = allAssets.filter((asset) => asset.folderPath === currentFolder);
 const folderOptions = [...folderIndex.values()].sort((left, right) => left.folderPath.localeCompare(right.folderPath));
+const mediaFolderChoices = folderOptions.map((folder) => ({
+	folderPath: folder.folderPath,
+	label: formatFolderLabel(folder.folderPath),
+}));
 const folderTitle = currentFolder ? formatFolderLabel(currentFolder) : t("messages.allMedia", "All media");
 const storageConnectedLabel = storageStatus.isConfigured ? "Storage connected" : "Storage not connected";
 const storageReadyLabel = storageStatus.isConfigured ? "Ready to upload" : "Connect storage to upload";
@@ -779,6 +783,59 @@ const mediaFeedback = [
 			</section>
 		</div>
 	</div>
+
+	<div
+		class="modal fade"
+		tabindex="-1"
+		aria-hidden="true"
+		data-media-action-modal
+	>
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content border-0 shadow-sm admin-feedback-modal-shell">
+				<div class="admin-feedback-modal-accent" aria-hidden="true"></div>
+				<div class="modal-header py-3 px-3 px-sm-4 admin-feedback-modal-header">
+					<div class="d-flex align-items-start gap-3 min-w-0">
+						<span class="admin-feedback-modal-icon" aria-hidden="true">
+							<span class="admin-feedback-modal-glyph">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M4 12h16" />
+									<path d="M8 8l-4 4 4 4" />
+									<path d="M16 8l4 4-4 4" />
+								</svg>
+							</span>
+						</span>
+						<div class="min-w-0">
+							<p class="admin-feedback-modal-kicker mb-1">Media action</p>
+							<h2 class="modal-title h5 mb-0 text-break" data-media-action-modal-title>Rename file</h2>
+						</div>
+					</div>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body px-3 px-sm-4 py-3">
+					<p class="mb-3 text-body-secondary" data-media-action-modal-message>Update the file name without changing the asset contents.</p>
+					<div data-media-action-modal-rename>
+						<label class="form-label fw-semibold" for="mediaRenameValue" data-media-action-modal-field-label>File name</label>
+						<input id="mediaRenameValue" class="form-control" type="text" data-media-action-modal-input />
+						<p class="form-text mb-0">Use a clear file name so the asset is easier to find later.</p>
+					</div>
+					<div data-media-action-modal-move hidden>
+						<label class="form-label fw-semibold" for="mediaMoveValue" data-media-action-modal-field-label>Destination folder</label>
+						<select id="mediaMoveValue" class="form-select" data-media-action-modal-select>
+							<option value="">Root</option>
+							{mediaFolderChoices.map((folder) => (
+								<option value={folder.folderPath}>{folder.label}</option>
+							))}
+						</select>
+						<p class="form-text mb-0">Choose a folder to keep the media library organized.</p>
+					</div>
+				</div>
+				<div class="modal-footer py-3 px-3 px-sm-4 border-0">
+					<button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" data-media-action-modal-dismiss>Cancel</button>
+					<button type="button" class="btn btn-primary btn-sm" data-media-action-modal-confirm>Save</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </AdminLayout>
 
 <script type="module" define:vars={{ mediaFeedback, loadError }}>
@@ -939,6 +996,115 @@ const mediaFeedback = [
 		}
 	};
 
+	const mediaActionModal = document.querySelector("[data-media-action-modal]");
+	const mediaActionModalTitle = mediaActionModal?.querySelector("[data-media-action-modal-title]");
+	const mediaActionModalMessage = mediaActionModal?.querySelector("[data-media-action-modal-message]");
+	const mediaActionModalFieldLabel = mediaActionModal?.querySelector("[data-media-action-modal-field-label]");
+	const mediaActionModalRename = mediaActionModal?.querySelector("[data-media-action-modal-rename]");
+	const mediaActionModalMove = mediaActionModal?.querySelector("[data-media-action-modal-move]");
+	const mediaActionModalInput = mediaActionModal?.querySelector("[data-media-action-modal-input]");
+	const mediaActionModalSelect = mediaActionModal?.querySelector("[data-media-action-modal-select]");
+	const mediaActionModalConfirm = mediaActionModal?.querySelector("[data-media-action-modal-confirm]");
+	const mediaActionModalDismiss = mediaActionModal?.querySelector("[data-media-action-modal-dismiss]");
+	let pendingMediaAction = null;
+
+	const openMediaActionModal = ({ mode, assetId, assetName, assetFolder }) => {
+		if (!(mediaActionModal instanceof HTMLElement)) {
+			return;
+		}
+
+		pendingMediaAction = { mode, assetId };
+
+		if (mediaActionModalTitle instanceof HTMLElement) {
+			mediaActionModalTitle.textContent = mode === "rename" ? "Rename file" : "Move file";
+		}
+		if (mediaActionModalMessage instanceof HTMLElement) {
+			mediaActionModalMessage.textContent =
+				mode === "rename"
+					? "Update the file name without changing the asset contents."
+					: "Choose a destination folder for this asset.";
+		}
+		if (mediaActionModalFieldLabel instanceof HTMLElement) {
+			mediaActionModalFieldLabel.textContent = mode === "rename" ? "File name" : "Destination folder";
+		}
+		if (mediaActionModalRename instanceof HTMLElement) {
+			mediaActionModalRename.hidden = mode !== "rename";
+		}
+		if (mediaActionModalMove instanceof HTMLElement) {
+			mediaActionModalMove.hidden = mode !== "move";
+		}
+		if (mediaActionModalInput instanceof HTMLInputElement) {
+			mediaActionModalInput.value = mode === "rename" ? assetName || "" : "";
+			mediaActionModalInput.hidden = mode !== "rename";
+		}
+		if (mediaActionModalSelect instanceof HTMLSelectElement) {
+			mediaActionModalSelect.value = mode === "move" ? assetFolder || "" : "";
+			mediaActionModalSelect.hidden = mode !== "move";
+		}
+		if (mediaActionModalConfirm instanceof HTMLButtonElement) {
+			mediaActionModalConfirm.textContent = mode === "rename" ? "Rename" : "Move";
+		}
+		if (mediaActionModalDismiss instanceof HTMLButtonElement) {
+			mediaActionModalDismiss.textContent = "Cancel";
+		}
+
+		const bootstrap = window.bootstrap;
+		if (bootstrap?.Modal) {
+			mediaActionModal.addEventListener(
+				"shown.bs.modal",
+				() => {
+					if (mode === "rename" && mediaActionModalInput instanceof HTMLInputElement) {
+						mediaActionModalInput.focus();
+						mediaActionModalInput.select();
+					} else if (mode === "move" && mediaActionModalSelect instanceof HTMLSelectElement) {
+						mediaActionModalSelect.focus();
+					}
+				},
+				{ once: true },
+			);
+			bootstrap.Modal.getOrCreateInstance(mediaActionModal).show();
+		}
+	};
+
+	const closeMediaActionModal = () => {
+		if (!(mediaActionModal instanceof HTMLElement)) {
+			return;
+		}
+
+		const bootstrap = window.bootstrap;
+		if (bootstrap?.Modal) {
+			const instance = bootstrap.Modal.getInstance(mediaActionModal);
+			instance?.hide();
+		}
+		pendingMediaAction = null;
+	};
+
+	if (mediaActionModalConfirm instanceof HTMLButtonElement) {
+		mediaActionModalConfirm.addEventListener("click", () => {
+			if (!pendingMediaAction) {
+				return;
+			}
+
+			const { mode, assetId } = pendingMediaAction;
+			if (mode === "rename" && mediaActionModalInput instanceof HTMLInputElement) {
+				const nextName = mediaActionModalInput.value.trim();
+				if (!nextName) {
+					mediaActionModalInput.focus();
+					return;
+				}
+				submitMediaAction({ intent: "update", assetId, fileName: nextName });
+			}
+
+			if (mode === "move" && mediaActionModalSelect instanceof HTMLSelectElement) {
+				submitMediaAction({ intent: "update", assetId, folderPath: mediaActionModalSelect.value.trim() });
+			}
+		});
+	}
+
+	mediaActionModal?.addEventListener("hidden.bs.modal", () => {
+		pendingMediaAction = null;
+	});
+
 	document.addEventListener("click", (event) => {
 		const target = event.target;
 		if (!(target instanceof HTMLElement)) {
@@ -953,17 +1119,12 @@ const mediaFeedback = [
 				return;
 			}
 
-			const nextName = window.prompt("Rename file", assetName);
-			if (nextName === null) {
-				return;
-			}
-
-			const trimmed = nextName.trim();
-			if (!trimmed) {
-				return;
-			}
-
-			submitMediaAction({ intent: "update", assetId: Number(assetId), fileName: trimmed });
+			openMediaActionModal({
+				mode: "rename",
+				assetId: Number(assetId),
+				assetName,
+				assetFolder: renameButton.dataset.assetFolder || "",
+			});
 			return;
 		}
 
@@ -975,12 +1136,12 @@ const mediaFeedback = [
 				return;
 			}
 
-			const nextFolder = window.prompt("Move file to folder", assetFolder);
-			if (nextFolder === null) {
-				return;
-			}
-
-			submitMediaAction({ intent: "update", assetId: Number(assetId), folderPath: nextFolder.trim() });
+			openMediaActionModal({
+				mode: "move",
+				assetId: Number(assetId),
+				assetName: moveButton.dataset.assetName || "",
+				assetFolder,
+			});
 		}
 	});
 </script>

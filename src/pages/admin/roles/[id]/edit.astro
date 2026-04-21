@@ -3,7 +3,7 @@ export const prerender = false;
 
 import RoleForm from "../../../../components/admin/RoleForm.astro";
 import AdminLayout from "../../../../layouts/AdminLayout.astro";
-import { listPermissions } from "../../../../lib/db/permissions";
+import { listPermissionSummaries } from "../../../../lib/db/permissions";
 import { getRoleById } from "../../../../lib/db/roles";
 import { getDb } from "../../../../lib/blog";
 import { getUiTranslations, localizeAdminHref } from "../../../../lib/i18n";
@@ -33,7 +33,7 @@ try {
 	loadError = error instanceof Error ? error.message : t("messages.roleRequestFailed");
 }
 
-const permissions = await listPermissions(db);
+const permissions = await listPermissionSummaries(db);
 
 if (Astro.url.searchParams.get("error")) {
 	loadError = t("messages.roleRequestFailed");
@@ -41,11 +41,11 @@ if (Astro.url.searchParams.get("error")) {
 ---
 
 <AdminLayout
-	title={t("actions.edit")}
-	description={t("messages.saveEditRole")}
+	title={t("actions.editRole", "Edit role")}
+	description={t("messages.saveEditRole", "Edit role")}
 	session={session}
-	pageTitle={t("actions.edit")}
-	pageDescription={t("messages.editRoleDescription")}
+	pageTitle={t("actions.editRole", "Edit role")}
+	pageDescription={t("messages.editRoleDescription", "Update this role.")}
 >
 	<div class="admin-content-stack">
 		{

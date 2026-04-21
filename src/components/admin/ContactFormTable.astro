@@ -29,7 +29,7 @@ const { t } = getUiTranslations(Astro);
 					<tr>
 						<th>{t("labels.title")}</th>
 						<th>{t("labels.description")}</th>
-						<th>Submissions</th>
+						<th>{t("labels.submissions", "Submissions")}</th>
 						<th>{t("labels.status")}</th>
 						<th>{t("labels.updated")}</th>
 						<th>{t("labels.action")}</th>
@@ -41,10 +41,10 @@ const { t } = getUiTranslations(Astro);
 							<tr>
 								<td>
 									<strong>{form.title}</strong>
-									{form.useCaptcha && <span class="badge bg-primary-subtle text-uppercase ms-2">Captcha</span>}
+									{form.useCaptcha && <span class="badge bg-primary-subtle text-uppercase ms-2">{t("labels.captcha", "Captcha")}</span>}
 								</td>
 								<td>
-									<span class="text-muted small lh-sm">{form.description || "â€”"}</span>
+									<span class="text-muted small lh-sm">{form.description || "-"}</span>
 								</td>
 								<td>
 									<span class="badge text-bg-light">{submissionCounts[form.id] ?? 0}</span>
@@ -61,7 +61,7 @@ const { t } = getUiTranslations(Astro);
 											<IconAction
 												href={`/admin/contact-forms/${form.id}/leads`}
 												icon="view"
-												label="Leads"
+												label={t("actions.viewLeads", "Leads")}
 											/>
 										)}
 										{canUpdate && (

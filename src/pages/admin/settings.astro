@@ -89,7 +89,7 @@ const settingsFeedback = [
 						aria-selected="true"
 						data-settings-tab="site"
 					>
-						Site
+						{t("nav.site", "Site")}
 					</button>
 				</li>
 				<li class="nav-item" role="presentation">
@@ -100,7 +100,7 @@ const settingsFeedback = [
 						aria-selected="false"
 						data-settings-tab="media"
 					>
-						Media
+						{t("nav.media", "Media")}
 					</button>
 				</li>
 				<li class="nav-item" role="presentation">
@@ -111,7 +111,7 @@ const settingsFeedback = [
 						aria-selected="false"
 						data-settings-tab="captcha"
 					>
-						Captcha
+						{t("labels.captcha", "Captcha")}
 					</button>
 				</li>
 				<li class="nav-item" role="presentation">
@@ -122,7 +122,7 @@ const settingsFeedback = [
 						aria-selected="false"
 						data-settings-tab="secrets"
 					>
-						Secrets
+						{t("headings.secrets", "Secrets")}
 					</button>
 				</li>
 			</ul>
@@ -148,7 +148,7 @@ const settingsFeedback = [
 						<div class="admin-form-surface media-settings-shell">
 							<div class="admin-surface-header media-settings-header">
 								<div>
-									<h2 class="h5 mb-1">Media storage</h2>
+									<h2 class="h5 mb-1">{t("messages.mediaStorage", "Media storage")}</h2>
 									<p class="admin-inline-muted mb-0">Keep storage simple for everyday admin work.</p>
 								</div>
 								<div class="media-status-badges" aria-label="Media storage status">
@@ -158,10 +158,10 @@ const settingsFeedback = [
 							</div>
 							<div class="media-settings-actions">
 								<button class="btn btn-outline-secondary" type="button" data-media-test-button disabled={formDisabled}>
-									Test connection
+									{t("actions.testConnection", "Test connection")}
 								</button>
 								<button class="btn btn-primary" type="submit" disabled={formDisabled}>
-									Save media settings
+									{t("actions.saveMediaSettings", "Save media settings")}
 								</button>
 							</div>
 							<div class="media-settings-advanced">
@@ -215,11 +215,11 @@ const settingsFeedback = [
 											checked={siteConfig.mediaStorageSettings.s3ForcePathStyle}
 											disabled={formDisabled}
 										/>
-										<span>Use path-style URLs</span>
+									<span>{t("labels.usePathStyleUrls", "Use path-style URLs")}</span>
 									</label>
 									<div class="media-secret-field">
 										<label for="s3AccessKeyId">
-											<span>S3 access key ID</span>
+										<span>{t("labels.s3AccessKeyId", "S3 access key ID")}</span>
 											<div class="input-group">
 												<input
 													id="s3AccessKeyId"
@@ -252,7 +252,7 @@ const settingsFeedback = [
 									</div>
 									<div class="media-secret-field media-secret-field-wide">
 										<label for="s3SecretAccessKey">
-											<span>S3 secret access key</span>
+										<span>{t("labels.s3SecretAccessKey", "S3 secret access key")}</span>
 											<div class="input-group">
 												<input
 													id="s3SecretAccessKey"
@@ -295,12 +295,12 @@ const settingsFeedback = [
 						<div class="admin-form-surface">
 							<div class="admin-surface-header mb-3">
 								<div>
-									<h2 class="h5 mb-0">Captcha</h2>
+								<h2 class="h5 mb-0">{t("labels.captcha", "Captcha")}</h2>
 								</div>
 							</div>
 							<div class="admin-form-grid">
 								<label class="admin-checkbox-field" style="grid-column: 1 / -1;">
-									<span>Captcha usage</span>
+									<span>{t("labels.captchaUsage", "Captcha usage")}</span>
 									<div class="form-check form-switch">
 										<input
 											class="form-check-input"
@@ -311,12 +311,12 @@ const settingsFeedback = [
 											disabled={formDisabled}
 										/>
 										<label class="form-check-label">
-											Enable captcha verification for contact forms that opt in.
+											{t("messages.captchaToggleHelp", "Enable captcha verification for contact forms that opt in.")}
 										</label>
 									</div>
 								</label>
 								<label>
-									<span>Captcha site key</span>
+									<span>{t("labels.captchaSiteKey", "Captcha site key")}</span>
 									<input
 										class="form-control"
 										name="captchaSiteKey"
@@ -327,7 +327,7 @@ const settingsFeedback = [
 								</label>
 								<div class="media-secret-field" style="grid-column: 1 / -1;">
 									<label for="captchaSecretKey">
-										<span>Captcha secret key</span>
+												<span>{t("labels.captchaSecretKey", "Captcha secret key")}</span>
 										<div class="input-group">
 											<input
 												id="captchaSecretKey"
@@ -360,10 +360,10 @@ const settingsFeedback = [
 								</div>
 							</div>
 							<div class="admin-form-section">
-								<p class="admin-muted mb-2">Configure the captcha keys here, then opt individual contact forms in where needed.</p>
+								<p class="admin-muted mb-2">{t("messages.captchaSettingsHelp", "Configure the captcha keys here, then opt individual contact forms in where needed.")}</p>
 								<div class="d-flex flex-wrap gap-2 align-items-center">
 									<button class="btn btn-primary" type="submit" disabled={formDisabled}>
-										Save captcha settings
+										{t("actions.saveCaptchaSettings", "Save captcha settings")}
 									</button>
 								</div>
 							</div>
