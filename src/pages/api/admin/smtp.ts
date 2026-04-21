@@ -29,12 +29,21 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			password: formSettings.password || currentSettings.password,
 		});
 		if (intent === "test") {
+			console.log("[smtp-test] starting", {
+				host: settings.host,
+				port: settings.port,
+				encryption: settings.encryption,
+				hasUsername: Boolean(settings.username),
+				fromEmail: settings.fromEmail,
+				fromName: settings.fromName,
+			});
 			await sendSmtpEmail(settings, {
 				to: [settings.fromEmail],
 				subject: "SMTP test email from Edge CMS",
 				text: "This is a test email sent from the Edge CMS admin settings page.",
 				html: "<p>This is a test email sent from the Edge CMS admin settings page.</p>",
-			});
+			}, true);
+			console.log("[smtp-test] completed successfully");
 			return Response.json({ ok: true, message: "Test email sent successfully." });
 		}
 

@@ -59,7 +59,7 @@ export function validateSmtpSettings(input: SmtpSettings): SmtpSettings {
 	return normalized;
 }
 
-export async function sendSmtpEmail(settings: SmtpSettings, message: EmailMessage): Promise<void> {
+export async function sendSmtpEmail(settings: SmtpSettings, message: EmailMessage, debug = false): Promise<void> {
 	const smtp = validateSmtpSettings(settings);
 	const recipients = message.to.map(validateEmailAddress);
 	if (recipients.length === 0) {
@@ -67,6 +67,15 @@ export async function sendSmtpEmail(settings: SmtpSettings, message: EmailMessag
 	}
 
 	const transport = smtp.encryption === "ssl" ? "on" : "starttls";
+	if (debug) {
+		console.log("[smtp] starting send", {
+			host: smtp.host,
+			port: smtp.port,
+			encryption: smtp.encryption,
+			recipientCount: recipients.length,
+			subject: message.subject,
+		});
+	}
 	let socket = await connectToSmtp(smtp, transport);
 	try {
 		const reader = socket.readable.pipeThrough(new TextDecoderStream()).getReader();
@@ -76,16 +85,25 @@ export async function sendSmtpEmail(settings: SmtpSettings, message: EmailMessag
 		await sendCommand(writer, `EHLO ${getClientHostname(smtp.host)}`);
 		let reply = await readReply(reader);
 		await expectReply(reply, [250], "SMTP EHLO");
+		if (debug) {
+			console.log("[smtp] ehlo response", reply.lines);
+		}
 
 		if (smtp.encryption === "tls") {
 			if (!reply.lines.some((line) => /STARTTLS/i.test(line))) {
 				throw new Error("SMTP server does not support STARTTLS.");
 			}
 
+			if (debug) {
+				console.log("[smtp] upgrading to starttls");
+			}
 			await sendCommand(writer, "STARTTLS");
 			await expectReply(await readReply(reader), [220], "SMTP STARTTLS");
 			socket = socket.startTls();
-			await sendSmtpEmailOverSocket(socket, smtp, recipients, message);
+			if (debug) {
+				console.log("[smtp] tls upgrade complete");
+			}
+			await sendSmtpEmailOverSocket(socket, smtp, recipients, message, debug);
 			return;
 		}
 
@@ -104,12 +122,19 @@ async function sendSmtpEmailOverSocket(
 	settings: SmtpSettings,
 	recipients: string[],
 	message: EmailMessage,
+	debug = false,
 ): Promise<void> {
 	const reader = socket.readable.pipeThrough(new TextDecoderStream()).getReader();
 	const writer = socket.writable.getWriter();
 	await sendCommand(writer, `EHLO ${getClientHostname(settings.host)}`);
 	await expectReply(await readReply(reader), [250], "SMTP EHLO");
+	if (debug) {
+		console.log("[smtp] post-tls ehlo complete");
+	}
 	await authenticateIfNeeded(reader, writer, settings);
+	if (debug && settings.username) {
+		console.log("[smtp] authentication completed");
+	}
 	await sendEnvelope(reader, writer, settings, recipients, message);
 	await writer.close().catch(() => undefined);
 	await socket.close().catch(() => undefined);
