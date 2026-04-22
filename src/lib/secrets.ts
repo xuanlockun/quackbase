@@ -110,7 +110,7 @@ export async function createAdminSecret(
 	}
 
 	const secretType = input.secretType ?? DEFAULT_SECRET_TYPE;
-	const { key } = await resolveEncryptionKey(env);
+	const key = await resolveEncryptionKey(env);
 	const encrypted = await encryptSecret(secretValue, key);
 	const last4 = secretValue.slice(-4);
 	const label = input.label?.trim() || getDefaultSecretLabel(secretType);
@@ -142,7 +142,7 @@ export async function upsertAdminSecret(
 		return createAdminSecret(db, input, env);
 	}
 
-	const { key } = await resolveEncryptionKey(env);
+	const key = await resolveEncryptionKey(env);
 	const encrypted = await encryptSecret(secretValue, key);
 	const last4 = secretValue.slice(-4);
 	const label = input.label?.trim() || getDefaultSecretLabel(input.secretType);
@@ -207,7 +207,7 @@ export async function getAdminSecretValue(
 		return null;
 	}
 
-	const { key } = await resolveEncryptionKey(env);
+	const key = await resolveEncryptionKey(env);
 	return decryptSecret(row.encrypted_value, row.iv, key);
 }
 
@@ -232,7 +232,7 @@ export async function getAdminSecretValueByType(
 		return null;
 	}
 
-	const { key } = await resolveEncryptionKey(env);
+	const key = await resolveEncryptionKey(env);
 	return decryptSecret(row.encrypted_value, row.iv, key);
 }
 
