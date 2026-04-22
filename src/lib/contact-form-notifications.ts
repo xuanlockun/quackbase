@@ -13,7 +13,7 @@ export async function sendContactFormNotificationEmail(context: ContactFormSubmi
 	}
 
 	const smtpSettings = context.siteConfig.smtpSettings;
-	if (!smtpSettings.host.trim() || !smtpSettings.fromEmail.trim() || !smtpSettings.fromName.trim()) {
+	if (!smtpSettings.fromEmail.trim() || !smtpSettings.fromName.trim()) {
 		return;
 	}
 
@@ -64,21 +64,25 @@ export async function sendContactFormNotificationEmail(context: ContactFormSubmi
 		if (context.requestInfo.referer) textLines.push(`- Referrer: ${context.requestInfo.referer}`);
 	}
 
-	await sendSmtpEmail(smtpSettings, {
-		to: recipients,
-		subject: `New contact form submission: ${context.contactForm.title}`,
-		text: textLines.join("\n"),
-		html: `
-			<div style="font-family: system-ui, sans-serif; line-height: 1.5; color: #111827;">
-				<h2 style="margin: 0 0 12px;">${escapeHtml(context.contactForm.title)}</h2>
-				<p style="margin: 0 0 16px; color: #4b5563;">Submitted at ${escapeHtml(submittedAt)}</p>
-				<table cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 720px;">
-					${fieldRows || "<tr><td>No field values were captured.</td></tr>"}
-				</table>
-				${metadataRows ? `<h3 style="margin: 24px 0 8px;">Metadata</h3><table cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 720px;">${metadataRows}</table>` : ""}
-			</div>
-		`,
-	});
+	await sendSmtpEmail(
+		smtpSettings,
+		{
+			to: recipients,
+			subject: `New contact form submission: ${context.contactForm.title}`,
+			text: textLines.join("\n"),
+			html: `
+				<div style="font-family: system-ui, sans-serif; line-height: 1.5; color: #111827;">
+					<h2 style="margin: 0 0 12px;">${escapeHtml(context.contactForm.title)}</h2>
+					<p style="margin: 0 0 16px; color: #4b5563;">Submitted at ${escapeHtml(submittedAt)}</p>
+					<table cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 720px;">
+						${fieldRows || "<tr><td>No field values were captured.</td></tr>"}
+					</table>
+					${metadataRows ? `<h3 style="margin: 24px 0 8px;">Metadata</h3><table cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 720px;">${metadataRows}</table>` : ""}
+				</div>
+			`,
+		},
+		context.emailService,
+	);
 }
 
 function escapeHtml(value: string): string {

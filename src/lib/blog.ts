@@ -985,20 +985,11 @@ function parseSmtpEncryption(value: unknown): SmtpEncryption {
 }
 
 function validateSmtpSettings(input: SmtpSettings): void {
-	if (!input.host.trim()) {
-		throw new Error("SMTP host is required.");
-	}
-	if (!Number.isInteger(input.port) || input.port < 1 || input.port > 65535) {
-		throw new Error("SMTP port must be between 1 and 65535.");
-	}
 	if (!input.fromEmail.trim()) {
-		throw new Error("SMTP from email is required.");
+		throw new Error("Email sender address is required.");
 	}
 	if (!input.fromName.trim()) {
-		throw new Error("SMTP from name is required.");
-	}
-	if ((input.username.trim() && !input.password.trim()) || (!input.username.trim() && input.password.trim())) {
-		throw new Error("SMTP username and password must both be provided.");
+		throw new Error("Email sender name is required.");
 	}
 }
 

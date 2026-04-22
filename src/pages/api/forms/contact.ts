@@ -25,6 +25,7 @@ export const POST: APIRoute = async ({ locals, request }) => {
 		const db = getDb(locals);
 		const catalog = getLanguageCatalog(locals);
 		const siteConfig = await getSiteConfig(db);
+		const emailService = (locals.runtime.env as Record<string, unknown> & { EMAIL?: SendEmail }).EMAIL ?? null;
 		const contactForms = await listContactForms(db, true, input.language, catalog);
 		const explicitForm =
 			typeof input.contactFormId === "number" ? await getContactFormById(db, input.contactFormId, input.language, catalog) : null;
@@ -57,6 +58,7 @@ export const POST: APIRoute = async ({ locals, request }) => {
 				db,
 				siteConfig,
 				contactForm: selectedForm,
+				emailService,
 				submission: {
 					id: submissionId,
 					contactFormId: resolvedInput.contactFormId ?? selectedForm.id,
