@@ -9,11 +9,21 @@ registerContactFormSubmissionHook(async (context) => {
 export async function sendContactFormNotificationEmail(context: ContactFormSubmissionContext): Promise<void> {
 	const recipients = parseEmailList(context.contactForm.notificationEmails.join(", "));
 	if (recipients.length === 0) {
+		console.log("[contact-notify] skipped", {
+			formId: context.contactForm.id,
+			formTitle: context.contactForm.title,
+			reason: "no recipients configured",
+		});
 		return;
 	}
 
 	const smtpSettings = context.siteConfig.smtpSettings;
 	if (!smtpSettings.fromEmail.trim() || !smtpSettings.fromName.trim()) {
+		console.log("[contact-notify] skipped", {
+			formId: context.contactForm.id,
+			formTitle: context.contactForm.title,
+			reason: "sender not configured",
+		});
 		return;
 	}
 
@@ -64,6 +74,15 @@ export async function sendContactFormNotificationEmail(context: ContactFormSubmi
 		if (context.requestInfo.referer) textLines.push(`- Referrer: ${context.requestInfo.referer}`);
 	}
 
+	console.log("[contact-notify] sending", {
+		formId: context.contactForm.id,
+		formTitle: context.contactForm.title,
+		recipients,
+		fromEmail: smtpSettings.fromEmail,
+		fromName: smtpSettings.fromName,
+		fieldCount: context.contactForm.fields.length,
+	});
+
 	await sendSmtpEmail(
 		context.db,
 		context.runtimeEnv,
@@ -84,6 +103,12 @@ export async function sendContactFormNotificationEmail(context: ContactFormSubmi
 			`,
 		},
 	);
+
+	console.log("[contact-notify] sent", {
+		formId: context.contactForm.id,
+		formTitle: context.contactForm.title,
+		recipients,
+	});
 }
 
 function escapeHtml(value: string): string {

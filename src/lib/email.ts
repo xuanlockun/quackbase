@@ -75,6 +75,13 @@ export async function sendSmtpEmail(
 		...(message.html ? { html: message.html } : {}),
 	};
 
+	console.log("[resend] sending", {
+		from: payload.from,
+		to: payload.to,
+		subject: payload.subject,
+		html: Boolean(message.html),
+	});
+
 	const response = await fetch("https://api.resend.com/emails", {
 		method: "POST",
 		headers: {
@@ -92,8 +99,19 @@ export async function sendSmtpEmail(
 
 	if (!response.ok) {
 		const messageText = data?.message || data?.name || `Resend returned HTTP ${response.status}`;
+		console.error("[resend] send failed", {
+			status: response.status,
+			message: messageText,
+			details: data,
+		});
 		throw new Error(messageText);
 	}
+
+	console.log("[resend] send complete", {
+		id: data?.id,
+		to: payload.to,
+		subject: payload.subject,
+	});
 }
 
 async function resolveResendApiKey(
