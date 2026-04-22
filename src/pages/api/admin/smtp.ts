@@ -51,19 +51,27 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			return Response.json({ ok: true, message: "Test email sent successfully." });
 		}
 
+		let warningMessage = "";
 		if (resendApiKey) {
-			await upsertAdminSecret(
-				db,
-				{
-					secretType: "resend_api_key",
-					label: "Resend API Key",
-					secretValue: resendApiKey,
-				},
-				locals.runtime.env,
-			);
+			try {
+				await upsertAdminSecret(
+					db,
+					{
+						secretType: "resend_api_key",
+						label: "Resend API Key",
+						secretValue: resendApiKey,
+					},
+					locals.runtime.env,
+				);
+			} catch (secretError) {
+				warningMessage = secretError instanceof Error ? secretError.message : "Resend API key could not be stored.";
+			}
 		}
 
 		await saveSmtpSettings(db, settings);
+		if (warningMessage) {
+			return redirect(`/admin/settings?smtpSaved=1&smtpWarning=${encodeURIComponent(warningMessage)}`);
+		}
 		return redirect("/admin/settings?smtpSaved=1");
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Email settings could not be saved.";

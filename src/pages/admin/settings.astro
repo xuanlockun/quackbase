@@ -83,6 +83,7 @@ const settingsFeedback = [
 	["secretSaved", { title: "Secret saved", message: t("messages.secretSaved", "The secret was stored successfully."), tone: "success" }],
 	["mediaError", { title: "Connection failed", message: "Media storage settings could not be saved.", tone: "error" }],
 	["mediaSaved", { title: "Settings saved", message: "Media storage settings were saved successfully.", tone: "success" }],
+	["smtpWarning", { title: "Email saved with warning", message: "Email settings were saved, but the API key could not be stored.", tone: "warning" }],
 	["smtpError", { title: "Email failed", message: "Email settings could not be saved.", tone: "error" }],
 	["smtpSaved", { title: "Email saved", message: "Email settings were saved successfully.", tone: "success" }],
 	["captchaError", { title: "Captcha failed", message: "Captcha settings could not be saved.", tone: "error" }],
@@ -514,7 +515,7 @@ const settingsFeedback = [
 		const search = new URLSearchParams(window.location.search);
 		for (const [key, entry] of settingsFeedback) {
 			if (search.has(key)) {
-				const message = key === "mediaError" ? search.get("mediaError") || entry.message : entry.message;
+				const message = search.get(key) || entry.message;
 				showModal(entry.title, message, "", entry.tone);
 				window.history.replaceState({}, "", window.location.pathname + window.location.hash);
 				break;
