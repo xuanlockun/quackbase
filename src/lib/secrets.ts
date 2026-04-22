@@ -274,16 +274,21 @@ async function migrateLegacyAdminSecretsTable(db: D1Database): Promise<void> {
 			FROM sqlite_master
 			WHERE type = 'table' AND name = 'admin_secrets'
 			LIMIT 1`,
-		)
+	)
 		.first<{ sql: string | null }>();
 
 	const createSql = table?.sql ?? "";
-	if (!createSql.includes("CHECK (secret_type = 'cloudflare_api_access_token')")) {
+	if (!createSql) {
+		return;
+	}
+
+	if (createSql.includes("resend_api_key")) {
 		return;
 	}
 
 	await db.batch([
 		db.prepare(`DROP INDEX IF EXISTS idx_admin_secrets_created_at`),
+		db.prepare(`DROP INDEX IF EXISTS idx_admin_secrets_type_updated_at`),
 		db.prepare(`ALTER TABLE admin_secrets RENAME TO admin_secrets_legacy`),
 		db.prepare(
 			`CREATE TABLE admin_secrets (
