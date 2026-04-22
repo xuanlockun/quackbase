@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { getDb, getSmtpSettings, parseSmtpSettingsForm, saveSmtpSettings } from "../../../lib/blog";
 import { requireApiPermission } from "../../../lib/rbac/guards";
 import { sendSmtpEmail, validateSmtpSettings } from "../../../lib/email";
+import { upsertAdminSecret } from "../../../lib/secrets";
 
 export const prerender = false;
 
@@ -20,7 +21,7 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 
 	try {
 		const db = getDb(locals);
-		const emailService = (locals.runtime.env as Record<string, unknown> & { EMAIL?: SendEmail }).EMAIL ?? null;
+		const resendApiKey = String(formData.get("resendApiKey") ?? "").trim();
 		const currentSettings = await getSmtpSettings(db);
 		const formSettings = parseSmtpSettingsForm(formData);
 		const settings = validateSmtpSettings({
@@ -34,14 +35,32 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 				fromEmail: settings.fromEmail,
 				fromName: settings.fromName,
 			});
-			await sendSmtpEmail(settings, {
-				to: [settings.fromEmail],
-				subject: "Email test from Edge CMS",
-				text: "This is a test email sent from the Edge CMS admin settings page.",
-				html: "<p>This is a test email sent from the Edge CMS admin settings page.</p>",
-			}, emailService);
+			await sendSmtpEmail(
+				db,
+				locals.runtime.env,
+				settings,
+				{
+					to: [settings.fromEmail],
+					subject: "Email test from Edge CMS",
+					text: "This is a test email sent from the Edge CMS admin settings page.",
+					html: "<p>This is a test email sent from the Edge CMS admin settings page.</p>",
+				},
+				{ resendApiKey: resendApiKey || null },
+			);
 			console.log("[email-test] completed successfully");
 			return Response.json({ ok: true, message: "Test email sent successfully." });
+		}
+
+		if (resendApiKey) {
+			await upsertAdminSecret(
+				db,
+				{
+					secretType: "resend_api_key",
+					label: "Resend API Key",
+					secretValue: resendApiKey,
+				},
+				locals.runtime.env,
+			);
 		}
 
 		await saveSmtpSettings(db, settings);

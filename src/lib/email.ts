@@ -1,3 +1,4 @@
+import { getAdminSecretValueByType } from "./secrets";
 import type { SmtpSettings } from "./blog";
 
 export interface EmailMessage {
@@ -6,18 +7,6 @@ export interface EmailMessage {
 	text: string;
 	html?: string;
 	replyTo?: string;
-}
-
-export interface CloudflareEmailBinding {
-	send(message: {
-		to: string | string[];
-		from: string | { email: string; name?: string };
-		subject: string;
-		text?: string;
-		html?: string;
-		replyTo?: string | { email: string; name?: string };
-		headers?: Record<string, string>;
-	}): Promise<{ messageId: string }>;
 }
 
 export function parseEmailList(value: string): string[] {
@@ -61,38 +50,75 @@ export function validateSmtpSettings(input: SmtpSettings): SmtpSettings {
 }
 
 export async function sendSmtpEmail(
+	db: D1Database,
+	env: { JWT_SECRET?: string; SECRETS_ENCRYPTION_KEY?: string },
 	settings: SmtpSettings,
 	message: EmailMessage,
-	emailBinding?: CloudflareEmailBinding | null,
+	options?: { resendApiKey?: string | null; debug?: boolean },
 ): Promise<void> {
 	const smtp = validateSmtpSettings(settings);
-	const binding = emailBinding ?? null;
-	if (!binding) {
-		throw new Error("Cloudflare Email Service binding EMAIL is not configured.");
-	}
-
 	const recipients = message.to.map(validateEmailAddress);
 	if (recipients.length === 0) {
 		throw new Error("At least one email recipient is required.");
 	}
 
+	const apiKey = await resolveResendApiKey(db, env, options?.resendApiKey ?? null);
+	if (!apiKey) {
+		throw new Error("Resend API key is not configured.");
+	}
+
 	const payload = {
+		from: formatFromAddress(smtp.fromName, smtp.fromEmail),
 		to: recipients.length === 1 ? recipients[0] : recipients,
-		from: {
-			email: smtp.fromEmail,
-			name: smtp.fromName,
-		},
 		subject: message.subject,
 		text: message.text,
 		...(message.html ? { html: message.html } : {}),
-		...(message.replyTo
-			? {
-					replyTo: validateEmailAddress(message.replyTo),
-				}
-			: {}),
 	};
 
-	await binding.send(payload);
+	const response = await fetch("https://api.resend.com/emails", {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+			"User-Agent": "Edge CMS",
+			"Content-Type": "application/json",
+			Accept: "application/json",
+		},
+		body: JSON.stringify(payload),
+	});
+
+	const data = await response.json().catch(() => null) as
+		| { id?: string; message?: string; name?: string }
+		| null;
+
+	if (!response.ok) {
+		const messageText = data?.message || data?.name || `Resend returned HTTP ${response.status}`;
+		throw new Error(messageText);
+	}
+}
+
+async function resolveResendApiKey(
+	db: D1Database,
+	env: { JWT_SECRET?: string; SECRETS_ENCRYPTION_KEY?: string },
+	overrideKey?: string | null,
+): Promise<string> {
+	const explicitKey = typeof overrideKey === "string" ? overrideKey.trim() : "";
+	if (explicitKey) {
+		return explicitKey;
+	}
+
+	const storedKey = await getAdminSecretValueByType(db, "resend_api_key", env);
+
+	return storedKey?.trim() ?? "";
+}
+
+function formatFromAddress(name: string, email: string): string {
+	const normalizedName = name.trim();
+	const normalizedEmail = validateEmailAddress(email);
+	return normalizedName ? `${escapeHeaderValue(normalizedName)} <${normalizedEmail}>` : `<${normalizedEmail}>`;
+}
+
+function escapeHeaderValue(value: string): string {
+	return value.replace(/["\\]/g, "\\$&");
 }
 
 function normalizePort(value: number): number {

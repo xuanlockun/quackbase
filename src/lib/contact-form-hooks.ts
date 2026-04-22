@@ -1,6 +1,5 @@
 import type { ContactFormRecord } from "./contact-forms";
 import type { ContactFormSubmissionRecord } from "./forms";
-import type { CloudflareEmailBinding } from "./email";
 import type { SiteConfig } from "./blog";
 
 export interface ContactFormSubmissionRequestInfo {
@@ -11,11 +10,11 @@ export interface ContactFormSubmissionRequestInfo {
 
 export interface ContactFormSubmissionContext {
 	db: D1Database;
+	runtimeEnv: { JWT_SECRET?: string; SECRETS_ENCRYPTION_KEY?: string };
 	siteConfig: SiteConfig;
 	contactForm: ContactFormRecord;
 	submission: ContactFormSubmissionRecord;
 	requestInfo: ContactFormSubmissionRequestInfo;
-	emailService?: CloudflareEmailBinding | null;
 }
 
 export type ContactFormSubmissionHook = (context: ContactFormSubmissionContext) => void | Promise<void>;

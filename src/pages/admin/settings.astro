@@ -5,7 +5,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 import { SITE_TITLE } from "../../consts";
 import { getDb, getSiteConfig } from "../../lib/blog";
 import { getUiTranslations } from "../../lib/i18n";
-import { listAdminSecrets, type AdminSecretRecord } from "../../lib/secrets";
+import { getLatestAdminSecretRecordByType, listAdminSecrets, type AdminSecretRecord } from "../../lib/secrets";
 import FeedbackModal from "../../components/admin/FeedbackModal.astro";
 import SecretsManager from "../../components/admin/SecretsManager.astro";
 
@@ -55,9 +55,16 @@ try {
 }
 
 try {
-	secrets = await listAdminSecrets(db, { secretTypes: ["cloudflare_api_access_token"] });
+	secrets = await listAdminSecrets(db, { secretTypes: ["cloudflare_api_access_token", "resend_api_key"] });
 } catch (error) {
 	secretsLoadError = error instanceof Error ? error.message : t("messages.failedToLoadSecrets");
+}
+
+let resendApiKeyStored = false;
+try {
+	resendApiKeyStored = Boolean(await getLatestAdminSecretRecordByType(db, "resend_api_key"));
+} catch {
+	resendApiKeyStored = false;
 }
 
 const formDisabled = Boolean(loadError);
@@ -67,7 +74,7 @@ const mediaStorageStatusPrimary = mediaStorageConnected ? "Storage connected" : 
 const mediaStorageStatusSecondary = mediaStorageConnected ? "Ready to upload" : "Configure storage";
 const emailConfigured = Boolean(siteConfig.smtpSettings.fromEmail.trim()) && Boolean(siteConfig.smtpSettings.fromName.trim());
 const emailStatusPrimary = emailConfigured ? "Email service ready" : "Email service not configured";
-const emailStatusSecondary = emailConfigured ? "Ready to send notifications" : "Configure sender identity";
+const emailStatusSecondary = resendApiKeyStored ? "API key stored" : "API key not stored";
 const settingsFeedback = [
 	["siteError", { title: "Settings failed", message: t("messages.siteSettingsFailed", "Site settings could not be saved."), tone: "error" }],
 	["siteSaved", { title: "Settings saved", message: t("messages.siteSettingsSaved", "Site settings were saved successfully."), tone: "success" }],
@@ -320,10 +327,10 @@ const settingsFeedback = [
 						<div class="admin-form-surface smtp-settings-shell">
 							<div class="admin-surface-header smtp-settings-header">
 								<div>
-									<h2 class="h5 mb-1">Cloudflare Email Service</h2>
-									<p class="admin-inline-muted mb-0">Configure the sender identity used by the Cloudflare Email Service binding for contact form notifications.</p>
+									<h2 class="h5 mb-1">Resend</h2>
+									<p class="admin-inline-muted mb-0">Configure the sender identity and API key used for contact form notifications.</p>
 								</div>
-								<div class="smtp-status-badges" aria-label="Cloudflare Email Service">
+								<div class="smtp-status-badges" aria-label="Resend email service">
 									<span class="media-status-badge">{emailStatusPrimary}</span>
 									<span class="media-status-badge">{emailStatusSecondary}</span>
 								</div>
@@ -333,7 +340,7 @@ const settingsFeedback = [
 									Test email
 								</button>
 								<button class="btn btn-primary" type="submit" disabled={formDisabled}>
-									Save email settings
+									Save Resend settings
 								</button>
 							</div>
 							<div class="smtp-settings-grid admin-grid-two">
@@ -345,8 +352,19 @@ const settingsFeedback = [
 									<span>Sender name</span>
 									<input class="form-control" name="smtpFromName" value={siteConfig.smtpSettings.fromName} placeholder={SITE_TITLE} disabled={formDisabled} />
 								</label>
+								<label class="grid-span-2">
+									<span>Resend API key</span>
+									<input
+										class="form-control"
+										name="resendApiKey"
+										type="password"
+										autocomplete="off"
+										placeholder={resendApiKeyStored ? "Leave blank to keep the saved key" : "re_..."}
+										disabled={formDisabled}
+									/>
+								</label>
 							</div>
-							<p class="admin-muted mb-0">Cloudflare config lives in <code>wrangler.json</code> under the <code>send_email</code> binding. This page stores only the sender identity used in outbound messages.</p>
+							<p class="admin-muted mb-0">The API key is stored encrypted in the admin secrets table. Leave it blank to keep the existing key.</p>
 						</div>
 					</form>
 				</section>

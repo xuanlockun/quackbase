@@ -65,6 +65,8 @@ export async function sendContactFormNotificationEmail(context: ContactFormSubmi
 	}
 
 	await sendSmtpEmail(
+		context.db,
+		context.runtimeEnv,
 		smtpSettings,
 		{
 			to: recipients,
@@ -81,7 +83,6 @@ export async function sendContactFormNotificationEmail(context: ContactFormSubmi
 				</div>
 			`,
 		},
-		context.emailService,
 	);
 }
 

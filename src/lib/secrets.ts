@@ -1,5 +1,6 @@
 export type AdminSecretType =
 	| "cloudflare_api_access_token"
+	| "resend_api_key"
 	| "media_s3_access_key_id"
 	| "media_s3_secret_access_key";
 
@@ -34,11 +35,13 @@ const SECRET_KEY_ALGORITHM = "AES-GCM";
 const MASKED_SECRET_PREFIX = "****";
 const ADMIN_SECRET_TYPES: AdminSecretType[] = [
 	"cloudflare_api_access_token",
+	"resend_api_key",
 	"media_s3_access_key_id",
 	"media_s3_secret_access_key",
 ];
 const ADMIN_SECRET_TYPE_LABELS: Record<AdminSecretType, string> = {
 	cloudflare_api_access_token: "Cloudflare API Access Token",
+	resend_api_key: "Resend API Key",
 	media_s3_access_key_id: "Media S3 Access Key ID",
 	media_s3_secret_access_key: "Media S3 Secret Access Key",
 };
@@ -50,7 +53,7 @@ export async function ensureSecretTables(db: D1Database): Promise<void> {
 		db.prepare(
 			`CREATE TABLE IF NOT EXISTS admin_secrets (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				secret_type TEXT NOT NULL CHECK (secret_type IN ('cloudflare_api_access_token', 'media_s3_access_key_id', 'media_s3_secret_access_key')),
+				secret_type TEXT NOT NULL CHECK (secret_type IN ('cloudflare_api_access_token', 'resend_api_key', 'media_s3_access_key_id', 'media_s3_secret_access_key')),
 				label TEXT NOT NULL,
 				encrypted_value TEXT NOT NULL,
 				iv TEXT NOT NULL,
@@ -285,7 +288,7 @@ async function migrateLegacyAdminSecretsTable(db: D1Database): Promise<void> {
 		db.prepare(
 			`CREATE TABLE admin_secrets (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				secret_type TEXT NOT NULL CHECK (secret_type IN ('cloudflare_api_access_token', 'media_s3_access_key_id', 'media_s3_secret_access_key')),
+				secret_type TEXT NOT NULL CHECK (secret_type IN ('cloudflare_api_access_token', 'resend_api_key', 'media_s3_access_key_id', 'media_s3_secret_access_key')),
 				label TEXT NOT NULL,
 				encrypted_value TEXT NOT NULL,
 				iv TEXT NOT NULL,
