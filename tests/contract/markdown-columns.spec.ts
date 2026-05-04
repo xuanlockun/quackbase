@@ -25,31 +25,24 @@ Right [link](https://example.com)
 
 	it("renders logo grid blocks inside page content markdown", () => {
 		const html = renderMarkdown(`::: logo-grid
-eyebrow: Partners and Clients
-title: Our Partners & Clients
-body: Trusted by teams across multiple industries.
 - https://ncs.vn/wp-content/uploads/2020/03/client4.png
 - https://ncs.vn/wp-content/uploads/2020/03/client5.svg
 :::`);
 
 		expect(html).toContain('class="logo-grid-section"');
-		expect(html).toContain("Our Partners &amp; Clients");
 		expect(html).toContain('class="logo-grid-item"');
 		expect(html).toContain("client4.png");
 	});
 
-	it("renders showcase split blocks inside page content markdown", () => {
-		const html = renderMarkdown(`::: showcase-split
-eyebrow: Why Choose Us
-title: Your Partner for Software Innovation
-body: We help businesses elevate their value through software development and consultancy services.
-image: https://ncs.vn/wp-content/uploads/2020/02/image1-home1.png
-alt: Software innovation illustration
+	it("renders service grid blocks inside page content markdown", () => {
+		const html = renderMarkdown(`::: service-grid
+- Recruitment Services | https://ncs.vn/wp-content/uploads/2020/02/image1-home1.png
+- Consultant Services | https://ncs.vn/wp-content/uploads/2020/02/bg-cta1-home1.jpg
 :::`);
 
-		expect(html).toContain('class="showcase-split-section"');
-		expect(html).toContain("Your Partner for Software Innovation");
-		expect(html).toContain("Software innovation illustration");
+		expect(html).toContain('class="service-grid-section"');
+		expect(html).toContain("Recruitment Services");
+		expect(html).toContain("Consultant Services");
 		expect(html).toContain("image1-home1.png");
 	});
 });

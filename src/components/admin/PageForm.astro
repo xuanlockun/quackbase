@@ -221,7 +221,7 @@ const initialContactFields = [];
 							</div>
 							<p class="admin-editor-help mb-0">Markdown is stored as entered. Use quick shortcuts to format content while keeping the current content model unchanged.</p>
 							<p class="admin-editor-help mb-0">
-								Custom blocks: <code>::: logo-grid</code> for client/partner logos and <code>::: showcase-split</code> for text + image sections.
+								Custom blocks: <code>::: logo-grid</code> for a row/grid of logos and <code>::: service-grid</code> for image cards with titles.
 							</p>
 							<textarea class="form-control admin-editor-textarea" data-content-input={languageOption.code} rows="14" disabled={isDisabled}
 							>{contentTranslations[languageOption.code] ?? (languageOption.code === def ? "# New page" : "")}</textarea

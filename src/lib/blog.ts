@@ -380,8 +380,8 @@ function renderStructuredMarkdown(markdown: string): string {
 			}
 		}
 
-		if (!inFence && isShowcaseSplitBlockStart(trimmed)) {
-			const block = parseShowcaseSplitBlock(lines, index);
+		if (!inFence && isServiceGridBlockStart(trimmed)) {
+			const block = parseServiceGridBlock(lines, index);
 			if (block) {
 				flushMarkdownBuffer();
 				segments.push(block.html);
@@ -430,8 +430,8 @@ function isLogoGridBlockStart(trimmedLine: string): boolean {
 	return /^:::\s*logo-grid(?:\s|$)/i.test(trimmedLine);
 }
 
-function isShowcaseSplitBlockStart(trimmedLine: string): boolean {
-	return /^:::\s*showcase-split(?:\s|$)/i.test(trimmedLine);
+function isServiceGridBlockStart(trimmedLine: string): boolean {
+	return /^:::\s*service-grid(?:\s|$)/i.test(trimmedLine);
 }
 
 function isColumnBlockStart(trimmedLine: string): boolean {
@@ -516,7 +516,6 @@ function parseLogoGridBlock(
 	lines: string[],
 	startIndex: number,
 ): { html: string; nextIndex: number } | null {
-	const metadata = new Map<string, string>();
 	const items: string[] = [];
 
 	for (let index = startIndex + 1; index < lines.length; index += 1) {
@@ -525,23 +524,12 @@ function parseLogoGridBlock(
 
 		if (isBlockClose(trimmed)) {
 			return {
-				html: renderLogoGridMarkdownBlock({
-					eyebrow: metadata.get("eyebrow") ?? "",
-					title: metadata.get("title") ?? "",
-					body: metadata.get("body") ?? "",
-					items,
-				}),
+				html: renderLogoGridMarkdownBlock(items),
 				nextIndex: index,
 			};
 		}
 
 		if (!trimmed) {
-			continue;
-		}
-
-		const metadataMatch = trimmed.match(/^(eyebrow|title|body)\s*:\s*(.+)$/i);
-		if (metadataMatch) {
-			metadata.set(metadataMatch[1].toLowerCase(), metadataMatch[2].trim());
 			continue;
 		}
 
@@ -557,25 +545,12 @@ function parseLogoGridBlock(
 	return null;
 }
 
-function renderLogoGridMarkdownBlock(input: {
-	eyebrow: string;
-	title: string;
-	body: string;
-	items: string[];
-}): string {
-	if (input.items.length === 0) {
+function renderLogoGridMarkdownBlock(items: string[]): string {
+	if (items.length === 0) {
 		return "";
 	}
 
-	const headerHtml =
-		input.eyebrow || input.title || input.body
-			? `<div class="logo-grid-header">
-				${input.eyebrow ? `<p class="site-eyebrow mb-2">${escapeHtml(input.eyebrow)}</p>` : ""}
-				${input.title ? `<h2 class="logo-grid-title">${escapeHtml(input.title)}</h2>` : ""}
-				${input.body ? `<p class="logo-grid-body mb-0">${escapeHtml(input.body)}</p>` : ""}
-			</div>`
-			: "";
-	const itemsHtml = input.items
+	const itemsHtml = items
 		.map(
 			(imageUrl) => `<div class="logo-grid-item">
 				<img src="${escapeHtml(imageUrl)}" alt="" loading="lazy" />
@@ -583,14 +558,14 @@ function renderLogoGridMarkdownBlock(input: {
 		)
 		.join("");
 
-	return `<section class="logo-grid-section"><div class="logo-grid-shell">${headerHtml}<div class="logo-grid-list">${itemsHtml}</div></div></section>`;
+	return `<section class="logo-grid-section"><div class="logo-grid-shell"><div class="logo-grid-list">${itemsHtml}</div></div></section>`;
 }
 
-function parseShowcaseSplitBlock(
+function parseServiceGridBlock(
 	lines: string[],
 	startIndex: number,
 ): { html: string; nextIndex: number } | null {
-	const metadata = new Map<string, string>();
+	const items: Array<{ title: string; imageUrl: string }> = [];
 
 	for (let index = startIndex + 1; index < lines.length; index += 1) {
 		const line = lines[index];
@@ -598,13 +573,7 @@ function parseShowcaseSplitBlock(
 
 		if (isBlockClose(trimmed)) {
 			return {
-				html: renderShowcaseSplitMarkdownBlock({
-					eyebrow: metadata.get("eyebrow") ?? "",
-					title: metadata.get("title") ?? "",
-					body: metadata.get("body") ?? "",
-					imageUrl: metadata.get("image") ?? "",
-					imageAlt: metadata.get("alt") ?? "",
-				}),
+				html: renderServiceGridMarkdownBlock(items),
 				nextIndex: index,
 			};
 		}
@@ -613,9 +582,12 @@ function parseShowcaseSplitBlock(
 			continue;
 		}
 
-		const metadataMatch = trimmed.match(/^(eyebrow|title|body|image|alt)\s*:\s*(.+)$/i);
-		if (metadataMatch) {
-			metadata.set(metadataMatch[1].toLowerCase(), metadataMatch[2].trim());
+		const itemMatch = trimmed.match(/^-\s+(.+?)\s*\|\s*(.+)$/);
+		if (itemMatch) {
+			items.push({
+				title: itemMatch[1].trim(),
+				imageUrl: itemMatch[2].trim(),
+			});
 			continue;
 		}
 
@@ -625,25 +597,25 @@ function parseShowcaseSplitBlock(
 	return null;
 }
 
-function renderShowcaseSplitMarkdownBlock(input: {
-	eyebrow: string;
-	title: string;
-	body: string;
-	imageUrl: string;
-	imageAlt: string;
-}): string {
-	if (!input.title && !input.body && !input.imageUrl) {
+function renderServiceGridMarkdownBlock(items: Array<{ title: string; imageUrl: string }>): string {
+	if (items.length === 0) {
 		return "";
 	}
 
-	return `<section class="showcase-split-section">
-		<div class="showcase-split-shell">
-			<div class="showcase-split-copy">
-				${input.eyebrow ? `<p class="site-eyebrow mb-2">${escapeHtml(input.eyebrow)}</p>` : ""}
-				${input.title ? `<h2 class="showcase-split-title">${escapeHtml(input.title)}</h2>` : ""}
-				${input.body ? `<p class="showcase-split-body mb-0">${escapeHtml(input.body)}</p>` : ""}
-			</div>
-			${input.imageUrl ? `<div class="showcase-split-media"><img src="${escapeHtml(input.imageUrl)}" alt="${escapeHtml(input.imageAlt || input.title)}" loading="lazy" /></div>` : ""}
+	const itemsHtml = items
+		.map(
+			(item) => `<article class="service-grid-card">
+				<div class="service-grid-card-media">
+					<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" loading="lazy" />
+				</div>
+				<h3 class="service-grid-card-title">${escapeHtml(item.title)}</h3>
+			</article>`,
+		)
+		.join("");
+
+	return `<section class="service-grid-section">
+		<div class="service-grid-shell">
+			<div class="service-grid-list">${itemsHtml}</div>
 		</div>
 	</section>`;
 }
