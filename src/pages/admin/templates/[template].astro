@@ -306,14 +306,18 @@ function buildSocialLinksFragment(): string {
 								))}
 							</div>
 							<p class="admin-editor-help mb-0">Insert saved placeholders directly into the template. The preview on this page still uses the same stored HTML contract.</p>
-						<textarea
-							class="form-control template-editor-textarea admin-editor-textarea"
-							name="templateHtml"
-							rows="16"
-							spellcheck="false"
-							placeholder={defaultTemplateHtml}
-							disabled={Boolean(loadError)}
-						>{templateHtml.trim() ? templateHtml : defaultTemplateHtml}</textarea>
+							<div class="template-editor-stack">
+								<pre class="template-editor-highlight" aria-hidden="true" data-template-highlight></pre>
+								<textarea
+									class="form-control template-editor-textarea admin-editor-textarea"
+									name="templateHtml"
+									rows="16"
+									spellcheck="false"
+									placeholder={defaultTemplateHtml}
+									disabled={Boolean(loadError)}
+									data-template-editor-input
+								>{templateHtml.trim() ? templateHtml : defaultTemplateHtml}</textarea>
+							</div>
 						</div>
 					</label>
 				</div>
@@ -341,10 +345,6 @@ function buildSocialLinksFragment(): string {
 	</div>
 </AdminLayout>
 
-<script>
-	import "../../../scripts/admin-template-code-editor.ts";
-</script>
-
 <script type="module" define:vars={{ templateFeedback, loadError }}>
 	const showFeedbackModal = window.showAdminFeedbackModal;
 	const search = new URLSearchParams(window.location.search);
@@ -369,30 +369,48 @@ function buildSocialLinksFragment(): string {
 			return;
 		}
 
-		const textarea = document.querySelector(".template-editor-textarea");
+		const textarea = document.querySelector("[data-template-editor-input]");
 		if (!(textarea instanceof HTMLTextAreaElement)) {
 			return;
 		}
 
 		const token = target.dataset.templateToken || "";
-		const codeMirrorView = textarea._codeMirrorView;
-		if (codeMirrorView && typeof codeMirrorView.dispatch === "function") {
-			const selection = codeMirrorView.state.selection.main;
-			codeMirrorView.dispatch({
-				changes: { from: selection.from, to: selection.to, insert: token },
-				selection: { anchor: selection.from + token.length },
-			});
-			codeMirrorView.focus();
-			return;
-		}
-
 		const start = textarea.selectionStart ?? textarea.value.length;
 		const end = textarea.selectionEnd ?? textarea.value.length;
 		textarea.value = `${textarea.value.slice(0, start)}${token}${textarea.value.slice(end)}`;
 		const caret = start + token.length;
 		textarea.focus();
 		textarea.setSelectionRange(caret, caret);
+		textarea.dispatchEvent(new Event("input", { bubbles: true }));
 	});
+
+	const escapeHtml = (value) =>
+		String(value ?? "")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#39;");
+
+	const highlightTemplateValue = (value) =>
+		escapeHtml(value)
+			.replace(/(\{\{[^}]+\}\})/g, '<span class="template-editor-token">$1</span>')
+			.replace(/\n$/g, "\n ");
+
+	const templateTextarea = document.querySelector("[data-template-editor-input]");
+	const templateHighlight = document.querySelector("[data-template-highlight]");
+	if (templateTextarea instanceof HTMLTextAreaElement && templateHighlight instanceof HTMLElement) {
+		const syncTemplateHighlight = () => {
+			templateHighlight.innerHTML = highlightTemplateValue(templateTextarea.value || templateTextarea.placeholder || " ");
+			templateHighlight.scrollTop = templateTextarea.scrollTop;
+			templateHighlight.scrollLeft = templateTextarea.scrollLeft;
+		};
+
+		templateTextarea.addEventListener("input", syncTemplateHighlight);
+		templateTextarea.addEventListener("scroll", syncTemplateHighlight);
+		window.addEventListener("resize", syncTemplateHighlight);
+		syncTemplateHighlight();
+	}
 </script>
 
 <style>
@@ -420,21 +438,62 @@ function buildSocialLinksFragment(): string {
 		flex-wrap: wrap;
 	}
 
-	.template-editor-textarea {
+	.template-editor-stack {
+		position: relative;
 		min-height: 24rem;
+		border: 1px solid rgba(15, 23, 42, 0.14);
+		background: #ffffff;
+		overflow: hidden;
+	}
+
+	.template-editor-highlight,
+	.template-editor-textarea {
 		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 		font-size: 0.92rem;
-		line-height: 1.5;
+		line-height: 1.6;
+		tab-size: 2;
 	}
 
-	.admin-code-editor {
-		border: 1px solid rgba(15, 23, 42, 0.14);
-		background: #fff;
+	.template-editor-highlight {
+		position: absolute;
+		inset: 0;
+		margin: 0;
+		padding: 0.9rem 1rem;
+		overflow: auto;
+		white-space: pre-wrap;
+		word-break: break-word;
+		pointer-events: none;
+		color: #334155;
+		background: #ffffff;
 	}
 
-	.admin-code-editor .cm-editor {
+	.template-editor-textarea {
+		position: relative;
+		z-index: 1;
 		min-height: 24rem;
-		font-size: 0.92rem;
+		padding: 0.9rem 1rem;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		color: transparent;
+		caret-color: #0f172a;
+		-webkit-text-fill-color: transparent;
+		resize: vertical;
+	}
+
+	.template-editor-textarea:focus {
+		box-shadow: inset 0 0 0 1px rgba(43, 108, 176, 0.22);
+	}
+
+	.template-editor-textarea::selection {
+		background: rgba(43, 108, 176, 0.18);
+	}
+
+	.template-editor-token {
+		color: #1d4ed8;
+		font-weight: 600;
+		background: rgba(59, 130, 246, 0.1);
+		border-radius: 0.2rem;
 	}
 
 	.template-preview {
