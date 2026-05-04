@@ -173,7 +173,7 @@
     "dashboardWelcome": "Welcome back, {name}.",
     "dashboardSummary": "Content overview",
     "dashboardQuickActions": "Quick actions",
-    "dashboardTemplateHelp": "Edit the raw HTML shell for the public header, navbar, page wrapper, and footer.",
+    "dashboardTemplateHelp": "Edit the raw HTML shell for the public header, page wrapper, posts section, and footer.",
     "manageSecrets": "Add, review, and delete securely stored admin secrets.",
     "secretsHelp": "Secrets are encrypted at rest and shown only in masked form.",
     "secretEncryptedHint": "The token is stored encrypted and is never revealed again in the UI.",

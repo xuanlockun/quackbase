@@ -173,7 +173,7 @@
     "dashboardWelcome": "おかえりなさい、{name} さん。",
     "dashboardSummary": "コンテンツ概要",
     "dashboardQuickActions": "クイック操作",
-    "dashboardTemplateHelp": "公開側のヘッダー、ナビバー、ページラッパー、フッターの raw HTML を編集します。",
+    "dashboardTemplateHelp": "公開側のヘッダー、ページラッパー、投稿セクション、フッターの raw HTML を編集します。",
     "manageSecrets": "安全に保存された管理用シークレットを追加、確認、削除します。",
     "secretsHelp": "シークレットは保存時に暗号化され、UI ではマスク表示のみです。",
     "secretEncryptedHint": "トークンは暗号化して保存され、UI に再表示されることはありません。",

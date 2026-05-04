@@ -171,7 +171,7 @@
     "dashboardWelcome": "Chào mừng quay lại, {name}.",
     "dashboardSummary": "Tổng quan nội dung",
     "dashboardQuickActions": "Thao tác nhanh",
-    "dashboardTemplateHelp": "Chỉnh raw HTML shell cho header, navbar, page wrapper và footer của trang public.",
+    "dashboardTemplateHelp": "Chỉnh raw HTML shell cho header, page wrapper, khu vực bài viết và footer của trang public.",
     "manageSecrets": "Thêm, xem và xóa các secret admin được lưu an toàn.",
     "secretsHelp": "Secret được mã hóa khi lưu và chỉ hiển thị dưới dạng ẩn danh.",
     "secretEncryptedHint": "Token được lưu dạng mã hóa và không bao giờ hiển thị lại trong UI.",

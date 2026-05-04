@@ -5,6 +5,12 @@ import { requireApiPermission } from "../../../../lib/rbac/guards";
 export const prerender = false;
 
 const TEMPLATE_PATHS = new Set(["header", "navbar", "page", "posts", "footer"]);
+const TEMPLATE_COLUMN_BY_KIND = {
+	footer: "footer_template_html",
+	header: "header_template_html",
+	page: "page_template_html",
+	posts: "blog_feed_template_html",
+} as const;
 
 export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 	const template = params.template ?? "footer";
@@ -27,7 +33,6 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 		const rawTemplate = formData.get("templateHtml");
 		const templateHtml = typeof rawTemplate === "string" ? rawTemplate : "";
 		const db = getDb(locals);
-
 		if (normalizedTemplate === "footer") {
 			await db
 				.prepare(
@@ -39,35 +44,14 @@ export const POST: APIRoute = async ({ locals, request, redirect, params }) => {
 				)
 				.bind(templateHtml)
 				.run();
-		} else if (normalizedTemplate === "header") {
+		} else {
+			const column = TEMPLATE_COLUMN_BY_KIND[normalizedTemplate];
 			await db
 				.prepare(
-					`INSERT INTO site_settings (id, header_template_html)
+					`INSERT INTO site_settings (id, ${column})
 					VALUES (1, ?1)
 					ON CONFLICT(id) DO UPDATE SET
-						header_template_html = excluded.header_template_html,
-						updated_at = CURRENT_TIMESTAMP`,
-				)
-				.bind(templateHtml)
-				.run();
-		} else if (normalizedTemplate === "page") {
-			await db
-				.prepare(
-					`INSERT INTO site_settings (id, page_template_html)
-					VALUES (1, ?1)
-					ON CONFLICT(id) DO UPDATE SET
-						page_template_html = excluded.page_template_html,
-						updated_at = CURRENT_TIMESTAMP`,
-				)
-				.bind(templateHtml)
-				.run();
-		} else if (normalizedTemplate === "posts") {
-			await db
-				.prepare(
-					`INSERT INTO site_settings (id, blog_feed_template_html)
-					VALUES (1, ?1)
-					ON CONFLICT(id) DO UPDATE SET
-						blog_feed_template_html = excluded.blog_feed_template_html,
+						${column} = excluded.${column},
 						updated_at = CURRENT_TIMESTAMP`,
 				)
 				.bind(templateHtml)
