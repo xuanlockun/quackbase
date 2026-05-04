@@ -3,7 +3,6 @@ export const prerender = false;
 
 import BlogPost from '../layouts/BlogPost.astro';
 import CmsPageSections from '../components/CmsPageSections.astro';
-import HomeShowcaseSections from '../components/HomeShowcaseSections.astro';
 import { getDb, getPublishedPageBySlug, getSiteConfig } from '../lib/blog';
 import { getUiTranslations } from '../lib/i18n';
 
@@ -43,7 +42,6 @@ if (!page) {
 				blogFeedTemplateHtml={config?.blogFeedTemplateHtml}
 				currentLanguage={language}
 			/>
-			<HomeShowcaseSections />
 		</BlogPost>
 	) : (
 		<BlogPost

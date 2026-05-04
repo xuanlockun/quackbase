@@ -45,9 +45,7 @@ const contentTranslations = {
 	[def]: "# New page",
 	...(page?.contentTranslations ?? {}),
 };
-const initialSections: PageSectionConfig[] = [...(page?.pageSections ?? [])]
-	.sort((left, right) => left.order - right.order)
-	.filter((section, index, sections) => sections.findIndex((entry) => entry.type === section.type) === index);
+const initialSections: PageSectionConfig[] = [...(page?.pageSections ?? [])].sort((left, right) => left.order - right.order);
 if (!initialSections.some((section) => section.type === "page_content")) {
 	initialSections.unshift({ type: "page_content", order: 1 });
 }
@@ -222,6 +220,9 @@ const initialContactFields = [];
 								<button type="button" class="admin-editor-tool" data-editor-snippet="> Quote" disabled={isDisabled}>Quote</button>
 							</div>
 							<p class="admin-editor-help mb-0">Markdown is stored as entered. Use quick shortcuts to format content while keeping the current content model unchanged.</p>
+							<p class="admin-editor-help mb-0">
+								Custom blocks: <code>::: logo-grid</code> for client/partner logos and <code>::: showcase-split</code> for text + image sections.
+							</p>
 							<textarea class="form-control admin-editor-textarea" data-content-input={languageOption.code} rows="14" disabled={isDisabled}
 							>{contentTranslations[languageOption.code] ?? (languageOption.code === def ? "# New page" : "")}</textarea
 							>
@@ -550,6 +551,7 @@ const initialContactFields = [];
 	.page-sections-actions select {
 		min-width: 200px;
 	}
+
 
 	.banner-picker-panel {
 		display: grid;

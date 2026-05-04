@@ -291,7 +291,11 @@ export interface SitePage {
 	resolvedLanguage: string;
 }
 
-export type PageSectionType = "page_content" | "blog_feed" | "banner_slider" | "contact_form";
+export type PageSectionType =
+	| "page_content"
+	| "blog_feed"
+	| "banner_slider"
+	| "contact_form";
 
 export interface PageSectionConfig {
 	type: PageSectionType;
@@ -366,6 +370,26 @@ function renderStructuredMarkdown(markdown: string): string {
 			}
 		}
 
+		if (!inFence && isLogoGridBlockStart(trimmed)) {
+			const block = parseLogoGridBlock(lines, index);
+			if (block) {
+				flushMarkdownBuffer();
+				segments.push(block.html);
+				index = block.nextIndex;
+				continue;
+			}
+		}
+
+		if (!inFence && isShowcaseSplitBlockStart(trimmed)) {
+			const block = parseShowcaseSplitBlock(lines, index);
+			if (block) {
+				flushMarkdownBuffer();
+				segments.push(block.html);
+				index = block.nextIndex;
+				continue;
+			}
+		}
+
 		markdownBuffer.push(line);
 	}
 
@@ -385,12 +409,29 @@ function renderMarkdownChunk(markdown: string): string {
 	});
 }
 
+function escapeHtml(value: string): string {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
 function isFenceLine(trimmedLine: string): boolean {
 	return trimmedLine.startsWith("```") || trimmedLine.startsWith("~~~");
 }
 
 function isColumnsBlockStart(trimmedLine: string): boolean {
 	return /^:::\s*columns(?:\s|$)/i.test(trimmedLine);
+}
+
+function isLogoGridBlockStart(trimmedLine: string): boolean {
+	return /^:::\s*logo-grid(?:\s|$)/i.test(trimmedLine);
+}
+
+function isShowcaseSplitBlockStart(trimmedLine: string): boolean {
+	return /^:::\s*showcase-split(?:\s|$)/i.test(trimmedLine);
 }
 
 function isColumnBlockStart(trimmedLine: string): boolean {
@@ -469,6 +510,142 @@ function renderColumnsBlock(columns: string[]): string {
 		.join("");
 
 	return `<div class="cms-columns" style="--cms-columns-count: ${columnCount};" data-cms-columns-count="${columnCount}">${renderedColumns}</div>`;
+}
+
+function parseLogoGridBlock(
+	lines: string[],
+	startIndex: number,
+): { html: string; nextIndex: number } | null {
+	const metadata = new Map<string, string>();
+	const items: string[] = [];
+
+	for (let index = startIndex + 1; index < lines.length; index += 1) {
+		const line = lines[index];
+		const trimmed = line.trim();
+
+		if (isBlockClose(trimmed)) {
+			return {
+				html: renderLogoGridMarkdownBlock({
+					eyebrow: metadata.get("eyebrow") ?? "",
+					title: metadata.get("title") ?? "",
+					body: metadata.get("body") ?? "",
+					items,
+				}),
+				nextIndex: index,
+			};
+		}
+
+		if (!trimmed) {
+			continue;
+		}
+
+		const metadataMatch = trimmed.match(/^(eyebrow|title|body)\s*:\s*(.+)$/i);
+		if (metadataMatch) {
+			metadata.set(metadataMatch[1].toLowerCase(), metadataMatch[2].trim());
+			continue;
+		}
+
+		const itemMatch = trimmed.match(/^-\s+(.+)$/);
+		if (itemMatch) {
+			items.push(itemMatch[1].trim());
+			continue;
+		}
+
+		return null;
+	}
+
+	return null;
+}
+
+function renderLogoGridMarkdownBlock(input: {
+	eyebrow: string;
+	title: string;
+	body: string;
+	items: string[];
+}): string {
+	if (input.items.length === 0) {
+		return "";
+	}
+
+	const headerHtml =
+		input.eyebrow || input.title || input.body
+			? `<div class="logo-grid-header">
+				${input.eyebrow ? `<p class="site-eyebrow mb-2">${escapeHtml(input.eyebrow)}</p>` : ""}
+				${input.title ? `<h2 class="logo-grid-title">${escapeHtml(input.title)}</h2>` : ""}
+				${input.body ? `<p class="logo-grid-body mb-0">${escapeHtml(input.body)}</p>` : ""}
+			</div>`
+			: "";
+	const itemsHtml = input.items
+		.map(
+			(imageUrl) => `<div class="logo-grid-item">
+				<img src="${escapeHtml(imageUrl)}" alt="" loading="lazy" />
+			</div>`,
+		)
+		.join("");
+
+	return `<section class="logo-grid-section"><div class="logo-grid-shell">${headerHtml}<div class="logo-grid-list">${itemsHtml}</div></div></section>`;
+}
+
+function parseShowcaseSplitBlock(
+	lines: string[],
+	startIndex: number,
+): { html: string; nextIndex: number } | null {
+	const metadata = new Map<string, string>();
+
+	for (let index = startIndex + 1; index < lines.length; index += 1) {
+		const line = lines[index];
+		const trimmed = line.trim();
+
+		if (isBlockClose(trimmed)) {
+			return {
+				html: renderShowcaseSplitMarkdownBlock({
+					eyebrow: metadata.get("eyebrow") ?? "",
+					title: metadata.get("title") ?? "",
+					body: metadata.get("body") ?? "",
+					imageUrl: metadata.get("image") ?? "",
+					imageAlt: metadata.get("alt") ?? "",
+				}),
+				nextIndex: index,
+			};
+		}
+
+		if (!trimmed) {
+			continue;
+		}
+
+		const metadataMatch = trimmed.match(/^(eyebrow|title|body|image|alt)\s*:\s*(.+)$/i);
+		if (metadataMatch) {
+			metadata.set(metadataMatch[1].toLowerCase(), metadataMatch[2].trim());
+			continue;
+		}
+
+		return null;
+	}
+
+	return null;
+}
+
+function renderShowcaseSplitMarkdownBlock(input: {
+	eyebrow: string;
+	title: string;
+	body: string;
+	imageUrl: string;
+	imageAlt: string;
+}): string {
+	if (!input.title && !input.body && !input.imageUrl) {
+		return "";
+	}
+
+	return `<section class="showcase-split-section">
+		<div class="showcase-split-shell">
+			<div class="showcase-split-copy">
+				${input.eyebrow ? `<p class="site-eyebrow mb-2">${escapeHtml(input.eyebrow)}</p>` : ""}
+				${input.title ? `<h2 class="showcase-split-title">${escapeHtml(input.title)}</h2>` : ""}
+				${input.body ? `<p class="showcase-split-body mb-0">${escapeHtml(input.body)}</p>` : ""}
+			</div>
+			${input.imageUrl ? `<div class="showcase-split-media"><img src="${escapeHtml(input.imageUrl)}" alt="${escapeHtml(input.imageAlt || input.title)}" loading="lazy" /></div>` : ""}
+		</div>
+	</section>`;
 }
 
 export { getDefaultLanguage, getSupportedLanguages, getLocalizedPagePath, getLocalizedPostPath } from "./i18n";
