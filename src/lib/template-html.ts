@@ -1,14 +1,14 @@
 const TEMPLATE_PLACEHOLDER_PATTERN = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g;
 
-export const DEFAULT_HEADER_TEMPLATE_HTML = `<header class="bg-white border-bottom shadow-sm">
+export const DEFAULT_HEADER_TEMPLATE_HTML = `<header class="site-navbar-shell">
   <div class="container-fluid px-3 px-lg-4">
-    <nav class="navbar navbar-expand-lg py-2">
-      <div class="container-fluid px-0">
+    <nav class="navbar navbar-expand-lg site-navbar-bar">
+      <div class="container-fluid px-0 align-items-center gap-3">
         {{brand}}
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler site-navbar-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse w-100" id="mainNavbar">
+        <div class="collapse navbar-collapse w-100 site-navbar-collapse" id="mainNavbar">
           {{navigation}}
         </div>
       </div>
@@ -16,18 +16,19 @@ export const DEFAULT_HEADER_TEMPLATE_HTML = `<header class="bg-white border-bott
   </div>
 </header>`;
 
-export const DEFAULT_NAVIGATION_TEMPLATE_HTML = `<div class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center w-100 gap-lg-3">
-  <ul class="navbar-nav flex-grow-1 justify-content-lg-center mb-3 mb-lg-0 gap-lg-1">
+export const DEFAULT_NAVIGATION_TEMPLATE_HTML = `<div class="site-nav-layout d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center w-100 gap-lg-3">
+  <ul class="navbar-nav site-nav-list flex-grow-1 justify-content-lg-center mb-3 mb-lg-0 gap-lg-1">
     {{navItems}}
   </ul>
-  <div class="d-flex align-items-center justify-content-lg-end mt-3 mt-lg-0 flex-shrink-0">
+  <div class="site-nav-actions d-flex align-items-center justify-content-lg-end mt-3 mt-lg-0 flex-shrink-0">
     {{languageSwitch}}
   </div>
 </div>`;
 
 export const DEFAULT_BLOG_FEED_TEMPLATE_HTML = `<section class="blog-feed-section mb-5">
-  <div class="mb-3">
-    <h2 class="h4 mb-0">{{heading}}</h2>
+  <div class="blog-feed-heading">
+    <p class="blog-feed-kicker mb-2">Journal</p>
+    <h2 class="blog-feed-heading-title mb-0">{{heading}}</h2>
   </div>
   {{posts}}
 </section>`;

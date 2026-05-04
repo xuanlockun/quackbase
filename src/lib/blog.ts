@@ -17,7 +17,7 @@ function catalogOrFallback(catalog?: LanguageCatalogState): LanguageCatalogState
 	return catalog ?? FALLBACK_LANGUAGE_CATALOG;
 }
 
-export const DEFAULT_PAGE_TEMPLATE_HTML = `<section class="page-shell">{{content}}</section>`;
+export const DEFAULT_PAGE_TEMPLATE_HTML = `<section class="page-shell"><div class="page-shell__inner">{{content}}</div></section>`;
 
 export interface BlogPostRecord {
 	id: number;

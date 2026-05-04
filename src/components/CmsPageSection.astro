@@ -1,5 +1,5 @@
 ---
-import { getLocalizedPostPath, type PageSectionConfig } from "../lib/blog";
+import { DEFAULT_PAGE_TEMPLATE_HTML, getLocalizedPostPath, type PageSectionConfig } from "../lib/blog";
 import type { BannerRecord } from "../lib/banners";
 import type { ContactFormField } from "../lib/forms";
 import type { ContactFormRecord } from "../lib/contact-forms";
@@ -37,8 +37,6 @@ interface BannerSlide {
 	altText?: string;
 	linkUrl?: string;
 }
-
-const DEFAULT_PAGE_TEMPLATE_HTML = `<section class="page-shell">{{content}}</section>`;
 
 const {
 	section,

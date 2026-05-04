@@ -54,7 +54,7 @@ const templateMeta = {
 		label: t("nav.footer"),
 		description: t("messages.templateFooterHelp", "Edit the raw HTML used for the public footer. Use {{footerText}} and {{year}} for dynamic content."),
 		value: (config) => config.footerTemplateHtml,
-		defaultHtml: `<footer>&copy; {{year}} {{footerText}}</footer>`,
+		defaultHtml: `<footer class="site-footer-fallback"><div class="site-footer-fallback__eyebrow">Edge CMS</div><div class="site-footer-fallback__body"><p class="site-footer-fallback__copy mb-0">{{footerText}}</p><p class="site-footer-fallback__meta mb-0">&copy; {{year}}</p></div>{{socialLinks}}</footer>`,
 	},
 } as const;
 
@@ -92,19 +92,20 @@ function renderTemplatePreview(
 			const navigationSource = config.headerTemplateHtml.trim()
 				? DEFAULT_NAVIGATION_TEMPLATE_HTML
 				: config.navbarTemplateHtml.trim() || DEFAULT_NAVIGATION_TEMPLATE_HTML;
-			return renderTemplateHtml(source, {
+			const renderedHeader = renderTemplateHtml(source, {
 				brand: buildBrandHtml(config.siteTitle, config.logoUrl),
 				navigation: buildNavigationHtml(config.navItems, navigationSource),
 				navItems: buildNavItemsHtml(config.navItems),
 				languageSwitch: buildLanguageSwitchHtml(),
 			});
+			return `<div class="site-header" style="--site-header-background:${escapeHtml(config.headerBackground)};--site-header-text:${escapeHtml(config.headerTextColor)};--site-header-accent:${escapeHtml(config.headerAccentColor)};">${renderedHeader}</div>`;
 		}
 		case "footer":
-			return renderTemplateHtml(source, {
+			return `<div class="site-footer-shell" style="--site-footer-background:${escapeHtml(config.footerBackground)};--site-footer-text:${escapeHtml(config.footerTextColor)};">${renderTemplateHtml(source, {
 				footerText: escapeHtml(config.footerText),
 				year: String(new Date().getFullYear()),
 				socialLinks: buildSocialLinksHtml(),
-			});
+			})}</div>`;
 		case "posts":
 			return renderTemplateHtml(source, {
 				heading: t("messages.templateLatestPosts", "Latest posts"),
