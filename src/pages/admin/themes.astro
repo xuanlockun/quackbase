@@ -1,0 +1,293 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import FeedbackModal from "../../components/admin/FeedbackModal.astro";
+import { getDb, getSiteConfig } from "../../lib/blog";
+import { getUiTranslations } from "../../lib/i18n";
+import { SITE_THEME_PRESETS } from "../../lib/site-themes";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const { t, localizeAdminHref } = getUiTranslations(Astro);
+const db = getDb(Astro.locals);
+
+let currentThemeKey = SITE_THEME_PRESETS[0]?.key ?? "classic";
+let loadError = "";
+
+try {
+	const siteConfig = await getSiteConfig(db);
+	currentThemeKey = siteConfig.themeKey;
+} catch (error) {
+	loadError = error instanceof Error ? error.message : t("messages.failedToLoadSiteSettings");
+}
+
+const themeFeedback = [
+	["themeSaved", { title: t("messages.themeSavedTitle", "Theme saved"), message: t("messages.themeSaved", "Theme applied successfully."), tone: "success" }],
+	["themeError", { title: t("messages.themeErrorTitle", "Theme failed"), message: t("messages.themeSaveFailed", "Theme could not be applied."), tone: "error" }],
+] as const;
+---
+
+<AdminLayout
+	title={t("nav.themes", "Themes")}
+	description={t("messages.manageThemes", "Choose a ready-made site theme, then customize templates only when needed.")}
+	session={session}
+	pageTitle={t("nav.themes", "Themes")}
+	pageDescription={t("messages.themePageIntro", "Start from a preset theme so switching the public look is faster and easier for editors.")}
+>
+	<FeedbackModal id="admin-theme-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
+	<div class="admin-content-stack">
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
+
+		<section class="admin-utility-panel theme-page-intro">
+			<div>
+				<p class="admin-page-eyebrow mb-1">{t("nav.themes", "Themes")}</p>
+				<h2 class="h5 mb-1">{t("messages.themePageHeading", "Preset themes for the public site")}</h2>
+				<p class="admin-inline-muted mb-0">{t("messages.themePageHelp", "Each theme updates the main public templates and color system together. You can still fine-tune the raw templates afterwards if needed.")}</p>
+			</div>
+			<a class="btn btn-outline-secondary" href={localizeAdminHref("/admin/templates")}>
+				{t("actions.openTemplateEditor", "Open template editor")}
+			</a>
+		</section>
+
+		<section class="theme-grid" aria-label={t("messages.themeGalleryLabel", "Theme gallery")}>
+			{
+				SITE_THEME_PRESETS.map((theme) => {
+					const isActive = theme.key === currentThemeKey;
+					return (
+						<article class:list={["theme-card admin-form-surface", isActive && "theme-card-active"]}>
+							<div
+								class="theme-preview"
+								style={`--theme-preview-surface:${theme.preview.surface};--theme-preview-accent:${theme.preview.accent};--theme-preview-text:${theme.preview.text};`}
+								aria-hidden="true"
+							>
+								<div class="theme-preview-browser">
+									<div class="theme-preview-toolbar">
+										<span></span>
+										<span></span>
+										<span></span>
+									</div>
+									<div class="theme-preview-header"></div>
+									<div class="theme-preview-hero">
+										<div class="theme-preview-kicker"></div>
+										<div class="theme-preview-title"></div>
+										<div class="theme-preview-copy"></div>
+									</div>
+									<div class="theme-preview-grid">
+										<div></div>
+										<div></div>
+										<div></div>
+									</div>
+								</div>
+							</div>
+
+							<div class="theme-card-body">
+								<div class="theme-card-heading">
+									<div>
+										<h3 class="h5 mb-1">{theme.name}</h3>
+										<p class="admin-inline-muted mb-0">{theme.description}</p>
+									</div>
+									{isActive && <span class="badge text-bg-primary">{t("labels.currentTheme", "Current")}</span>}
+								</div>
+
+								<div class="theme-chip-row" aria-label={t("messages.themeColorPaletteLabel", "Theme color palette")}>
+									<span class="theme-chip" style={`--theme-chip:${theme.headerBackground};`}></span>
+									<span class="theme-chip" style={`--theme-chip:${theme.headerAccentColor};`}></span>
+									<span class="theme-chip" style={`--theme-chip:${theme.footerBackground};`}></span>
+								</div>
+
+								<form method="post" action="/api/admin/theme" class="theme-card-actions">
+									<input type="hidden" name="themeKey" value={theme.key} />
+									<input type="hidden" name="successRedirectTo" value="/admin/themes?themeSaved=1" />
+									<input type="hidden" name="errorRedirectTo" value="/admin/themes?themeError=1" />
+									<button class:list={["btn", isActive ? "btn-outline-secondary" : "btn-primary"]} type="submit" disabled={Boolean(loadError) || isActive}>
+										{isActive ? t("actions.currentTheme", "Currently applied") : t("actions.applyTheme", "Apply theme")}
+									</button>
+								</form>
+							</div>
+						</article>
+					);
+				})
+			}
+		</section>
+	</div>
+</AdminLayout>
+
+<script type="module" define:vars={{ loadError, themeFeedback }}>
+	const showFeedbackModal = window.showAdminFeedbackModal;
+
+	const showModal = (title, message, detail = "", tone = "info") => {
+		if (typeof showFeedbackModal === "function") {
+			showFeedbackModal({ title, message, detail, tone });
+		}
+	};
+
+	const search = new URLSearchParams(window.location.search);
+	for (const [key, entry] of themeFeedback) {
+		if (search.has(key)) {
+			const message = search.get(key) || entry.message;
+			showModal(entry.title, message, "", entry.tone);
+			window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+			break;
+		}
+	}
+
+	if (loadError) {
+		showModal("Theme load failed", loadError, "", "error");
+	}
+</script>
+
+<style>
+	.theme-page-intro {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.theme-grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1rem;
+	}
+
+	.theme-card {
+		overflow: hidden;
+		padding: 0;
+	}
+
+	.theme-card-active {
+		border-color: color-mix(in srgb, var(--accent, #1f6feb) 34%, rgba(15, 23, 42, 0.14));
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent, #1f6feb) 18%, transparent);
+	}
+
+	.theme-preview {
+		padding: 1rem;
+		background:
+			linear-gradient(135deg, color-mix(in srgb, var(--theme-preview-surface) 86%, white) 0%, #ffffff 100%);
+		border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+	}
+
+	.theme-preview-browser {
+		padding: 0.75rem;
+		border-radius: 1rem;
+		background: #fff;
+		box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+	}
+
+	.theme-preview-toolbar {
+		display: flex;
+		gap: 0.3rem;
+		margin-bottom: 0.65rem;
+	}
+
+	.theme-preview-toolbar span {
+		width: 0.55rem;
+		height: 0.55rem;
+		border-radius: 999px;
+		background: rgba(148, 163, 184, 0.6);
+	}
+
+	.theme-preview-header,
+	.theme-preview-kicker,
+	.theme-preview-title,
+	.theme-preview-copy,
+	.theme-preview-grid > div {
+		border-radius: 999px;
+	}
+
+	.theme-preview-header {
+		height: 0.95rem;
+		margin-bottom: 1rem;
+		background: var(--theme-preview-text);
+		opacity: 0.9;
+	}
+
+	.theme-preview-hero {
+		display: grid;
+		gap: 0.45rem;
+		margin-bottom: 0.9rem;
+	}
+
+	.theme-preview-kicker {
+		width: 32%;
+		height: 0.45rem;
+		background: var(--theme-preview-accent);
+	}
+
+	.theme-preview-title {
+		width: 70%;
+		height: 0.8rem;
+		background: var(--theme-preview-text);
+	}
+
+	.theme-preview-copy {
+		width: 54%;
+		height: 0.6rem;
+		background: color-mix(in srgb, var(--theme-preview-text) 45%, white);
+	}
+
+	.theme-preview-grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.55rem;
+	}
+
+	.theme-preview-grid > div {
+		height: 4rem;
+		background: color-mix(in srgb, var(--theme-preview-accent) 24%, white);
+	}
+
+	.theme-card-body {
+		display: grid;
+		gap: 0.95rem;
+		padding: 1rem;
+	}
+
+	.theme-card-heading {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
+	.theme-chip-row {
+		display: flex;
+		gap: 0.45rem;
+	}
+
+	.theme-chip {
+		width: 1.4rem;
+		height: 1.4rem;
+		border-radius: 999px;
+		border: 1px solid rgba(15, 23, 42, 0.1);
+		background: var(--theme-chip);
+	}
+
+	.theme-card-actions {
+		display: flex;
+	}
+
+	.theme-card-actions .btn {
+		width: 100%;
+	}
+
+	@media (max-width: 1100px) {
+		.theme-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	@media (max-width: 720px) {
+		.theme-page-intro {
+			flex-direction: column;
+		}
+
+		.theme-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

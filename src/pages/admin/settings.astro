@@ -21,6 +21,7 @@ let siteConfig = {
 	siteTitle: SITE_TITLE,
 	faviconUrl: "/favicon.svg",
 	logoUrl: "",
+	themeKey: "classic",
 	mediaStorageSettings: {
 		s3Endpoint: "",
 		s3Bucket: "",
@@ -170,6 +171,7 @@ const settingsFeedback = [
 					<form method="post" action="/api/admin/site" class="admin-form-shell admin-compact-form mb-0">
 						<input type="hidden" name="successRedirectTo" value="/admin/settings?siteSaved=1" />
 						<input type="hidden" name="errorRedirectTo" value="/admin/settings?siteError=1" />
+						<input type="hidden" name="themeKey" value={siteConfig.themeKey} />
 						<div class="admin-grid-two">
 							<label><span>{t("labels.siteTitle")}</span><input class="form-control" name="siteTitle" value={siteConfig.siteTitle} placeholder={SITE_TITLE} disabled={formDisabled} /></label>
 							<label><span>{t("labels.faviconUrl")}</span><input class="form-control" name="faviconUrl" value={siteConfig.faviconUrl} placeholder="/favicon.svg" disabled={formDisabled} /></label>

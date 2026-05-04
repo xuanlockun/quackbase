@@ -172,8 +172,8 @@ const statCards = [
 const quickActions = [
 	{ label: t("actions.createPost"), href: "/admin/posts/new" },
 	{ label: t("actions.createPage"), href: "/admin/pages/new" },
+	{ label: t("nav.themes", "Themes"), href: "/admin/themes" },
 	{ label: t("nav.template"), href: "/admin/templates" },
-	{ label: t("nav.settings"), href: "/admin/settings" },
 ];
 
 const setupSteps = [
@@ -184,9 +184,9 @@ const setupSteps = [
 		indexLabel: "01",
 	},
 	{
-		title: t("nav.template"),
-		description: t("messages.dashboardSetupTemplate", "Adjust the neutral public shell in this order: header, page, posts, then footer."),
-		href: localizeAdminHref("/admin/templates"),
+		title: t("nav.themes", "Themes"),
+		description: t("messages.dashboardSetupTheme", "Pick the closest preset first, then fine-tune templates only if you need a custom layout."),
+		href: localizeAdminHref("/admin/themes"),
 		indexLabel: "02",
 	},
 	{
@@ -270,9 +270,13 @@ const chevronIcon = `
 			<div class="dashboard-panel admin-utility-panel">
 				<h3 class="h5 mb-0">{t("nav.template")}</h3>
 				<p class="dashboard-panel-copy">
-					{t("messages.dashboardTemplateHelp", "Edit the raw HTML shell for the public header, page wrapper, posts section, and footer.")}
+					{t("messages.dashboardTemplateHelp", "Pick a preset theme for the public site, then edit the raw templates only when you need deeper customization.")}
 				</p>
 				<div class="dashboard-links">
+					<a class="dashboard-action-link" href={localizeAdminHref("/admin/themes")}>
+						<span>{t("nav.themes", "Themes")}</span>
+						<span class="dashboard-action-icon" aria-hidden="true" set:html={chevronIcon}></span>
+					</a>
 					<a class="dashboard-action-link" href={localizeAdminHref("/admin/templates")}>
 						<span>{t("nav.template")}</span>
 						<span class="dashboard-action-icon" aria-hidden="true" set:html={chevronIcon}></span>

@@ -2,6 +2,7 @@
 import BaseHead from "../../components/BaseHead.astro";
 import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
+import { getDb, getSiteConfig } from "../../lib/blog";
 import "../../styles/site-theme.css";
 
 interface Props {
@@ -21,6 +22,14 @@ const {
 	bodyClass = "bg-body site-app",
 	mainClass = "site-main",
 } = Astro.props;
+
+let siteThemeKey = "classic";
+
+try {
+	siteThemeKey = (await getSiteConfig(getDb(Astro.locals))).themeKey;
+} catch {
+	siteThemeKey = "classic";
+}
 ---
 
 <html lang={lang}>
@@ -28,7 +37,7 @@ const {
 		<BaseHead title={title} description={description} faviconHref={faviconHref} />
 	</head>
 
-	<body class={bodyClass}>
+	<body class={bodyClass} data-site-theme={siteThemeKey}>
 		<Header />
 		<main class={mainClass}>
 			<slot />

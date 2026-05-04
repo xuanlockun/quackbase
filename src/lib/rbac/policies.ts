@@ -14,6 +14,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 	{ href: "/admin/banners", labelKey: "nav.banners", permissions: ["banners.read"] },
 	{ href: "/admin/contact-forms", labelKey: "nav.contactForms", permissions: ["contactForms.read"] },
 	{ href: "/admin/backup", labelKey: "nav.backup", permissions: ["site.manage"] },
+	{ href: "/admin/themes", labelKey: "nav.themes", permissions: ["site.manage"] },
 	{ href: "/admin/templates", labelKey: "nav.template", permissions: ["site.manage"] },
 	{ href: "/admin/footer", labelKey: "nav.footer", permissions: ["site.manage"] },
 	{ href: "/admin/settings", labelKey: "nav.settings", permissions: ["site.manage"] },
@@ -30,6 +31,7 @@ const ADMIN_PAGE_POLICIES = new Map<string, string[]>([
 	["/admin/banners", ["banners.read"]],
 	["/admin/contact-forms", ["contactForms.read"]],
 	["/admin/backup", ["site.manage"]],
+	["/admin/themes", ["site.manage"]],
 	["/admin/footer", ["site.manage"]],
 	["/admin/templates", ["site.manage"]],
 	["/admin/templates/header", ["site.manage"]],
@@ -92,6 +94,10 @@ export function getRequiredAdminPagePermissions(pathname: string): string[] | nu
 	}
 
 	if (pathname === "/admin/templates") {
+		return ["site.manage"];
+	}
+
+	if (pathname === "/admin/themes") {
 		return ["site.manage"];
 	}
 

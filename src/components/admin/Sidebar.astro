@@ -75,6 +75,14 @@ const navIconMap: Record<string, string> = {
 			<path d="M12 17.7v2.4" />
 		</svg>
 	`,
+	"nav.themes": `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M12 4c-4.418 0-8 3.358-8 7.5C4 15.09 6.91 18 10.5 18H12a2 2 0 0 0 0-4h-.5a2.5 2.5 0 0 1 0-5H20" />
+			<circle cx="7.5" cy="10" r="1" />
+			<circle cx="10.5" cy="7.5" r="1" />
+			<circle cx="15.5" cy="7.5" r="1" />
+		</svg>
+	`,
 	"nav.users": `
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 			<circle cx="12" cy="8" r="3" />
@@ -108,9 +116,12 @@ const navIconMap: Record<string, string> = {
 };
 
 const navIconHtml = (key: string) => navIconMap[key] ?? navIconMap["default"];
+const navLabelFallbacks: Record<string, string> = {
+	"nav.themes": "Themes",
+};
 const sectionConfig = [
 	{ title: null, labelKeys: ["nav.dashboard", "nav.posts", "nav.pages", "nav.media", "nav.banners", "nav.contactForms"] },
-	{ title: "Design", labelKeys: ["nav.template"] },
+	{ title: "Design", labelKeys: ["nav.themes", "nav.template"] },
 	{ title: "Management", labelKeys: ["nav.users", "nav.roles"] },
 	{ title: "Settings", labelKeys: ["nav.backup", "nav.settings", "nav.languages"] },
 ];
@@ -163,7 +174,7 @@ function isActiveLink(href: string, currentPath: string): boolean {
 									<span class="d-inline-flex align-items-center justify-content-center flex-shrink-0 admin-sidebar-icon-wrap">
 										<span aria-hidden="true" set:html={navIconHtml(link.labelKey)}></span>
 									</span>
-									<span>{t(link.labelKey)}</span>
+									<span>{t(link.labelKey, navLabelFallbacks[link.labelKey])}</span>
 								</a>
 							))
 						}

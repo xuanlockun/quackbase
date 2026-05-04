@@ -17,6 +17,7 @@ import {
 	DEFAULT_SITE_TITLE,
 	DEFAULT_TEMPLATE_THEME,
 } from "./site-defaults";
+import { DEFAULT_SITE_THEME_KEY, getSiteThemePreset } from "./site-themes";
 import { DEFAULT_BLOG_FEED_TEMPLATE_HTML } from "./template-html";
 import { normalizePayloadOrder } from "./ui-table-order";
 
@@ -220,6 +221,7 @@ export interface SiteConfig {
 	homePageSlug: string;
 	faviconUrl: string;
 	logoUrl: string;
+	themeKey: string;
 	captchaEnabled: boolean;
 	captchaSiteKey: string;
 	captchaSecretKey: string;
@@ -700,7 +702,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 
 	const settings = await db
 		.prepare(
-			`SELECT site_title, home_page_slug, favicon_url, logo_url, captcha_enabled, captcha_site_key, captcha_secret_key, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, media_s3_access_key_id, media_s3_secret_access_key, media_s3_region, media_s3_force_path_style, smtp_host, smtp_port, smtp_username, smtp_password, smtp_encryption, smtp_from_email, smtp_from_name, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html, nav_items
+			`SELECT site_title, home_page_slug, favicon_url, logo_url, theme_key, captcha_enabled, captcha_site_key, captcha_secret_key, media_s3_endpoint, media_s3_bucket, media_s3_public_base_url, media_s3_access_key_id, media_s3_secret_access_key, media_s3_region, media_s3_force_path_style, smtp_host, smtp_port, smtp_username, smtp_password, smtp_encryption, smtp_from_email, smtp_from_name, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html, nav_items
 			FROM site_settings
 			WHERE id = 1`,
 		)
@@ -709,6 +711,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			home_page_slug: string;
 			favicon_url: string;
 			logo_url: string;
+			theme_key: string;
 			captcha_enabled: string;
 			captcha_site_key: string;
 			captcha_secret_key: string;
@@ -790,6 +793,7 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 		homePageSlug: settings?.home_page_slug ?? DEFAULT_HOME_PAGE_SLUG,
 		faviconUrl: settings?.favicon_url ?? DEFAULT_FAVICON_URL,
 		logoUrl: settings?.logo_url ?? "",
+		themeKey: getSiteThemePreset(settings?.theme_key ?? DEFAULT_SITE_THEME_KEY).key,
 		captchaEnabled: parseBooleanSetting(settings?.captcha_enabled, false),
 		captchaSiteKey: settings?.captcha_site_key ?? "",
 		captchaSecretKey: settings?.captcha_secret_key ?? "",
@@ -909,26 +913,89 @@ export async function saveSiteSettings(
 		siteTitle: string;
 		faviconUrl: string;
 		logoUrl: string;
+		themeKey?: string;
 	},
 ): Promise<void> {
 	await ensureSiteTables(db);
+	const themeKey = getSiteThemePreset(input.themeKey).key;
 
 	await db
 		.prepare(
-			`INSERT INTO site_settings (id, site_title, favicon_url, logo_url, updated_at)
-			VALUES (1, ?1, ?2, ?3, CURRENT_TIMESTAMP)
+			`INSERT INTO site_settings (id, site_title, favicon_url, logo_url, theme_key, updated_at)
+			VALUES (1, ?1, ?2, ?3, ?4, CURRENT_TIMESTAMP)
 			ON CONFLICT(id) DO UPDATE SET
 				site_title = excluded.site_title,
 				favicon_url = excluded.favicon_url,
 				logo_url = excluded.logo_url,
+				theme_key = excluded.theme_key,
 				updated_at = CURRENT_TIMESTAMP`,
 		)
 		.bind(
 			input.siteTitle.trim(),
 			normalizeFaviconUrl(input.faviconUrl),
-		normalizeLogoUrl(input.logoUrl),
-	)
-	.run();
+			normalizeLogoUrl(input.logoUrl),
+			themeKey,
+		)
+		.run();
+}
+
+export interface SiteThemeSelectionInput {
+	themeKey: string;
+}
+
+export async function saveSiteThemeSelection(db: D1Database, input: SiteThemeSelectionInput): Promise<void> {
+	await ensureSiteTables(db);
+	const theme = getSiteThemePreset(input.themeKey);
+
+	await db.batch([
+		db
+			.prepare(
+				`INSERT INTO site_settings (
+					id,
+					theme_key,
+					header_background,
+					header_text_color,
+					header_accent_color,
+					header_template_html,
+					navbar_template_html,
+					page_template_html,
+					blog_feed_template_html,
+					updated_at
+				)
+				VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, CURRENT_TIMESTAMP)
+				ON CONFLICT(id) DO UPDATE SET
+					theme_key = excluded.theme_key,
+					header_background = excluded.header_background,
+					header_text_color = excluded.header_text_color,
+					header_accent_color = excluded.header_accent_color,
+					header_template_html = excluded.header_template_html,
+					navbar_template_html = excluded.navbar_template_html,
+					page_template_html = excluded.page_template_html,
+					blog_feed_template_html = excluded.blog_feed_template_html,
+					updated_at = CURRENT_TIMESTAMP`,
+			)
+			.bind(
+				theme.key,
+				theme.headerBackground,
+				theme.headerTextColor,
+				theme.headerAccentColor,
+				theme.headerTemplateHtml,
+				theme.navbarTemplateHtml,
+				theme.pageTemplateHtml,
+				theme.blogFeedTemplateHtml,
+			),
+		db
+			.prepare(
+				`INSERT INTO footer_settings (id, footer_background, footer_text_color, footer_template_html, updated_at)
+				VALUES (1, ?1, ?2, ?3, CURRENT_TIMESTAMP)
+				ON CONFLICT(id) DO UPDATE SET
+					footer_background = excluded.footer_background,
+					footer_text_color = excluded.footer_text_color,
+					footer_template_html = excluded.footer_template_html,
+					updated_at = CURRENT_TIMESTAMP`,
+			)
+			.bind(theme.footerBackground, theme.footerTextColor, theme.footerTemplateHtml),
+	]);
 }
 
 export interface CaptchaSettingsInput {
@@ -1508,15 +1575,24 @@ export function parseSiteSettingsForm(formData: FormData): {
 	siteTitle: string;
 	faviconUrl: string;
 	logoUrl: string;
+	themeKey: string;
 } {
 	const siteTitle = optionalString(formData, "siteTitle") || "";
 	const faviconUrl = optionalString(formData, "faviconUrl") || "/favicon.svg";
 	const logoUrl = optionalString(formData, "logoUrl");
+	const themeKey = optionalString(formData, "themeKey") || DEFAULT_SITE_THEME_KEY;
 
 	return {
 		siteTitle,
 		faviconUrl,
 		logoUrl,
+		themeKey,
+	};
+}
+
+export function parseSiteThemeSelectionForm(formData: FormData): SiteThemeSelectionInput {
+	return {
+		themeKey: requiredString(formData, "themeKey"),
 	};
 }
 
@@ -1816,6 +1892,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				home_page_slug TEXT NOT NULL DEFAULT 'home',
 				favicon_url TEXT NOT NULL DEFAULT '/favicon.svg',
 				logo_url TEXT NOT NULL DEFAULT '',
+				theme_key TEXT NOT NULL DEFAULT '${DEFAULT_SITE_THEME_KEY}',
 				captcha_enabled TEXT NOT NULL DEFAULT '0',
 				captcha_site_key TEXT NOT NULL DEFAULT '',
 				captcha_secret_key TEXT NOT NULL DEFAULT '',
@@ -1895,6 +1972,10 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	if (!settingsColumnNames.has("logo_url")) {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN logo_url TEXT NOT NULL DEFAULT ''`).run();
+	}
+
+	if (!settingsColumnNames.has("theme_key")) {
+		await db.prepare(`ALTER TABLE site_settings ADD COLUMN theme_key TEXT NOT NULL DEFAULT '${DEFAULT_SITE_THEME_KEY}'`).run();
 	}
 
 	if (!settingsColumnNames.has("captcha_enabled")) {
@@ -2026,8 +2107,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 
 	await db.batch([
 		db.prepare(
-			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, captcha_enabled, captcha_site_key, captcha_secret_key, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html)
-			VALUES (1, '${DEFAULT_SITE_TITLE.replace(/'/g, "''")}', '${DEFAULT_HOME_PAGE_SLUG}', '${DEFAULT_FAVICON_URL}', '', '0', '', '', '${DEFAULT_TEMPLATE_THEME.headerBackground}', '${DEFAULT_TEMPLATE_THEME.headerTextColor}', '${DEFAULT_TEMPLATE_THEME.headerAccentColor}', '', '', '${DEFAULT_PAGE_TEMPLATE_HTML.replace(/'/g, "''")}', '${DEFAULT_BLOG_FEED_TEMPLATE_HTML.replace(/'/g, "''")}')
+			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, theme_key, captcha_enabled, captcha_site_key, captcha_secret_key, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html)
+			VALUES (1, '${DEFAULT_SITE_TITLE.replace(/'/g, "''")}', '${DEFAULT_HOME_PAGE_SLUG}', '${DEFAULT_FAVICON_URL}', '', '${DEFAULT_SITE_THEME_KEY}', '0', '', '', '${DEFAULT_TEMPLATE_THEME.headerBackground}', '${DEFAULT_TEMPLATE_THEME.headerTextColor}', '${DEFAULT_TEMPLATE_THEME.headerAccentColor}', '', '', '${DEFAULT_PAGE_TEMPLATE_HTML.replace(/'/g, "''")}', '${DEFAULT_BLOG_FEED_TEMPLATE_HTML.replace(/'/g, "''")}')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(
