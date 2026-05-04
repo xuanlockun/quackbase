@@ -27,7 +27,6 @@ export const DEFAULT_NAVIGATION_TEMPLATE_HTML = `<div class="site-nav-layout d-f
 
 export const DEFAULT_BLOG_FEED_TEMPLATE_HTML = `<section class="blog-feed-section mb-5">
   <div class="blog-feed-heading">
-    <p class="blog-feed-kicker mb-2">Journal</p>
     <h2 class="blog-feed-heading-title mb-0">{{heading}}</h2>
   </div>
   {{posts}}

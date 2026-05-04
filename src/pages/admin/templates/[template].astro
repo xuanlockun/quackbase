@@ -56,7 +56,7 @@ const templateMeta = {
 		label: t("nav.footer"),
 		description: t("messages.templateFooterHelp", "Edit the raw HTML used for the public footer. Use {{footerText}} and {{year}} for dynamic content."),
 		value: (config) => config.footerTemplateHtml,
-		defaultHtml: `<footer class="site-footer-fallback"><div class="site-footer-fallback__eyebrow">Edge CMS</div><div class="site-footer-fallback__body"><p class="site-footer-fallback__copy mb-0">{{footerText}}</p><p class="site-footer-fallback__meta mb-0">&copy; {{year}}</p></div>{{socialLinks}}</footer>`,
+		defaultHtml: `<footer class="site-footer-fallback"><div class="site-footer-fallback__body"><p class="site-footer-fallback__copy mb-0">{{footerText}}</p><p class="site-footer-fallback__meta mb-0">&copy; {{year}}</p></div>{{socialLinks}}</footer>`,
 	},
 } as const;
 

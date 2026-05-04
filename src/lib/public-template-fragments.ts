@@ -47,8 +47,8 @@ export function buildBrandHtml({
 	const logoStyle = "height:32px;width:auto;max-width:128px;object-fit:contain;";
 
 	return logoUrl
-		? `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${resolvedHomeHref}"><img src="${escapeHtml(logoUrl)}" alt="${logoAltHtml}" class="site-navbar-logo" loading="eager" width="128" height="32" style="${logoStyle}" /><span class="site-navbar-title">${siteTitleHtml}</span></a>`
-		: `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${resolvedHomeHref}"><span class="site-navbar-mark" aria-hidden="true">${escapeHtml(siteTitle.charAt(0) || siteTitle)}</span><span class="site-navbar-title">${siteTitleHtml}</span></a>`;
+		? `<a class="navbar-brand d-flex align-items-center gap-2 flex-shrink-0" href="${resolvedHomeHref}"><img src="${escapeHtml(logoUrl)}" alt="${logoAltHtml}" class="site-navbar-logo" loading="eager" width="128" height="32" style="${logoStyle}" /><span class="site-navbar-title">${siteTitleHtml}</span></a>`
+		: `<a class="navbar-brand d-flex align-items-center gap-2 flex-shrink-0" href="${resolvedHomeHref}"><span class="site-navbar-mark" aria-hidden="true">${escapeHtml(siteTitle.charAt(0) || siteTitle)}</span><span class="site-navbar-title">${siteTitleHtml}</span></a>`;
 }
 
 export function buildLanguageSwitchHtml({

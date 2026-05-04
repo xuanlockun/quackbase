@@ -44,7 +44,6 @@ const footerTemplateHtmlRendered = renderTemplateHtml(footerTemplateHtml, {
 			<Fragment set:html={footerTemplateHtmlRendered} />
 		) : (
 			<footer class="site-footer-fallback">
-				<div class="site-footer-fallback__eyebrow">Edge CMS</div>
 				<div class="site-footer-fallback__body">
 					<p class="site-footer-fallback__copy mb-0">{footerText}</p>
 					<p class="site-footer-fallback__meta mb-0">{`© ${today.getFullYear()}`}</p>

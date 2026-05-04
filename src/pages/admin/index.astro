@@ -215,10 +215,10 @@ const chevronIcon = `
 	<div class="admin-content-stack">
 		<p class="dashboard-kicker mb-0">{t("messages.dashboardWelcome", "Welcome back, {name}.").replace("{name}", session.displayName ?? t("messages.adminUserFallback"))}</p>
 
-		<section class="dashboard-setup">
-			<div class="dashboard-section-head">
+		<section class="dashboard-setup admin-stack-section admin-utility-panel">
+			<div class="dashboard-section-head admin-section-intro">
 				<div class="dashboard-section-copy">
-					<h3 class="h5 mb-0">{t("messages.dashboardSetupHeading", "Recommended setup flow")}</h3>
+					<h3 class="h5 mb-0">{t("messages.dashboardSetupHeading", "Recommended setup order")}</h3>
 					<p class="dashboard-section-note mb-0">
 						{t("messages.dashboardSetupHelp", "Use this order when you are shaping the default template or onboarding a new admin workspace.")}
 					</p>
@@ -227,8 +227,8 @@ const chevronIcon = `
 			<AdminOptionGrid items={setupSteps} columns="three" iconHtml={chevronIcon} />
 		</section>
 
-		<section>
-			<div class="dashboard-section-head">
+		<section class="admin-stack-section">
+			<div class="dashboard-section-head admin-section-intro">
 				<div class="dashboard-section-copy">
 					<h3 class="h5 mb-0">{t("messages.dashboardSummary", "Content overview")}</h3>
 					<p class="dashboard-section-note mb-0">{t("messages.dashboardSummaryHelp", "Jump into the main content areas and check what is already published.")}</p>
@@ -255,7 +255,7 @@ const chevronIcon = `
 		</section>
 
 		<section class="dashboard-panels">
-			<div class="dashboard-panel">
+			<div class="dashboard-panel admin-utility-panel">
 				<h3 class="h5 mb-0">{t("messages.dashboardQuickActions", "Quick actions")}</h3>
 				<p class="dashboard-panel-copy mb-0">{t("messages.dashboardQuickActionsHelp", "Start a common task without leaving the dashboard.")}</p>
 				<div class="dashboard-links">
@@ -267,7 +267,7 @@ const chevronIcon = `
 					))}
 				</div>
 			</div>
-			<div class="dashboard-panel">
+			<div class="dashboard-panel admin-utility-panel">
 				<h3 class="h5 mb-0">{t("nav.template")}</h3>
 				<p class="dashboard-panel-copy">
 					{t("messages.dashboardTemplateHelp", "Edit the raw HTML shell for the public header, page wrapper, posts section, and footer.")}
@@ -290,9 +290,9 @@ const chevronIcon = `
 <style>
 	.dashboard-kicker {
 		margin: 0;
-		font-size: 0.95rem;
+		font-size: 0.92rem;
 		font-weight: 600;
-		color: rgba(15, 23, 42, 0.7);
+		color: rgba(15, 23, 42, 0.64);
 	}
 
 	.dashboard-section-copy {
@@ -334,18 +334,18 @@ const chevronIcon = `
 
 	.dashboard-stat {
 		display: grid;
-		gap: 0.4rem;
-		padding: 0.95rem 1rem;
+		gap: 0.45rem;
+		padding: 1rem;
 		border: 1px solid rgba(15, 23, 42, 0.08);
-		border-radius: 0.8rem;
+		border-radius: 1rem;
 		background: #fff;
 		color: inherit;
 		text-decoration: none;
 	}
 
 	.dashboard-stat:hover {
-		background: rgba(249, 250, 251, 0.98);
-		border-color: color-mix(in srgb, var(--stat-accent, #4f7cff) 30%, rgba(15, 23, 42, 0.08));
+		background: rgba(248, 250, 252, 0.96);
+		border-color: rgba(15, 23, 42, 0.14);
 	}
 
 	.dashboard-stat-top {
@@ -362,10 +362,10 @@ const chevronIcon = `
 		width: 2rem;
 		height: 2rem;
 		flex: 0 0 auto;
-		border: 1px solid color-mix(in srgb, var(--stat-accent, #4f7cff) 32%, rgba(15, 23, 42, 0.08));
-		border-radius: 0.7rem;
-		color: var(--stat-accent, #4f7cff);
-		background: color-mix(in srgb, var(--stat-accent-soft, rgba(79, 124, 255, 0.12)) 72%, white);
+		border: 1px solid rgba(15, 23, 42, 0.1);
+		border-radius: 0.75rem;
+		color: rgba(15, 23, 42, 0.72);
+		background: rgba(248, 250, 252, 0.96);
 	}
 
 	.dashboard-stat-icon svg {
@@ -388,10 +388,6 @@ const chevronIcon = `
 	.dashboard-panel {
 		display: grid;
 		gap: 0.8rem;
-		padding: 1rem;
-		border: 1px solid rgba(15, 23, 42, 0.08);
-		border-radius: 0;
-		background: #fff;
 	}
 
 	.dashboard-links {
@@ -406,7 +402,7 @@ const chevronIcon = `
 		gap: 0.75rem;
 		padding: 0.7rem 0.8rem;
 		border: 1px solid rgba(15, 23, 42, 0.08);
-		border-radius: 0;
+		border-radius: 0.85rem;
 		color: inherit;
 		text-decoration: none;
 		background: #fff;
@@ -429,6 +425,7 @@ const chevronIcon = `
 
 	.dashboard-action-link:hover {
 		background: rgba(248, 250, 252, 0.96);
+		border-color: rgba(15, 23, 42, 0.12);
 	}
 
 	@media (max-width: 991px) {

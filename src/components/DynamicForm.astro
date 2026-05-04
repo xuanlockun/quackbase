@@ -55,7 +55,7 @@ const captchaIsAvailable = useCaptcha && captchaEnabled && Boolean(captchaSiteKe
 		</div>
 	) : (
 		<form
-			class="contact-form card border-0 shadow-lg overflow-hidden"
+			class="contact-form card border-0 overflow-hidden"
 			method="post"
 			action="/api/forms/contact"
 			data-dynamic-contact-form
@@ -64,7 +64,7 @@ const captchaIsAvailable = useCaptcha && captchaEnabled && Boolean(captchaSiteKe
 			data-error-message={t("messages.contactFormSubmitFailed")}
 			style={formStyle}
 		>
-			<div class="card-body p-4 p-lg-5">
+			<div class="card-body p-4 p-lg-4">
 				{showTitle && title && <h3 class="contact-form-title h4 mb-2">{title}</h3>}
 				{showDescription && description && <p class="contact-form-description text-muted mb-4">{description}</p>}
 				<input type="hidden" name="language" value={currentLanguage} />

@@ -301,7 +301,7 @@ const mediaActionCopy = {
 	<div class="admin-content-stack media-library-shell">
 		<FeedbackModal id="media-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
 
-		<div class="media-library-header admin-form-surface">
+		<div class="media-library-header admin-form-surface admin-stack-section">
 			<div class="media-library-summary">
 				<span class="media-library-status-icon" aria-hidden="true">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -324,7 +324,7 @@ const mediaActionCopy = {
 				</div>
 			</div>
 
-			<div class="media-library-actions">
+			<div class="media-library-actions" aria-label="Media library primary actions">
 				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="media-action-form media-action-form-upload">
 					<input type="hidden" name="folderPath" value={currentFolder} />
 					<label class="visually-hidden" for="mediaFiles">{t("actions.uploadFiles", "Upload files")}</label>
@@ -372,10 +372,13 @@ const mediaActionCopy = {
 		</div>
 
 		<div class="media-library-layout">
-			<aside class="media-folder-panel admin-form-surface">
-				<div class="d-flex align-items-center justify-content-between gap-2 mb-3">
-					<h2 class="h6 mb-0">{t("labels.folders", "Folders")}</h2>
-					<span class="text-body-secondary small">{folderEntries.length} {t("labels.folders", "folders")}</span>
+			<aside class="media-folder-panel admin-form-surface admin-stack-section">
+				<div class="admin-section-intro">
+					<div>
+						<h2 class="h6 mb-0">{t("labels.folders", "Folders")}</h2>
+						<p>{t("messages.createFolderHint", "Create a folder to keep files grouped together.")}</p>
+					</div>
+					<span class="admin-quiet-badge">{folderEntries.length} {t("labels.folders", "folders")}</span>
 				</div>
 				<nav class="media-folder-list" aria-label="Media folders">
 					<a class:list={["media-folder-item", !currentFolder ? "is-active" : ""]} href={buildFolderHref("", currentView)}>
@@ -401,7 +404,7 @@ const mediaActionCopy = {
 				</nav>
 			</aside>
 
-			<section class="media-content-panel admin-form-surface">
+			<section class="media-content-panel admin-form-surface admin-stack-section">
 				<nav class="media-breadcrumbs" aria-label={t("labels.breadcrumb", "Breadcrumb")}>
 					{breadcrumbs.map((crumb, index) => (
 						<>
@@ -419,12 +422,12 @@ const mediaActionCopy = {
 
 				<div class="media-content-header">
 					<div class="min-w-0">
-								<h2 class="h5 mb-1 text-break">{folderTitle}</h2>
-								<p class="admin-inline-muted mb-0">
+						<h2 class="h5 mb-1 text-break">{folderTitle}</h2>
+						<p class="admin-inline-muted mb-0">
 							{visibleAssets.length} {t("labels.files", "files")}, {childFolderEntries.length} {t("labels.folders", "folders")}
-								</p>
-							</div>
-							<div class="d-flex flex-wrap gap-2 align-items-center">
+						</p>
+					</div>
+					<div class="d-flex flex-wrap gap-2 align-items-center">
 						<div class="btn-group btn-group-sm" role="group" aria-label={t("labels.viewMode", "View mode")}>
 							<a class:list={["btn", currentView === "grid" ? "btn-primary" : "btn-outline-secondary"]} href={buildFolderHref(currentFolder, "grid")}>
 								{t("labels.grid", "Grid")}
@@ -1184,7 +1187,7 @@ const mediaActionCopy = {
 	.media-library-actions {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 1rem;
+		gap: 0.85rem;
 	}
 
 	.media-library-header {
@@ -1198,10 +1201,11 @@ const mediaActionCopy = {
 		justify-content: center;
 		width: 2.5rem;
 		height: 2.5rem;
-		border-radius: 0.9rem;
-		background: rgba(35, 55, 255, 0.08);
-		color: var(--accent);
+		border-radius: 0.8rem;
+		background: rgba(248, 250, 252, 0.96);
+		color: rgba(15, 23, 42, 0.72);
 		flex: 0 0 auto;
+		border: 1px solid rgba(15, 23, 42, 0.08);
 	}
 
 	.media-library-status-icon svg {
@@ -1228,6 +1232,7 @@ const mediaActionCopy = {
 	.media-folder-form {
 		display: grid;
 		gap: 0.65rem;
+		align-content: start;
 	}
 
 	.media-action-form-upload {
@@ -1252,6 +1257,7 @@ const mediaActionCopy = {
 		gap: 0.45rem;
 		cursor: pointer;
 		white-space: nowrap;
+		min-height: 2.5rem;
 	}
 
 	.media-action-button-icon {
@@ -1291,6 +1297,11 @@ const mediaActionCopy = {
 		min-width: 0;
 	}
 
+	.media-folder-panel {
+		position: sticky;
+		top: 1rem;
+	}
+
 	.media-folder-list {
 		display: grid;
 		gap: 0.35rem;
@@ -1303,17 +1314,17 @@ const mediaActionCopy = {
 		gap: 0.65rem;
 		padding: 0.6rem 0.7rem;
 		padding-left: calc(0.7rem + (var(--folder-depth, 0) * 0.55rem));
-		border-radius: 0.75rem;
+		border-radius: 0.85rem;
 		text-decoration: none;
 		color: inherit;
 		background: transparent;
-		transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+		transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 	}
 
 	.media-folder-item:hover,
 	.media-folder-item.is-active {
-		background: rgba(35, 55, 255, 0.06);
-		border-color: rgba(35, 55, 255, 0.2);
+		background: rgba(15, 23, 42, 0.04);
+		border-color: rgba(15, 23, 42, 0.14);
 	}
 
 	.media-folder-item.is-ancestor {
@@ -1385,7 +1396,9 @@ const mediaActionCopy = {
 	}
 
 	.media-content-header {
-		margin-bottom: 1rem;
+		margin-bottom: 0.25rem;
+		padding-bottom: 0.9rem;
+		border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 	}
 
 	.media-selection-bar {
@@ -1397,8 +1410,8 @@ const mediaActionCopy = {
 		padding: 0.75rem 0.85rem;
 		margin-bottom: 1rem;
 		border: 1px solid rgba(var(--gray), 0.16);
-		border-radius: 0.9rem;
-		background: rgba(248, 250, 252, 0.9);
+		border-radius: 1rem;
+		background: rgba(248, 250, 252, 0.92);
 	}
 
 	.media-selection-summary {
@@ -1418,6 +1431,7 @@ const mediaActionCopy = {
 	.media-file-section {
 		display: grid;
 		gap: 0.75rem;
+		padding-top: 0.25rem;
 	}
 
 	.media-folder-section {
@@ -1459,20 +1473,20 @@ const mediaActionCopy = {
 
 	.media-folder-card:hover,
 	.media-folder-list-link:hover {
-		border-color: rgba(35, 55, 255, 0.22);
-		background: rgba(35, 55, 255, 0.03);
+		border-color: rgba(15, 23, 42, 0.16);
+		background: rgba(248, 250, 252, 0.96);
 	}
 
 	.media-folder-card.is-active,
 	.media-folder-list-link.is-active {
-		border-color: rgba(35, 55, 255, 0.34);
-		background: rgba(35, 55, 255, 0.06);
+		border-color: rgba(15, 23, 42, 0.18);
+		background: rgba(248, 250, 252, 0.98);
 	}
 
 	.media-folder-card-icon {
 		width: 1.15rem;
 		height: 1.15rem;
-		color: var(--accent);
+		color: rgba(15, 23, 42, 0.72);
 	}
 
 	.media-folder-table-wrap {
@@ -1504,12 +1518,12 @@ const mediaActionCopy = {
 
 	.media-item-row.is-selected,
 	.media-card.is-selected {
-		background: rgba(35, 55, 255, 0.08);
-		box-shadow: inset 0 0 0 1px rgba(35, 55, 255, 0.24), 0 0 0 1px rgba(35, 55, 255, 0.12);
+		background: rgba(15, 23, 42, 0.05);
+		box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08);
 	}
 
 	.media-item-row.is-selected > * {
-		background: rgba(35, 55, 255, 0.03);
+		background: rgba(15, 23, 42, 0.03);
 	}
 
 	.media-card {
@@ -1558,7 +1572,7 @@ const mediaActionCopy = {
 
 	.media-preview-fallback {
 		min-height: 148px;
-		background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(14, 165, 233, 0.12));
+		background: linear-gradient(135deg, rgba(148, 163, 184, 0.14), rgba(226, 232, 240, 0.6));
 	}
 
 	.media-card-body {
@@ -1641,8 +1655,9 @@ const mediaActionCopy = {
 		width: 2rem;
 		height: 2rem;
 		border-radius: 999px;
-		background: rgba(35, 55, 255, 0.08);
-		color: var(--accent);
+		background: rgba(248, 250, 252, 0.96);
+		color: rgba(15, 23, 42, 0.72);
+		border: 1px solid rgba(15, 23, 42, 0.08);
 	}
 
 	.media-empty-state-icon svg {
@@ -1654,6 +1669,11 @@ const mediaActionCopy = {
 		.media-library-layout,
 		.media-library-actions {
 			grid-template-columns: 1fr;
+		}
+
+		.media-folder-panel {
+			position: static;
+			top: auto;
 		}
 
 		.media-library-summary {

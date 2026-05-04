@@ -106,7 +106,7 @@ const initialContactFields = [];
 
 <form class="admin-form-shell admin-compact-form" method="post" action={action}>
 	{mode === "edit" && page && <input type="hidden" name="id" value={page.id} />}
-	<div class="admin-form-surface">
+	<div class="admin-form-surface admin-stack-section">
 		<div class="admin-form-grid">
 			<label>
 				<span>{t("labels.slug")}</span>
@@ -159,7 +159,7 @@ const initialContactFields = [];
 	</div>
 
 	<div
-		class="admin-form-section localized-editor"
+		class="admin-form-section localized-editor admin-stack-section"
 		data-localized-editor
 		data-active-language={initialLanguage}
 		data-default-language={def}
@@ -222,7 +222,7 @@ const initialContactFields = [];
 	</div>
 
 	<div
-		class="admin-form-section page-sections-editor"
+		class="admin-form-section page-sections-editor admin-stack-section"
 	data-page-sections-editor
 	data-section-catalog={sectionCatalogJson}
 	data-banner-catalog={bannerCatalogJson}
@@ -450,7 +450,7 @@ const initialContactFields = [];
 
 	.localized-editor-header h2 {
 		margin: 0;
-		font-size: 1.1rem;
+		font-size: 1rem;
 	}
 
 	.localized-editor-header p {
@@ -464,7 +464,7 @@ const initialContactFields = [];
 
 	.admin-sections-table th,
 	.admin-sections-table td {
-		padding: 0.45rem 0.6rem;
+		padding: 0.6rem 0.7rem;
 		border-bottom: 1px solid rgba(var(--gray), 0.18);
 		vertical-align: top;
 	}
@@ -505,18 +505,18 @@ const initialContactFields = [];
 	}
 
 	.localized-editor-tab {
-		border-radius: 0;
-		padding: 0.3rem 0.65rem;
+		border-radius: 0.7rem;
+		padding: 0.38rem 0.72rem;
 		font-size: 0.8rem;
 	}
 
 	.localized-editor-panel {
 		display: grid;
-		gap: 0.8rem;
+		gap: 0.85rem;
 		padding: 1rem;
 		border: 1px solid rgba(var(--gray), 0.12);
-		border-radius: 0;
-		background: rgba(var(--gray-light), 0.3);
+		border-radius: 0.9rem;
+		background: rgba(248, 250, 252, 0.9);
 	}
 
 	.localized-editor-panel textarea {
@@ -544,8 +544,8 @@ const initialContactFields = [];
 		display: grid;
 		gap: 0.75rem;
 		border: 1px solid rgba(var(--gray), 0.14);
-		border-radius: 0;
-		background: rgba(255, 255, 255, 0.88);
+		border-radius: 0.9rem;
+		background: rgba(255, 255, 255, 0.96);
 	}
 
 	.banner-picker-panel > summary {
@@ -590,10 +590,10 @@ const initialContactFields = [];
 	.banner-picker-card {
 		display: grid;
 		gap: 0.5rem;
-		padding: 0.55rem;
+		padding: 0.7rem;
 		border: 1px solid rgba(var(--gray), 0.14);
-		border-radius: 0;
-		background: rgba(var(--gray-light), 0.18);
+		border-radius: 0.8rem;
+		background: rgba(248, 250, 252, 0.8);
 		cursor: pointer;
 		min-width: 0;
 	}

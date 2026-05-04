@@ -91,10 +91,10 @@ const pageFeedback = [
 
 	<FeedbackModal id="pages-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
-		<details class="admin-collapsible-surface admin-page-hub">
+		<details class="admin-collapsible-surface admin-page-hub admin-utility-panel">
 			<summary class="admin-collapsible-summary">
 				<div class="admin-page-hub-copy">
-					<p class="text-uppercase small fw-semibold mb-1 admin-eyebrow">{t("headings.pages")}</p>
+					<p class="text-uppercase small fw-semibold mb-1 admin-eyebrow">{t("labels.navigationItems", "Navigation items")}</p>
 					<h2 class="h5 mb-1">{t("messages.pageNavigationHub")}</h2>
 					<p class="mb-0 text-body-secondary small">{t("messages.pageNavigationHubHelp")}</p>
 				</div>
@@ -143,12 +143,6 @@ const pageFeedback = [
 </AdminLayout>
 
 <style>
-	.admin-page-hub {
-		background: #fff;
-		border-radius: 0;
-		box-shadow: none;
-	}
-
 	.admin-page-hub-copy {
 		max-width: 56rem;
 	}
