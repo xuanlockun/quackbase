@@ -1,8 +1,8 @@
-import Editor from "@toast-ui/editor";
-import "@toast-ui/editor/dist/toastui-editor.css";
+import EasyMDE from "easymde";
+import "easymde/dist/easymde.min.css";
 
 type MarkdownEditorHost = HTMLTextAreaElement & {
-	_markdownEditor?: Editor;
+	_markdownEditor?: EasyMDE;
 };
 
 const syncTextarea = (textarea: MarkdownEditorHost, value: string) => {
@@ -24,41 +24,31 @@ const initMarkdownEditor = (textarea: MarkdownEditorHost) => {
 		return;
 	}
 
-	const shell = textarea.closest(".admin-editor-shell");
-	if (!(shell instanceof HTMLElement)) {
-		return;
-	}
-
-	const mount = document.createElement("div");
-	mount.className = "admin-markdown-editor";
-	textarea.before(mount);
-
-	const editor = new Editor({
-		el: mount,
-		initialValue: textarea.value,
-		initialEditType: "markdown",
-		previewStyle: window.matchMedia("(max-width: 991px)").matches ? "tab" : "vertical",
-		height: "420px",
-		usageStatistics: false,
-		hideModeSwitch: false,
-		autofocus: false,
-		toolbarItems: [
-			["heading", "bold", "italic", "strike"],
-			["hr", "quote"],
-			["ul", "ol", "task"],
-			["table", "link"],
-			["code", "codeblock"],
-		],
+	const editor = new EasyMDE({
+		element: textarea,
+		autoDownloadFontAwesome: false,
+		forceSync: true,
+		spellChecker: false,
+		status: false,
+		toolbarTips: true,
+		minHeight: "340px",
+		placeholder: "Write in Markdown...",
+		showIcons: ["code", "table", "horizontal-rule"],
+		hideIcons: ["image", "side-by-side", "fullscreen", "guide"],
+		renderingConfig: {
+			singleLineBreaks: false,
+		},
 	});
 
-	editor.on("change", () => {
-		syncTextarea(textarea, editor.getMarkdown());
+	editor.codemirror.on("change", () => {
+		syncTextarea(textarea, editor.value());
 	});
 
-	textarea.hidden = true;
-	textarea.classList.add("admin-editor-textarea--enhanced");
 	textarea._markdownEditor = editor;
-	shell.dataset.editorEnhanced = "true";
+	const wrapper = textarea.closest(".editor-toolbar, .EasyMDEContainer")?.parentElement;
+	if (wrapper instanceof HTMLElement) {
+		wrapper.classList.add("admin-markdown-editor");
+	}
 };
 
 const initMarkdownEditors = (root: ParentNode = document) => {

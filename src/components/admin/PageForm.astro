@@ -5,7 +5,6 @@ import type { BannerRecord } from "../../lib/banners";
 import type { ContactFormRecord } from "../../lib/contact-forms";
 import CreateSubmit from "./CreateSubmit.astro";
 import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
-import "@toast-ui/editor/dist/toastui-editor.css";
 
 interface Props {
 	mode: "create" | "edit";
@@ -1159,10 +1158,10 @@ const initialContactFields = [];
 
 	const insertEditorSnippet = (textarea, snippet) => {
 		const markdownEditor = textarea?._markdownEditor;
-		if (markdownEditor && typeof markdownEditor.replaceSelection === "function") {
-			markdownEditor.focus();
-			markdownEditor.replaceSelection(snippet);
-			textarea.value = markdownEditor.getMarkdown();
+		if (markdownEditor && typeof markdownEditor.value === "function") {
+			const currentValue = markdownEditor.value();
+			const nextValue = currentValue ? `${currentValue}\n${snippet}` : snippet;
+			markdownEditor.value(nextValue);
 			textarea.dispatchEvent(new Event("input", { bubbles: true }));
 			return;
 		}

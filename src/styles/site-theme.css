@@ -459,6 +459,16 @@
 	text-shadow: none;
 }
 
+.banner-slide-copy,
+.banner-slide-copy h1,
+.banner-slide-copy h2,
+.banner-slide-copy h3,
+.banner-slide-copy p,
+.banner-slide-title,
+.banner-slide-caption {
+	color: #fff !important;
+}
+
 .banner-slide-overlay {
 	position: absolute;
 	inset: 0;
