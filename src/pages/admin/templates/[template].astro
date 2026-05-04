@@ -341,9 +341,11 @@ function buildSocialLinksFragment(): string {
 	</div>
 </AdminLayout>
 
-<script type="module" define:vars={{ templateFeedback, loadError }}>
+<script>
 	import "../../../scripts/admin-template-code-editor.ts";
+</script>
 
+<script type="module" define:vars={{ templateFeedback, loadError }}>
 	const showFeedbackModal = window.showAdminFeedbackModal;
 	const search = new URLSearchParams(window.location.search);
 
