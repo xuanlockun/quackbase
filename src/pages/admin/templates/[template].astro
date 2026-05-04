@@ -3,6 +3,7 @@ export const prerender = false;
 
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import LanguageSwitchScript from "../../../components/LanguageSwitchScript.astro";
+import AdminOptionGrid from "../../../components/admin/AdminOptionGrid.astro";
 import FeedbackModal from "../../../components/admin/FeedbackModal.astro";
 import "../../../styles/site-theme.css";
 import { DEFAULT_PAGE_TEMPLATE_HTML, getDb, getSiteConfig } from "../../../lib/blog";
@@ -26,7 +27,7 @@ if (!session) {
 	return Astro.redirect("/admin/login");
 }
 
-const { t, language, localizeHref } = getUiTranslations(Astro);
+const { t, language, localizeHref, localizeAdminHref } = getUiTranslations(Astro);
 const catalog = getLanguageCatalog(Astro.locals);
 const templateKind = Astro.params.template ?? "header";
 if (templateKind === "navbar") {
@@ -79,6 +80,13 @@ try {
 const templateFeedback = [
 	["saved", { title: "Template saved", message: t("messages.templateSaved"), tone: "success" }],
 	["error", { title: "Template save failed", message: t("messages.templateSaveFailed"), tone: "error" }],
+] as const;
+
+const templateOrder = [
+	{ key: "header", label: t("nav.header"), href: "/admin/templates/header" },
+	{ key: "page", label: t("headings.page", "Page"), href: "/admin/templates/page" },
+	{ key: "posts", label: t("headings.posts", "Posts"), href: "/admin/templates/posts" },
+	{ key: "footer", label: t("nav.footer"), href: "/admin/templates/footer" },
 ] as const;
 
 function renderTemplatePreview(
@@ -253,27 +261,64 @@ function buildSocialLinksFragment(): string {
 >
 	<div class="admin-content-stack">
 		<FeedbackModal id="template-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
-		<form method="post" action={`/api/admin/templates/${kind}`} class="admin-form-shell">
-			<div class="admin-form-section">
-				<label style="grid-column: 1 / -1;">
-					<span>{meta.label} HTML</span>
-					<textarea
-						class="form-control"
-						name="templateHtml"
-						rows="14"
-						spellcheck="false"
-						placeholder={defaultTemplateHtml}
-						disabled={Boolean(loadError)}
-					>{templateHtml.trim() ? templateHtml : defaultTemplateHtml}</textarea>
-				</label>
-				<p class="admin-muted">{meta.description}</p>
-				<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>Save template</button>
+		<div class="template-flow">
+			<div class="admin-form-section template-flow-panel">
+				<div class="template-flow-copy">
+					<strong>{t("messages.templateEditorFlowHeading", "Editing flow")}</strong>
+					<p class="admin-muted mb-0">
+						{t("messages.templateEditorFlowHelp", "Move through the public shell in order so layout changes stay predictable.")}
+					</p>
+				</div>
+				<AdminOptionGrid
+					items={templateOrder.map((entry, index) => ({
+						title: entry.label,
+						href: localizeAdminHref(entry.href),
+						indexLabel: String(index + 1).padStart(2, "0"),
+						active: entry.key === kind,
+					}))}
+					columns="four"
+				/>
 			</div>
-		</form>
-		<div class="admin-form-section">
-			<strong>{t("labels.preview", "Preview")}</strong>
-			<div class="template-preview site-app">
-				<div set:html={previewHtml}></div>
+
+			<form method="post" action={`/api/admin/templates/${kind}`} class="admin-form-shell">
+				<div class="admin-form-section template-editor-panel">
+					<div class="template-editor-header">
+						<div>
+							<strong>{meta.label} HTML</strong>
+							<p class="admin-muted mb-0">{meta.description}</p>
+						</div>
+						<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>Save template</button>
+					</div>
+					<label style="grid-column: 1 / -1;">
+						<span>{t("messages.templateEditorFieldHelp", "Saved HTML")}</span>
+						<textarea
+							class="form-control template-editor-textarea"
+							name="templateHtml"
+							rows="16"
+							spellcheck="false"
+							placeholder={defaultTemplateHtml}
+							disabled={Boolean(loadError)}
+						>{templateHtml.trim() ? templateHtml : defaultTemplateHtml}</textarea>
+					</label>
+				</div>
+			</form>
+			<div class="admin-form-section template-preview-panel">
+				<div class="template-editor-header">
+					<div>
+						<strong>{t("labels.preview", "Preview")}</strong>
+						<p class="admin-muted mb-0">
+							{t("messages.templatePreviewHelp", "Preview updates reflect the current saved values and shared site settings.")}
+						</p>
+					</div>
+				</div>
+				<div class="template-preview site-app">
+					<div set:html={previewHtml}></div>
+				</div>
+				<div class="template-preview-note">
+					<p class="admin-muted mb-0">
+						{t("messages.templatePreviewNote", "Use placeholders for dynamic content. Static markup here should stay neutral and reusable.")}
+					</p>
+				</div>
 			</div>
 			<LanguageSwitchScript />
 		</div>
@@ -300,10 +345,46 @@ function buildSocialLinksFragment(): string {
 </script>
 
 <style>
+	.template-flow {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.template-flow-panel,
+	.template-editor-panel,
+	.template-preview-panel {
+		gap: 0.9rem;
+	}
+
+	.template-flow-copy {
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.template-editor-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	.template-editor-textarea {
+		min-height: 24rem;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+		font-size: 0.92rem;
+		line-height: 1.5;
+	}
+
 	.template-preview {
 		border-radius: 1rem;
 		overflow: hidden;
 		border: 1px solid rgba(15, 23, 42, 0.08);
 	}
+
+	.template-preview-note {
+		padding-top: 0.25rem;
+	}
+
 </style>
 

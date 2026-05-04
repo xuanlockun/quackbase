@@ -23,9 +23,10 @@ const slides =
 		title: `${t("labels.banner", "Banner")} ${index + 1}`,
 		altText: `${t("labels.banner", "Banner")} ${index + 1}`,
 	}));
+const hasCaptions = slides.some((slide) => Boolean(slide.headline?.trim() || slide.caption?.trim()));
 ---
 
-<section class="banner-section">
+<section class:list={["banner-section", hasCaptions && "banner-section--has-copy"]}>
 	<div class="banner-section-frame">
 		<div
 			id="bannerCarousel"

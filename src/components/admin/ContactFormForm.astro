@@ -8,6 +8,7 @@ import {
 	localizeAdminHref,
 	type LocalizedText,
 } from "../../lib/i18n";
+import { DEFAULT_CONTACT_FORM_APPEARANCE } from "../../lib/site-defaults";
 
 interface Props {
 	mode: "create" | "edit";
@@ -47,9 +48,9 @@ const initialShowFormTitle = form?.showFormTitle ?? true;
 const initialShowFormDescription = form?.showFormDescription ?? true;
 const initialLanguage = form?.requestedLanguage ?? language;
 const initialLayout = form?.layout ?? "split";
-const initialBackgroundStyle = form?.backgroundStyle ?? "solid";
-const initialBackgroundColor = form?.backgroundColor ?? "#f8fbff";
-const initialButtonColor = form?.buttonColor ?? "#4f80ff";
+const initialBackgroundStyle = form?.backgroundStyle ?? DEFAULT_CONTACT_FORM_APPEARANCE.backgroundStyle;
+const initialBackgroundColor = form?.backgroundColor ?? DEFAULT_CONTACT_FORM_APPEARANCE.backgroundColor;
+const initialButtonColor = form?.buttonColor ?? DEFAULT_CONTACT_FORM_APPEARANCE.buttonColor;
 const initialUseCaptcha = form?.useCaptcha ?? false;
 const initialNotificationEmails = form?.notificationEmails?.join(", ") ?? "";
 const labelGridColumns = `2rem minmax(12rem, 16rem) ${labelLanguages

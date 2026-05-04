@@ -14,6 +14,7 @@ import {
 	parseFormFieldsForm,
 	parseFormFieldsPayload,
 } from "./forms";
+import { DEFAULT_CONTACT_FORM_APPEARANCE } from "./site-defaults";
 
 export type ContactFormLayout = "split" | "stacked" | "compact";
 export type ContactFormBackgroundStyle = "solid" | "gradient" | "radial";
@@ -102,9 +103,9 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 				show_form_title INTEGER NOT NULL DEFAULT 1 CHECK (show_form_title IN (0, 1)),
 				show_form_description INTEGER NOT NULL DEFAULT 1 CHECK (show_form_description IN (0, 1)),
 				layout TEXT NOT NULL DEFAULT 'split',
-				background_style TEXT NOT NULL DEFAULT 'solid',
-				background_color TEXT NOT NULL DEFAULT '#f8fbff',
-				button_color TEXT NOT NULL DEFAULT '#4f80ff',
+				background_style TEXT NOT NULL DEFAULT '${DEFAULT_CONTACT_FORM_APPEARANCE.backgroundStyle}',
+				background_color TEXT NOT NULL DEFAULT '${DEFAULT_CONTACT_FORM_APPEARANCE.backgroundColor}',
+				button_color TEXT NOT NULL DEFAULT '${DEFAULT_CONTACT_FORM_APPEARANCE.buttonColor}',
 				use_captcha INTEGER NOT NULL DEFAULT 0 CHECK (use_captcha IN (0, 1)),
 				notification_emails TEXT NOT NULL DEFAULT '',
 				fields_json TEXT NOT NULL DEFAULT '[]',
@@ -146,13 +147,13 @@ export async function ensureContactFormTables(db: D1Database): Promise<void> {
 		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN layout TEXT NOT NULL DEFAULT 'split'`).run();
 	}
 	if (!columnNames.has("background_style")) {
-		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN background_style TEXT NOT NULL DEFAULT 'solid'`).run();
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN background_style TEXT NOT NULL DEFAULT '${DEFAULT_CONTACT_FORM_APPEARANCE.backgroundStyle}'`).run();
 	}
 	if (!columnNames.has("background_color")) {
-		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN background_color TEXT NOT NULL DEFAULT '#f8fbff'`).run();
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN background_color TEXT NOT NULL DEFAULT '${DEFAULT_CONTACT_FORM_APPEARANCE.backgroundColor}'`).run();
 	}
 	if (!columnNames.has("button_color")) {
-		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN button_color TEXT NOT NULL DEFAULT '#4f80ff'`).run();
+		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN button_color TEXT NOT NULL DEFAULT '${DEFAULT_CONTACT_FORM_APPEARANCE.buttonColor}'`).run();
 	}
 	if (!columnNames.has("use_captcha")) {
 		await db.prepare(`ALTER TABLE contact_forms ADD COLUMN use_captcha INTEGER NOT NULL DEFAULT 0 CHECK (use_captcha IN (0, 1))`).run();
@@ -243,8 +244,8 @@ export async function createContactForm(db: D1Database, input: ContactFormInput)
 			input.showFormDescription ? 1 : 0,
 			normalizeContactFormLayout(input.layout),
 			normalizeContactFormBackgroundStyle(input.backgroundStyle),
-			normalizeContactFormColor(input.backgroundColor, "#f8fbff"),
-			normalizeContactFormColor(input.buttonColor, "#4f80ff"),
+			normalizeContactFormColor(input.backgroundColor, DEFAULT_CONTACT_FORM_APPEARANCE.backgroundColor),
+			normalizeContactFormColor(input.buttonColor, DEFAULT_CONTACT_FORM_APPEARANCE.buttonColor),
 			input.useCaptcha ? 1 : 0,
 			serializeNotificationEmails(input.notificationEmails),
 			JSON.stringify(normalizedFields),
@@ -293,8 +294,8 @@ export async function updateContactForm(db: D1Database, id: number, input: Conta
 			input.showFormDescription ? 1 : 0,
 			normalizeContactFormLayout(input.layout),
 			normalizeContactFormBackgroundStyle(input.backgroundStyle),
-			normalizeContactFormColor(input.backgroundColor, "#f8fbff"),
-			normalizeContactFormColor(input.buttonColor, "#4f80ff"),
+			normalizeContactFormColor(input.backgroundColor, DEFAULT_CONTACT_FORM_APPEARANCE.backgroundColor),
+			normalizeContactFormColor(input.buttonColor, DEFAULT_CONTACT_FORM_APPEARANCE.buttonColor),
 			input.useCaptcha ? 1 : 0,
 			serializeNotificationEmails(input.notificationEmails),
 			JSON.stringify(normalizedFields),
@@ -323,8 +324,8 @@ export function parseContactFormForm(formData: FormData): ContactFormInput {
 		showFormDescription: optionalBoolean(formData, "showFormDescription"),
 		layout: normalizeContactFormLayout(optionalString(formData, "layout")),
 		backgroundStyle: normalizeContactFormBackgroundStyle(optionalString(formData, "backgroundStyle")),
-		backgroundColor: normalizeContactFormColor(optionalString(formData, "backgroundColor"), "#f8fbff"),
-		buttonColor: normalizeContactFormColor(optionalString(formData, "buttonColor"), "#4f80ff"),
+		backgroundColor: normalizeContactFormColor(optionalString(formData, "backgroundColor"), DEFAULT_CONTACT_FORM_APPEARANCE.backgroundColor),
+		buttonColor: normalizeContactFormColor(optionalString(formData, "buttonColor"), DEFAULT_CONTACT_FORM_APPEARANCE.buttonColor),
 		useCaptcha: optionalBoolean(formData, "useCaptcha"),
 		notificationEmails: parseNotificationEmails(optionalString(formData, "notificationEmails"), true),
 		fields: parseFormFieldsForm(formData),
@@ -355,11 +356,11 @@ export function parseContactFormPayload(payload: unknown): ContactFormInput {
 		),
 		backgroundColor: normalizeContactFormColor(
 			typeof record.backgroundColor === "string" ? record.backgroundColor : "",
-			"#f8fbff",
+			DEFAULT_CONTACT_FORM_APPEARANCE.backgroundColor,
 		),
 		buttonColor: normalizeContactFormColor(
 			typeof record.buttonColor === "string" ? record.buttonColor : "",
-			"#4f80ff",
+			DEFAULT_CONTACT_FORM_APPEARANCE.buttonColor,
 		),
 		useCaptcha: parseBoolean(record.useCaptcha),
 		notificationEmails: parseNotificationEmails(
@@ -420,8 +421,8 @@ function toContactFormRecord(row: ContactFormRow, requestedLanguage: string, cat
 		showFormDescription: row.show_form_description === 1,
 		layout: normalizeContactFormLayout(row.layout),
 		backgroundStyle: normalizeContactFormBackgroundStyle(row.background_style),
-		backgroundColor: normalizeContactFormColor(row.background_color, "#f8fbff"),
-		buttonColor: normalizeContactFormColor(row.button_color, "#4f80ff"),
+		backgroundColor: normalizeContactFormColor(row.background_color, DEFAULT_CONTACT_FORM_APPEARANCE.backgroundColor),
+		buttonColor: normalizeContactFormColor(row.button_color, DEFAULT_CONTACT_FORM_APPEARANCE.buttonColor),
 		useCaptcha: row.use_captcha === 1,
 		notificationEmails: parseNotificationEmails(row.notification_emails, false),
 		fields: parseStoredFieldsJson(row.fields_json),

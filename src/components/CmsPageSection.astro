@@ -4,6 +4,7 @@ import type { BannerRecord } from "../lib/banners";
 import type { ContactFormField } from "../lib/forms";
 import type { ContactFormRecord } from "../lib/contact-forms";
 import { escapeHtml, renderBlogFeedTemplate } from "../lib/template-html";
+import { DEFAULT_CONTACT_FORM_APPEARANCE } from "../lib/site-defaults";
 import BannerSection from "./BannerSection.astro";
 import DynamicForm from "./DynamicForm.astro";
 import { getLanguageCatalog, getUiTranslations } from "../lib/i18n";
@@ -66,9 +67,12 @@ const resolvedContactFormFormDescription = resolvedContactForm?.formDescription 
 const resolvedContactFormShowFormTitle = resolvedContactForm?.showFormTitle ?? true;
 const resolvedContactFormShowFormDescription = resolvedContactForm?.showFormDescription ?? true;
 const resolvedContactFormLayout = resolvedContactForm?.layout ?? "split";
-const resolvedContactFormBackgroundStyle = resolvedContactForm?.backgroundStyle ?? "solid";
-const resolvedContactFormBackgroundColor = resolvedContactForm?.backgroundColor ?? "#f8fbff";
-const resolvedContactFormButtonColor = resolvedContactForm?.buttonColor ?? "#4f80ff";
+const resolvedContactFormBackgroundStyle =
+	resolvedContactForm?.backgroundStyle ?? DEFAULT_CONTACT_FORM_APPEARANCE.backgroundStyle;
+const resolvedContactFormBackgroundColor =
+	resolvedContactForm?.backgroundColor ?? DEFAULT_CONTACT_FORM_APPEARANCE.backgroundColor;
+const resolvedContactFormButtonColor =
+	resolvedContactForm?.buttonColor ?? DEFAULT_CONTACT_FORM_APPEARANCE.buttonColor;
 const resolvedContactFormUseCaptcha = resolvedContactForm?.useCaptcha ?? false;
 const resolvedContactFormId = resolvedContactForm?.id ?? 0;
 const hasContactFormSectionCopy =

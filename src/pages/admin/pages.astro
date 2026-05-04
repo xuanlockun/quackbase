@@ -9,6 +9,7 @@ import FeedbackModal from "../../components/admin/FeedbackModal.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { getDb, getSiteConfig, listAllPages } from "../../lib/blog";
 import { getLanguageCatalog, getUiTranslations } from "../../lib/i18n";
+import { DEFAULT_FOOTER_TEXT, DEFAULT_TEMPLATE_THEME } from "../../lib/site-defaults";
 import { SITE_TITLE } from "../../consts";
 
 const session = Astro.locals.adminSession;
@@ -31,12 +32,12 @@ let siteConfig = {
 	homePageSlug: "home",
 	faviconUrl: "/favicon.svg",
 	logoUrl: "",
-	headerBackground: "#ffffff",
-	headerTextColor: "#0f1219",
-	headerAccentColor: "#2337ff",
-	footerText: "Edge CMS. Content updates go live straight from D1.",
-	footerBackground: "#eef2f7",
-	footerTextColor: "#60739f",
+	headerBackground: DEFAULT_TEMPLATE_THEME.headerBackground,
+	headerTextColor: DEFAULT_TEMPLATE_THEME.headerTextColor,
+	headerAccentColor: DEFAULT_TEMPLATE_THEME.headerAccentColor,
+	footerText: DEFAULT_FOOTER_TEXT,
+	footerBackground: DEFAULT_TEMPLATE_THEME.footerBackground,
+	footerTextColor: DEFAULT_TEMPLATE_THEME.footerTextColor,
 	navItems: [],
 };
 let loadError = "";

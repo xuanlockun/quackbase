@@ -4,6 +4,7 @@ import {
 	type ContactFormField,
 } from "../lib/forms";
 import { getLanguageCatalog, getUiTranslations } from "../lib/i18n";
+import { DEFAULT_CONTACT_FORM_APPEARANCE } from "../lib/site-defaults";
 
 interface Props {
 	fields: ContactFormField[];
@@ -32,9 +33,9 @@ const {
 	showTitle = true,
 	description = "",
 	showDescription = true,
-	backgroundStyle = "solid",
-	backgroundColor = "#f8fbff",
-	buttonColor = "#4f80ff",
+	backgroundStyle = DEFAULT_CONTACT_FORM_APPEARANCE.backgroundStyle,
+	backgroundColor = DEFAULT_CONTACT_FORM_APPEARANCE.backgroundColor,
+	buttonColor = DEFAULT_CONTACT_FORM_APPEARANCE.buttonColor,
 	useCaptcha = false,
 	captchaEnabled = false,
 	captchaSiteKey = "",

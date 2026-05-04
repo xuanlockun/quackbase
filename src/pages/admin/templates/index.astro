@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import AdminLayout from "../../../layouts/AdminLayout.astro";
+import AdminOptionGrid from "../../../components/admin/AdminOptionGrid.astro";
 import { getUiTranslations } from "../../../lib/i18n";
 
 const session = Astro.locals.adminSession;
@@ -17,24 +18,28 @@ const templateOptions = [
 		label: t("nav.header"),
 		href: "/admin/templates/header",
 		description: "Edit the full public top bar HTML.",
+		order: "01",
 	},
 	{
 		key: "page",
 		label: "Page",
 		href: "/admin/templates/page",
 		description: "Edit the HTML wrapper and styles used around rendered page content.",
+		order: "02",
 	},
 	{
 		key: "posts",
 		label: "Posts",
 		href: "/admin/templates/posts",
 		description: "Edit the HTML used for the public posts section.",
+		order: "03",
 	},
 	{
 		key: "footer",
 		label: t("nav.footer"),
 		href: "/admin/templates/footer",
 		description: "Edit the raw HTML used for the public footer.",
+		order: "04",
 	},
 ];
 
@@ -58,6 +63,12 @@ const chevronIcon = `
 >
 	<div class="admin-content-stack">
 		<div class="admin-form-section">
+			<div class="template-hub-copy">
+				<strong>{t("messages.templateHubHeading", "Recommended editing order")}</strong>
+				<p class="admin-muted mb-0">
+					{t("messages.templateHubOrderHelp", "Start at the header, then shape the page wrapper, the posts block, and finally the footer.")}
+				</p>
+			</div>
 			<label class="d-grid gap-2">
 				<span>{t("labels.templateToEdit", "Template to edit")}</span>
 				<select
@@ -80,49 +91,23 @@ const chevronIcon = `
 		</div>
 
 		<div class="admin-form-section">
-			<div class="d-flex flex-column gap-3">
-				{
-					templateOptions.map((template) => (
-						<a href={localizeAdminHref(template.href)} class="text-decoration-none">
-							<div class="border rounded-0 p-3 h-100 template-card">
-								<div class="d-flex justify-content-between align-items-start gap-3">
-								<div>
-									<strong class="d-block">{template.label}</strong>
-									<p class="mb-0 text-muted">{template.description}</p>
-								</div>
-									<span class="template-card-icon" aria-hidden="true" set:html={chevronIcon}></span>
-								</div>
-							</div>
-						</a>
-					))
-				}
-			</div>
+			<AdminOptionGrid
+				items={templateOptions.map((template) => ({
+					title: template.label,
+					description: template.description,
+					href: localizeAdminHref(template.href),
+					indexLabel: template.order,
+				}))}
+				columns="two"
+				iconHtml={chevronIcon}
+			/>
 		</div>
 	</div>
 </AdminLayout>
 
 <style>
-	.template-card {
-		background: rgba(255, 255, 255, 0.02);
-		transition: transform 0.15s ease, border-color 0.15s ease;
-	}
-
-	.template-card:hover {
-		transform: translateY(-1px);
-		border-color: rgba(255, 255, 255, 0.2);
-	}
-
-	.template-card-icon {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 1.75rem;
-		height: 1.75rem;
-		border: 1px solid rgba(255, 255, 255, 0.18);
-	}
-
-	.template-card-icon svg {
-		width: 1rem;
-		height: 1rem;
+	.template-hub-copy {
+		display: grid;
+		gap: 0.35rem;
 	}
 </style>

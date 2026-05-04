@@ -665,6 +665,92 @@ body.admin-app .table-responsive {
 	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.admin-option-grid {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.admin-option-grid--two {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-option-grid--three {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-option-grid--four {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-option-grid--five {
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.admin-option-card {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.9rem;
+	border: 1px solid rgba(15, 23, 42, 0.08);
+	border-radius: 0.8rem;
+	background: #fff;
+	color: inherit;
+	text-align: left;
+	text-decoration: none;
+}
+
+button.admin-option-card {
+	width: 100%;
+	font: inherit;
+	cursor: pointer;
+}
+
+.admin-option-card:hover,
+.admin-option-card:focus-visible {
+	background: rgba(249, 250, 251, 0.98);
+	border-color: rgba(15, 23, 42, 0.14);
+}
+
+.admin-option-card.is-active {
+	border-color: rgba(15, 23, 42, 0.18);
+	background: rgba(249, 250, 251, 0.98);
+}
+
+.admin-option-card-copy {
+	display: grid;
+	gap: 0.35rem;
+	min-width: 0;
+}
+
+.admin-option-card-index {
+	font-size: 0.72rem;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: rgba(15, 23, 42, 0.42);
+}
+
+.admin-option-card-description {
+	font-size: 0.9rem;
+	color: rgba(15, 23, 42, 0.62);
+}
+
+.admin-option-card-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 1.15rem;
+	height: 1.15rem;
+	color: rgba(15, 23, 42, 0.55);
+}
+
+.admin-option-card-icon svg {
+	width: 100%;
+	height: 100%;
+}
+
 .letter-spacing-wide {
 	letter-spacing: 0.08em;
 }
@@ -852,6 +938,13 @@ body.admin-app input[type="checkbox"] {
 	.admin-page-actions {
 		width: 100%;
 		justify-content: flex-start;
+	}
+
+	.admin-option-grid--five,
+	.admin-option-grid--four,
+	.admin-option-grid--three,
+	.admin-option-grid--two {
+		grid-template-columns: 1fr;
 	}
 }
 

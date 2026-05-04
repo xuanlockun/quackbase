@@ -1,0 +1,54 @@
+---
+interface AdminOptionItem {
+	title: string;
+	description?: string;
+	href?: string;
+	actionKey?: string;
+	indexLabel?: string;
+	active?: boolean;
+}
+
+interface Props {
+	items: AdminOptionItem[];
+	columns?: "two" | "three" | "four" | "five";
+	iconHtml?: string;
+}
+
+const {
+	items,
+	columns = "three",
+	iconHtml = "",
+} = Astro.props;
+---
+
+<div class:list={["admin-option-grid", `admin-option-grid--${columns}`]}>
+	{
+		items.map((item) => {
+			const className = ["admin-option-card", item.active && "is-active"];
+			const body = (
+				<>
+					<div class="admin-option-card-copy">
+						{item.indexLabel && <span class="admin-option-card-index">{item.indexLabel}</span>}
+						<strong>{item.title}</strong>
+						{item.description && <span class="admin-option-card-description">{item.description}</span>}
+					</div>
+					{iconHtml && <span class="admin-option-card-icon" aria-hidden="true" set:html={iconHtml}></span>}
+				</>
+			);
+
+			if (item.href) {
+				return (
+					<a href={item.href} class:list={className}>
+						{body}
+					</a>
+				);
+			}
+
+			return (
+				<button type="button" class:list={className} data-admin-option-action={item.actionKey ?? ""}>
+					{body}
+				</button>
+			);
+		})
+	}
+</div>

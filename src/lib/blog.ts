@@ -10,6 +10,13 @@ import {
 	stringifyLocalizedText,
 } from "./i18n";
 import { FALLBACK_LANGUAGE_CATALOG, type LanguageCatalogState, loadLanguageCatalog } from "./languages";
+import {
+	DEFAULT_FAVICON_URL,
+	DEFAULT_FOOTER_TEXT,
+	DEFAULT_HOME_PAGE_SLUG,
+	DEFAULT_SITE_TITLE,
+	DEFAULT_TEMPLATE_THEME,
+} from "./site-defaults";
 import { DEFAULT_BLOG_FEED_TEMPLATE_HTML } from "./template-html";
 import { normalizePayloadOrder } from "./ui-table-order";
 
@@ -630,9 +637,9 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 	assignNavSortOrders(navItems);
 
 	return {
-		siteTitle: settings?.site_title ?? "Edge CMS",
-		homePageSlug: settings?.home_page_slug ?? "home",
-		faviconUrl: settings?.favicon_url ?? "/favicon.svg",
+		siteTitle: settings?.site_title ?? DEFAULT_SITE_TITLE,
+		homePageSlug: settings?.home_page_slug ?? DEFAULT_HOME_PAGE_SLUG,
+		faviconUrl: settings?.favicon_url ?? DEFAULT_FAVICON_URL,
 		logoUrl: settings?.logo_url ?? "",
 		captchaEnabled: parseBooleanSetting(settings?.captcha_enabled, false),
 		captchaSiteKey: settings?.captcha_site_key ?? "",
@@ -655,18 +662,18 @@ export async function getSiteConfig(db: D1Database): Promise<SiteConfig> {
 			fromEmail: settings?.smtp_from_email ?? "",
 			fromName: settings?.smtp_from_name ?? "",
 		},
-		headerBackground: settings?.header_background ?? "#ffffff",
-		headerTextColor: settings?.header_text_color ?? "#0f1219",
-		headerAccentColor: settings?.header_accent_color ?? "#2337ff",
+		headerBackground: settings?.header_background ?? DEFAULT_TEMPLATE_THEME.headerBackground,
+		headerTextColor: settings?.header_text_color ?? DEFAULT_TEMPLATE_THEME.headerTextColor,
+		headerAccentColor: settings?.header_accent_color ?? DEFAULT_TEMPLATE_THEME.headerAccentColor,
 		headerTemplateHtml: settings?.header_template_html ?? "",
 		navbarTemplateHtml: settings?.navbar_template_html ?? "",
 		pageTemplateHtml: settings?.page_template_html?.trim() ? settings.page_template_html : DEFAULT_PAGE_TEMPLATE_HTML,
 		blogFeedTemplateHtml: settings?.blog_feed_template_html?.trim()
 			? settings.blog_feed_template_html
 			: DEFAULT_BLOG_FEED_TEMPLATE_HTML,
-		footerText: footerSettings?.footer_text ?? "Edge CMS. Content updates go live straight from D1.",
-		footerBackground: footerSettings?.footer_background ?? "#eef2f7",
-		footerTextColor: footerSettings?.footer_text_color ?? "#60739f",
+		footerText: footerSettings?.footer_text ?? DEFAULT_FOOTER_TEXT,
+		footerBackground: footerSettings?.footer_background ?? DEFAULT_TEMPLATE_THEME.footerBackground,
+		footerTextColor: footerSettings?.footer_text_color ?? DEFAULT_TEMPLATE_THEME.footerTextColor,
 		footerTemplateHtml: footerSettings?.footer_template_html ?? "",
 		navItems,
 	};
@@ -715,9 +722,9 @@ export async function saveSiteConfig(
 				normalizeHomePageSlug(input.homePageSlug),
 				normalizeFaviconUrl(input.faviconUrl),
 				normalizeLogoUrl(input.logoUrl),
-				sanitizeHexColor(input.headerBackground, "#ffffff"),
-				sanitizeHexColor(input.headerTextColor, "#0f1219"),
-				sanitizeHexColor(input.headerAccentColor, "#2337ff"),
+				sanitizeHexColor(input.headerBackground, DEFAULT_TEMPLATE_THEME.headerBackground),
+				sanitizeHexColor(input.headerTextColor, DEFAULT_TEMPLATE_THEME.headerTextColor),
+				sanitizeHexColor(input.headerAccentColor, DEFAULT_TEMPLATE_THEME.headerAccentColor),
 				navPayload,
 			),
 		db
@@ -730,8 +737,8 @@ export async function saveSiteConfig(
 					updated_at = CURRENT_TIMESTAMP`,
 			)
 			.bind(
-				sanitizeHexColor(input.footerBackground, "#eef2f7"),
-				sanitizeHexColor(input.footerTextColor, "#60739f"),
+				sanitizeHexColor(input.footerBackground, DEFAULT_TEMPLATE_THEME.footerBackground),
+				sanitizeHexColor(input.footerTextColor, DEFAULT_TEMPLATE_THEME.footerTextColor),
 			),
 		db.prepare(`DELETE FROM navigation_items`),
 		...flatNavItems.map((item) =>
@@ -1405,11 +1412,11 @@ export function parseSiteForm(formData: FormData): {
 	const homePageSlug = requiredString(formData, "homePageSlug");
 	const faviconUrl = optionalString(formData, "faviconUrl") || "/favicon.svg";
 	const logoUrl = optionalString(formData, "logoUrl");
-	const headerBackground = optionalString(formData, "headerBackground") || "#ffffff";
-	const headerTextColor = optionalString(formData, "headerTextColor") || "#0f1219";
-	const headerAccentColor = optionalString(formData, "headerAccentColor") || "#2337ff";
-	const footerBackground = optionalString(formData, "footerBackground") || "#eef2f7";
-	const footerTextColor = optionalString(formData, "footerTextColor") || "#60739f";
+	const headerBackground = optionalString(formData, "headerBackground") || DEFAULT_TEMPLATE_THEME.headerBackground;
+	const headerTextColor = optionalString(formData, "headerTextColor") || DEFAULT_TEMPLATE_THEME.headerTextColor;
+	const headerAccentColor = optionalString(formData, "headerAccentColor") || DEFAULT_TEMPLATE_THEME.headerAccentColor;
+	const footerBackground = optionalString(formData, "footerBackground") || DEFAULT_TEMPLATE_THEME.footerBackground;
+	const footerTextColor = optionalString(formData, "footerTextColor") || DEFAULT_TEMPLATE_THEME.footerTextColor;
 	const navRaw = optionalString(formData, "navItems");
 	let navItems: SiteNavItem[] = [];
 	const catalog = catalogOrFallback();
@@ -1677,9 +1684,9 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				smtp_encryption TEXT NOT NULL DEFAULT 'tls',
 				smtp_from_email TEXT NOT NULL DEFAULT '',
 				smtp_from_name TEXT NOT NULL DEFAULT '',
-				header_background TEXT NOT NULL DEFAULT '#ffffff',
-				header_text_color TEXT NOT NULL DEFAULT '#0f1219',
-				header_accent_color TEXT NOT NULL DEFAULT '#2337ff',
+				header_background TEXT NOT NULL DEFAULT '${DEFAULT_TEMPLATE_THEME.headerBackground}',
+				header_text_color TEXT NOT NULL DEFAULT '${DEFAULT_TEMPLATE_THEME.headerTextColor}',
+				header_accent_color TEXT NOT NULL DEFAULT '${DEFAULT_TEMPLATE_THEME.headerAccentColor}',
 				header_template_html TEXT NOT NULL DEFAULT '',
 				navbar_template_html TEXT NOT NULL DEFAULT '',
 				page_template_html TEXT NOT NULL DEFAULT '',
@@ -1713,9 +1720,9 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 		db.prepare(
 			`CREATE TABLE IF NOT EXISTS footer_settings (
 				id INTEGER PRIMARY KEY CHECK (id = 1),
-				footer_text TEXT NOT NULL DEFAULT 'Edge CMS. Content updates go live straight from D1.',
-				footer_background TEXT NOT NULL DEFAULT '#eef2f7',
-				footer_text_color TEXT NOT NULL DEFAULT '#60739f',
+				footer_text TEXT NOT NULL DEFAULT '${DEFAULT_FOOTER_TEXT.replace(/'/g, "''")}',
+				footer_background TEXT NOT NULL DEFAULT '${DEFAULT_TEMPLATE_THEME.footerBackground}',
+				footer_text_color TEXT NOT NULL DEFAULT '${DEFAULT_TEMPLATE_THEME.footerTextColor}',
 				footer_template_html TEXT NOT NULL DEFAULT '',
 				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 			)`,
@@ -1871,12 +1878,12 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 	await db.batch([
 		db.prepare(
 			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, captcha_enabled, captcha_site_key, captcha_secret_key, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html)
-			VALUES (1, 'Edge CMS', 'home', '/favicon.svg', '', '0', '', '', '#ffffff', '#0f1219', '#2337ff', '', '', '${DEFAULT_PAGE_TEMPLATE_HTML.replace(/'/g, "''")}', '${DEFAULT_BLOG_FEED_TEMPLATE_HTML.replace(/'/g, "''")}')
+			VALUES (1, '${DEFAULT_SITE_TITLE.replace(/'/g, "''")}', '${DEFAULT_HOME_PAGE_SLUG}', '${DEFAULT_FAVICON_URL}', '', '0', '', '', '${DEFAULT_TEMPLATE_THEME.headerBackground}', '${DEFAULT_TEMPLATE_THEME.headerTextColor}', '${DEFAULT_TEMPLATE_THEME.headerAccentColor}', '', '', '${DEFAULT_PAGE_TEMPLATE_HTML.replace(/'/g, "''")}', '${DEFAULT_BLOG_FEED_TEMPLATE_HTML.replace(/'/g, "''")}')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(
 			`INSERT INTO footer_settings (id, footer_text, footer_background, footer_text_color, footer_template_html)
-			VALUES (1, 'Edge CMS. Content updates go live straight from D1.', '#eef2f7', '#60739f', '')
+			VALUES (1, '${DEFAULT_FOOTER_TEXT.replace(/'/g, "''")}', '${DEFAULT_TEMPLATE_THEME.footerBackground}', '${DEFAULT_TEMPLATE_THEME.footerTextColor}', '')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(
