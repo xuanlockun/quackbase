@@ -4,6 +4,7 @@ export const prerender = false;
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import LanguageSwitchScript from "../../../components/LanguageSwitchScript.astro";
 import FeedbackModal from "../../../components/admin/FeedbackModal.astro";
+import "../../../styles/site-theme.css";
 import { DEFAULT_PAGE_TEMPLATE_HTML, getDb, getSiteConfig } from "../../../lib/blog";
 import { getLanguageCatalog, getLanguageSwitchOptions, getUiTranslations } from "../../../lib/i18n";
 import {
@@ -271,7 +272,9 @@ function buildSocialLinksFragment(): string {
 		</form>
 		<div class="admin-form-section">
 			<strong>{t("labels.preview", "Preview")}</strong>
-			<div class="template-preview" set:html={previewHtml}></div>
+			<div class="template-preview site-app">
+				<div set:html={previewHtml}></div>
+			</div>
 			<LanguageSwitchScript />
 		</div>
 	</div>
@@ -298,129 +301,9 @@ function buildSocialLinksFragment(): string {
 
 <style>
 	.template-preview {
-		background: #fff;
-	}
-
-	.template-preview .site-navbar-logo {
-		display: block;
-		width: auto;
-		max-width: 128px;
-		height: 32px;
-		object-fit: contain;
-	}
-
-	.template-preview .site-navbar-mark {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 40px;
-		height: 40px;
-		border: 2px solid #2337ff;
-		border-radius: 0;
-		font-weight: 700;
-		font-size: 0.95rem;
-		line-height: 1;
-		color: #2337ff;
-	}
-
-	.template-preview .site-navbar-title {
-		white-space: nowrap;
-	}
-
-	.template-preview .navbar-nav .dropdown-menu {
-		display: none;
-		position: absolute;
-		top: 100%;
-	}
-
-	.template-preview .navbar-nav .dropdown-menu.show {
-		display: block;
-	}
-
-	.template-preview .navbar-nav .nav-item.dropdown:hover > .dropdown-menu,
-	.template-preview .navbar-nav .dropdown-submenu:hover > .dropdown-menu {
-		display: block;
-	}
-
-	.template-preview .navbar-nav .dropdown-submenu {
-		position: relative;
-	}
-
-	.template-preview .navbar-nav .dropdown-submenu .dropdown-menu {
-		top: 0;
-		left: 100%;
-		margin-left: 0.25rem;
-	}
-
-	.template-preview .dropdown-submenu-menu {
-		min-width: 12rem;
-	}
-
-	.template-preview .blog-feed-section {
-		display: grid;
-		gap: 1rem;
-	}
-
-	.template-preview .blog-feed-featured-link,
-	.template-preview .blog-feed-featured-link:hover {
-		color: inherit;
-	}
-
-	.template-preview .blog-feed-featured,
-	.template-preview .blog-feed-card {
-		background: #fff;
+		border-radius: 1rem;
+		overflow: hidden;
 		border: 1px solid rgba(15, 23, 42, 0.08);
-		box-shadow: none;
-	}
-
-	.template-preview .blog-feed-featured-media,
-	.template-preview .blog-feed-card-media {
-		position: relative;
-		overflow: hidden;
-		background: rgba(148, 163, 184, 0.08);
-	}
-
-	.template-preview .blog-feed-featured-media {
-		aspect-ratio: 16 / 10;
-	}
-
-	.template-preview .blog-feed-card-media {
-		aspect-ratio: 4 / 3;
-	}
-
-	.template-preview .blog-feed-image {
-		display: block;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-
-	.template-preview .blog-feed-excerpt {
-		display: -webkit-box;
-		-webkit-line-clamp: 4;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-
-	@media (max-width: 992px) {
-		.template-preview .navbar-nav .dropdown-menu {
-			position: static;
-		}
-
-		.template-preview .site-navbar-logo {
-			max-width: 112px;
-			height: 30px;
-		}
-
-		.template-preview .site-navbar-mark {
-			width: 34px;
-			height: 34px;
-			font-size: 0.85rem;
-		}
-
-		.template-preview .site-navbar-title {
-			font-size: 0.95rem;
-		}
 	}
 </style>
 
