@@ -1,0 +1,37 @@
+---
+import BaseHead from "../../components/BaseHead.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+
+interface Props {
+	title: string;
+	description: string;
+	lang?: string;
+	faviconHref?: string;
+	bodyClass?: string;
+	mainClass?: string;
+}
+
+const {
+	title,
+	description,
+	lang = "en",
+	faviconHref,
+	bodyClass = "bg-body site-app",
+	mainClass = "site-main",
+} = Astro.props;
+---
+
+<html lang={lang}>
+	<head>
+		<BaseHead title={title} description={description} faviconHref={faviconHref} />
+	</head>
+
+	<body class={bodyClass}>
+		<Header />
+		<main class={mainClass}>
+			<slot />
+		</main>
+		<Footer />
+	</body>
+</html>

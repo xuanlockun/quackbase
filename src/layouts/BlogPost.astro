@@ -1,9 +1,7 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import FormattedDate from '../components/FormattedDate.astro';
-import { getUiTranslations } from '../lib/i18n';
+import SiteLayout from "../components/site/SiteLayout.astro";
+import FormattedDate from "../components/FormattedDate.astro";
+import { getUiTranslations } from "../lib/i18n";
 
 interface Props {
 	title: string;
@@ -33,154 +31,79 @@ const {
 	faviconHref,
 } = Astro.props;
 const { t } = getUiTranslations(Astro);
-const mainClass = wideContent ? "page-main page-main-wide" : "page-main";
+const mainClass = wideContent ? "site-main site-main--wide" : "site-main";
 ---
 
-<html lang={lang}>
-	<head>
-		<BaseHead title={title} description={description} faviconHref={faviconHref} />
-		<style>
-			main.page-main {
-				width: calc(100% - 2em);
-				max-width: 100%;
-				margin: 0;
-			}
-
-			main.page-main-wide {
-				width: 100%;
-				max-width: 100%;
-				margin: 0;
-			}
-
-			.page-bleed {
-				width: 100%;
-				margin: 0;
-			}
-
-			.page-bleed .hero-image,
-			.page-bleed .title,
-			.page-bleed .prose {
-				width: 100%;
-				max-width: none;
-			}
-
-			.page-bleed .prose {
-				padding-inline: 0;
-			}
-
-			.hero-image {
-				width: 100%;
-			}
-			.hero-image img {
-				display: block;
-				margin: 0 auto;
-				border-radius: 12px;
-				box-shadow: var(--box-shadow);
-			}
-			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
-			}
-			.prose.prose-wide {
-				width: 1120px;
-			}
-			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
-				text-align: center;
-				line-height: 1;
-			}
-			.title h1 {
-				margin: 0 0 0.5em 0;
-			}
-			.date {
-				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
-			}
-			.last-updated-on {
-				font-style: italic;
-			}
-		</style>
-	</head>
-
-	<body class="bg-body">
-		<Header />
-		<main class={mainClass}>
-			{wideContent ? (
-				<article class="page-bleed">
-					{heroImage && (
-						<div class="hero-image">
-							<img src={heroImage} alt="" class="img-fluid" />
+<SiteLayout title={title} description={description} lang={lang} faviconHref={faviconHref} mainClass={mainClass}>
+	{wideContent ? (
+		<article class="site-article site-article--wide">
+			{heroImage && (
+				<div class="site-hero-media">
+					<img src={heroImage} alt="" class="img-fluid" />
+				</div>
+			)}
+			{showDate && (
+				<div class="site-meta-row d-flex flex-column flex-md-row justify-content-between mb-3 text-muted small">
+					<div>
+						<span>{t("messages.publishedOn")} </span>
+						<FormattedDate date={pubDate} />
+					</div>
+					{updatedDate && (
+						<div>
+							<span>{t("messages.lastUpdatedOn")} </span>
+							<FormattedDate date={updatedDate} />
 						</div>
 					)}
-					{showDate && (
-						<div class="d-flex flex-column flex-md-row justify-content-between mb-3 text-muted small">
-							<div>
-								<span>{t("messages.publishedOn")} </span>
-								<FormattedDate date={pubDate} />
+				</div>
+			)}
+			{showTitle && (
+				<>
+					<h1 class="display-5">{title}</h1>
+					<hr class="site-section-divider" />
+				</>
+			)}
+			{contentHtml && <div class="site-prose site-prose--wide" set:html={contentHtml} />}
+			<slot />
+		</article>
+	) : (
+		<div class="container">
+			<article class="site-article site-surface-article card shadow-sm border-0">
+				<div class="row g-0">
+					{
+						heroImage && (
+							<div class="col-12">
+								<img src={heroImage} alt="" class="img-fluid rounded-top" />
 							</div>
-							{updatedDate && (
-								<div>
-									<span>{t("messages.lastUpdatedOn")} </span>
-									<FormattedDate date={updatedDate} />
+						)
+					}
+					<div class="col-12">
+						<div class="card-body">
+							{showDate && (
+								<div class="site-meta-row d-flex flex-column flex-md-row justify-content-between mb-3 text-muted small">
+									<div>
+										<span>{t("messages.publishedOn")} </span>
+										<FormattedDate date={pubDate} />
+									</div>
+									{updatedDate && (
+										<div>
+											<span>{t("messages.lastUpdatedOn")} </span>
+											<FormattedDate date={updatedDate} />
+										</div>
+									)}
 								</div>
 							)}
-						</div>
-					)}
-					{showTitle && (
-						<>
-							<h1 class="display-5">{title}</h1>
-							<hr />
-						</>
-					)}
-					{contentHtml && <div class="prose" set:html={contentHtml} />}
-					<slot />
-				</article>
-			) : (
-				<div class="container">
-				<article class="card shadow-sm border-0">
-					<div class="row g-0">
-						{
-							heroImage && (
-								<div class="col-12">
-									<img src={heroImage} alt="" class="img-fluid rounded-top" />
-								</div>
-							)
-						}
-						<div class="col-12">
-							<div class="card-body">
-								{showDate && (
-									<div class="d-flex flex-column flex-md-row justify-content-between mb-3 text-muted small">
-										<div>
-											<span>{t("messages.publishedOn")} </span>
-											<FormattedDate date={pubDate} />
-										</div>
-										{updatedDate && (
-											<div>
-												<span>{t("messages.lastUpdatedOn")} </span>
-												<FormattedDate date={updatedDate} />
-											</div>
-										)}
-									</div>
-								)}
-								{showTitle && (
-									<>
-										<h1 class="display-5">{title}</h1>
-										<hr />
-									</>
-								)}
-								<div class="prose" set:html={contentHtml} />
-								<slot />
-							</div>
+							{showTitle && (
+								<>
+									<h1 class="display-5">{title}</h1>
+									<hr class="site-section-divider" />
+								</>
+							)}
+							<div class="site-prose" set:html={contentHtml} />
+							<slot />
 						</div>
 					</div>
-				</article>
-			</div>
-			)}
-		</main>
-		<Footer />
-	</body>
-</html>
+				</div>
+			</article>
+		</div>
+	)}
+</SiteLayout>

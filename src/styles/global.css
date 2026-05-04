@@ -126,6 +126,228 @@ img {
 	min-width: 0;
 }
 
+.site-app {
+	background:
+		radial-gradient(circle at top center, rgba(35, 55, 255, 0.05), transparent 28%),
+		var(--body-bg);
+}
+
+.site-main {
+	width: min(100%, 90rem);
+	margin: 0 auto;
+	padding: 1.5rem 1rem 3rem;
+}
+
+.site-main--wide {
+	width: 100%;
+	max-width: none;
+	padding-inline: 0;
+}
+
+.site-header {
+	color: var(--site-header-text, var(--text-color));
+}
+
+.site-header header {
+	background: var(--site-header-background, #fff);
+	color: inherit;
+}
+
+.site-header .navbar,
+.site-header .navbar a,
+.site-header .navbar .nav-link,
+.site-header .navbar .dropdown-item {
+	color: inherit;
+}
+
+.site-header .navbar .nav-link.active,
+.site-header .navbar .nav-link:hover,
+.site-header .navbar .navbar-brand:hover {
+	color: var(--site-header-accent, var(--accent));
+}
+
+.site-navbar-logo {
+	display: block;
+	width: auto;
+	max-width: 128px;
+	height: 32px;
+	object-fit: contain;
+}
+
+.site-navbar-mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border: 2px solid var(--site-header-accent, var(--accent));
+	border-radius: 999px;
+	font-weight: 700;
+	font-size: 0.95rem;
+	line-height: 1;
+	color: var(--site-header-accent, var(--accent));
+}
+
+.site-navbar-title {
+	white-space: nowrap;
+}
+
+.site-header .navbar-nav .dropdown-menu {
+	display: none;
+	position: absolute;
+	top: 100%;
+}
+
+.site-header .navbar-nav .dropdown-menu.show {
+	display: block;
+}
+
+.site-header .navbar-nav .nav-item.dropdown:hover > .dropdown-menu,
+.site-header .navbar-nav .dropdown-submenu:hover > .dropdown-menu {
+	display: block;
+}
+
+.site-header .navbar-nav .dropdown-submenu {
+	position: relative;
+}
+
+.site-header .navbar-nav .dropdown-submenu .dropdown-menu {
+	top: 0;
+	left: 100%;
+	margin-left: 0.25rem;
+}
+
+.site-header .dropdown-submenu-menu {
+	min-width: 12rem;
+}
+
+.site-article {
+	width: 100%;
+}
+
+.site-surface-article {
+	border-radius: 1.25rem;
+	overflow: hidden;
+}
+
+.site-hero-media {
+	width: 100%;
+	margin-bottom: 1.25rem;
+}
+
+.site-hero-media img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+.site-meta-row {
+	color: var(--gray);
+}
+
+.site-prose {
+	width: min(100%, 46rem);
+	margin: 0 auto;
+	color: var(--text-color);
+}
+
+.site-prose--wide {
+	width: min(100%, 70rem);
+	padding-inline: 1rem;
+}
+
+.site-section-divider {
+	margin: 1rem 0 1.5rem;
+	border-color: rgba(15, 23, 42, 0.08);
+}
+
+.site-footer-shell {
+	margin-top: 2rem;
+	background: var(--site-footer-background, #eef2f7);
+	color: var(--site-footer-text, #60739f);
+}
+
+.site-footer-shell footer {
+	color: inherit;
+}
+
+.site-footer-fallback {
+	width: min(100%, 90rem);
+	margin: 0 auto;
+	padding: 1.5rem 1rem 2rem;
+	font-size: 0.95rem;
+}
+
+.site-social-links {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.site-social-links a {
+	color: inherit;
+}
+
+.blog-feed-section {
+	display: grid;
+	gap: 1rem;
+}
+
+.blog-feed-featured-link,
+.blog-feed-featured-link:hover {
+	color: inherit;
+}
+
+.blog-feed-featured,
+.blog-feed-card {
+	background: #fff;
+	border: 1px solid rgba(15, 23, 42, 0.08);
+	box-shadow: none;
+}
+
+.blog-feed-featured {
+	min-height: 100%;
+}
+
+.blog-feed-featured-media,
+.blog-feed-card-media {
+	position: relative;
+	overflow: hidden;
+	background: rgba(148, 163, 184, 0.08);
+}
+
+.blog-feed-featured-media {
+	aspect-ratio: 16 / 10;
+}
+
+.blog-feed-card-media {
+	aspect-ratio: 4 / 3;
+}
+
+.blog-feed-image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.blog-feed-card-body,
+.blog-feed-featured-copy .card-body {
+	min-height: 0;
+}
+
+.blog-feed-title {
+	line-height: 1.15;
+}
+
+.blog-feed-excerpt {
+	display: -webkit-box;
+	-webkit-line-clamp: 4;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
 .admin-app {
 	background:
 		radial-gradient(circle at top left, rgba(35, 55, 255, 0.08), transparent 32%),
@@ -2221,6 +2443,39 @@ body.admin-app [data-admin-confirm-modal] .btn-danger:focus-visible {
 }
 
 @media (max-width: 991px) {
+	.site-main {
+		padding-inline: 0.75rem;
+	}
+
+	.site-header .navbar-nav .dropdown-menu {
+		position: static;
+	}
+
+	.site-navbar-logo {
+		max-width: 112px;
+		height: 30px;
+	}
+
+	.site-navbar-mark {
+		width: 34px;
+		height: 34px;
+		font-size: 0.85rem;
+	}
+
+	.site-navbar-title {
+		font-size: 0.95rem;
+	}
+
+	.site-prose,
+	.site-prose--wide {
+		width: 100%;
+		padding-inline: 0;
+	}
+
+	.blog-feed-featured-media {
+		aspect-ratio: 16 / 9;
+	}
+
 	body.admin-app .admin-page-header {
 		flex-direction: column;
 	}

@@ -1,5 +1,8 @@
 ---
+import LanguageSwitchScript from "./LanguageSwitchScript.astro";
 import { getLanguageCatalog, getLanguageSwitchOptions, getUiTranslations } from "../lib/i18n";
+import { buildLanguageSwitchHtml } from "../lib/public-template-fragments";
+import { escapeHtml } from "../lib/template-html";
 
 interface Props {
 	fullWidth?: boolean;
@@ -11,33 +14,12 @@ const catalog = getLanguageCatalog(Astro.locals);
 const options = getLanguageSwitchOptions(Astro.url, language, catalog);
 ---
 
-<label class:list={["language-switch", fullWidth && "language-switch-full"]}>
-	<span class="visually-hidden">{t("labels.language")}</span>
-	<select
-		class:list={["form-select form-select-sm language-switch-select", fullWidth ? "w-100" : "w-auto"]}
-		aria-label={t("labels.language")}
-		data-language-switch
-	>
-		{
-			options.map((option) => (
-				<option value={option.href} selected={option.isActive}>
-					{option.label}
-				</option>
-			))
-		}
-	</select>
-</label>
-
-<script is:inline>
-	document.querySelectorAll("[data-language-switch]").forEach((select) => {
-		if (!(select instanceof HTMLSelectElement)) {
-			return;
-		}
-
-		select.addEventListener("change", () => {
-			if (select.value) {
-				window.location.href = select.value;
-			}
-		});
-	});
-</script>
+<Fragment
+	set:html={buildLanguageSwitchHtml({
+		label: t("labels.language"),
+		options,
+		escapeHtml,
+		fullWidth,
+	})}
+/>
+<LanguageSwitchScript />

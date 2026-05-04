@@ -1,7 +1,9 @@
 ---
+import LanguageSwitchScript from "./LanguageSwitchScript.astro";
 import { SITE_TITLE } from '../consts';
 import { getDb, getSiteConfig, type SiteNavItem } from '../lib/blog';
 import { getLanguageCatalog, getLanguageSwitchOptions, getUiTranslations } from '../lib/i18n';
+import { buildBrandHtml, buildLanguageSwitchHtml, buildNavItemsHtml } from "../lib/public-template-fragments";
 import { DEFAULT_HEADER_TEMPLATE_HTML, DEFAULT_NAVIGATION_TEMPLATE_HTML, escapeHtml, renderTemplateHtml } from '../lib/template-html';
 
 let siteTitle = SITE_TITLE;
@@ -39,16 +41,26 @@ if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.hre
 
 const currentPathname = Astro.url.pathname;
 const resolveNavHref = (href = "/") => (href.startsWith('/admin') ? localizeAdminHref(href) : localizeHref(href));
-const getNavLabel = (item: SiteNavItem) => item.labelTranslations?.[language] ?? item.labelTranslations?.en ?? item.label;
-const isActivePath = (href: string) => href === currentPathname;
-const hasActiveDescendant = (item: SiteNavItem): boolean =>
-	(item.children ?? []).some((child) => isActivePath(child.href) || hasActiveDescendant(child));
-const buildClass = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(" ");
 const catalog = getLanguageCatalog(Astro.locals);
 const languageSwitchOptions = getLanguageSwitchOptions(Astro.url, language, catalog);
-const brandHtml = buildBrandHtml();
-const navItemsHtml = navItems.map((item) => renderNavItemHtml(item)).join("");
-const languageSwitchHtml = buildLanguageSwitchHtml();
+const brandHtml = buildBrandHtml({
+	siteTitle,
+	logoUrl,
+	homeHref: localizeHref("/"),
+	escapeHtml,
+});
+const navItemsHtml = buildNavItemsHtml({
+	items: navItems,
+	language,
+	currentPathname,
+	resolveHref: resolveNavHref,
+	escapeHtml,
+});
+const languageSwitchHtml = buildLanguageSwitchHtml({
+	label: t("labels.language"),
+	options: languageSwitchOptions,
+	escapeHtml,
+});
 const navigationHtml = renderTemplateHtml(headerTemplateHtml.trim() ? DEFAULT_NAVIGATION_TEMPLATE_HTML : navbarTemplateHtml.trim() || DEFAULT_NAVIGATION_TEMPLATE_HTML, {
 	navItems: navItemsHtml,
 	languageSwitch: languageSwitchHtml,
@@ -59,118 +71,12 @@ const headerTemplateHtmlRendered = renderTemplateHtml(headerTemplateHtml.trim() 
 	navItems: navItemsHtml,
 	languageSwitch: languageSwitchHtml,
 });
-
-function buildBrandHtml(): string {
-	const siteTitleHtml = escapeHtml(siteTitle);
-	const logoAltHtml = escapeHtml(siteTitle);
-	const homeHref = escapeHtml(localizeHref("/"));
-	const logoStyle = "height:32px;width:auto;max-width:128px;object-fit:contain;";
-
-	return logoUrl
-		? `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${homeHref}"><img src="${escapeHtml(logoUrl)}" alt="${logoAltHtml}" class="site-navbar-logo" loading="eager" width="128" height="32" style="${logoStyle}" /><span class="site-navbar-title">${siteTitleHtml}</span></a>`
-		: `<a class="navbar-brand d-flex align-items-center gap-2 fs-5 fw-bold flex-shrink-0" href="${homeHref}"><span class="site-navbar-mark" aria-hidden="true">${escapeHtml(siteTitle.charAt(0) || siteTitle)}</span><span class="site-navbar-title">${siteTitleHtml}</span></a>`;
-}
-
-function buildLanguageSwitchHtml(): string {
-	const optionsHtml = languageSwitchOptions
-		.map(
-			(option) =>
-				`<option value="${escapeHtml(option.href)}"${option.isActive ? " selected" : ""}>${escapeHtml(option.label)}</option>`,
-		)
-		.join("");
-
-	return `<label class="language-switch"><span class="visually-hidden">${escapeHtml(t("labels.language"))}</span><select class="form-select form-select-sm language-switch-select w-auto" aria-label="${escapeHtml(t("labels.language"))}" data-language-switch>${optionsHtml}</select></label><script>document.querySelectorAll("[data-language-switch]").forEach((select) => {if (!(select instanceof HTMLSelectElement)) {return;}select.addEventListener("change", () => {if (select.value) {window.location.href = select.value;}});});</script>`;
-}
-
-function renderNavItemHtml(item: SiteNavItem): string {
-	const hasChildren = Boolean(item.children?.length);
-	const linkHref = escapeHtml(resolveNavHref(item.href));
-	const label = escapeHtml(getNavLabel(item));
-	const active = isActivePath(item.href) || (hasChildren && hasActiveDescendant(item));
-
-	if (!hasChildren) {
-		return `<li class="nav-item"><a class="${buildClass("nav-link", active && "active")}" href="${linkHref}">${label}</a></li>`;
-	}
-
-	return `<li class="${buildClass("nav-item", "dropdown", active && "active")}"><a class="nav-link dropdown-toggle" href="${linkHref}" data-bs-toggle="dropdown" aria-expanded="false">${label}</a><ul class="${buildClass("dropdown-menu", "dropdown-submenu-menu")}">${item.children!.map((child) => renderNavItemHtml(child)).join("")}</ul></li>`;
-}
 ---
 
-<Fragment set:html={headerTemplateHtmlRendered} />
-<style>
-	.site-navbar-logo {
-		display: block;
-		width: auto;
-		max-width: 128px;
-		height: 32px;
-		object-fit: contain;
-	}
-
-	.site-navbar-mark {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 40px;
-		height: 40px;
-		border: 2px solid #2337ff;
-		border-radius: 999px;
-		font-weight: 700;
-		font-size: 0.95rem;
-		line-height: 1;
-		color: #2337ff;
-	}
-
-	.site-navbar-title {
-		white-space: nowrap;
-	}
-
-	.navbar-nav .dropdown-menu {
-		display: none;
-		position: absolute;
-		top: 100%;
-	}
-
-	.navbar-nav .dropdown-menu.show {
-		display: block;
-	}
-
-	.navbar-nav .nav-item.dropdown:hover > .dropdown-menu,
-	.navbar-nav .dropdown-submenu:hover > .dropdown-menu {
-		display: block;
-	}
-
-	.navbar-nav .dropdown-submenu {
-		position: relative;
-	}
-
-	.navbar-nav .dropdown-submenu .dropdown-menu {
-		top: 0;
-		left: 100%;
-		margin-left: 0.25rem;
-	}
-
-	.dropdown-submenu-menu {
-		min-width: 12rem;
-	}
-
-	@media (max-width: 992px) {
-		.navbar-nav .dropdown-menu {
-			position: static;
-		}
-
-		.site-navbar-logo {
-			max-width: 112px;
-			height: 30px;
-		}
-
-		.site-navbar-mark {
-			width: 34px;
-			height: 34px;
-			font-size: 0.85rem;
-		}
-
-		.site-navbar-title {
-			font-size: 0.95rem;
-		}
-	}
-</style>
+<div
+	class="site-header"
+	style={`--site-header-background:${headerBackground};--site-header-text:${headerTextColor};--site-header-accent:${headerAccentColor};`}
+>
+	<Fragment set:html={headerTemplateHtmlRendered} />
+	<LanguageSwitchScript />
+</div>
