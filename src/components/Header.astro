@@ -62,7 +62,8 @@ const languageSwitchHtml = buildLanguageSwitchHtml({
 	options: languageSwitchOptions,
 	escapeHtml,
 });
-const navigationHtml = renderTemplateHtml(headerTemplateHtml.trim() ? DEFAULT_NAVIGATION_TEMPLATE_HTML : navbarTemplateHtml.trim() || DEFAULT_NAVIGATION_TEMPLATE_HTML, {
+const navigationTemplateSource = navbarTemplateHtml.trim() || DEFAULT_NAVIGATION_TEMPLATE_HTML;
+const navigationHtml = renderTemplateHtml(navigationTemplateSource, {
 	navItems: navItemsHtml,
 	languageSwitch: languageSwitchHtml,
 });
