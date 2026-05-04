@@ -1258,10 +1258,16 @@ body.admin-app .admin-topbar-mark {
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	border-radius: 6px;
-	background: #101418;
-	border: 2px solid rgba(255, 255, 255, 0.12);
-	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+	overflow: hidden;
+	border-radius: 14px;
+	background:
+		radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.35) 0, rgba(255, 255, 255, 0) 32%),
+		linear-gradient(180deg, #fff2db 0%, #ffd3a0 38%, #ff9f43 100%);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	box-shadow:
+		0 14px 24px rgba(255, 122, 26, 0.22),
+		inset 0 1px 0 rgba(255, 255, 255, 0.42),
+		inset 0 -8px 14px rgba(220, 96, 9, 0.18);
 }
 
 body.admin-app .admin-sidebar-mark {
@@ -1274,26 +1280,50 @@ body.admin-app .admin-topbar-mark {
 	height: 40px;
 }
 
-body.admin-app .admin-sidebar-mark-bar,
-body.admin-app .admin-topbar-mark-bar {
+body.admin-app .admin-sidebar-mark-sun,
+body.admin-app .admin-topbar-mark-sun,
+body.admin-app .admin-sidebar-mark-cloud,
+body.admin-app .admin-topbar-mark-cloud {
 	position: absolute;
-	height: 5px;
-	background: #fff;
-	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
-body.admin-app .admin-sidebar-mark-bar--primary,
-body.admin-app .admin-topbar-mark-bar--primary {
-	top: 33%;
-	left: 22%;
-	right: 22%;
+body.admin-app .admin-sidebar-mark-sun,
+body.admin-app .admin-topbar-mark-sun {
+	top: 8px;
+	left: 9px;
+	width: 16px;
+	height: 16px;
+	border-radius: 999px;
+	background: radial-gradient(circle at 35% 35%, #fff7e7 0, #ffd36f 45%, #ff9a1f 100%);
+	box-shadow:
+		0 0 0 5px rgba(255, 171, 64, 0.16),
+		0 6px 14px rgba(255, 138, 28, 0.28);
 }
 
-body.admin-app .admin-sidebar-mark-bar--secondary,
-body.admin-app .admin-topbar-mark-bar--secondary {
-	top: 53%;
-	left: 35%;
-	right: 22%;
+body.admin-app .admin-sidebar-mark-cloud,
+body.admin-app .admin-topbar-mark-cloud {
+	background: linear-gradient(180deg, #fffdf8 0%, #ffe8c9 100%);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.85),
+		0 4px 10px rgba(202, 89, 10, 0.16);
+}
+
+body.admin-app .admin-sidebar-mark-cloud--large,
+body.admin-app .admin-topbar-mark-cloud--large {
+	left: 8px;
+	bottom: 9px;
+	width: 24px;
+	height: 11px;
+	border-radius: 999px 999px 10px 10px;
+}
+
+body.admin-app .admin-sidebar-mark-cloud--small,
+body.admin-app .admin-topbar-mark-cloud--small {
+	right: 6px;
+	bottom: 13px;
+	width: 14px;
+	height: 14px;
+	border-radius: 999px;
 }
 
 body.admin-app .admin-sidebar-brand-copy small,
