@@ -307,7 +307,6 @@ function buildSocialLinksFragment(): string {
 							</div>
 							<p class="admin-editor-help mb-0">Insert saved placeholders directly into the template. The preview on this page still uses the same stored HTML contract.</p>
 							<div class="template-editor-stack">
-								<pre class="template-editor-highlight" aria-hidden="true" data-template-highlight></pre>
 								<textarea
 									class="form-control template-editor-textarea admin-editor-textarea"
 									name="templateHtml"
@@ -317,6 +316,10 @@ function buildSocialLinksFragment(): string {
 									disabled={Boolean(loadError)}
 									data-template-editor-input
 								>{templateHtml.trim() ? templateHtml : defaultTemplateHtml}</textarea>
+							</div>
+							<div class="template-token-preview" data-template-token-preview hidden>
+								<strong>Detected variables</strong>
+								<div class="template-token-preview-list" data-template-token-preview-list></div>
 							</div>
 						</div>
 					</label>
@@ -392,24 +395,24 @@ function buildSocialLinksFragment(): string {
 			.replace(/"/g, "&quot;")
 			.replace(/'/g, "&#39;");
 
-	const highlightTemplateValue = (value) =>
-		escapeHtml(value)
-			.replace(/(\{\{[^}]+\}\})/g, '<span class="template-editor-token">$1</span>')
-			.replace(/\n$/g, "\n ");
-
 	const templateTextarea = document.querySelector("[data-template-editor-input]");
-	const templateHighlight = document.querySelector("[data-template-highlight]");
-	if (templateTextarea instanceof HTMLTextAreaElement && templateHighlight instanceof HTMLElement) {
-		const syncTemplateHighlight = () => {
-			templateHighlight.innerHTML = highlightTemplateValue(templateTextarea.value || templateTextarea.placeholder || " ");
-			templateHighlight.scrollTop = templateTextarea.scrollTop;
-			templateHighlight.scrollLeft = templateTextarea.scrollLeft;
+	const tokenPreview = document.querySelector("[data-template-token-preview]");
+	const tokenPreviewList = document.querySelector("[data-template-token-preview-list]");
+	if (
+		templateTextarea instanceof HTMLTextAreaElement &&
+		tokenPreview instanceof HTMLElement &&
+		tokenPreviewList instanceof HTMLElement
+	) {
+		const syncTemplateTokens = () => {
+			const matches = Array.from(new Set((templateTextarea.value.match(/\{\{[^}]+\}\}/g) ?? []).map((token) => token.trim())));
+			tokenPreview.hidden = matches.length === 0;
+			tokenPreviewList.innerHTML = matches
+				.map((token) => `<span class="template-editor-token">${escapeHtml(token)}</span>`)
+				.join("");
 		};
 
-		templateTextarea.addEventListener("input", syncTemplateHighlight);
-		templateTextarea.addEventListener("scroll", syncTemplateHighlight);
-		window.addEventListener("resize", syncTemplateHighlight);
-		syncTemplateHighlight();
+		templateTextarea.addEventListener("input", syncTemplateTokens);
+		syncTemplateTokens();
 	}
 </script>
 
@@ -440,13 +443,8 @@ function buildSocialLinksFragment(): string {
 
 	.template-editor-stack {
 		position: relative;
-		min-height: 24rem;
-		border: 1px solid rgba(15, 23, 42, 0.14);
-		background: #ffffff;
-		overflow: hidden;
 	}
 
-	.template-editor-highlight,
 	.template-editor-textarea {
 		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 		font-size: 0.92rem;
@@ -454,39 +452,15 @@ function buildSocialLinksFragment(): string {
 		tab-size: 2;
 	}
 
-	.template-editor-highlight {
-		position: absolute;
-		inset: 0;
-		margin: 0;
-		padding: 0.9rem 1rem;
-		overflow: auto;
-		white-space: pre-wrap;
-		word-break: break-word;
-		pointer-events: none;
-		color: #334155;
-		background: #ffffff;
-	}
-
 	.template-editor-textarea {
-		position: relative;
-		z-index: 1;
 		min-height: 24rem;
-		padding: 0.9rem 1rem;
-		border: 0;
-		border-radius: 0;
-		background: transparent;
-		color: transparent;
-		caret-color: #0f172a;
-		-webkit-text-fill-color: transparent;
+		background: #fcfcfd;
+		color: #0f172a;
 		resize: vertical;
 	}
 
 	.template-editor-textarea:focus {
-		box-shadow: inset 0 0 0 1px rgba(43, 108, 176, 0.22);
-	}
-
-	.template-editor-textarea::selection {
-		background: rgba(43, 108, 176, 0.18);
+		box-shadow: 0 0 0 0.2rem rgba(43, 108, 176, 0.1);
 	}
 
 	.template-editor-token {
@@ -494,6 +468,27 @@ function buildSocialLinksFragment(): string {
 		font-weight: 600;
 		background: rgba(59, 130, 246, 0.1);
 		border-radius: 0.2rem;
+	}
+
+	.template-token-preview {
+		display: grid;
+		gap: 0.55rem;
+		padding: 0.75rem 0.85rem;
+		border: 1px solid rgba(29, 78, 216, 0.12);
+		background: rgba(239, 246, 255, 0.7);
+	}
+
+	.template-token-preview strong {
+		font-size: 0.82rem;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: #1e3a8a;
+	}
+
+	.template-token-preview-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.45rem;
 	}
 
 	.template-preview {
