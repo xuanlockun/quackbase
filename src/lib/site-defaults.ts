@@ -6,8 +6,8 @@ export const DEFAULT_LOGO_URL = "/logo.svg";
 export const DEFAULT_TEMPLATE_THEME = {
 	headerBackground: "#ffffff",
 	headerTextColor: "#0f1219",
-	headerAccentColor: "#111827",
-	footerBackground: "#f3f4f6",
+	headerAccentColor: "#1f2937",
+	footerBackground: "#ffffff",
 	footerTextColor: "#4b5563",
 } as const;
 

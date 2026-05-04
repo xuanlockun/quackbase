@@ -6,7 +6,6 @@ import { SITE_TITLE } from "../../consts";
 import { getDb, getSiteConfig } from "../../lib/blog";
 import { getUiTranslations } from "../../lib/i18n";
 import { getLatestAdminSecretRecordByType, listAdminSecrets, type AdminSecretRecord } from "../../lib/secrets";
-import AdminOptionGrid from "../../components/admin/AdminOptionGrid.astro";
 import FeedbackModal from "../../components/admin/FeedbackModal.astro";
 import SecretsManager from "../../components/admin/SecretsManager.astro";
 
@@ -91,33 +90,6 @@ const settingsFeedback = [
 	["captchaSaved", { title: "Captcha saved", message: "Captcha settings were saved successfully.", tone: "success" }],
 ] as const;
 
-const settingsSections = [
-	{
-		key: "site",
-		label: t("nav.site", "Site"),
-		description: t("messages.settingsSiteSummary", "Title, logo, and basic public identity."),
-	},
-	{
-		key: "media",
-		label: t("nav.media", "Media"),
-		description: t("messages.settingsMediaSummary", "Storage endpoint, bucket, and upload credentials."),
-	},
-	{
-		key: "smtp",
-		label: "Email",
-		description: t("messages.settingsEmailSummary", "Sender details and notification delivery."),
-	},
-	{
-		key: "captcha",
-		label: t("labels.captcha", "Captcha"),
-		description: t("messages.settingsCaptchaSummary", "Global verification keys for forms that opt in."),
-	},
-	{
-		key: "secrets",
-		label: t("headings.secrets", "Secrets"),
-		description: t("messages.settingsSecretsSummary", "Encrypted tokens and service credentials."),
-	},
-] as const;
 ---
 
 <AdminLayout
@@ -130,23 +102,12 @@ const settingsSections = [
 	<FeedbackModal id="admin-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
-		<div class="admin-form-section settings-overview">
-			<div class="settings-overview-copy">
-				<strong>{t("messages.settingsOverviewHeading", "Settings overview")}</strong>
-				<p class="admin-muted mb-0">
-					{t("messages.settingsOverviewHelp", "Choose an area below to configure the neutral template foundation and connected services.")}
-				</p>
-			</div>
-			<AdminOptionGrid
-				items={settingsSections.map((section) => ({
-					title: section.label,
-					description: section.description,
-					actionKey: section.key,
-				}))}
-				columns="five"
-			/>
-		</div>
 		<div class="admin-form-surface settings-tabs-shell">
+			<div class="settings-tabs-intro px-3 px-lg-4 pt-3 pt-lg-4">
+				<p class="admin-page-eyebrow mb-1">{t("nav.settings")}</p>
+				<h2 class="h5 mb-1">{t("messages.settingsFoundationHeading", "Site configuration")}</h2>
+				<p class="admin-inline-muted mb-0">{t("messages.settingsFoundationHelp", "Update site identity, storage, email, captcha, and secrets in place without leaving this screen.")}</p>
+			</div>
 			<ul class="nav nav-tabs flex-wrap gap-1 border-bottom px-3 pt-3" role="tablist" aria-label="Admin settings sections" data-settings-tablist>
 				<li class="nav-item" role="presentation">
 					<button
@@ -508,7 +469,6 @@ const settingsSections = [
 	const tablist = document.querySelector("[data-settings-tablist]");
 	const tabButtons = tablist?.querySelectorAll("[data-settings-tab]");
 	const panels = document.querySelectorAll("[data-settings-panel]");
-	const jumpButtons = document.querySelectorAll("[data-admin-option-action]");
 	const form = document.querySelector("[data-media-settings-form]");
 	const testButton = form?.querySelector("[data-media-test-button]");
 	const smtpForm = document.querySelector("[data-smtp-settings-form]");
@@ -550,19 +510,6 @@ const settingsSections = [
 
 		button.addEventListener("click", () => {
 			const tabName = button.dataset.settingsTab;
-			if (tabName) {
-				setActiveTab(tabName);
-			}
-		});
-	});
-
-	jumpButtons.forEach((button) => {
-		if (!(button instanceof HTMLButtonElement)) {
-			return;
-		}
-
-		button.addEventListener("click", () => {
-			const tabName = button.dataset.adminOptionAction;
 			if (tabName) {
 				setActiveTab(tabName);
 			}
@@ -693,14 +640,9 @@ const settingsSections = [
 </script>
 
 <style>
-	.settings-overview {
+	.settings-tabs-intro {
 		display: grid;
-		gap: 0.9rem;
-	}
-
-	.settings-overview-copy {
-		display: grid;
-		gap: 0.35rem;
+		gap: 0.2rem;
 	}
 
 	.media-settings-shell {

@@ -312,8 +312,8 @@ const mediaActionCopy = {
 					</svg>
 				</span>
 				<div class="min-w-0">
-					<p class="media-status-kicker mb-1">Storage</p>
-					<h2 class="h5 mb-1">{storageConnectedLabel}</h2>
+					<p class="media-status-kicker mb-1">Library status</p>
+					<h2 class="h5 mb-1">Manage uploads and folders</h2>
 					<p class="mb-0 text-body-secondary">{storageSummaryText}</p>
 				</div>
 				<div class="media-status-meta">
@@ -321,6 +321,7 @@ const mediaActionCopy = {
 						{storageConnectedLabel}
 					</span>
 					<span class="small text-body-secondary">{storageReadyLabel}</span>
+					<a class="small media-status-link" href="/admin/settings?tab=media">Storage settings</a>
 				</div>
 			</div>
 
@@ -1186,7 +1187,7 @@ const mediaActionCopy = {
 
 	.media-library-actions {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto;
 		gap: 0.85rem;
 	}
 
@@ -1228,6 +1229,15 @@ const mediaActionCopy = {
 		gap: 0.25rem;
 	}
 
+	.media-status-link {
+		color: rgba(15, 23, 42, 0.68);
+		text-decoration: none;
+	}
+
+	.media-status-link:hover {
+		text-decoration: underline;
+	}
+
 	.media-action-form,
 	.media-folder-form {
 		display: grid;
@@ -1258,6 +1268,11 @@ const mediaActionCopy = {
 		cursor: pointer;
 		white-space: nowrap;
 		min-height: 2.5rem;
+	}
+
+	.media-action-form-upload .media-action-button {
+		justify-content: space-between;
+		padding-inline: 1rem;
 	}
 
 	.media-action-button-icon {
@@ -1412,6 +1427,9 @@ const mediaActionCopy = {
 		border: 1px solid rgba(var(--gray), 0.16);
 		border-radius: 1rem;
 		background: rgba(248, 250, 252, 0.92);
+		position: sticky;
+		top: 0.75rem;
+		z-index: 2;
 	}
 
 	.media-selection-summary {

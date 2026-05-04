@@ -21,18 +21,18 @@ const description = t(
 	"messages.backupHelp",
 	"Export the live D1 database as an SQL file for recovery, migration, or archival backups.",
 );
-const exportTitle = t("messages.backupExportTitle", "Export backup");
+const exportTitle = t("messages.backupExportTitle", "Export SQL backup");
 const exportHelp = t(
 	"messages.backupExportHelp",
-	"Leave the table list empty to export the full database. Select one or more tables to export only those tables.",
+	"Download a portable SQL backup of the live database. Use the full export by default, or optionally narrow the export to selected tables.",
 );
 const tablesLabel = t("labels.tables", "Tables");
-const downloadLabel = t("actions.downloadBackup", "Download backup");
-const downloadFullLabel = t("actions.downloadFullBackup", "Download full backup");
-const importTitle = t("messages.backupImportTitle", "Import SQL");
+const downloadLabel = t("actions.downloadBackup", "Download selected tables");
+const downloadFullLabel = t("actions.downloadFullBackup", "Download full SQL backup");
+const importTitle = t("messages.backupImportTitle", "Restore from SQL backup");
 const importHelp = t(
 	"messages.backupImportHelp",
-	"Upload an SQL file to import data into the live D1 database. This action blocks the database while it runs.",
+	"Upload an SQL file and apply it to the live D1 database. This can overwrite live content and should be used carefully.",
 );
 const sqlFileLabel = t("labels.sqlFile", "SQL file");
 const tableSelectHelp = t(
@@ -75,7 +75,7 @@ const backupFeedback = [
 			<div class="admin-surface-header mb-3">
 				<div>
 					<h1 class="h4 mb-1">{pageTitle}</h1>
-					<p class="admin-inline-muted mb-0">{description}</p>
+					<p class="admin-inline-muted mb-0">Use export for routine safekeeping. Use restore only when you intentionally need to replace live data.</p>
 				</div>
 			</div>
 
@@ -94,9 +94,7 @@ const backupFeedback = [
 						<div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
 							<div>
 								<h2 class="h5 mb-1">{exportTitle}</h2>
-								<p class="text-body-secondary mb-0">
-									{exportHelp}
-								</p>
+								<p class="text-body-secondary mb-0">{exportHelp}</p>
 							</div>
 							<a class="btn btn-outline-secondary" href="/admin/settings">
 								{t("actions.back", "Back")}
@@ -104,44 +102,68 @@ const backupFeedback = [
 						</div>
 
 						<form action="/api/admin/backup/export" method="post" class="admin-form-stack">
-							<label class="form-label fw-semibold" for="backupTables">{tablesLabel}</label>
-							<select
-								id="backupTables"
-								class="form-select"
-								name="tables"
-								multiple
-								size={Math.min(Math.max(tableNames.length, 4), 10)}
-								disabled={!backupConfigured || tableNames.length === 0}
-							>
-								{tableNames.map((tableName) => <option value={tableName}>{tableName}</option>)}
-							</select>
-							<p class="form-text mb-0">{tableSelectHelp}</p>
 							<div class="d-flex flex-wrap gap-2 align-items-center">
-								<button type="submit" class="btn btn-primary" disabled={!backupConfigured}>
-									{tableNames.length > 0 ? downloadLabel : downloadFullLabel}
-								</button>
+								<button type="submit" class="btn btn-primary" disabled={!backupConfigured}>{downloadFullLabel}</button>
 								<span class="text-body-secondary small">
-									{tableNames.length > 0
-										? tablesAvailableLabel.replace("{count}", String(tableNames.length))
-										: noTableListLabel}
+									Includes schema and data in one SQL file.
 								</span>
 							</div>
+							{tableNames.length > 0 ? (
+								<details class="backup-advanced-options">
+									<summary class="backup-advanced-summary">Advanced: export selected tables only</summary>
+									<div class="backup-advanced-body">
+										<label class="form-label fw-semibold" for="backupTables">{tablesLabel}</label>
+										<select
+											id="backupTables"
+											class="form-select"
+											name="tables"
+											multiple
+											size={Math.min(Math.max(tableNames.length, 4), 10)}
+											disabled={!backupConfigured}
+										>
+											{tableNames.map((tableName) => <option value={tableName}>{tableName}</option>)}
+										</select>
+										<p class="form-text mb-0">{tableSelectHelp}</p>
+										<div class="d-flex flex-wrap gap-2 align-items-center">
+											<button type="submit" class="btn btn-outline-secondary" disabled={!backupConfigured}>
+												{downloadLabel}
+											</button>
+											<span class="text-body-secondary small">{tablesAvailableLabel.replace("{count}", String(tableNames.length))}</span>
+										</div>
+									</div>
+								</details>
+							) : (
+								<p class="form-text mb-0">{noTableListLabel}</p>
+							)}
 						</form>
 					</div>
 				</div>
 
 				<div class="col-12 col-lg-5">
-					<div class="backup-card">
+					<div class="backup-card backup-card-warning">
 						<h2 class="h5 mb-3">{importTitle}</h2>
-						<p class="text-body-secondary">
-							{importHelp}
-						</p>
-						<form action="/api/admin/backup/import" method="post" enctype="multipart/form-data" class="admin-form-stack">
+						<p class="text-body-secondary">{importHelp}</p>
+						<div class="backup-restore-warning">
+							<strong>Before restoring</strong>
+							<p class="mb-0 small text-body-secondary">Confirm the SQL file is the exact backup you want to apply. The live database is locked while the restore runs.</p>
+						</div>
+						<form
+							action="/api/admin/backup/import"
+							method="post"
+							enctype="multipart/form-data"
+							class="admin-form-stack"
+							data-admin-confirm-form
+							data-confirm-title="Restore live database from SQL backup?"
+							data-confirm-message="This will apply the uploaded SQL file to the live database."
+							data-confirm-detail="Make sure you exported a fresh backup first if you may need to roll back."
+							data-confirm-confirm-label="Restore database"
+							data-confirm-tone="warning"
+						>
 							<label class="form-label fw-semibold" for="sqlFile">{sqlFileLabel}</label>
 							<input id="sqlFile" class="form-control" type="file" name="sqlFile" accept=".sql,text/sql,application/sql" disabled={!backupConfigured} />
 							<p class="form-text mb-0">Use a file exported from D1 or any compatible SQLite SQL dump.</p>
 							<button type="submit" class="btn btn-warning" disabled={!backupConfigured}>
-								{importTitle}
+								Restore database
 							</button>
 						</form>
 					</div>
@@ -202,5 +224,39 @@ const backupFeedback = [
 	.admin-form-stack {
 		display: grid;
 		gap: 0.875rem;
+	}
+
+	.backup-card-warning {
+		border-color: rgba(245, 158, 11, 0.28);
+		background: linear-gradient(180deg, rgba(255, 251, 235, 0.98), rgba(255, 255, 255, 0.98));
+	}
+
+	.backup-advanced-options {
+		display: grid;
+		gap: 0.75rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 0.9rem;
+		background: rgba(248, 250, 252, 0.76);
+	}
+
+	.backup-advanced-summary {
+		padding: 0.85rem 0.95rem;
+		cursor: pointer;
+		font-weight: 600;
+	}
+
+	.backup-advanced-body {
+		display: grid;
+		gap: 0.875rem;
+		padding: 0 0.95rem 0.95rem;
+	}
+
+	.backup-restore-warning {
+		display: grid;
+		gap: 0.25rem;
+		padding: 0.85rem 0.95rem;
+		border-radius: 0.85rem;
+		background: rgba(255, 247, 237, 0.9);
+		border: 1px solid rgba(245, 158, 11, 0.2);
 	}
 </style>

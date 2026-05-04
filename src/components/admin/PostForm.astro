@@ -188,9 +188,19 @@ const backIcon = `
 					</label>
 					<label>
 						<span>{t("labels.content")} ({language.label})</span>
-						<textarea class="form-control" data-content-input={language.code} rows="14" disabled={isDisabled}
+						<div class="admin-editor-shell">
+							<div class="admin-editor-toolbar" aria-label="Markdown shortcuts">
+								<button type="button" class="admin-editor-tool" data-editor-snippet="## Heading" disabled={isDisabled}>Heading</button>
+								<button type="button" class="admin-editor-tool" data-editor-snippet="**Bold text**" disabled={isDisabled}>Bold</button>
+								<button type="button" class="admin-editor-tool" data-editor-snippet="- List item" disabled={isDisabled}>List</button>
+								<button type="button" class="admin-editor-tool" data-editor-snippet="[Link text](/path)" disabled={isDisabled}>Link</button>
+								<button type="button" class="admin-editor-tool" data-editor-snippet="> Quote" disabled={isDisabled}>Quote</button>
+							</div>
+							<p class="admin-editor-help mb-0">Markdown is stored as entered. Use the shortcuts for quick formatting without changing the saved format.</p>
+							<textarea class="form-control admin-editor-textarea" data-content-input={language.code} rows="14" disabled={isDisabled}
 							>{contentTranslations[language.code] ?? (language.code === def ? "# New post" : "")}</textarea
-						>
+							>
+						</div>
 					</label>
 				</section>
 			))
@@ -355,6 +365,21 @@ const backIcon = `
 		contentField.value = JSON.stringify(contentTranslations);
 	};
 
+	const insertEditorSnippet = (textarea, snippet) => {
+		const start = textarea.selectionStart ?? textarea.value.length;
+		const end = textarea.selectionEnd ?? textarea.value.length;
+		const before = textarea.value.slice(0, start);
+		const after = textarea.value.slice(end);
+		const needsLeadingBreak = before && !before.endsWith("\n") ? "\n" : "";
+		const needsTrailingBreak = after && !after.startsWith("\n") ? "\n" : "";
+		const insertion = `${needsLeadingBreak}${snippet}${needsTrailingBreak}`;
+		textarea.value = `${before}${insertion}${after}`;
+		const caret = before.length + insertion.length;
+		textarea.focus();
+		textarea.setSelectionRange(caret, caret);
+		textarea.dispatchEvent(new Event("input", { bubbles: true }));
+	};
+
 	document.querySelectorAll("[data-localized-editor]").forEach((root) => {
 		if (!(root instanceof HTMLElement)) {
 			return;
@@ -408,6 +433,20 @@ const backIcon = `
 		});
 
 		root.addEventListener("input", () => syncLocalizedEditor(root));
+		root.addEventListener("click", (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLButtonElement) || !target.matches("[data-editor-snippet]")) {
+				return;
+			}
+
+			const label = target.closest("label");
+			const textarea = label?.querySelector("[data-content-input]");
+			if (!(textarea instanceof HTMLTextAreaElement)) {
+				return;
+			}
+
+			insertEditorSnippet(textarea, target.dataset.editorSnippet || "");
+		});
 		syncLocalizedEditor(root);
 		setActiveLanguage(root.dataset.activeLanguage || root.dataset.defaultLanguage || "en");
 	});

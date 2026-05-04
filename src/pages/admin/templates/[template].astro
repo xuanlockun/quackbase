@@ -88,6 +88,12 @@ const templateOrder = [
 	{ key: "posts", label: t("headings.posts", "Posts"), href: "/admin/templates/posts" },
 	{ key: "footer", label: t("nav.footer"), href: "/admin/templates/footer" },
 ] as const;
+const templateTokenMap = {
+	header: ["{{brand}}", "{{navigation}}", "{{navItems}}", "{{languageSwitch}}"],
+	page: ["{{content}}"],
+	posts: ["{{heading}}", "{{posts}}"],
+	footer: ["{{footerText}}", "{{year}}", "{{socialLinks}}"],
+} as const;
 
 function renderTemplatePreview(
 	template: TemplateKind,
@@ -291,14 +297,24 @@ function buildSocialLinksFragment(): string {
 					</div>
 					<label style="grid-column: 1 / -1;">
 						<span>{t("messages.templateEditorFieldHelp", "Saved HTML")}</span>
+						<div class="admin-editor-shell">
+							<div class="admin-editor-toolbar" aria-label="Template placeholders">
+								{templateTokenMap[kind].map((token) => (
+									<button type="button" class="admin-editor-tool" data-template-token={token}>
+										{token}
+									</button>
+								))}
+							</div>
+							<p class="admin-editor-help mb-0">Insert saved placeholders directly into the template. The preview on this page still uses the same stored HTML contract.</p>
 						<textarea
-							class="form-control template-editor-textarea"
+							class="form-control template-editor-textarea admin-editor-textarea"
 							name="templateHtml"
 							rows="16"
 							spellcheck="false"
 							placeholder={defaultTemplateHtml}
 							disabled={Boolean(loadError)}
 						>{templateHtml.trim() ? templateHtml : defaultTemplateHtml}</textarea>
+						</div>
 					</label>
 				</div>
 			</form>
@@ -342,6 +358,26 @@ function buildSocialLinksFragment(): string {
 	if (loadError && typeof showFeedbackModal === "function") {
 		showFeedbackModal({ title: "Template load failed", message: loadError, tone: "error" });
 	}
+
+	document.addEventListener("click", (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLButtonElement) || !target.matches("[data-template-token]")) {
+			return;
+		}
+
+		const textarea = document.querySelector(".template-editor-textarea");
+		if (!(textarea instanceof HTMLTextAreaElement)) {
+			return;
+		}
+
+		const token = target.dataset.templateToken || "";
+		const start = textarea.selectionStart ?? textarea.value.length;
+		const end = textarea.selectionEnd ?? textarea.value.length;
+		textarea.value = `${textarea.value.slice(0, start)}${token}${textarea.value.slice(end)}`;
+		const caret = start + token.length;
+		textarea.focus();
+		textarea.setSelectionRange(caret, caret);
+	});
 </script>
 
 <style>
