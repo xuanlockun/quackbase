@@ -55,6 +55,10 @@ const keyLabel = t("labels.translationKey");
 const valueLabel = t("labels.translationValue");
 const translationTabsLabel = t("labels.languages", "Languages");
 const addLanguageTitle = t("actions.addLanguage", "Add language");
+const languageFeedback = [
+	["imported", { title: t("messages.languageImportCompletedTitle", "Import completed"), message: t("messages.languageImportCompleted", "Language JSON import completed."), tone: "success" }],
+	["importError", { title: t("messages.languageImportFailedTitle", "Import failed"), message: Astro.url.searchParams.get("importError") || t("messages.languageImportFailed", "Language JSON import failed."), tone: "error" }],
+] as const;
 ---
 
 <AdminLayout
@@ -66,6 +70,26 @@ const addLanguageTitle = t("actions.addLanguage", "Add language");
 >
 	<div class="admin-content-stack">
 		{loadError && <p class="alert alert-warning mb-0">{loadError}</p>}
+		<div class="admin-form-surface">
+			<div class="admin-surface-header mb-3">
+				<div>
+					<h2 class="h5 mb-1">{t("messages.languageJsonTools", "Language JSON tools")}</h2>
+					<p class="admin-inline-muted mb-0">{t("messages.languageJsonToolsHelp", "Export languages and translations as JSON, or import a JSON bundle to merge updates into this workspace.")}</p>
+				</div>
+			</div>
+			<div class="d-flex flex-wrap gap-3 align-items-end justify-content-between">
+				<a class="btn btn-outline-secondary" href="/api/admin/languages/translations/export">
+					{t("actions.exportLanguagesJson", "Export JSON")}
+				</a>
+				<form method="post" action="/api/admin/languages/translations/import" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-end">
+					<label class="d-grid gap-1">
+						<span class="small text-muted">{t("messages.languageJsonFileLabel", "JSON file")}</span>
+						<input class="form-control" type="file" name="translationsFile" accept="application/json,.json" required />
+					</label>
+					<button class="btn btn-primary" type="submit">{t("actions.importLanguagesJson", "Import JSON")}</button>
+				</form>
+			</div>
+		</div>
 		<div class="admin-form-surface">
 			<LanguageTable
 				languages={languages}
@@ -187,4 +211,22 @@ const addLanguageTitle = t("actions.addLanguage", "Add language");
 
 	<script type="module" src={languageManagerScript} client:load></script>
 	<script type="module" src={translationManagerScript} client:load></script>
+	<script type="module" define:vars={{ languageFeedback }}>
+		const showFeedbackModal = window.showAdminFeedbackModal;
+		const search = new URLSearchParams(window.location.search);
+
+		for (const [key, entry] of languageFeedback) {
+			if (search.has(key)) {
+				const message =
+					key === "imported"
+						? `${entry.message} ${search.get("languagesUpdated") ?? 0} languages, ${search.get("translationsUpdated") ?? 0} translation keys.`
+						: search.get(key) || entry.message;
+				if (typeof showFeedbackModal === "function") {
+					showFeedbackModal({ title: entry.title, message, tone: entry.tone });
+				}
+				window.history.replaceState({}, "", window.location.pathname + window.location.hash);
+				break;
+			}
+		}
+	</script>
 </AdminLayout>

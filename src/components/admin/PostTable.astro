@@ -1,6 +1,7 @@
 ---
 import FormattedDate from "../FormattedDate.astro";
 import IconAction from "./IconAction.astro";
+import LanguageCoverageBadges from "./LanguageCoverageBadges.astro";
 import type { AdminPostSummary } from "../../lib/blog";
 import { getUiTranslations } from "../../lib/i18n";
 
@@ -30,7 +31,7 @@ const { t } = getUiTranslations(Astro);
 						<th>{t("labels.title")}</th>
 						<th>{t("labels.status")}</th>
 						<th>{t("labels.updated")}</th>
-						<th>{t("labels.slug")}</th>
+						<th>{t("nav.languages", "Languages")}</th>
 						<th>{t("labels.action")}</th>
 					</tr>
 				</thead>
@@ -56,7 +57,7 @@ const { t } = getUiTranslations(Astro);
 									<FormattedDate date={new Date(post.updatedAt)} />
 								</td>
 								<td>
-									<code>{post.slug}</code>
+									<LanguageCoverageBadges translations={[post.titleTranslations, post.slugTranslations, post.contentTranslations]} />
 								</td>
 								<td class="admin-action-cell">
 									<div class="admin-action-group">

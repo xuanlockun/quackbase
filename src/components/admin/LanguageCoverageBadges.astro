@@ -1,0 +1,67 @@
+---
+import type { LocalizedText } from "../../lib/i18n";
+import { getLanguageCatalog, getSupportedLanguages, getUiTranslations } from "../../lib/i18n";
+
+interface Props {
+	translations: LocalizedText[];
+}
+
+const { translations } = Astro.props;
+const { t } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const languages = getSupportedLanguages(catalog);
+
+function hasLanguageCoverage(localeCode: string): boolean {
+	return translations.every((entry) => typeof entry[localeCode] === "string" && entry[localeCode].trim().length > 0);
+}
+---
+
+<div class="language-coverage-list" aria-label={t("nav.languages", "Languages")}>
+	{
+		languages.map((language) => {
+			const covered = hasLanguageCoverage(language.code);
+			return (
+				<span class:list={["language-coverage-chip", covered ? "language-coverage-chip-covered" : "language-coverage-chip-missing"]}>
+					<strong>{language.code.toUpperCase()}</strong>
+					<span>{covered ? t("messages.languageReady", "Ready") : t("messages.languageMissing", "Missing")}</span>
+				</span>
+			);
+		})
+	}
+</div>
+
+<style>
+	.language-coverage-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+
+	.language-coverage-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.25rem 0.55rem;
+		border-radius: 999px;
+		font-size: 0.74rem;
+		line-height: 1;
+		border: 1px solid transparent;
+	}
+
+	.language-coverage-chip strong {
+		font-size: 0.7rem;
+		letter-spacing: 0.08em;
+	}
+
+	.language-coverage-chip-covered {
+		background: rgba(25, 135, 84, 0.12);
+		border-color: rgba(25, 135, 84, 0.2);
+		color: #146c43;
+	}
+
+	.language-coverage-chip-missing {
+		background: rgba(255, 193, 7, 0.16);
+		border-color: rgba(255, 193, 7, 0.28);
+		color: #8a5a00;
+	}
+</style>

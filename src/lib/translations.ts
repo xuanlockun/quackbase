@@ -1,3 +1,10 @@
+import {
+	createLanguage,
+	listAllLanguages,
+	type LanguageRow,
+	updateLanguageByCode,
+} from "./languages";
+
 export interface TranslationEntryRow {
 	localeCode: string;
 	translationKey: string;
@@ -9,6 +16,18 @@ export interface TranslationBundleRow {
 	translationKey: string;
 	translations: Record<string, string>;
 	updatedAt: string | null;
+}
+
+export interface TranslationExportPayload {
+	version: 1;
+	exportedAt: string;
+	languages: Array<{
+		code: string;
+		name: string;
+		enabled: boolean;
+		isDefault: boolean;
+	}>;
+	translations: Record<string, Record<string, string>>;
 }
 
 const LOCALE_PATTERN = /^[a-z]{2}(?:-[a-z]{2})?$/i;
@@ -134,6 +153,32 @@ export async function listTranslationEntriesByKey(
 	return bundleFromRows((result.results ?? []).map(rowFromDb));
 }
 
+export async function listAllTranslationBundles(db: D1Database): Promise<TranslationBundleRow[]> {
+	const result = await db
+		.prepare(
+			`SELECT locale_code, translation_key, translated_value, updated_at
+			FROM translation_entries
+			ORDER BY translation_key COLLATE NOCASE ASC, locale_code COLLATE NOCASE ASC`,
+		)
+		.all<{
+			locale_code: string;
+			translation_key: string;
+			translated_value: string;
+			updated_at: string;
+		}>();
+
+	const bundles = new Map<string, TranslationEntryRow[]>();
+	for (const row of (result.results ?? []).map(rowFromDb)) {
+		const entries = bundles.get(row.translationKey) ?? [];
+		entries.push(row);
+		bundles.set(row.translationKey, entries);
+	}
+
+	return Array.from(bundles.values())
+		.map((rows) => bundleFromRows(rows))
+		.filter((bundle): bundle is TranslationBundleRow => Boolean(bundle));
+}
+
 export async function insertTranslationEntry(
 	db: D1Database,
 	locale: string,
@@ -218,6 +263,105 @@ export async function saveTranslationBundle(
 	}
 
 	return bundle;
+}
+
+export async function buildTranslationExportPayload(db: D1Database): Promise<TranslationExportPayload> {
+	const [languages, bundles] = await Promise.all([listAllLanguages(db), listAllTranslationBundles(db)]);
+
+	return {
+		version: 1,
+		exportedAt: new Date().toISOString(),
+		languages: languages.map((language) => ({
+			code: language.code,
+			name: language.name,
+			enabled: language.enabled,
+			isDefault: language.isDefault,
+		})),
+		translations: Object.fromEntries(
+			bundles.map((bundle) => [bundle.translationKey, bundle.translations]),
+		),
+	};
+}
+
+export async function importTranslationExportPayload(
+	db: D1Database,
+	payload: unknown,
+): Promise<{ languagesUpdated: number; translationsUpdated: number }> {
+	if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+		throw new Error("Invalid translation import payload.");
+	}
+
+	const record = payload as Record<string, unknown>;
+	const importedLanguages = Array.isArray(record.languages) ? record.languages : [];
+	const importedTranslations =
+		record.translations && typeof record.translations === "object" && !Array.isArray(record.translations)
+			? (record.translations as Record<string, unknown>)
+			: null;
+
+	if (!importedTranslations) {
+		throw new Error("Translation import payload must include a translations object.");
+	}
+
+	const existingLanguages = new Map<string, LanguageRow>(
+		(await listAllLanguages(db)).map((language) => [language.code, language]),
+	);
+
+	let languagesUpdated = 0;
+	for (const entry of importedLanguages) {
+		if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+			continue;
+		}
+
+		const language = entry as Record<string, unknown>;
+		const code = typeof language.code === "string" ? normalizeLocaleCode(language.code) : "";
+		const name = typeof language.name === "string" ? language.name.trim() : "";
+		if (!code || !name || !LOCALE_PATTERN.test(code)) {
+			continue;
+		}
+
+		const existing = existingLanguages.get(code);
+		if (!existing) {
+			await createLanguage(db, {
+				code,
+				name,
+				enabled: language.enabled !== false,
+				isDefault: language.isDefault === true,
+			});
+			languagesUpdated += 1;
+			continue;
+		}
+
+		await updateLanguageByCode(db, code, {
+			name,
+			enabled: typeof language.enabled === "boolean" ? language.enabled : existing.enabled,
+			isDefault: language.isDefault === true,
+		});
+		languagesUpdated += 1;
+	}
+
+	let translationsUpdated = 0;
+	for (const [translationKey, rawTranslations] of Object.entries(importedTranslations)) {
+		if (!translationKey.trim() || !rawTranslations || typeof rawTranslations !== "object" || Array.isArray(rawTranslations)) {
+			continue;
+		}
+
+		const translations: Record<string, string> = {};
+		for (const [localeCode, translatedValue] of Object.entries(rawTranslations as Record<string, unknown>)) {
+			if (!LOCALE_PATTERN.test(normalizeLocaleCode(localeCode)) || typeof translatedValue !== "string") {
+				continue;
+			}
+			translations[normalizeLocaleCode(localeCode)] = translatedValue;
+		}
+
+		if (Object.keys(translations).length === 0) {
+			continue;
+		}
+
+		await saveTranslationBundle(db, translationKey, translations);
+		translationsUpdated += 1;
+	}
+
+	return { languagesUpdated, translationsUpdated };
 }
 
 export async function updateTranslationEntry(

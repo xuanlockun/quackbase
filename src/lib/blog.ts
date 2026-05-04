@@ -79,6 +79,7 @@ export interface AdminPostSummary {
 	descriptionTranslations: LocalizedText;
 	slug: string;
 	slugTranslations: LocalizedText;
+	contentTranslations: LocalizedText;
 	status: string;
 	updatedAt: string;
 	isPinned: boolean;
@@ -1420,6 +1421,7 @@ export function toAdminPostSummary(
 		descriptionTranslations: post.descriptionTranslations,
 		slug: resolveLocalizedSlug(post.slugTranslations, language, c),
 		slugTranslations: post.slugTranslations,
+		contentTranslations: post.contentTranslations,
 		status: post.status,
 		updatedAt: (post.updatedDate ?? post.pubDate).toISOString(),
 		isPinned: post.isPinned,
