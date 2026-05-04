@@ -537,9 +537,20 @@ const navActionIcons = {
 	}
 
 	.nav-tree-toggle-glyph {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		font-size: 0.82rem;
 		font-weight: 700;
 		line-height: 1;
+	}
+
+	.nav-tree-toggle-glyph svg,
+	.nav-tree-toggle > svg {
+		display: block;
+		width: 0.95rem;
+		height: 0.95rem;
+		flex: 0 0 auto;
 	}
 
 	.nav-tree-title {
@@ -627,9 +638,22 @@ const navActionIcons = {
 	}
 
 	.nav-action-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		font-size: 0.84rem;
 		line-height: 1;
 		font-weight: 700;
+	}
+
+	.nav-action-icon svg,
+	.nav-action > svg,
+	.nav-item-remove > svg,
+	.nav-tree-add-row > svg {
+		display: block;
+		width: 0.95rem;
+		height: 0.95rem;
+		flex: 0 0 auto;
 	}
 
 	.nav-tree-footer {

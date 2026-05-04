@@ -3,6 +3,7 @@ import type { AdminPostDetail } from "../../lib/blog";
 import { getSupportedLanguages } from "../../lib/blog";
 import CreateSubmit from "./CreateSubmit.astro";
 import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
+import "@toast-ui/editor/dist/toastui-editor.css";
 
 interface Props {
 	mode: "create" | "edit";
@@ -107,6 +108,7 @@ const backIcon = `
 	<div
 		class="admin-form-section localized-editor"
 		data-localized-editor
+		data-markdown-editor-root
 		data-active-language={initialLanguage}
 		data-default-language={def}
 	>
@@ -283,7 +285,9 @@ const backIcon = `
 	}
 </style>
 
-<script is:inline>
+<script type="module">
+	import "../../scripts/admin-markdown-editor.ts";
+
 	const slugifyValue = (value) =>
 		value
 			.trim()
@@ -366,6 +370,15 @@ const backIcon = `
 	};
 
 	const insertEditorSnippet = (textarea, snippet) => {
+		const markdownEditor = textarea?._markdownEditor;
+		if (markdownEditor && typeof markdownEditor.replaceSelection === "function") {
+			markdownEditor.focus();
+			markdownEditor.replaceSelection(snippet);
+			textarea.value = markdownEditor.getMarkdown();
+			textarea.dispatchEvent(new Event("input", { bubbles: true }));
+			return;
+		}
+
 		const start = textarea.selectionStart ?? textarea.value.length;
 		const end = textarea.selectionEnd ?? textarea.value.length;
 		const before = textarea.value.slice(0, start);

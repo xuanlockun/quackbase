@@ -342,6 +342,8 @@ function buildSocialLinksFragment(): string {
 </AdminLayout>
 
 <script type="module" define:vars={{ templateFeedback, loadError }}>
+	import "../../../scripts/admin-template-code-editor.ts";
+
 	const showFeedbackModal = window.showAdminFeedbackModal;
 	const search = new URLSearchParams(window.location.search);
 
@@ -371,6 +373,17 @@ function buildSocialLinksFragment(): string {
 		}
 
 		const token = target.dataset.templateToken || "";
+		const codeMirrorView = textarea._codeMirrorView;
+		if (codeMirrorView && typeof codeMirrorView.dispatch === "function") {
+			const selection = codeMirrorView.state.selection.main;
+			codeMirrorView.dispatch({
+				changes: { from: selection.from, to: selection.to, insert: token },
+				selection: { anchor: selection.from + token.length },
+			});
+			codeMirrorView.focus();
+			return;
+		}
+
 		const start = textarea.selectionStart ?? textarea.value.length;
 		const end = textarea.selectionEnd ?? textarea.value.length;
 		textarea.value = `${textarea.value.slice(0, start)}${token}${textarea.value.slice(end)}`;
@@ -410,6 +423,16 @@ function buildSocialLinksFragment(): string {
 		font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 		font-size: 0.92rem;
 		line-height: 1.5;
+	}
+
+	.admin-code-editor {
+		border: 1px solid rgba(15, 23, 42, 0.14);
+		background: #fff;
+	}
+
+	.admin-code-editor .cm-editor {
+		min-height: 24rem;
+		font-size: 0.92rem;
 	}
 
 	.template-preview {

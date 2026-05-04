@@ -424,7 +424,7 @@
 .banner-slide {
 	position: relative;
 	overflow: hidden;
-	min-height: clamp(18rem, 36vw, 31rem);
+	min-height: clamp(20rem, 38vw, 34rem);
 	border-radius: 0;
 	background: #f4f4f5;
 	border: 0;
@@ -665,7 +665,7 @@
 	}
 
 	.banner-slide {
-		min-height: clamp(15rem, 48vw, 22rem);
+		min-height: clamp(16rem, 50vw, 24rem);
 	}
 
 	.blog-feed-featured-media {
@@ -695,7 +695,7 @@
 	}
 
 	.banner-slide {
-		min-height: clamp(13.5rem, 58vw, 18rem);
+		min-height: clamp(14.5rem, 62vw, 19rem);
 	}
 
 	.banner-slide-overlay {

@@ -5,6 +5,7 @@ import type { BannerRecord } from "../../lib/banners";
 import type { ContactFormRecord } from "../../lib/contact-forms";
 import CreateSubmit from "./CreateSubmit.astro";
 import { getLanguageCatalog, getUiTranslations, localizeAdminHref } from "../../lib/i18n";
+import "@toast-ui/editor/dist/toastui-editor.css";
 
 interface Props {
 	mode: "create" | "edit";
@@ -161,6 +162,7 @@ const initialContactFields = [];
 	<div
 		class="admin-form-section localized-editor admin-stack-section"
 		data-localized-editor
+		data-markdown-editor-root
 		data-active-language={initialLanguage}
 		data-default-language={def}
 	>
@@ -665,6 +667,8 @@ const initialContactFields = [];
 </style>
 
 <script type="module">
+	import "../../scripts/admin-markdown-editor.ts";
+
 	const sectionInput = document.querySelector("[data-page-sections-config]");
 	const sectionRows = document.querySelector("[data-section-rows]");
 	const sectionSelect = document.querySelector("[data-section-select]");
@@ -1154,6 +1158,15 @@ const initialContactFields = [];
 	}
 
 	const insertEditorSnippet = (textarea, snippet) => {
+		const markdownEditor = textarea?._markdownEditor;
+		if (markdownEditor && typeof markdownEditor.replaceSelection === "function") {
+			markdownEditor.focus();
+			markdownEditor.replaceSelection(snippet);
+			textarea.value = markdownEditor.getMarkdown();
+			textarea.dispatchEvent(new Event("input", { bubbles: true }));
+			return;
+		}
+
 		const start = textarea.selectionStart ?? textarea.value.length;
 		const end = textarea.selectionEnd ?? textarea.value.length;
 		const before = textarea.value.slice(0, start);
