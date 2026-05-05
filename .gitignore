@@ -200,3 +200,12 @@ dist
 
 ### Astro ###
 .astro/
+
+# Private ignore hehe
+.agents/
+.specify/
+migrations-dev/
+specs/
+learning.md
+noteREADME.md
+AGENTS.md
