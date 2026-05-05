@@ -380,20 +380,44 @@ VALUES (1, 'Edge CMS. Content updates go live straight from D1.', '#eef2f7', '#6
 ON CONFLICT(id) DO NOTHING;
 
 INSERT INTO navigation_items (label, href, sort_order, is_visible)
-SELECT json_object('en', 'Home', 'vi', 'Trang chu'), '/', 0, 1
+SELECT json_object('en', 'Home'), '/', 0, 1
 WHERE NOT EXISTS (SELECT 1 FROM navigation_items);
+
+INSERT INTO navigation_items (label, href, sort_order, is_visible)
+SELECT json_object('en', 'News'), '/news/', 1, 1
+WHERE NOT EXISTS (SELECT 1 FROM navigation_items WHERE href = '/news/');
 
 INSERT INTO site_pages (title, slug, description, content, show_title, show_posts_section, status, updated_at, page_sections)
 VALUES (
-	json_object('en', 'Hello World', 'vi', 'Xin chao'),
+	json_object('en', 'Home'),
 	'home',
-	'Welcome to Edge CMS.',
-	json_object('en', 'Your new Edge CMS project is ready.'),
+	'Welcome page',
+	json_object('en', '# Welcome to Edge CMS
+
+This starter is ready to publish simple pages, posts, and localized content from day one.
+
+- Edit this page from the admin dashboard
+- Publish your first post from the News page
+- Add more languages only when you need them'),
+	1,
+	0,
+	'published',
+	CURRENT_TIMESTAMP,
+	'[{"type":"page_content","order":1}]'
+)
+ON CONFLICT(slug) DO NOTHING;
+
+INSERT INTO site_pages (title, slug, description, content, show_title, show_posts_section, status, updated_at, page_sections)
+VALUES (
+	json_object('en', 'News'),
+	'news',
+	'Latest news and updates',
+	json_object('en', 'Browse the latest published posts below.'),
 	1,
 	1,
 	'published',
 	CURRENT_TIMESTAMP,
-	'["page_content","blog_feed"]'
+	'[{"type":"page_content","order":1},{"type":"blog_feed","order":2}]'
 )
 ON CONFLICT(slug) DO NOTHING;
 

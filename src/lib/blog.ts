@@ -2125,6 +2125,45 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			SELECT json_object('${defaultLanguageCode}', 'Home'), '/', 0, 1
 			WHERE NOT EXISTS (SELECT 1 FROM navigation_items)`,
 		),
+		db.prepare(
+			`INSERT INTO navigation_items (label, href, sort_order, is_visible)
+			SELECT json_object('${defaultLanguageCode}', 'News'), '/news/', 1, 1
+			WHERE NOT EXISTS (SELECT 1 FROM navigation_items WHERE href = '/news/')`,
+		),
+		db.prepare(
+			`INSERT INTO site_pages (title, slug, description, content, show_title, show_posts_section, status, updated_at, page_sections)
+			SELECT
+				json_object('${defaultLanguageCode}', 'Home'),
+				'home',
+				'Welcome page',
+				json_object('${defaultLanguageCode}', '# Welcome to Edge CMS
+
+This starter is ready to publish simple pages, posts, and localized content from day one.
+
+- Edit this page from the admin dashboard
+- Publish your first post from the News page
+- Add more languages only when you need them'),
+				1,
+				0,
+				'published',
+				CURRENT_TIMESTAMP,
+				'[{"type":"page_content","order":1}]'
+			WHERE NOT EXISTS (SELECT 1 FROM site_pages WHERE slug = 'home')`,
+		),
+		db.prepare(
+			`INSERT INTO site_pages (title, slug, description, content, show_title, show_posts_section, status, updated_at, page_sections)
+			SELECT
+				json_object('${defaultLanguageCode}', 'News'),
+				'news',
+				'Latest news and updates',
+				json_object('${defaultLanguageCode}', 'Browse the latest published posts below.'),
+				1,
+				1,
+				'published',
+				CURRENT_TIMESTAMP,
+				'[{"type":"page_content","order":1},{"type":"blog_feed","order":2}]'
+			WHERE NOT EXISTS (SELECT 1 FROM site_pages WHERE slug = 'news')`,
+		),
 	]);
 
 	await db
