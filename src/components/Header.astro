@@ -15,8 +15,12 @@ let headerAccentColor = DEFAULT_TEMPLATE_THEME.headerAccentColor;
 let headerTemplateHtml = "";
 let navbarTemplateHtml = "";
 const { language, t, localizeHref, localizeAdminHref } = getUiTranslations(Astro);
+const catalog = getLanguageCatalog(Astro.locals);
+const defaultLanguageCode = catalog.defaultLanguageCode;
+const fallbackHomeTranslations = { [defaultLanguageCode]: t("nav.home", "Home") };
+const fallbackCmsTranslations = { [defaultLanguageCode]: t("nav.cms", "CMS") };
 let navItems: SiteNavItem[] = [
-	{ label: t("nav.home"), labelTranslations: { en: "Home", vi: "Trang chu" }, href: '/', sortOrder: 0 },
+	{ label: t("nav.home"), labelTranslations: fallbackHomeTranslations, href: '/', sortOrder: 0 },
 ];
 
 try {
@@ -36,13 +40,12 @@ try {
 if (Astro.url.pathname.startsWith('/admin') && !navItems.some((item) => item.href === '/admin')) {
 	navItems = [
 		...navItems,
-		{ label: t("nav.cms"), labelTranslations: { en: "CMS", vi: "CMS" }, href: '/admin', sortOrder: 999 },
+		{ label: t("nav.cms"), labelTranslations: fallbackCmsTranslations, href: '/admin', sortOrder: 999 },
 	];
 }
 
 const currentPathname = Astro.url.pathname;
 const resolveNavHref = (href = "/") => (href.startsWith('/admin') ? localizeAdminHref(href) : localizeHref(href));
-const catalog = getLanguageCatalog(Astro.locals);
 const languageSwitchOptions = getLanguageSwitchOptions(Astro.url, language, catalog);
 const brandHtml = buildBrandHtml({
 	siteTitle,

@@ -6,8 +6,8 @@ import {
 	FALLBACK_LANGUAGE_CATALOG,
 	loadLanguageCatalog,
 	isValidLanguageCode,
-	LanguageCatalogState,
 } from "./lib/languages";
+import type { LanguageCatalogState } from "./lib/languages";
 import { readUiLanguagePreference, resolveUiLanguage, writeUiLanguagePreference } from "./lib/i18n";
 import { loadLocalizationPayload } from "./lib/localization";
 import {
@@ -37,6 +37,32 @@ function removeLeadingLanguageSegment(pathname: string, catalog: LanguageCatalog
 	return `/${segments.join("/")}`;
 }
 
+function getLocalizedAdminRedirect(
+	pathname: string,
+	search: string,
+	hash: string,
+	catalog: LanguageCatalogState,
+): string | null {
+	const segments = pathname.split("/").filter(Boolean);
+	if (segments.length < 2) {
+		return null;
+	}
+
+	const [language, firstSegment, ...rest] = segments;
+	const isEnabledLanguage = catalog.enabledLanguages.some((entry) => entry.code === language);
+	if (!isEnabledLanguage || firstSegment !== "admin") {
+		return null;
+	}
+
+	const trailingSlash = pathname.endsWith("/");
+	const normalizedPath = `/${[firstSegment, ...rest].join("/")}${trailingSlash ? "/" : ""}`;
+	const params = new URLSearchParams(search);
+	params.set("lang", language);
+	const nextSearch = params.toString();
+
+	return `${normalizedPath}${nextSearch ? `?${nextSearch}` : ""}${hash}`;
+}
+
 function buildFallbackPath(
 	pathname: string,
 	search: string,
@@ -59,6 +85,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		const db = getDb(context.locals);
 		const catalog = ensureCatalog(await loadLanguageCatalog(db));
 		context.locals.languageCatalog = catalog;
+		const localizedAdminRedirect = getLocalizedAdminRedirect(
+			context.url.pathname,
+			context.url.search,
+			context.url.hash,
+			catalog,
+		);
+		if (localizedAdminRedirect) {
+			return context.redirect(localizedAdminRedirect);
+		}
 		if (!pathname.startsWith("/admin") && !pathname.startsWith("/api")) {
 			const firstSegment = pathname.split("/").filter(Boolean)[0];
 			if (firstSegment && isValidLanguageCode(firstSegment) && catalog.enabledLanguages.every((lang) => lang.code !== firstSegment)) {

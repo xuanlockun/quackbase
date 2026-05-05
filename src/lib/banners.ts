@@ -74,6 +74,8 @@ export async function ensureBannerTables(db: D1Database): Promise<void> {
 
 	const bannerColumns = await db.prepare(`PRAGMA table_info(banners)`).all<{ name: string }>();
 	const bannerColumnNames = new Set((bannerColumns.results ?? []).map((column) => column.name));
+	const languageCatalog = await loadLanguageCatalog(db);
+	const defaultLanguageCode = languageCatalog.defaultLanguageCode.replace(/'/g, "''");
 	if (!bannerColumnNames.has("headline")) {
 		await db.prepare(`ALTER TABLE banners ADD COLUMN headline TEXT NOT NULL DEFAULT ''`).run();
 	}
@@ -86,15 +88,15 @@ export async function ensureBannerTables(db: D1Database): Promise<void> {
 			`UPDATE banners
 			SET title = CASE
 				WHEN json_valid(title) THEN title
-				ELSE json_object('en', title)
+				ELSE json_object('${defaultLanguageCode}', title)
 			END,
 			headline = CASE
 				WHEN json_valid(headline) THEN headline
-				ELSE json_object('en', headline)
+				ELSE json_object('${defaultLanguageCode}', headline)
 			END,
 			caption = CASE
 				WHEN json_valid(caption) THEN caption
-				ELSE json_object('en', caption)
+				ELSE json_object('${defaultLanguageCode}', caption)
 			END`,
 		)
 		.run();

@@ -6,7 +6,7 @@
 [![Cloudflare D1](https://img.shields.io/badge/Cloudflare-D1-F38020.svg)](https://developers.cloudflare.com/d1/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://developers.cloudflare.com/workers/wrangler/commands/#deploy)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/xuanlockun/astro-blog-starter-template)
 
 **The runtime CMS for Astro and Cloudflare Workers.** Built for global performance, content editing at runtime, and a clean admin experience.
 

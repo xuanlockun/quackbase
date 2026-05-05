@@ -11,11 +11,18 @@ const requestedLanguage = Astro.params.lang ?? "";
 const slug = Astro.params.slug ?? "";
 const { t } = getUiTranslations(Astro);
 let config = null;
+const reservedLocalizedSlugs = new Set(["admin"]);
 
 if (!isSupportedLanguage(requestedLanguage, catalog)) {
 	const target = new URL(Astro.url);
 	target.pathname = `/${catalog.defaultLanguageCode}/${slug}/`;
 	return Astro.redirect(target.toString(), 301);
+}
+
+if (reservedLocalizedSlugs.has(slug)) {
+	const target = new URL(`/admin`, Astro.url);
+	target.searchParams.set("lang", requestedLanguage);
+	return Astro.redirect(target.toString(), 302);
 }
 
 let page = null;

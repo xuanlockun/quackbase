@@ -43,12 +43,15 @@ if (!requestedKey || !bundle) {
 }
 
 const editorLanguages = [
-	{ code: selectedLanguage?.code ?? enabledLanguages[0]?.code ?? languages[0]?.code ?? "en", label: selectedLanguage?.name ?? enabledLanguages[0]?.name ?? languages[0]?.name ?? "English" },
+	{
+		code: selectedLanguage?.code ?? enabledLanguages[0]?.code ?? languages[0]?.code ?? "en",
+		label: selectedLanguage?.name ?? enabledLanguages[0]?.name ?? languages[0]?.name ?? t("labels.language", "Language"),
+	},
 	...enabledLanguages
 		.filter((entry) => entry.code !== selectedLanguage?.code)
 		.map((entry) => ({ code: entry.code, label: entry.name })),
 ];
-const selectedLocale = editorLanguages[0]?.code ?? requestedLocale ?? "en";
+const selectedLocale = editorLanguages[0]?.code ?? requestedLocale ?? languages[0]?.code ?? "en";
 const headingTitle = t("labels.translationEntry", "Edit translation entry");
 const saveButtonLabel = t("actions.saveChanges", "Save changes");
 const keyLabel = t("labels.translationKey");

@@ -40,7 +40,7 @@ try {
 const editorLanguages = [
 	{
 		code: selectedLanguage?.code ?? enabledLanguages[0]?.code ?? languages[0]?.code ?? "en",
-		label: selectedLanguage?.name ?? enabledLanguages[0]?.name ?? languages[0]?.name ?? "English",
+		label: selectedLanguage?.name ?? enabledLanguages[0]?.name ?? languages[0]?.name ?? t("labels.language", "Language"),
 		isActive: true,
 	},
 	...enabledLanguages

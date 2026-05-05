@@ -34,6 +34,11 @@ const def = catalog.defaultLanguageCode;
 const submitLabel = mode === "edit" ? t("actions.savePage") : t("actions.createPage");
 const isDisabled = Boolean(loadError) || !canSubmit;
 const languages = getSupportedLanguages(catalog);
+const labelLanguages = [
+	...languages.filter((entry) => entry.code === def),
+	...languages.filter((entry) => entry.code !== def),
+];
+const labelLanguagesJson = JSON.stringify(labelLanguages);
 const initialLanguage = page?.requestedLanguage ?? language;
 const initialShowTitle = page?.showTitle ?? true;
 const showTitleId = "page-show-title";
@@ -400,11 +405,13 @@ const initialContactFields = [];
 			class="contact-fields-editor"
 			data-contact-fields-editor
 			data-disabled={String(isDisabled)}
+			data-label-languages={labelLanguagesJson}
+			data-label-label={t("labels.label")}
+			data-field-label-placeholder={t("messages.contactFormFieldLabelPlaceholder", "Field label")}
+			data-translations-label={t("messages.contactFormAdditionalTranslations", "Additional translations")}
 			data-remove-label={t("actions.remove")}
 			data-type-label={t("labels.fieldType")}
 			data-required-label={t("labels.required")}
-			data-label-en={`${t("labels.label")} (EN)`}
-			data-label-vi={`${t("labels.label")} (VI)`}
 			data-text-option={t("labels.textField")}
 			data-email-option={t("labels.emailField")}
 			data-textarea-option={t("labels.textareaField")}
@@ -794,7 +801,7 @@ const initialContactFields = [];
 			return;
 		}
 		contactRows.append(createContactFieldRow());
-		const lastInput = contactRows.querySelector("[data-contact-field]:last-child [data-contact-field-label-en]");
+		const lastInput = contactRows.querySelector("[data-contact-field]:last-child [data-contact-field-label]");
 		if (lastInput instanceof HTMLInputElement) {
 			lastInput.focus();
 		}
@@ -1053,8 +1060,6 @@ const initialContactFields = [];
 		const metaType = metadata?.typeLabel ?? "Type";
 		const metaRequired = metadata?.requiredLabel ?? "Required";
 		const metaRemove = metadata?.removeLabel ?? "Remove";
-		const metaLabelEn = metadata?.labelEn ?? "Label (EN)";
-		const metaLabelVi = metadata?.labelVi ?? "Label (VI)";
 		const metaText = metadata?.textOption ?? "Text";
 		const metaEmail = metadata?.emailOption ?? "Email";
 		const metaTextarea = metadata?.textareaOption ?? "Textarea";
@@ -1066,8 +1071,26 @@ const initialContactFields = [];
 		row.dataset.fieldId = String(assignedId);
 		nextFieldId = Math.max(nextFieldId, assignedId);
 		const type = field.type ?? "text";
-		const labelEn = escapeAttribute(field.label?.en ?? "");
-		const labelVi = escapeAttribute(field.label?.vi ?? "");
+		const labelLanguages = parseLabelLanguages();
+		const defaultLanguage = String(labelLanguages[0]?.code ?? "en");
+		const primaryLabel = escapeAttribute(field.label?.[defaultLanguage] ?? "");
+		const labelCaption = escapeHtml(editor?.dataset.labelLabel ?? "Label");
+		const fieldLabelPlaceholder = escapeAttribute(editor?.dataset.fieldLabelPlaceholder ?? "Field label");
+		const translationsLabel = escapeHtml(editor?.dataset.translationsLabel ?? "Additional translations");
+		const labelInputs = labelLanguages
+			.slice(1)
+			.map((entry) => {
+				const code = String(entry.code ?? "");
+				const value = escapeAttribute(field.label?.[code] ?? "");
+				return `
+            <label>
+                <span>${labelCaption} (${escapeAttribute(code.toUpperCase())})</span>
+                <input type="text" data-contact-field-label data-language-code="${escapeAttribute(code)}" value="${value}" ${
+					isContactReadOnly ? "disabled" : ""
+				} />
+            </label>`;
+			})
+			.join("");
 		row.innerHTML = `
         <span class="drag-handle" data-drag-handle aria-label="Drag field"></span>
         <div class="contact-field-meta">
@@ -1091,17 +1114,12 @@ const initialContactFields = [];
         </div>
         <div class="contact-field-labels">
             <label>
-                <span>${metaLabelEn}</span>
-                <input type="text" data-contact-field-label-en value="${labelEn}" ${
+                <span>${labelCaption} (${escapeAttribute(defaultLanguage.toUpperCase())})</span>
+                <input type="text" data-contact-field-label data-language-code="${escapeAttribute(defaultLanguage)}" value="${primaryLabel}" placeholder="${fieldLabelPlaceholder}" ${
 			isContactReadOnly ? "disabled" : ""
 		} required />
             </label>
-            <label>
-                <span>${metaLabelVi}</span>
-                <input type="text" data-contact-field-label-vi value="${labelVi}" ${
-			isContactReadOnly ? "disabled" : ""
-		} />
-            </label>
+            ${labelInputs}
         </div>`;
 		return row;
 	}
@@ -1114,24 +1132,25 @@ const initialContactFields = [];
 			.map((row, index) => {
 				const typeInput = row.querySelector("[data-contact-field-type]");
 				const requiredInput = row.querySelector("[data-contact-field-required]");
-				const labelEnInput = row.querySelector("[data-contact-field-label-en]");
-				const labelViInput = row.querySelector("[data-contact-field-label-vi]");
-				if (!(typeInput instanceof HTMLSelectElement) || !(labelEnInput instanceof HTMLInputElement)) {
+				const labelInputs = Array.from(row.querySelectorAll("[data-contact-field-label]"));
+				if (!(typeInput instanceof HTMLSelectElement) || labelInputs.length === 0) {
 					return null;
 				}
-				const enValue = labelEnInput.value.trim();
-				if (!enValue) {
+				const labels = Object.fromEntries(
+					labelInputs
+						.filter((input) => input instanceof HTMLInputElement)
+						.map((input) => [input.dataset.languageCode ?? "", input.value.trim()])
+						.filter(([code, value]) => code && value),
+				);
+				const defaultValue = typeof labels[def] === "string" ? labels[def].trim() : "";
+				if (!defaultValue) {
 					return null;
 				}
-				const viValue = labelViInput instanceof HTMLInputElement ? labelViInput.value.trim() : "";
 				return {
 					id: Number(row.dataset.fieldId) || undefined,
 					type: typeInput.value,
 					required: Boolean(requiredInput?.checked),
-					label: {
-						en: enValue,
-						...(viValue ? { vi: viValue } : {}),
-					},
+					label: labels,
 					order: index + 1,
 				};
 			})
@@ -1260,6 +1279,6 @@ const initialContactFields = [];
 			insertEditorSnippet(textarea, target.dataset.editorSnippet || "");
 		});
 		syncLocalizedEditor(root);
-		setActiveLanguage(root.dataset.activeLanguage || root.dataset.defaultLanguage || "en");
+		setActiveLanguage(root.dataset.activeLanguage || root.dataset.defaultLanguage || "");
 	});
 </script>

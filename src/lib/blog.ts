@@ -1963,6 +1963,8 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 	const settingsColumnNames = new Set((settingsColumns.results ?? []).map((column) => column.name));
 	const footerColumns = await db.prepare(`PRAGMA table_info(footer_settings)`).all<{ name: string }>();
 	const footerColumnNames = new Set((footerColumns.results ?? []).map((column) => column.name));
+	const languageCatalog = await loadLanguageCatalog(db);
+	const defaultLanguageCode = languageCatalog.defaultLanguageCode.replace(/'/g, "''");
 
 	if (!settingsColumnNames.has("nav_items")) {
 		await db.prepare(`ALTER TABLE site_settings ADD COLUMN nav_items TEXT NOT NULL DEFAULT '[]'`).run();
@@ -2094,11 +2096,11 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			`UPDATE site_pages
 			SET title = CASE
 				WHEN json_valid(title) THEN title
-				ELSE json_object('en', title)
+				ELSE json_object('${defaultLanguageCode}', title)
 			END,
 			content = CASE
 				WHEN json_valid(content) THEN content
-				ELSE json_object('en', content)
+				ELSE json_object('${defaultLanguageCode}', content)
 			END`,
 		)
 		.run();
@@ -2120,7 +2122,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 		),
 		db.prepare(
 			`INSERT INTO navigation_items (label, href, sort_order, is_visible)
-			SELECT json_object('en', 'Home', 'vi', 'Trang chu'), '/', 0, 1
+			SELECT json_object('${defaultLanguageCode}', 'Home'), '/', 0, 1
 			WHERE NOT EXISTS (SELECT 1 FROM navigation_items)`,
 		),
 	]);
@@ -2130,7 +2132,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 			`UPDATE navigation_items
 			SET label = CASE
 				WHEN json_valid(label) THEN label
-				ELSE json_object('en', label)
+				ELSE json_object('${defaultLanguageCode}', label)
 			END`,
 		)
 		.run();
@@ -2157,6 +2159,8 @@ async function ensurePostTables(db: D1Database): Promise<void> {
 
 	const postColumns = await db.prepare(`PRAGMA table_info(posts)`).all<{ name: string }>();
 	const columnNames = new Set((postColumns.results ?? []).map((column) => column.name));
+	const languageCatalog = await loadLanguageCatalog(db);
+	const defaultLanguageCode = languageCatalog.defaultLanguageCode.replace(/'/g, "''");
 
 	if (!columnNames.has("content") && columnNames.has("content_markdown")) {
 		await db.prepare(`ALTER TABLE posts RENAME COLUMN content_markdown TO content`).run();
@@ -2171,19 +2175,19 @@ async function ensurePostTables(db: D1Database): Promise<void> {
 			`UPDATE posts
 			SET slug = CASE
 				WHEN json_valid(slug) THEN slug
-				ELSE json_object('en', slug)
+				ELSE json_object('${defaultLanguageCode}', slug)
 			END,
 			title = CASE
 				WHEN json_valid(title) THEN title
-				ELSE json_object('en', title)
+				ELSE json_object('${defaultLanguageCode}', title)
 			END,
 			description = CASE
 				WHEN json_valid(description) THEN description
-				ELSE json_object('en', description)
+				ELSE json_object('${defaultLanguageCode}', description)
 			END,
 			content = CASE
 				WHEN json_valid(content) THEN content
-				ELSE json_object('en', content)
+				ELSE json_object('${defaultLanguageCode}', content)
 			END`,
 		)
 		.run();
