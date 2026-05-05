@@ -79,8 +79,9 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			return response;
 		}
 
-		await updateLastLoginAt(getDb(locals), user.id);
-		const token = await signAdminJwt(user.id, user.email, locals.runtime.env.JWT_SECRET);
+		const db = getDb(locals);
+		await updateLastLoginAt(db, user.id);
+		const token = await signAdminJwt(user.id, user.email, db);
 		const sessionCookie = createAdminSessionCookie(token, request.url);
 
 		logSecurityEvent("auth.login.success", { userId: user.id, email: user.email });
@@ -109,7 +110,6 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		return response;
 	} catch (error) {
 		logSecurityEvent("auth.login.failed", { reason: "unexpected_error", message: error instanceof Error ? error.message : "unknown" });
-
 		if (wantsJson) {
 			return new Response(JSON.stringify({ error: "Login failed." }), {
 				status: 401,

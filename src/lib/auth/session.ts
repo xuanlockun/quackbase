@@ -14,22 +14,18 @@ export async function resolveAdminSession(
 		return null;
 	}
 
-	const secret = locals.runtime.env.JWT_SECRET;
-	if (!secret) {
-		return null;
-	}
-
-	const claims = await verifyAdminJwt(token, secret);
+	const db = getDb(locals);
+	const claims = await verifyAdminJwt(token, db);
 	if (!claims) {
 		return null;
 	}
 
-	const user = await findAdminUserById(getDb(locals), claims.userId);
+	const user = await findAdminUserById(db, claims.userId);
 	if (!user || !user.isActive) {
 		return null;
 	}
 
-	const effectiveAccess = await getEffectiveAccessForUser(getDb(locals), user.id);
+	const effectiveAccess = await getEffectiveAccessForUser(db, user.id);
 	if (effectiveAccess.roles.length === 0) {
 		return null;
 	}

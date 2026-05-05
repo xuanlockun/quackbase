@@ -3,7 +3,7 @@ import type { LocalizationPayload } from "./lib/localization";
 
 interface Env {
 	DB: D1Database;
-	JWT_SECRET: string;
+	JWT_SECRET?: string;
 	SECRETS_ENCRYPTION_KEY?: string;
 	R2_BUCKET?: R2Bucket;
 	R2_PUBLIC_BASE_URL?: string;

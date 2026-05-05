@@ -85,7 +85,7 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			permissions: effectiveAccess.permissions.map((permission) => permission.name),
 			isSuperadmin: true,
 		};
-		const token = await signAdminJwt(user.id, user.email, locals.runtime.env.JWT_SECRET);
+		const token = await signAdminJwt(user.id, user.email, db);
 		const sessionCookie = createAdminSessionCookie(token, request.url);
 		const response = redirect(
 			getDefaultAdminPath(session),
