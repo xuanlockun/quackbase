@@ -8,7 +8,82 @@
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/xuanlockun/astro-blog-starter-template)
 
-**The runtime CMS for Astro and Cloudflare Workers.** Built for global performance, content editing at runtime, and a clean admin experience.
+![](docs/d5677d11-feb4-4bcc-9a67-eb5525620533.png)
+
+**Quackbase is a runtime CMS for Astro, powered by Cloudflare Workers and D1.**
+
+Build fast content-driven websites without spinning up a server, wiring a traditional backend, or paying for a database before your project even has users.
+
+Quackbase gives you a clean admin experience, runtime content editing, and a deploy-anywhere-on-Cloudflare setup that feels small, sharp, and ridiculously easy to ship.
+
+## Why Quackbase?
+
+Most CMS setups are either too heavy, too expensive, or too annoying to deploy.
+
+Quackbase is built around a simpler idea:
+
+> Your Astro site should stay fast, your content should be editable at runtime, and your infrastructure should fit in your pocket.
+
+No credit card.  
+No server.  
+No vendor ceremony.  
+No bullshit.
+
+Just Astro, Cloudflare Workers, D1, and a tiny CMS layer that gets out of your way.
+
+## What you get
+
+- **Runtime content editing**  
+  Update pages, posts, and structured content without rebuilding the whole site every time.
+
+- **Cloudflare-native deployment**  
+  Runs on Cloudflare Workers with D1 as the database layer.
+
+- **Astro-first architecture**  
+  Designed for Astro projects, not retrofitted from a generic CMS.
+
+- **Clean admin UI**  
+  A simple editing experience for managing content without touching code.
+
+- **Fast by default**  
+  Built close to the edge, with a lightweight stack and minimal moving parts.
+
+- **Open source and hackable**  
+  TypeScript all the way down. Fork it, customize it, break it, make it yours.
+
+## Built for
+
+Quackbase is a good fit for:
+
+- blogs
+- docs sites
+- landing pages
+- changelogs
+- portfolios
+- startup websites
+- small content-heavy products
+- indie projects that need a CMS without the baggage
+
+## Not built for
+
+Quackbase is intentionally small.
+
+It is probably not what you want if you need:
+
+- enterprise workflow approval chains
+- massive editorial teams
+- complex multi-tenant permission systems
+- a WordPress replacement with every plugin under the sun
+
+This project is for people who want something lean, understandable, and easy to deploy.
+
+## Tech stack
+
+- **Astro 5**
+- **TypeScript**
+- **Cloudflare Workers**
+- **Cloudflare D1**
+- **Wrangler**
 
 ## 📦 Get Started
 
