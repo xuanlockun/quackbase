@@ -8,7 +8,7 @@
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/xuanlockun/astro-blog-starter-template)
 
-![](docs/d5677d11-feb4-4bcc-9a67-eb5525620533.png)
+<img src="docs/d5677d11-feb4-4bcc-9a67-eb5525620533.png" alt="Demo" height="420">
 
 **Quackbase is a runtime CMS for Astro, powered by Cloudflare Workers and D1.**
 
