@@ -4,6 +4,7 @@ import { signAdminJwt } from "../../../../lib/auth/jwt";
 import { hashPassword } from "../../../../lib/auth/passwords";
 import { logSecurityEvent } from "../../../../lib/auth/audit";
 import { getDb } from "../../../../lib/blog";
+import { ensureAdminBootstrapSchema } from "../../../../lib/db/admin-bootstrap";
 import { createAdminUser, countAdminUsers } from "../../../../lib/db/admin-users";
 import { getEffectiveAccessForUser } from "../../../../lib/db/permissions";
 import { getDefaultAdminPath } from "../../../../lib/rbac/policies";
@@ -40,6 +41,7 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 	const db = getDb(locals);
 
 	try {
+		await ensureAdminBootstrapSchema(db);
 		const userCount = await countAdminUsers(db);
 		if (userCount > 0) {
 			if (wantsJson) {

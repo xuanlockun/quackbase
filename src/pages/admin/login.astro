@@ -6,20 +6,30 @@ import Footer from "../../components/Footer.astro";
 import Header from "../../components/Header.astro";
 import { SITE_TITLE } from "../../consts";
 import { getDb } from "../../lib/blog";
+import { ensureAdminBootstrapSchema } from "../../lib/db/admin-bootstrap";
 import { getUiTranslations } from "../../lib/i18n";
 import { countAdminUsers } from "../../lib/db/admin-users";
 
 const error = Astro.url.searchParams.get("error");
 const setupError = Astro.url.searchParams.get("setupError");
-const db = getDb(Astro.locals);
-const adminUserCount = await countAdminUsers(db);
-const needsInitialSetup = adminUserCount === 0;
 const { language, t } = getUiTranslations(Astro);
+let needsInitialSetup = false;
+let bootstrapError = "";
+
+try {
+	const db = getDb(Astro.locals);
+	await ensureAdminBootstrapSchema(db);
+	const adminUserCount = await countAdminUsers(db);
+	needsInitialSetup = adminUserCount === 0;
+} catch (error) {
+	bootstrapError = error instanceof Error ? error.message : "Admin setup is unavailable right now.";
+}
+
 const errorMessage =
 	error === "access-denied"
-		? t("messages.accessDenied")
+		? t("messages.accessDenied", "You do not have access to that page.")
 		: error === "invalid"
-			? t("messages.invalidCredentials")
+			? t("messages.invalidCredentials", "The email or password is incorrect.")
 			: "";
 const setupErrorMessage = setupError || "";
 const initialSetupTitle = t("messages.initialSetupTitle", "Initial setup");
@@ -29,12 +39,14 @@ const initialSetupHelp = t(
 );
 const displayNameLabel = t("labels.displayName", "Display name");
 const createAccountLabel = t("actions.createAdminAccount", "Create admin account");
+const loginTitle = t("headings.adminLogin", "Admin login");
+const signInIntro = t("messages.signInIntro", "Sign in to continue to the admin workspace.");
 ---
 
 <!doctype html>
 <html lang={language}>
 	<head>
-		<BaseHead title={`${t("headings.adminLogin")} | ${SITE_TITLE}`} description={t("messages.signInIntro")} />
+		<BaseHead title={`${loginTitle} | ${SITE_TITLE}`} description={signInIntro} />
 		<style>
 			.login-shell {
 				min-height: calc(100vh - 140px);
@@ -78,7 +90,13 @@ const createAccountLabel = t("actions.createAdminAccount", "Create admin account
 		<Header />
 		<main class="login-shell">
 			<section class="panel">
-				{needsInitialSetup ? (
+				{bootstrapError ? (
+					<>
+						<h1>{loginTitle}</h1>
+						<p class="muted">{signInIntro}</p>
+						<p class="error">{bootstrapError}</p>
+					</>
+				) : needsInitialSetup ? (
 					<>
 						<h1>{initialSetupTitle}</h1>
 						<p class="muted">{initialSetupHelp}</p>
@@ -103,8 +121,8 @@ const createAccountLabel = t("actions.createAdminAccount", "Create admin account
 					</>
 				) : (
 					<>
-						<h1>{t("headings.adminLogin")}</h1>
-						<p class="muted">{t("messages.signInIntro")}</p>
+						<h1>{loginTitle}</h1>
+						<p class="muted">{signInIntro}</p>
 						{errorMessage && <p class="error">{errorMessage}</p>}
 						<form method="post" action="/api/admin/auth/login">
 							<label>
