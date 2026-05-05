@@ -315,9 +315,7 @@ WHERE roles.name = 'editor'
 
 INSERT INTO languages (code, name, enabled, is_default)
 VALUES
-	('en', 'English', 1, 1),
-	('vi', 'Vietnamese', 1, 0),
-	('jp', 'Japanese', 1, 0)
+	('en', 'English', 1, 1)
 ON CONFLICT(code) DO NOTHING;
 
 UPDATE languages SET is_default = 0 WHERE code != 'en';

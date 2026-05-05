@@ -55,6 +55,7 @@ const keyLabel = t("labels.translationKey");
 const valueLabel = t("labels.translationValue");
 const translationTabsLabel = t("labels.languages", "Languages");
 const addLanguageTitle = t("actions.addLanguage", "Add language");
+const selectedLanguageName = selectedLanguage?.name ?? enabledLanguages[0]?.name ?? languages[0]?.name ?? "English";
 const languageFeedback = [
 	["imported", { title: t("messages.languageImportCompletedTitle", "Import completed"), message: t("messages.languageImportCompleted", "Language JSON import completed."), tone: "success" }],
 	["importError", { title: t("messages.languageImportFailedTitle", "Import failed"), message: Astro.url.searchParams.get("importError") || t("messages.languageImportFailed", "Language JSON import failed."), tone: "error" }],
@@ -74,14 +75,32 @@ const languageFeedback = [
 			<div class="admin-surface-header mb-3">
 				<div>
 					<h2 class="h5 mb-1">{t("messages.languageJsonTools", "Language JSON tools")}</h2>
-					<p class="admin-inline-muted mb-0">{t("messages.languageJsonToolsHelp", "Export languages and translations as JSON, or import a JSON bundle to merge updates into this workspace.")}</p>
+					<p class="admin-inline-muted mb-0">{t("messages.languageJsonToolsHelp", "Export one locale as a simple JSON file like en.json, or import the same format back into this workspace.")}</p>
 				</div>
 			</div>
 			<div class="d-flex flex-wrap gap-3 align-items-end justify-content-between">
-				<a class="btn btn-outline-secondary" href="/api/admin/languages/translations/export">
-					{t("actions.exportLanguagesJson", "Export JSON")}
-				</a>
-				<form method="post" action="/api/admin/languages/translations/import" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-end">
+				<div class="d-flex flex-wrap gap-2 align-items-end">
+					<label class="d-grid gap-1">
+						<span class="small text-muted">{t("labels.language", "Language")}</span>
+						<select class="form-select" name="locale" form="language-json-import-form" data-language-json-locale>
+							{
+								languages.map((language) => (
+									<option value={language.code} selected={language.code === selectedLocale}>
+										{language.name}
+									</option>
+								))
+							}
+						</select>
+					</label>
+					<a class="btn btn-outline-secondary" href={`/api/admin/languages/translations/export?locale=${encodeURIComponent(selectedLocale || "en")}`} data-language-json-export>
+						{t("actions.exportLanguagesJson", "Export JSON")}
+					</a>
+				</div>
+				<form id="language-json-import-form" method="post" action="/api/admin/languages/translations/import" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-end">
+					<label class="d-grid gap-1">
+						<span class="small text-muted">{t("labels.name", "Name")}</span>
+						<input class="form-control" type="text" name="languageName" value={selectedLanguageName} />
+					</label>
 					<label class="d-grid gap-1">
 						<span class="small text-muted">{t("messages.languageJsonFileLabel", "JSON file")}</span>
 						<input class="form-control" type="file" name="translationsFile" accept="application/json,.json" required />
@@ -212,6 +231,17 @@ const languageFeedback = [
 	<script type="module" src={languageManagerScript} client:load></script>
 	<script type="module" src={translationManagerScript} client:load></script>
 	<script type="module" define:vars={{ languageFeedback }}>
+		const localeSelect = document.querySelector("[data-language-json-locale]");
+		const exportLink = document.querySelector("[data-language-json-export]");
+		if (localeSelect instanceof HTMLSelectElement && exportLink instanceof HTMLAnchorElement) {
+			const syncExportHref = () => {
+				const locale = localeSelect.value || "en";
+				exportLink.href = `/api/admin/languages/translations/export?locale=${encodeURIComponent(locale)}`;
+			};
+			localeSelect.addEventListener("change", syncExportHref);
+			syncExportHref();
+		}
+
 		const showFeedbackModal = window.showAdminFeedbackModal;
 		const search = new URLSearchParams(window.location.search);
 

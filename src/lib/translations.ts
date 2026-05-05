@@ -4,6 +4,7 @@ import {
 	type LanguageRow,
 	updateLanguageByCode,
 } from "./languages";
+import enCatalog from "../../locales/en.json";
 
 export interface TranslationEntryRow {
 	localeCode: string;
@@ -30,7 +31,10 @@ export interface TranslationExportPayload {
 	translations: Record<string, Record<string, string>>;
 }
 
+type LocaleJsonObject = Record<string, string | LocaleJsonObject>;
+
 const LOCALE_PATTERN = /^[a-z]{2}(?:-[a-z]{2})?$/i;
+const DEFAULT_BOOTSTRAP_LOCALE = "en";
 
 function normalizeLocaleCode(locale: string): string {
 	return locale.trim().toLowerCase();
@@ -107,6 +111,7 @@ async function getEntry(db: D1Database, locale: string, key: string): Promise<Tr
 }
 
 export async function listTranslationEntriesByLocale(db: D1Database, locale: string): Promise<TranslationEntryRow[]> {
+	await ensureDefaultEnglishTranslations(db);
 	const normalizedLocale = ensureValidLocale(locale);
 	const result = await db
 		.prepare(
@@ -130,6 +135,7 @@ export async function listTranslationEntriesByKey(
 	db: D1Database,
 	translationKey: string,
 ): Promise<TranslationBundleRow | null> {
+	await ensureDefaultEnglishTranslations(db);
 	const normalizedKey = translationKey.trim();
 	if (!normalizedKey) {
 		return null;
@@ -154,6 +160,7 @@ export async function listTranslationEntriesByKey(
 }
 
 export async function listAllTranslationBundles(db: D1Database): Promise<TranslationBundleRow[]> {
+	await ensureDefaultEnglishTranslations(db);
 	const result = await db
 		.prepare(
 			`SELECT locale_code, translation_key, translated_value, updated_at
@@ -266,6 +273,7 @@ export async function saveTranslationBundle(
 }
 
 export async function buildTranslationExportPayload(db: D1Database): Promise<TranslationExportPayload> {
+	await ensureDefaultEnglishTranslations(db);
 	const [languages, bundles] = await Promise.all([listAllLanguages(db), listAllTranslationBundles(db)]);
 
 	return {
@@ -283,10 +291,19 @@ export async function buildTranslationExportPayload(db: D1Database): Promise<Tra
 	};
 }
 
+export async function buildLocaleTranslationFile(db: D1Database, locale: string): Promise<Record<string, unknown>> {
+	await ensureDefaultEnglishTranslations(db);
+	const entries = await listTranslationEntriesByLocale(db, locale);
+	return expandFlatTranslations(
+		Object.fromEntries(entries.map((entry) => [entry.translationKey, entry.translatedValue])),
+	);
+}
+
 export async function importTranslationExportPayload(
 	db: D1Database,
 	payload: unknown,
 ): Promise<{ languagesUpdated: number; translationsUpdated: number }> {
+	await ensureDefaultEnglishTranslations(db);
 	if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
 		throw new Error("Invalid translation import payload.");
 	}
@@ -364,6 +381,44 @@ export async function importTranslationExportPayload(
 	return { languagesUpdated, translationsUpdated };
 }
 
+export async function importLocaleTranslationFile(
+	db: D1Database,
+	locale: string,
+	payload: unknown,
+	languageName?: string,
+): Promise<{ languagesUpdated: number; translationsUpdated: number }> {
+	await ensureDefaultEnglishTranslations(db);
+	const normalizedLocale = ensureValidLocale(locale);
+	const translationMap = flattenLocaleObject(payload);
+	if (Object.keys(translationMap).length === 0) {
+		throw new Error("Translation JSON file is empty or invalid.");
+	}
+
+	const existingLanguages = await listAllLanguages(db);
+	const existing = existingLanguages.find((entry) => entry.code === normalizedLocale);
+	if (!existing) {
+		await createLanguage(db, {
+			code: normalizedLocale,
+			name: languageName?.trim() || normalizedLocale.toUpperCase(),
+			enabled: true,
+			isDefault: false,
+		});
+	} else if (languageName?.trim() && languageName.trim() !== existing.name) {
+		await updateLanguageByCode(db, normalizedLocale, { name: languageName.trim() });
+	}
+
+	let translationsUpdated = 0;
+	for (const [translationKey, translatedValue] of Object.entries(translationMap)) {
+		await insertTranslationEntry(db, normalizedLocale, translationKey, translatedValue);
+		translationsUpdated += 1;
+	}
+
+	return {
+		languagesUpdated: 1,
+		translationsUpdated,
+	};
+}
+
 export async function updateTranslationEntry(
 	db: D1Database,
 	locale: string,
@@ -422,4 +477,93 @@ export async function deleteTranslationEntry(
 		.prepare(`DELETE FROM translation_entries WHERE locale_code = ?1 AND translation_key = ?2`)
 		.bind(normalizedLocale, normalizedKey)
 		.run();
+}
+
+export async function ensureDefaultEnglishTranslations(db: D1Database): Promise<void> {
+	await db.batch([
+		db.prepare(
+			`CREATE TABLE IF NOT EXISTS translation_entries (
+				locale_code TEXT NOT NULL,
+				translation_key TEXT NOT NULL,
+				translated_value TEXT NOT NULL,
+				updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (locale_code, translation_key)
+			)`,
+		),
+		db.prepare(`CREATE INDEX IF NOT EXISTS idx_translation_entries_locale ON translation_entries (locale_code)`),
+		db.prepare(`CREATE INDEX IF NOT EXISTS idx_translation_entries_key ON translation_entries (translation_key)`),
+	]);
+
+	const existing = await db
+		.prepare(`SELECT COUNT(*) as count FROM translation_entries WHERE locale_code = ?1`)
+		.bind(DEFAULT_BOOTSTRAP_LOCALE)
+		.first<{ count: number }>();
+	if ((existing?.count ?? 0) > 0) {
+		return;
+	}
+
+	const translations = flattenLocaleObject(enCatalog);
+	for (const [translationKey, translatedValue] of Object.entries(translations)) {
+		await db
+			.prepare(
+				`INSERT INTO translation_entries (locale_code, translation_key, translated_value)
+				VALUES (?1, ?2, ?3)
+				ON CONFLICT(locale_code, translation_key) DO UPDATE SET
+					translated_value = excluded.translated_value,
+					updated_at = CURRENT_TIMESTAMP`,
+			)
+			.bind(DEFAULT_BOOTSTRAP_LOCALE, translationKey, translatedValue)
+			.run();
+	}
+}
+
+function flattenLocaleObject(input: unknown, prefix = ""): Record<string, string> {
+	if (!input || typeof input !== "object" || Array.isArray(input)) {
+		return {};
+	}
+
+	const flattened: Record<string, string> = {};
+	for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
+		const nextKey = prefix ? `${prefix}.${key}` : key;
+		if (typeof value === "string") {
+			const trimmed = value.trim();
+			if (trimmed) {
+				flattened[nextKey] = trimmed;
+			}
+			continue;
+		}
+
+		Object.assign(flattened, flattenLocaleObject(value, nextKey));
+	}
+
+	return flattened;
+}
+
+function expandFlatTranslations(input: Record<string, string>): Record<string, unknown> {
+	const output: Record<string, unknown> = {};
+
+	for (const [flatKey, value] of Object.entries(input)) {
+		const segments = flatKey.split(".").filter(Boolean);
+		if (segments.length === 0) {
+			continue;
+		}
+
+		let cursor: Record<string, unknown> = output;
+		for (let index = 0; index < segments.length; index += 1) {
+			const segment = segments[index];
+			const isLeaf = index === segments.length - 1;
+			if (isLeaf) {
+				cursor[segment] = value;
+				continue;
+			}
+
+			const existing = cursor[segment];
+			if (!existing || typeof existing !== "object" || Array.isArray(existing)) {
+				cursor[segment] = {};
+			}
+			cursor = cursor[segment] as Record<string, unknown>;
+		}
+	}
+
+	return output;
 }

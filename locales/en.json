@@ -130,6 +130,7 @@
     "updated": "Updated",
     "name": "Name",
     "code": "Code",
+    "default": "Default",
     "enabled": "Enabled",
     "defaultLanguage": "Default language",
     "message": "Message",

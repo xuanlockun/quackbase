@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { getDb } from "../../../../../lib/blog";
-import { importTranslationExportPayload } from "../../../../../lib/translations";
+import { importLocaleTranslationFile, importTranslationExportPayload } from "../../../../../lib/translations";
 import { requireApiPermission } from "../../../../../lib/rbac/guards";
 
 export const prerender = false;
@@ -22,8 +22,14 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 			return redirect("/admin/languages?importError=" + encodeURIComponent("Choose a JSON file to import."));
 		}
 
+		const importLocale = typeof formData.get("locale") === "string" ? String(formData.get("locale")).trim().toLowerCase() : "";
+		const languageName = typeof formData.get("languageName") === "string" ? String(formData.get("languageName")).trim() : "";
 		const payload = JSON.parse(await file.text());
-		const result = await importTranslationExportPayload(getDb(locals), payload);
+		const inferredLocale = importLocale || inferLocaleFromFilename(file.name);
+		const result =
+			inferredLocale && isLocaleJsonPayload(payload)
+				? await importLocaleTranslationFile(getDb(locals), inferredLocale, payload, languageName || undefined)
+				: await importTranslationExportPayload(getDb(locals), payload);
 		return redirect(
 			`/admin/languages?imported=1&languagesUpdated=${encodeURIComponent(String(result.languagesUpdated))}&translationsUpdated=${encodeURIComponent(String(result.translationsUpdated))}`,
 		);
@@ -32,3 +38,16 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		return redirect("/admin/languages?importError=" + encodeURIComponent(message));
 	}
 };
+
+function inferLocaleFromFilename(filename: string): string {
+	const match = filename.trim().toLowerCase().match(/^([a-z]{2}(?:-[a-z]{2})?)\.(json|sql)$/i);
+	return match?.[1] ?? "";
+}
+
+function isLocaleJsonPayload(payload: unknown): boolean {
+	if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+		return false;
+	}
+
+	return !("translations" in (payload as Record<string, unknown>)) && !("languages" in (payload as Record<string, unknown>));
+}

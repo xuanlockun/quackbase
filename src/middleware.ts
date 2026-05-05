@@ -10,6 +10,7 @@ import {
 import type { LanguageCatalogState } from "./lib/languages";
 import { readUiLanguagePreference, resolveUiLanguage, writeUiLanguagePreference } from "./lib/i18n";
 import { loadLocalizationPayload } from "./lib/localization";
+import { ensureDefaultEnglishTranslations } from "./lib/translations";
 import {
 	getDefaultAdminPath,
 	getRequiredAdminPagePermissions,
@@ -115,6 +116,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	context.locals.uiLanguage = uiLanguage;
 	try {
 		const db = getDb(context.locals);
+		await ensureDefaultEnglishTranslations(db);
 		context.locals.localizationPayload = await loadLocalizationPayload(db, uiLanguage);
 	} catch {
 		context.locals.localizationPayload = undefined;
