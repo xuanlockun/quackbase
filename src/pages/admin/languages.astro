@@ -82,7 +82,7 @@ const languageFeedback = [
 				<div class="d-flex flex-wrap gap-2 align-items-end">
 					<label class="d-grid gap-1">
 						<span class="small text-muted">{t("labels.language", "Language")}</span>
-						<select class="form-select" name="locale" form="language-json-import-form" data-language-json-locale>
+						<select class="form-select" data-language-json-locale>
 							{
 								languages.map((language) => (
 									<option value={language.code} selected={language.code === selectedLocale}>

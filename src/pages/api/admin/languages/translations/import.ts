@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ locals, request, redirect }) => {
 		const importLocale = typeof formData.get("locale") === "string" ? String(formData.get("locale")).trim().toLowerCase() : "";
 		const languageName = typeof formData.get("languageName") === "string" ? String(formData.get("languageName")).trim() : "";
 		const payload = JSON.parse(await file.text());
-		const inferredLocale = importLocale || inferLocaleFromFilename(file.name);
+		const inferredLocale = inferLocaleFromFilename(file.name) || importLocale;
 		const result =
 			inferredLocale && isLocaleJsonPayload(payload)
 				? await importLocaleTranslationFile(getDb(locals), inferredLocale, payload, languageName || undefined)
