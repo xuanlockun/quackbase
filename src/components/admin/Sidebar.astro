@@ -11,6 +11,18 @@ const { session } = Astro.props;
 const pathname = Astro.url.pathname;
 const links = getVisibleAdminNavItems(session);
 const { t, localizeAdminHref } = getUiTranslations(Astro);
+const adminBrandName = "Quackbase";
+const adminBrandDuckIcon = `
+	<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<path d="M11 34H30C37.18 34 43 39.82 43 47C43 54.18 37.18 60 30 60H20.8C10.97 60 3 52.03 3 42.2V42C3 37.58 6.58 34 11 34Z" fill="white"/>
+		<path d="M28.5 8C38.72 8 47 16.28 47 26.5C47 30.83 45.51 34.81 43.01 37.96C48.44 41.6 52 47.79 52 54.8V60H42V54.8C42 49.05 37.35 44.4 31.6 44.4H30.5C29.67 44.4 29 43.73 29 42.9V34.57C29 33.93 29.41 33.36 30.01 33.16C35.87 31.22 40.1 25.69 40.1 19.2C40.1 18.8 40.08 18.4 40.05 18H28.5C22.98 18 18.5 13.52 18.5 8H28.5Z" fill="white"/>
+		<path d="M44.4 23.2L56.1 26.4C59.1 27.22 59.1 31.48 56.1 32.3L44.4 35.5C43.12 35.85 41.85 34.88 41.85 33.55V25.15C41.85 23.82 43.12 22.85 44.4 23.2Z" fill="#FF6A00"/>
+		<path d="M14.2 44.8C17.8 48 23.4 49.8 30.2 49.1" stroke="#FF6A00" stroke-width="3.6" stroke-linecap="round"/>
+		<circle cx="33.3" cy="21.7" r="2.8" fill="#0B0B0B"/>
+		<path d="M11 34H30C37.18 34 43 39.82 43 47C43 54.18 37.18 60 30 60H20.8C10.97 60 3 52.03 3 42.2V42C3 37.58 6.58 34 11 34Z" stroke="#0B0B0B" stroke-width="4.4" stroke-linejoin="round"/>
+		<path d="M28.5 8C38.72 8 47 16.28 47 26.5C47 30.83 45.51 34.81 43.01 37.96C48.44 41.6 52 47.79 52 54.8V60H42V54.8C42 49.05 37.35 44.4 31.6 44.4H30.5C29.67 44.4 29 43.73 29 42.9V34.57C29 33.93 29.41 33.36 30.01 33.16C35.87 31.22 40.1 25.69 40.1 19.2C40.1 18.8 40.08 18.4 40.05 18H28.5C22.98 18 18.5 13.52 18.5 8H28.5Z" stroke="#0B0B0B" stroke-width="4.4" stroke-linejoin="round"/>
+	</svg>
+`;
 
 const navIconMap: Record<string, string> = {
 	"nav.posts": `
@@ -146,13 +158,10 @@ function isActiveLink(href: string, currentPath: string): boolean {
 <nav aria-label="Admin navigation" class="admin-sidebar-nav d-flex flex-column h-100">
 	<header class="admin-sidebar-header">
 		<a href={localizeAdminHref("/admin")} class="admin-sidebar-brand text-decoration-none">
-			<span class="admin-sidebar-mark" aria-hidden="true">
-				<span class="admin-sidebar-mark-sun"></span>
-				<span class="admin-sidebar-mark-cloud admin-sidebar-mark-cloud--large"></span>
-				<span class="admin-sidebar-mark-cloud admin-sidebar-mark-cloud--small"></span>
+			<span class="admin-sidebar-mark admin-sidebar-mark--duck" aria-hidden="true" set:html={adminBrandDuckIcon}>
 			</span>
 			<div class="admin-sidebar-brand-copy">
-				<p class="mb-0 fw-semibold text-white">{t("app.brand")}</p>
+				<p class="mb-0 fw-semibold text-white">{adminBrandName}</p>
 				<small class="text-uppercase letter-spacing-wide">Admin</small>
 			</div>
 		</a>
@@ -185,7 +194,7 @@ function isActiveLink(href: string, currentPath: string): boolean {
 		}
 	</div>
 	<footer class="admin-sidebar-footer">
-		<p class="mb-0 small text-uppercase letter-spacing-wide">{t("app.brand")}</p>
+		<p class="mb-0 small text-uppercase letter-spacing-wide">{adminBrandName}</p>
 		<small class="text-muted">Admin navigation</small>
 	</footer>
 </nav>

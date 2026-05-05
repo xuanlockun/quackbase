@@ -1,4 +1,4 @@
-# Edge CMS
+# Quackbase
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![Astro](https://img.shields.io/badge/Astro-5-black.svg)](https://astro.build/)
