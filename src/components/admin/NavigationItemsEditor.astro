@@ -1038,6 +1038,17 @@ const navActionIcons = {
 		return document.querySelector(`[data-nav-field-bank][data-nav-owner="${rowId}"]`);
 	};
 
+	const getRowForFieldBank = (fieldBank) => {
+		if (!(fieldBank instanceof HTMLElement) || !(rowsContainer instanceof HTMLElement)) {
+			return null;
+		}
+		const rowId = fieldBank.dataset.navOwner?.trim();
+		if (!rowId) {
+			return null;
+		}
+		return rowsContainer.querySelector(`[data-nav-row][data-row-id="${rowId}"]`);
+	};
+
 	const getNavRows = () => Array.from(rowsContainer?.querySelectorAll("[data-nav-row]") ?? []);
 	const getVisibleNavRows = () => getNavRows().filter((row) => !row.hidden);
 	const getRowDepth = (row) => clampDepth(Number(row.dataset.depth ?? "0"));
@@ -1314,7 +1325,9 @@ const navActionIcons = {
 
 		const bank = getFieldBankForRow(selectedRow);
 		if (bank instanceof HTMLElement && inspectorFields instanceof HTMLElement) {
-			inspectorFields.replaceChildren(bank);
+			if (bank.parentElement !== inspectorFields) {
+				inspectorFields.replaceChildren(bank);
+			}
 		}
 
 		if (inspectorBody instanceof HTMLElement) {
@@ -1614,6 +1627,22 @@ const navActionIcons = {
 		return reference;
 	};
 
+	const findInsertPositionForSibling = (row) => {
+		if (!(row instanceof HTMLElement)) {
+			return null;
+		}
+		let reference = row;
+		const rowDepth = getRowDepth(row);
+		while (reference.nextElementSibling instanceof HTMLElement) {
+			const nextDepth = getRowDepth(reference.nextElementSibling);
+			if (nextDepth <= rowDepth) {
+				break;
+			}
+			reference = reference.nextElementSibling;
+		}
+		return reference;
+	};
+
 	const changeDepth = (row, delta) => {
 		if (!(row instanceof HTMLElement)) {
 			return;
@@ -1631,6 +1660,23 @@ const navActionIcons = {
 		const newRow = createNavRow({ label: defaultNavLabel, href: "/" }, depth);
 		const insertAfter = findInsertPositionForChild(parentRow);
 		insertAfter.after(newRow);
+		selectRow(newRow, { focusInspector: true });
+		newRow.scrollIntoView({ block: "nearest" });
+		syncPayload();
+	};
+
+	const addSiblingRow = () => {
+		if (isReadOnly || !(rowsContainer instanceof HTMLElement)) {
+			return;
+		}
+		const referenceRow = selectedRow instanceof HTMLElement ? findInsertPositionForSibling(selectedRow) : null;
+		const depth = selectedRow instanceof HTMLElement ? getRowDepth(selectedRow) : 0;
+		const newRow = createNavRow({ label: defaultNavLabel, href: "/" }, depth);
+		if (referenceRow instanceof HTMLElement) {
+			referenceRow.after(newRow);
+		} else {
+			rowsContainer.append(newRow);
+		}
 		selectRow(newRow, { focusInspector: true });
 		newRow.scrollIntoView({ block: "nearest" });
 		syncPayload();
@@ -1668,6 +1714,18 @@ const navActionIcons = {
 
 	rowsContainer?.addEventListener("input", (event) => {
 		const row = event.target instanceof Element ? event.target.closest("[data-nav-row]") : null;
+		if (row instanceof HTMLElement) {
+			updateRowPreview(row);
+			if (selectedRow === row) {
+				updateSelectedRowUi();
+			}
+		}
+		syncPayload();
+	});
+
+	inspectorFields?.addEventListener("input", (event) => {
+		const fieldBank = event.target instanceof Element ? event.target.closest("[data-nav-field-bank]") : null;
+		const row = getRowForFieldBank(fieldBank);
 		if (row instanceof HTMLElement) {
 			updateRowPreview(row);
 			if (selectedRow === row) {
@@ -1736,7 +1794,7 @@ const navActionIcons = {
 
 	addRootButton?.addEventListener("click", (event) => {
 		event.preventDefault();
-		addRootRow();
+		addSiblingRow();
 	});
 
 	addEmptyButton?.addEventListener("click", (event) => {
@@ -1770,6 +1828,10 @@ const navActionIcons = {
 		if (selectedRow instanceof HTMLElement) {
 			removeRow(selectedRow);
 		}
+	});
+
+	payloadInput?.form?.addEventListener("submit", () => {
+		syncPayload();
 	});
 
 	updateEmptyState();
