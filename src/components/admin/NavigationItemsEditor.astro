@@ -176,18 +176,33 @@ const navActionIcons = {
 						<p class="mb-0">{t("messages.navigationTreeHelp", "Drag rows to reorder, collapse long branches, and select any item to edit it in the inspector.")}</p>
 					</div>
 					<div class="nav-tree-toolbar-actions">
-						<span class="nav-tree-drag-pill">
-							<span class="nav-tree-drag-pill-icon" aria-hidden="true" set:html={navActionIcons.drag}></span>
-							<span>{t("labels.dragToReorder", "Drag to reorder")}</span>
-						</span>
-						<button class="btn btn-outline-primary nav-builder-action" type="button" data-nav-add-child-global disabled={Boolean(loadError)}>
+						<button class="btn btn-primary nav-builder-action" type="button" data-nav-add disabled={Boolean(loadError)}>
+							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addRow}></span>
+							<span>{t("actions.addItem", "Add item")}</span>
+						</button>
+						<button class="btn btn-outline-secondary nav-builder-action" type="button" data-nav-add-child-global disabled={Boolean(loadError)}>
 							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addChild}></span>
 							<span>{t("actions.addChild", "Add item")}</span>
 						</button>
-						<button class="btn btn-primary nav-builder-action" type="button" data-nav-add disabled={Boolean(loadError)}>
-							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addRow}></span>
-							<span>{t("actions.addRow", "Add row")}</span>
+						<button class="btn btn-outline-danger nav-builder-action" type="button" data-nav-remove-selected disabled={Boolean(loadError)}>
+							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.remove}></span>
+							<span>{t("actions.remove", "Delete")}</span>
 						</button>
+						<details class="nav-toolbar-menu">
+							<summary class="btn btn-outline-secondary nav-builder-action">
+								<span>{t("actions.moreActions", "More actions")}</span>
+							</summary>
+							<div class="nav-toolbar-menu-panel">
+								<button class="btn btn-link nav-toolbar-menu-item" type="button" data-nav-indent-selected disabled={Boolean(loadError)}>
+									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.indent}></span>
+									<span>{t("actions.indent", "Indent")}</span>
+								</button>
+								<button class="btn btn-link nav-toolbar-menu-item" type="button" data-nav-outdent-selected disabled={Boolean(loadError)}>
+									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.outdent}></span>
+									<span>{t("actions.outdent", "Outdent")}</span>
+								</button>
+							</div>
+						</details>
 					</div>
 				</div>
 
@@ -197,7 +212,7 @@ const navActionIcons = {
 						<p class="mb-3 text-body-secondary small">{t("messages.navigationEmptyHelp", "Start by adding a root row, then nest child items underneath it.")}</p>
 						<button class="btn btn-primary" type="button" data-nav-empty-add disabled={Boolean(loadError)}>
 							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addRow}></span>
-							<span>{t("actions.addRow", "Add row")}</span>
+							<span>{t("actions.addItem", "Add item")}</span>
 						</button>
 					</div>
 
@@ -233,63 +248,11 @@ const navActionIcons = {
 										>
 											<span class="nav-tree-toggle-glyph" aria-hidden="true"></span>
 										</button>
-										<span class="nav-drag-handle" data-drag-handle aria-label={t("labels.dragToReorder", "Drag to reorder")} set:html={navActionIcons.drag}></span>
+										<span class="nav-drag-handle" data-drag-handle aria-label={t("labels.dragToReorder", "Drag to reorder")}></span>
 										<div class="nav-tree-summary">
-											<div class="nav-tree-summary-meta">
-												<span class="nav-tree-level-badge">{depth === 0 ? t("labels.root", "Root") : `${t("labels.level", "Level")} ${depth + 1}`}</span>
-												{hasChildren ? <span class="nav-tree-children-badge">{t("labels.parent", "Parent")}</span> : null}
-											</div>
 											<strong class="nav-tree-title" data-nav-preview-title>{resolveNavPreviewLabel(item.labelTranslations, item.label)}</strong>
 											<span class="nav-tree-path" data-nav-preview-path>{item.href}</span>
 										</div>
-									</div>
-
-									<div class="nav-tree-actions">
-										<button
-											class="btn btn-sm btn-outline-secondary nav-action"
-											type="button"
-											data-nav-edit
-											disabled={Boolean(loadError)}
-											aria-label={t("actions.edit", "Edit")}
-										>
-											<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.edit}></span>
-										</button>
-										<button
-											class="btn btn-sm btn-outline-secondary nav-action"
-											type="button"
-											data-nav-add-child
-											disabled={Boolean(loadError)}
-											aria-label={t("actions.addChild", "Add item")}
-										>
-											<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addChild}></span>
-										</button>
-										<button
-											class="btn btn-sm btn-outline-secondary nav-action"
-											type="button"
-											data-nav-indent
-											disabled={Boolean(loadError)}
-											aria-label={t("actions.indent", "Indent")}
-										>
-											<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.indent}></span>
-										</button>
-										<button
-											class="btn btn-sm btn-outline-secondary nav-action"
-											type="button"
-											data-nav-outdent
-											disabled={Boolean(loadError)}
-											aria-label={t("actions.outdent", "Outdent")}
-										>
-											<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.outdent}></span>
-										</button>
-										<button
-											class="btn btn-sm btn-outline-danger nav-action nav-action-danger"
-											type="button"
-											data-nav-remove
-											disabled={Boolean(loadError)}
-											aria-label={t("actions.remove", "Remove")}
-										>
-											<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.remove}></span>
-										</button>
 									</div>
 								</div>
 
@@ -363,24 +326,6 @@ const navActionIcons = {
 						<div class="nav-inspector-fields" data-nav-inspector-fields></div>
 					</div>
 
-					<div class="nav-inspector-actions">
-						<button class="btn btn-outline-primary nav-builder-action" type="button" data-nav-add-child-selected disabled={Boolean(loadError)}>
-							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addChild}></span>
-							<span>{t("actions.addChild", "Add item")}</span>
-						</button>
-						<button class="btn btn-outline-secondary nav-builder-action" type="button" data-nav-indent-selected disabled={Boolean(loadError)}>
-							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.indent}></span>
-							<span>{t("actions.indent", "Indent")}</span>
-						</button>
-						<button class="btn btn-outline-secondary nav-builder-action" type="button" data-nav-outdent-selected disabled={Boolean(loadError)}>
-							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.outdent}></span>
-							<span>{t("actions.outdent", "Outdent")}</span>
-						</button>
-						<button class="btn btn-outline-danger nav-builder-action" type="button" data-nav-remove-selected disabled={Boolean(loadError)}>
-							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.remove}></span>
-							<span>{t("actions.remove", "Remove")}</span>
-						</button>
-					</div>
 				</div>
 			</aside>
 		</div>
@@ -407,8 +352,7 @@ const navActionIcons = {
 	.nav-builder-header,
 	.nav-tree-toolbar,
 	.nav-builder-footer,
-	.nav-inspector-header,
-	.nav-inspector-actions {
+	.nav-inspector-header {
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
@@ -506,6 +450,53 @@ const navActionIcons = {
 		justify-content: flex-end;
 	}
 
+	.nav-toolbar-menu {
+		position: relative;
+	}
+
+	.nav-toolbar-menu > summary {
+		list-style: none;
+	}
+
+	.nav-toolbar-menu > summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.nav-toolbar-menu-panel {
+		position: absolute;
+		top: calc(100% + 0.45rem);
+		right: 0;
+		z-index: 3;
+		min-width: 12rem;
+		display: none;
+		gap: 0.2rem;
+		padding: 0.45rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 0.85rem;
+		background: #fff;
+		box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+	}
+
+	.nav-toolbar-menu[open] .nav-toolbar-menu-panel {
+		display: grid;
+	}
+
+	.nav-toolbar-menu-item {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		justify-content: flex-start;
+		padding: 0.7rem 0.8rem;
+		border-radius: 0.7rem;
+		color: #334155;
+		text-decoration: none;
+	}
+
+	.nav-toolbar-menu-item:hover {
+		background: rgba(59, 130, 246, 0.08);
+		color: #0f172a;
+	}
+
 	.nav-builder-action,
 	.nav-builder-save {
 		display: inline-flex;
@@ -517,11 +508,8 @@ const navActionIcons = {
 		font-weight: 600;
 	}
 
-	.nav-tree-drag-pill,
 	.nav-builder-footer-pill,
-	.nav-inspector-tag,
-	.nav-tree-level-badge,
-	.nav-tree-children-badge {
+	.nav-inspector-tag {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.45rem;
@@ -531,13 +519,11 @@ const navActionIcons = {
 		font-weight: 600;
 	}
 
-	.nav-tree-drag-pill,
 	.nav-builder-footer-pill {
 		background: rgba(59, 130, 246, 0.08);
 		color: #1d4ed8;
 	}
 
-	.nav-tree-drag-pill-icon,
 	.nav-action-icon,
 	.nav-inspector-empty-icon,
 	.nav-drag-handle {
@@ -547,12 +533,25 @@ const navActionIcons = {
 	}
 
 	.nav-action-icon svg,
-	.nav-tree-drag-pill-icon svg,
-	.nav-inspector-empty-icon svg,
-	.nav-drag-handle svg {
+	.nav-inspector-empty-icon svg {
 		display: block;
 		width: 1rem;
 		height: 1rem;
+	}
+
+	.nav-drag-handle::before {
+		content: "";
+		display: block;
+		width: 0.72rem;
+		height: 0.9rem;
+		background:
+			radial-gradient(circle, currentColor 1px, transparent 1.1px) 0 0 / 0.35rem 0.35rem,
+			radial-gradient(circle, currentColor 1px, transparent 1.1px) 0.35rem 0 / 0.35rem 0.35rem,
+			radial-gradient(circle, currentColor 1px, transparent 1.1px) 0 0.35rem / 0.35rem 0.35rem,
+			radial-gradient(circle, currentColor 1px, transparent 1.1px) 0.35rem 0.35rem / 0.35rem 0.35rem,
+			radial-gradient(circle, currentColor 1px, transparent 1.1px) 0 0.7rem / 0.35rem 0.35rem,
+			radial-gradient(circle, currentColor 1px, transparent 1.1px) 0.35rem 0.7rem / 0.35rem 0.35rem;
+		background-repeat: no-repeat;
 	}
 
 	.nav-tree-list {
@@ -604,15 +603,15 @@ const navActionIcons = {
 	.nav-tree-card {
 		position: relative;
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		gap: 0.85rem;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0.45rem;
 		align-items: center;
-		padding: 0.9rem 1rem;
-		border: 1px solid rgba(15, 23, 42, 0.08);
-		border-radius: 1rem;
-		background: rgba(255, 255, 255, 0.92);
-		box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
-		transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+		padding: 0.72rem 0.9rem;
+		border: 1px solid rgba(226, 232, 240, 0.95);
+		border-radius: 0.82rem;
+		background: rgba(255, 255, 255, 0.98);
+		box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+		transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 	}
 
 	.nav-tree-card::before {
@@ -632,9 +631,8 @@ const navActionIcons = {
 
 	.nav-tree-row:hover .nav-tree-card,
 	.nav-tree-row:focus-within .nav-tree-card {
-		transform: translateY(-1px);
-		border-color: rgba(59, 130, 246, 0.22);
-		box-shadow: 0 16px 34px rgba(59, 130, 246, 0.09);
+		border-color: rgba(191, 219, 254, 0.98);
+		box-shadow: 0 12px 24px rgba(59, 130, 246, 0.08);
 	}
 
 	.nav-tree-row[data-selected="true"] .nav-tree-card {
@@ -656,7 +654,7 @@ const navActionIcons = {
 	.nav-tree-main {
 		display: grid;
 		grid-template-columns: auto auto minmax(0, 1fr);
-		gap: 0.85rem;
+		gap: 0.65rem;
 		align-items: center;
 		min-width: 0;
 		border: 0;
@@ -675,11 +673,11 @@ const navActionIcons = {
 
 	.nav-tree-toggle,
 	.nav-action {
-		width: 2.15rem;
-		height: 2.15rem;
-		min-height: 2.15rem;
+		width: 1.6rem;
+		height: 1.6rem;
+		min-height: 1.6rem;
 		padding: 0;
-		border-radius: 0.75rem;
+		border-radius: 0.45rem;
 	}
 
 	.nav-tree-toggle {
@@ -702,42 +700,30 @@ const navActionIcons = {
 	}
 
 	.nav-drag-handle {
-		width: 2.15rem;
-		height: 2.15rem;
-		border-radius: 0.75rem;
-		border: 1px dashed rgba(148, 163, 184, 0.55);
-		background: rgba(248, 250, 252, 0.9);
-		color: #64748b;
+		width: 0.9rem;
+		height: 1rem;
+		border-radius: 0;
+		border: 0;
+		background: transparent;
+		color: #94a3b8;
 		cursor: grab;
 	}
 
 	.nav-tree-summary {
 		min-width: 0;
 		display: grid;
-		gap: 0.35rem;
+		gap: 0.12rem;
 	}
 
-	.nav-tree-summary-meta {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.45rem;
-	}
-
-	.nav-tree-level-badge,
 	.nav-inspector-tag {
 		background: rgba(15, 23, 42, 0.05);
 		color: #334155;
 	}
 
-	.nav-tree-children-badge {
-		background: rgba(59, 130, 246, 0.08);
-		color: #1d4ed8;
-	}
-
 	.nav-tree-title {
-		font-size: 0.98rem;
+		font-size: 0.95rem;
 		line-height: 1.3;
-		font-weight: 700;
+		font-weight: 600;
 		color: #0f172a;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -745,22 +731,11 @@ const navActionIcons = {
 	}
 
 	.nav-tree-path {
-		font-size: 0.84rem;
+		font-size: 0.78rem;
 		color: #64748b;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-
-	.nav-tree-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.45rem;
-		justify-content: flex-end;
-	}
-
-	.nav-action-danger {
-		color: #dc2626;
 	}
 
 	.nav-tree-field-bank-host[hidden] {
@@ -867,8 +842,7 @@ const navActionIcons = {
 		.nav-builder-header,
 		.nav-tree-toolbar,
 		.nav-builder-footer,
-		.nav-inspector-header,
-		.nav-inspector-actions {
+		.nav-inspector-header {
 			align-items: stretch;
 		}
 
@@ -881,7 +855,6 @@ const navActionIcons = {
 			align-items: start;
 		}
 
-		.nav-tree-actions,
 		.nav-tree-toolbar-actions,
 		.nav-builder-footer-actions {
 			justify-content: flex-start;
@@ -928,7 +901,6 @@ const navActionIcons = {
 	const addRootButton = editor?.querySelector("[data-nav-add]");
 	const addEmptyButton = editor?.querySelector("[data-nav-empty-add]");
 	const addChildGlobalButton = editor?.querySelector("[data-nav-add-child-global]");
-	const addChildSelectedButton = editor?.querySelector("[data-nav-add-child-selected]");
 	const indentSelectedButton = editor?.querySelector("[data-nav-indent-selected]");
 	const outdentSelectedButton = editor?.querySelector("[data-nav-outdent-selected]");
 	const removeSelectedButton = editor?.querySelector("[data-nav-remove-selected]");
@@ -945,7 +917,6 @@ const navActionIcons = {
 	const totalCount = document.querySelector("[data-nav-total-count]");
 	const removeLabel = editor?.dataset.removeLabel ?? "Remove";
 	const addChildLabel = editor?.dataset.addChildLabel ?? "Add item";
-	const addRowLabel = editor?.dataset.addRowLabel ?? "Add row";
 	const indentLabel = editor?.dataset.indentLabel ?? "Indent";
 	const outdentLabel = editor?.dataset.outdentLabel ?? "Outdent";
 	const dragLabel = editor?.dataset.dragLabel ?? "Drag to reorder";
@@ -955,10 +926,9 @@ const navActionIcons = {
 	const noSelectionCopy = editor?.dataset.noSelectionCopy ?? "Choose a row from the tree to edit its label and path here.";
 	const inspectorDefaultTitle = editor?.dataset.inspectorTitle ?? "Selected item";
 	const inspectorDefaultCopy = editor?.dataset.inspectorCopy ?? "Keep the tree on the left for structure and use this panel for editing the selected item.";
-	const rootLabel = editor?.dataset.rootLabel ?? "Root";
-	const levelLabel = editor?.dataset.levelLabel ?? "Level";
 	const parentRoleLabel = editor?.dataset.parentRoleLabel ?? "Parent";
 	const itemRoleLabel = editor?.dataset.itemRoleLabel ?? "Item";
+	const levelLabel = editor?.dataset.levelLabel ?? "Level";
 	const rootLevelLabel = editor?.dataset.rootLevelLabel ?? "Root level";
 	const isReadOnly = editor?.dataset.disabled === "true";
 	const maxNavDepth = Number(editor?.dataset.maxDepth ?? "4");
@@ -1149,15 +1119,6 @@ const navActionIcons = {
 			row.dataset.hasChildren = hasChildren ? "true" : "false";
 			updateRowToggle(row);
 
-			const levelBadge = row.querySelector(".nav-tree-level-badge");
-			const childBadge = row.querySelector(".nav-tree-children-badge");
-			if (levelBadge instanceof HTMLElement) {
-				levelBadge.textContent = depth === 0 ? rootLabel : `${levelLabel} ${depth + 1}`;
-			}
-			if (childBadge instanceof HTMLElement) {
-				childBadge.hidden = !hasChildren;
-			}
-
 			const isCollapsed = hasChildren && row.dataset.collapsed === "true";
 			collapseStack[depth] = isCollapsed;
 		}
@@ -1276,9 +1237,6 @@ const navActionIcons = {
 		const disableSelectionActions = isReadOnly || !hasSelection;
 		if (addChildGlobalButton instanceof HTMLButtonElement) {
 			addChildGlobalButton.disabled = disableSelectionActions;
-		}
-		if (addChildSelectedButton instanceof HTMLButtonElement) {
-			addChildSelectedButton.disabled = disableSelectionActions;
 		}
 		if (indentSelectedButton instanceof HTMLButtonElement) {
 			indentSelectedButton.disabled = disableSelectionActions;
@@ -1544,20 +1502,9 @@ const navActionIcons = {
 		dragHandle.className = "nav-drag-handle";
 		dragHandle.dataset.dragHandle = "";
 		dragHandle.setAttribute("aria-label", dragLabel);
-		dragHandle.innerHTML = navActionIcons.drag;
 
 		const summary = document.createElement("div");
 		summary.className = "nav-tree-summary";
-		const summaryMeta = document.createElement("div");
-		summaryMeta.className = "nav-tree-summary-meta";
-		const levelBadge = document.createElement("span");
-		levelBadge.className = "nav-tree-level-badge";
-		levelBadge.textContent = depth === 0 ? rootLabel : `${levelLabel} ${depth + 1}`;
-		const childBadge = document.createElement("span");
-		childBadge.className = "nav-tree-children-badge";
-		childBadge.hidden = true;
-		childBadge.textContent = parentRoleLabel;
-		summaryMeta.append(levelBadge, childBadge);
 		const title = document.createElement("strong");
 		title.className = "nav-tree-title";
 		title.dataset.navPreviewTitle = "";
@@ -1566,35 +1513,10 @@ const navActionIcons = {
 		path.className = "nav-tree-path";
 		path.dataset.navPreviewPath = "";
 		path.textContent = entry.href ?? "/";
-		summary.append(summaryMeta, title, path);
+		summary.append(title, path);
 		main.append(toggleButton, dragHandle, summary);
 
-		const actions = document.createElement("div");
-		actions.className = "nav-tree-actions";
-		const buttonConfigs = [
-			["navEdit", navActionIcons.edit, "Edit"],
-			["navAddChild", navActionIcons.addChild, addChildLabel],
-			["navIndent", navActionIcons.indent, indentLabel],
-			["navOutdent", navActionIcons.outdent, outdentLabel],
-			["navRemove", navActionIcons.remove, removeLabel],
-		];
-
-		for (const [datasetKey, iconMarkup, label] of buttonConfigs) {
-			const button = document.createElement("button");
-			button.type = "button";
-			button.className = datasetKey === "navRemove"
-				? "btn btn-sm btn-outline-danger nav-action nav-action-danger"
-				: "btn btn-sm btn-outline-secondary nav-action";
-			button.dataset[datasetKey] = "";
-			button.setAttribute("aria-label", label);
-			button.innerHTML = `<span class="nav-action-icon" aria-hidden="true">${iconMarkup}</span>`;
-			if (isReadOnly) {
-				button.disabled = true;
-			}
-			actions.append(button);
-		}
-
-		card.append(main, actions);
+		card.append(main);
 		row.append(card);
 
 		const fieldHost = document.createElement("div");
@@ -1702,28 +1624,6 @@ const navActionIcons = {
 			refreshTreeState();
 			return;
 		}
-		if (actionButton?.matches("[data-nav-edit]")) {
-			selectRow(row, { focusInspector: true });
-			return;
-		}
-		if (actionButton?.matches("[data-nav-add-child]")) {
-			selectRow(row);
-			addChildRow(row);
-			return;
-		}
-		if (actionButton?.matches("[data-nav-indent]")) {
-			changeDepth(row, 1);
-			return;
-		}
-		if (actionButton?.matches("[data-nav-outdent]")) {
-			changeDepth(row, -1);
-			return;
-		}
-		if (actionButton?.matches("[data-nav-remove]")) {
-			removeRow(row);
-			return;
-		}
-
 		if (target.closest("[data-nav-select]")) {
 			selectRow(row);
 		}
@@ -1776,13 +1676,6 @@ const navActionIcons = {
 	});
 
 	addChildGlobalButton?.addEventListener("click", (event) => {
-		event.preventDefault();
-		if (selectedRow instanceof HTMLElement) {
-			addChildRow(selectedRow);
-		}
-	});
-
-	addChildSelectedButton?.addEventListener("click", (event) => {
 		event.preventDefault();
 		if (selectedRow instanceof HTMLElement) {
 			addChildRow(selectedRow);
