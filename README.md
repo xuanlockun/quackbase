@@ -1,3 +1,8 @@
+<p>
+  <a href="./README.md"><img src="https://img.shields.io/badge/Language-English-0f172a?style=for-the-badge" alt="English README"></a>
+  <a href="./README.vi.md"><img src="https://img.shields.io/badge/Ngon_ngu-Tieng_Viet-dc2626?style=for-the-badge" alt="Vietnamese README"></a>
+</p>
+
 <h1 style="display: flex; align-items: center; gap: 10px;">
   <img src="docs/quackbase.png" alt="V1t" height="40">
   <span>Quackbase</span>
