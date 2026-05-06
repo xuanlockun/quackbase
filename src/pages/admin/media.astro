@@ -1272,8 +1272,8 @@ const mediaActionCopy = {
 <style>
 	.media-library-layout {
 		display: grid;
-		grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
-		gap: 1rem;
+		grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+		gap: 1.1rem;
 		align-items: start;
 	}
 
@@ -1288,6 +1288,14 @@ const mediaActionCopy = {
 		display: grid;
 		grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.95fr);
 		gap: 1rem;
+		align-items: stretch;
+	}
+
+	.media-library-header,
+	.media-content-panel,
+	.media-folder-panel,
+	.media-action-card {
+		box-shadow: 0 16px 32px rgba(15, 23, 42, 0.05);
 	}
 
 	.media-library-status-icon {
@@ -1343,6 +1351,7 @@ const mediaActionCopy = {
 		display: grid;
 		gap: 1rem;
 		min-width: 0;
+		height: 100%;
 	}
 
 	.media-action-card-primary {
@@ -1362,6 +1371,7 @@ const mediaActionCopy = {
 	.media-action-stack {
 		display: grid;
 		gap: 0.85rem;
+		align-content: start;
 	}
 
 	.media-action-form-upload {
@@ -1463,6 +1473,8 @@ const mediaActionCopy = {
 	.media-folder-panel {
 		position: sticky;
 		top: 1rem;
+		max-height: calc(100vh - 2rem);
+		overflow: auto;
 	}
 
 	.media-folder-list {
@@ -1564,6 +1576,11 @@ const mediaActionCopy = {
 		border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 	}
 
+	.media-content-panel {
+		display: grid;
+		gap: 0.95rem;
+	}
+
 	.media-selection-bar {
 		display: flex;
 		align-items: center;
@@ -1612,8 +1629,8 @@ const mediaActionCopy = {
 
 	.media-file-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-		gap: 0.75rem;
+		grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+		gap: 0.9rem;
 	}
 
 	.media-folder-card,
@@ -1700,6 +1717,13 @@ const mediaActionCopy = {
 		border: 1px solid rgba(var(--gray), 0.14);
 		border-radius: 0.85rem;
 		background: #fff;
+		transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+	}
+
+	.media-card:hover {
+		border-color: rgba(15, 23, 42, 0.14);
+		box-shadow: 0 16px 28px rgba(15, 23, 42, 0.08);
+		transform: translateY(-1px);
 	}
 
 	.media-card-select {
@@ -1840,6 +1864,8 @@ const mediaActionCopy = {
 		.media-folder-panel {
 			position: static;
 			top: auto;
+			max-height: none;
+			overflow: visible;
 		}
 
 		.media-library-summary {
