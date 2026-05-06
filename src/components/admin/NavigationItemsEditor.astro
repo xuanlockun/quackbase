@@ -1,4 +1,4 @@
-﻿---
+---
 import type { SiteNavItem } from "../../lib/blog";
 import { getLanguageCatalog, getSupportedLanguages, getUiTranslations, type LocalizedText } from "../../lib/i18n";
 
@@ -13,6 +13,9 @@ const catalog = getLanguageCatalog(Astro.locals);
 const languages = getSupportedLanguages(catalog);
 const defaultLanguageCode = catalog.defaultLanguageCode;
 const languagesJson = JSON.stringify(languages);
+const maxNavDepth = 4;
+const guideSlots = Array.from({ length: maxNavDepth }, (_, index) => index);
+
 const resolveNavPreviewLabel = (translations?: LocalizedText, fallback = "") => {
 	if (!translations) {
 		return fallback;
@@ -93,18 +96,35 @@ const navActionIcons = {
 			<path d="M5 12h14" />
 		</svg>
 	`,
+	drag: `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M9 5h.01" />
+			<path d="M9 12h.01" />
+			<path d="M9 19h.01" />
+			<path d="M15 5h.01" />
+			<path d="M15 12h.01" />
+			<path d="M15 19h.01" />
+		</svg>
+	`,
 };
 ---
 
-<div class="admin-form-section nav-tree-editor">
-	<div class="nav-tree-editor-header">
-		<div>
-			<h2 class="h5 mb-1">{t("labels.navigationItems")}</h2>
-			<p class="admin-inline-muted mb-0">{t("messages.pageNavigationHubHelp")}</p>
+<div class="admin-form-section nav-builder">
+	<div class="nav-builder-header">
+		<div class="nav-builder-heading">
+			<div class="nav-builder-kicker">{t("labels.navigationItems", "Navigation items")}</div>
+			<h2 class="h4 mb-1">{t("messages.pageNavigationHub", "Page navigation")}</h2>
+			<p class="admin-inline-muted mb-0">{t("messages.pageNavigationHubHelp", "Arrange your navigation structure, select an item to edit it, and drag rows to reorder.")}</p>
 		</div>
-		<div class="nav-tree-editor-meta">
-			<span class="admin-quiet-badge">{rootItemCount} root</span>
-			<span class="admin-quiet-badge">{totalItemCount} total</span>
+		<div class="nav-builder-stats" aria-label={t("labels.navigationItems", "Navigation items")}>
+			<span class="nav-builder-stat">
+				<strong data-nav-root-count>{rootItemCount}</strong>
+				<span>{t("labels.rootItems", "Root items")}</span>
+			</span>
+			<span class="nav-builder-stat">
+				<strong data-nav-total-count>{totalItemCount}</strong>
+				<span>{t("labels.totalItems", "Total items")}</span>
+			</span>
 		</div>
 	</div>
 
@@ -117,598 +137,786 @@ const navActionIcons = {
 	/>
 
 	<div
-		class="nav-tree-editor-surface"
+		class="nav-builder-surface"
 		data-nav-items-editor
 		data-languages={languagesJson}
 		data-default-language={defaultLanguageCode}
 		data-disabled={Boolean(loadError)}
-		data-remove-label={t("actions.remove")}
-		data-add-child-label={t("actions.addChild")}
-		data-indent-label={t("actions.indent")}
-		data-outdent-label={t("actions.outdent")}
-		data-parent-label={t("labels.parent")}
-		data-child-label={t("labels.child")}
-		data-label-label={t("labels.label")}
-		data-link-label={t("labels.link")}
-		data-drag-label={t("labels.dragToReorder")}
+		data-max-depth={maxNavDepth}
+		data-remove-label={t("actions.remove", "Remove")}
+		data-add-child-label={t("actions.addChild", "Add item")}
+		data-add-row-label={t("actions.addRow", "Add row")}
+		data-indent-label={t("actions.indent", "Indent")}
+		data-outdent-label={t("actions.outdent", "Outdent")}
+		data-parent-label={t("labels.parent", "Parent")}
+		data-child-label={t("labels.child", "Child")}
+		data-label-label={t("labels.label", "Label")}
+		data-link-label={t("labels.link", "Link")}
+		data-drag-label={t("labels.dragToReorder", "Drag to reorder")}
 		data-collapse-label={t("actions.collapse", "Collapse")}
 		data-expand-label={t("actions.expand", "Expand")}
 		data-edit-label={t("actions.edit", "Edit")}
-		data-example-label={t("nav.home")}
+		data-example-label={t("nav.home", "Home")}
+		data-no-selection-title={t("messages.selectNavigationItemTitle", "Select a navigation item")}
+		data-no-selection-copy={t("messages.selectNavigationItemCopy", "Choose a row from the tree to edit its label and path here.")}
+		data-inspector-title={t("labels.selectedItem", "Selected item")}
+		data-inspector-copy={t("messages.navigationInspectorHelp", "Keep the tree on the left for structure and use this panel for editing the selected item.")}
+		data-root-label={t("labels.root", "Root")}
+		data-level-label={t("labels.level", "Level")}
+		data-parent-role-label={t("labels.parent", "Parent")}
+		data-item-role-label={t("labels.item", "Item")}
+		data-root-level-label={t("labels.rootLevel", "Root level")}
 	>
-		<div class="nav-tree-board">
-			<div class="nav-tree-board-head">
-				<div class="nav-tree-board-copy">
-					<span class="nav-tree-kicker">{t("labels.navigationItems")}</span>
-					<h3 class="h6 mb-1">{t("messages.pageNavigationHub")}</h3>
+		<div class="nav-builder-workspace">
+			<div class="nav-tree-shell">
+				<div class="nav-tree-toolbar">
+					<div class="nav-tree-toolbar-copy">
+						<span class="nav-tree-toolbar-kicker">{t("labels.navigationItems", "Navigation items")}</span>
+						<h3 class="h6 mb-1">{t("messages.navigationTree", "Navigation tree")}</h3>
+						<p class="mb-0">{t("messages.navigationTreeHelp", "Drag rows to reorder, collapse long branches, and select any item to edit it in the inspector.")}</p>
+					</div>
+					<div class="nav-tree-toolbar-actions">
+						<span class="nav-tree-drag-pill">
+							<span class="nav-tree-drag-pill-icon" aria-hidden="true" set:html={navActionIcons.drag}></span>
+							<span>{t("labels.dragToReorder", "Drag to reorder")}</span>
+						</span>
+						<button class="btn btn-outline-primary nav-builder-action" type="button" data-nav-add-child-global disabled={Boolean(loadError)}>
+							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addChild}></span>
+							<span>{t("actions.addChild", "Add item")}</span>
+						</button>
+						<button class="btn btn-primary nav-builder-action" type="button" data-nav-add disabled={Boolean(loadError)}>
+							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addRow}></span>
+							<span>{t("actions.addRow", "Add row")}</span>
+						</button>
+					</div>
 				</div>
-				<div class="nav-tree-board-hint">
-					<span class="admin-quiet-badge">
-						{t("labels.dragToReorder")}
-					</span>
-				</div>
-			</div>
 
-			<div class="nav-tree-list" data-nav-items-rows role="list">
-				<div class="nav-tree-empty admin-state-surface" data-nav-empty hidden={navRows.length > 0}>
-					<h3 class="h6 mb-2">{t("messages.noNavigationItemsConfigured")}</h3>
-				</div>
+				<div class="nav-tree-list" data-nav-items-rows role="list">
+					<div class="nav-tree-empty admin-state-surface" data-nav-empty hidden={navRows.length > 0}>
+						<h3 class="h6 mb-2">{t("messages.noNavigationItemsConfigured", "No navigation items configured")}</h3>
+						<p class="mb-3 text-body-secondary small">{t("messages.navigationEmptyHelp", "Start by adding a root row, then nest child items underneath it.")}</p>
+						<button class="btn btn-primary" type="button" data-nav-empty-add disabled={Boolean(loadError)}>
+							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addRow}></span>
+							<span>{t("actions.addRow", "Add row")}</span>
+						</button>
+					</div>
 
-				{
-					navEntries.map(({ item, depth, hasChildren }, index) => (
-						<article
-							class="nav-tree-row"
-							role="listitem"
-							data-nav-row
-							data-depth={depth}
-							data-has-children={hasChildren ? "true" : "false"}
-							style={`--nav-depth: ${depth}`}
-							draggable={!Boolean(loadError) ? "true" : "false"}
-							data-row-index={index}
-						>
-							<div class="nav-tree-rail" aria-hidden="true">
-								<span class="nav-drag-handle" data-drag-handle aria-label={t("labels.dragToReorder")}></span>
-								<span class="nav-tree-spine"></span>
-							</div>
+					{
+						navEntries.map(({ item, depth, hasChildren }, index) => (
+							<article
+								class="nav-tree-row"
+								role="listitem"
+								data-nav-row
+								data-depth={depth}
+								data-has-children={hasChildren ? "true" : "false"}
+								data-row-index={index}
+								style={`--nav-depth: ${depth}`}
+								draggable={!Boolean(loadError) ? "true" : "false"}
+							>
+								<div class="nav-tree-row-guides" aria-hidden="true">
+									{
+										guideSlots.map((slot) => (
+											<span class="nav-tree-guide" data-guide-index={slot}></span>
+										))
+									}
+								</div>
 
-							<div class="nav-tree-body">
-								<div class="nav-tree-summary">
-									<div class="nav-tree-summary-copy">
-										<div class="nav-tree-summary-line">
-											{hasChildren ? (
-								<button
-									class="btn btn-sm btn-outline-secondary nav-tree-toggle"
-									type="button"
-									data-nav-toggle
-									aria-expanded="true"
-									aria-label={t("labels.collapse", "Collapse")}
-								>
-									<span class="nav-tree-toggle-glyph" aria-hidden="true">
-										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M4 12h16" />
-											<path d="M4 7h4" />
-											<path d="M4 17h4" />
-										</svg>
-									</span>
-								</button>
-											) : null}
+								<div class="nav-tree-card">
+									<div class="nav-tree-main" data-nav-select tabindex="0" role="button" aria-pressed="false">
+										<button
+											class="btn btn-sm btn-outline-secondary nav-tree-toggle"
+											type="button"
+											data-nav-toggle
+											hidden={!hasChildren}
+											aria-expanded="true"
+											aria-label={t("actions.collapse", "Collapse")}
+										>
+											<span class="nav-tree-toggle-glyph" aria-hidden="true"></span>
+										</button>
+										<span class="nav-drag-handle" data-drag-handle aria-label={t("labels.dragToReorder", "Drag to reorder")} set:html={navActionIcons.drag}></span>
+										<div class="nav-tree-summary">
+											<div class="nav-tree-summary-meta">
+												<span class="nav-tree-level-badge">{depth === 0 ? t("labels.root", "Root") : `${t("labels.level", "Level")} ${depth + 1}`}</span>
+												{hasChildren ? <span class="nav-tree-children-badge">{t("labels.parent", "Parent")}</span> : null}
+											</div>
+											<strong class="nav-tree-title" data-nav-preview-title>{resolveNavPreviewLabel(item.labelTranslations, item.label)}</strong>
+											<span class="nav-tree-path" data-nav-preview-path>{item.href}</span>
 										</div>
-										<strong class="nav-tree-title" data-nav-preview-title>{resolveNavPreviewLabel(item.labelTranslations, item.label)}</strong>
-										<span class="nav-tree-path" data-nav-preview-path>{item.href}</span>
+									</div>
+
+									<div class="nav-tree-actions">
+										<button
+											class="btn btn-sm btn-outline-secondary nav-action"
+											type="button"
+											data-nav-edit
+											disabled={Boolean(loadError)}
+											aria-label={t("actions.edit", "Edit")}
+										>
+											<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.edit}></span>
+										</button>
+										<button
+											class="btn btn-sm btn-outline-secondary nav-action"
+											type="button"
+											data-nav-add-child
+											disabled={Boolean(loadError)}
+											aria-label={t("actions.addChild", "Add item")}
+										>
+											<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addChild}></span>
+										</button>
+										<button
+											class="btn btn-sm btn-outline-secondary nav-action"
+											type="button"
+											data-nav-indent
+											disabled={Boolean(loadError)}
+											aria-label={t("actions.indent", "Indent")}
+										>
+											<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.indent}></span>
+										</button>
+										<button
+											class="btn btn-sm btn-outline-secondary nav-action"
+											type="button"
+											data-nav-outdent
+											disabled={Boolean(loadError)}
+											aria-label={t("actions.outdent", "Outdent")}
+										>
+											<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.outdent}></span>
+										</button>
+										<button
+											class="btn btn-sm btn-outline-danger nav-action nav-action-danger"
+											type="button"
+											data-nav-remove
+											disabled={Boolean(loadError)}
+											aria-label={t("actions.remove", "Remove")}
+										>
+											<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.remove}></span>
+										</button>
 									</div>
 								</div>
 
-								<div class="nav-tree-fields">
-									{
-										languages.map((languageOption) => (
-											<label class="nav-tree-field">
-												<span class="nav-tree-field-label">
-													{t("labels.label")} ({languageOption.label})
-												</span>
-												<input
-													class="form-control form-control-sm"
-													type="text"
-													value={item.labelTranslations?.[languageOption.code] ?? ""}
-													placeholder={languageOption.label}
-													data-nav-label
-													data-language-code={languageOption.code}
-													disabled={Boolean(loadError)}
-												/>
-											</label>
-										))
-									}
+								<div class="nav-tree-field-bank-host" data-nav-field-host hidden>
+									<div class="nav-tree-fields" data-nav-field-bank>
+										{
+											languages.map((languageOption) => (
+												<label class="nav-tree-field">
+													<span class="nav-tree-field-label">
+														{t("labels.label", "Label")} ({languageOption.label})
+													</span>
+													<input
+														class="form-control"
+														type="text"
+														value={item.labelTranslations?.[languageOption.code] ?? ""}
+														placeholder={languageOption.label}
+														data-nav-label
+														data-language-code={languageOption.code}
+														disabled={Boolean(loadError)}
+													/>
+												</label>
+											))
+										}
 
-									<label class="nav-tree-field nav-tree-field-link">
-										<span class="nav-tree-field-label">{t("labels.link")}</span>
-										<input
-											class="form-control form-control-sm"
-											type="text"
-											value={item.href}
-											placeholder="/about or https://example.com"
-											data-nav-href
-											disabled={Boolean(loadError)}
-										/>
-									</label>
+										<label class="nav-tree-field nav-tree-field-link">
+											<span class="nav-tree-field-label">{t("labels.link", "Link")}</span>
+											<input
+												class="form-control"
+												type="text"
+												value={item.href}
+												placeholder="/about or https://example.com"
+												data-nav-href
+												disabled={Boolean(loadError)}
+											/>
+										</label>
+									</div>
 								</div>
-							</div>
+							</article>
+						))
+					}
+				</div>
+			</div>
 
-							<div class="nav-tree-actions">
-								<button
-									class="btn btn-sm btn-outline-secondary nav-action"
-									type="button"
-									data-nav-edit
-									disabled={Boolean(loadError)}
-									aria-label={t("actions.edit")}
-									aria-pressed="false"
-								>
-									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.edit}></span>
-									<span class="visually-hidden">{t("actions.edit")}</span>
-								</button>
-								<button
-									class="btn btn-sm btn-outline-secondary nav-action"
-									type="button"
-									data-nav-add-child
-									disabled={Boolean(loadError)}
-									aria-label={t("actions.addChild")}
-								>
-									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addChild}></span>
-									<span class="visually-hidden">{t("actions.addChild")}</span>
-								</button>
-								<button
-									class="btn btn-sm btn-outline-secondary nav-action"
-									type="button"
-									data-nav-indent
-									disabled={Boolean(loadError)}
-									aria-label={t("actions.indent")}
-								>
-									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.indent}></span>
-									<span class="visually-hidden">{t("actions.indent")}</span>
-								</button>
-								<button
-									class="btn btn-sm btn-outline-secondary nav-action"
-									type="button"
-									data-nav-outdent
-									disabled={Boolean(loadError)}
-									aria-label={t("actions.outdent")}
-								>
-									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.outdent}></span>
-									<span class="visually-hidden">{t("actions.outdent")}</span>
-								</button>
-								<button
-									class="btn btn-sm btn-outline-danger nav-item-remove"
-									type="button"
-									data-nav-remove
-									disabled={Boolean(loadError)}
-									aria-label={t("actions.remove")}
-								>
-									<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.remove}></span>
-									<span class="visually-hidden">{t("actions.remove")}</span>
-								</button>
+			<aside class="nav-inspector" data-nav-inspector>
+				<div class="nav-inspector-header">
+					<div>
+						<span class="nav-inspector-kicker">{t("labels.selectedItem", "Selected item")}</span>
+						<h3 class="h5 mb-1" data-nav-inspector-title>{t("messages.selectNavigationItemTitle", "Select a navigation item")}</h3>
+						<p class="mb-0 text-body-secondary small" data-nav-inspector-copy>{t("messages.selectNavigationItemCopy", "Choose a row from the tree to edit its label and path here.")}</p>
+					</div>
+					<div class="nav-inspector-tags">
+						<span class="nav-inspector-tag" data-nav-inspector-depth hidden></span>
+						<span class="nav-inspector-tag" data-nav-inspector-role hidden></span>
+					</div>
+				</div>
+
+				<div class="nav-inspector-empty" data-nav-inspector-empty>
+					<div class="nav-inspector-empty-icon" aria-hidden="true" set:html={navActionIcons.edit}></div>
+					<p class="mb-1 fw-semibold">{t("messages.selectNavigationItemTitle", "Select a navigation item")}</p>
+					<p class="mb-0 text-body-secondary small">{t("messages.selectNavigationItemCopy", "Choose a row from the tree to edit its label and path here.")}</p>
+				</div>
+
+				<div class="nav-inspector-body" data-nav-inspector-body hidden>
+					<div class="nav-inspector-card">
+						<div class="nav-inspector-card-head">
+							<div>
+								<p class="nav-inspector-card-label mb-1">{t("labels.itemSettings", "Item details")}</p>
+								<p class="mb-0 text-body-secondary small">{t("messages.navigationInspectorHelp", "Update the selected item while keeping the tree visible for context.")}</p>
 							</div>
-						</article>
-					))
-				}
+						</div>
+						<div class="nav-inspector-fields" data-nav-inspector-fields></div>
+					</div>
+
+					<div class="nav-inspector-actions">
+						<button class="btn btn-outline-primary nav-builder-action" type="button" data-nav-add-child-selected disabled={Boolean(loadError)}>
+							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addChild}></span>
+							<span>{t("actions.addChild", "Add item")}</span>
+						</button>
+						<button class="btn btn-outline-secondary nav-builder-action" type="button" data-nav-indent-selected disabled={Boolean(loadError)}>
+							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.indent}></span>
+							<span>{t("actions.indent", "Indent")}</span>
+						</button>
+						<button class="btn btn-outline-secondary nav-builder-action" type="button" data-nav-outdent-selected disabled={Boolean(loadError)}>
+							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.outdent}></span>
+							<span>{t("actions.outdent", "Outdent")}</span>
+						</button>
+						<button class="btn btn-outline-danger nav-builder-action" type="button" data-nav-remove-selected disabled={Boolean(loadError)}>
+							<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.remove}></span>
+							<span>{t("actions.remove", "Remove")}</span>
+						</button>
+					</div>
+				</div>
+			</aside>
+		</div>
+
+		<div class="nav-builder-footer">
+			<div class="nav-builder-footer-copy">
+				<span class="nav-builder-footer-pill">{t("labels.dragToReorder", "Drag to reorder")}</span>
+				<p class="mb-0">{t("messages.navigationFooterHelp", "Use indentation and drag-and-drop to organize deep menu hierarchies without losing context.")}</p>
+			</div>
+			<div class="nav-builder-footer-actions">
+				{loadError && <span class="text-danger small">{loadError}</span>}
+				<button class="btn btn-primary nav-builder-save" type="submit" disabled={Boolean(loadError)}>{t("actions.saveChanges", "Save changes")}</button>
 			</div>
 		</div>
-
-		<div class="nav-tree-footer">
-			<button class="btn btn-sm btn-outline-secondary nav-tree-add-row" type="button" data-nav-add disabled={Boolean(loadError)}>
-				<span class="nav-action-icon" aria-hidden="true" set:html={navActionIcons.addRow}></span>
-				<span>{t("actions.addRow")}</span>
-			</button>
-		</div>
-	</div>
-
-	<div class="admin-form-section">
-		<button class="btn btn-primary" type="submit" disabled={Boolean(loadError)}>{t("actions.saveChanges")}</button>
 	</div>
 </div>
 
 <style>
-	.nav-tree-editor {
+	.nav-builder {
 		display: grid;
-		gap: 0.7rem;
+		gap: 1.25rem;
 	}
 
-	.nav-tree-editor .btn,
-	.nav-tree-editor .badge,
-	.nav-tree-editor .form-control,
-	.nav-tree-editor .form-select {
-		box-shadow: none;
-	}
-
-	.nav-tree-editor .btn-sm {
-		min-height: 2rem;
-		padding: 0.22rem 0.5rem;
-		font-size: 0.75rem;
-		line-height: 1.05;
-	}
-
-	.nav-tree-editor .form-control,
-	.nav-tree-editor .form-select {
-		min-height: 2rem;
-		padding: 0.2rem 0.5rem;
-		font-size: 0.84rem;
-		line-height: 1.1;
-	}
-
-	.nav-tree-editor .badge {
-		border-radius: 0.25rem;
-		padding: 0.12rem 0.34rem;
-		font-size: 0.62rem;
-		line-height: 1;
-	}
-
-	.nav-tree-editor-header,
-	.nav-tree-board-head,
-	.nav-tree-footer {
+	.nav-builder-header,
+	.nav-tree-toolbar,
+	.nav-builder-footer,
+	.nav-inspector-header,
+	.nav-inspector-actions {
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.nav-builder-kicker,
+	.nav-tree-toolbar-kicker,
+	.nav-inspector-kicker,
+	.nav-inspector-card-label {
+		display: inline-flex;
+		align-items: center;
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: #667085;
+	}
+
+	.nav-builder-heading,
+	.nav-tree-toolbar-copy {
+		max-width: 44rem;
+	}
+
+	.nav-builder-stats {
+		display: inline-flex;
 		gap: 0.75rem;
 		flex-wrap: wrap;
 	}
 
-	.nav-tree-editor-meta {
-		display: inline-flex;
-		flex-wrap: wrap;
-		gap: 0.3rem;
+	.nav-builder-stat {
+		min-width: 7rem;
+		padding: 0.85rem 1rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 1rem;
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96));
+		box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+		display: grid;
+		gap: 0.2rem;
 	}
 
-	.nav-tree-editor-surface {
+	.nav-builder-stat strong {
+		font-size: 1.15rem;
+		font-weight: 700;
+		color: #0f172a;
+	}
+
+	.nav-builder-stat span:last-child {
+		font-size: 0.8rem;
+		color: #64748b;
+	}
+
+	.nav-builder-surface {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.nav-builder-workspace {
+		display: grid;
+		grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 0.95fr);
+		gap: 1rem;
+		align-items: start;
+	}
+
+	.nav-tree-shell,
+	.nav-inspector,
+	.nav-builder-footer {
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 1.25rem;
+		background:
+			linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98)),
+			linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(148, 163, 184, 0.03));
+		box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+	}
+
+	.nav-tree-shell {
+		display: grid;
+		gap: 1rem;
+		padding: 1.1rem;
+	}
+
+	.nav-tree-toolbar-copy p,
+	.nav-builder-footer-copy p {
+		font-size: 0.9rem;
+		color: #64748b;
+	}
+
+	.nav-tree-toolbar-actions,
+	.nav-builder-footer-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		align-items: center;
+		justify-content: flex-end;
+	}
+
+	.nav-builder-action,
+	.nav-builder-save {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.55rem;
+		border-radius: 0.9rem;
+		min-height: 2.75rem;
+		padding-inline: 1rem;
+		font-weight: 600;
+	}
+
+	.nav-tree-drag-pill,
+	.nav-builder-footer-pill,
+	.nav-inspector-tag,
+	.nav-tree-level-badge,
+	.nav-tree-children-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		border-radius: 999px;
+		padding: 0.4rem 0.75rem;
+		font-size: 0.76rem;
+		font-weight: 600;
+	}
+
+	.nav-tree-drag-pill,
+	.nav-builder-footer-pill {
+		background: rgba(59, 130, 246, 0.08);
+		color: #1d4ed8;
+	}
+
+	.nav-tree-drag-pill-icon,
+	.nav-action-icon,
+	.nav-inspector-empty-icon,
+	.nav-drag-handle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.nav-action-icon svg,
+	.nav-tree-drag-pill-icon svg,
+	.nav-inspector-empty-icon svg,
+	.nav-drag-handle svg {
+		display: block;
+		width: 1rem;
+		height: 1rem;
+	}
+
+	.nav-tree-list {
 		display: grid;
 		gap: 0.65rem;
 	}
 
-	.nav-tree-board {
-		display: grid;
-		gap: 0.3rem;
-		padding: 0.05rem 0;
-		border: 0;
-		border-radius: 0;
-		background: transparent;
-		box-shadow: none;
-	}
-
-	.nav-tree-kicker {
-		display: inline-flex;
-		align-items: center;
-		margin-bottom: 0.25rem;
-		font-size: 0.62rem;
-		font-weight: 800;
-		text-transform: uppercase;
-		letter-spacing: 0.13em;
-		color: rgba(15, 23, 42, 0.5);
-	}
-
-	.nav-tree-list {
-		--tree-step: 1rem;
-		display: grid;
-		gap: 0;
-		position: relative;
-		padding-left: 0;
-		border: 0;
-		background: transparent;
-	}
-
 	.nav-tree-empty {
-		border: 0;
-		background: transparent;
-		box-shadow: none;
-		border-radius: 0;
-		padding: 0.5rem 0.1rem;
+		padding: 1.25rem;
+		border-radius: 1rem;
+		border-style: dashed;
+		display: grid;
+		gap: 0.2rem;
+		justify-items: start;
 	}
 
 	.nav-tree-row {
-		--nav-indent: calc(var(--nav-depth, 0) * var(--tree-step));
-		--nav-row-padding-left: calc(0.1rem + var(--nav-indent));
+		--nav-indent: calc(var(--nav-depth, 0) * 1.45rem);
 		position: relative;
 		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) auto;
-		gap: 0.4rem;
-		align-items: center;
-		padding: 0.35rem 0.4rem 0.35rem var(--nav-row-padding-left);
-		border-radius: 0.75rem;
-		border: 0;
-		background: transparent;
-		box-shadow: none;
-		transition: background-color 0.15s ease;
-		margin-left: 0;
+		gap: 0.55rem;
+		padding-left: var(--nav-indent);
 	}
 
-	.nav-tree-row[data-depth="0"] {
-		margin-left: 0;
-	}
-
-	.nav-tree-row[data-editing="true"] {
-		background: rgba(15, 23, 42, 0.045);
-	}
-
-	.nav-tree-row:hover {
-		transform: none;
-		background: rgba(15, 23, 42, 0.03);
-	}
-
-	.nav-tree-row:focus-within {
-		background: rgba(15, 23, 42, 0.038);
-	}
-
-	.nav-tree-row[data-collapsed="true"] .nav-tree-toggle {
-		background: rgba(15, 23, 42, 0.03);
-		border-color: rgba(15, 23, 42, 0.12);
-	}
-
-	.nav-tree-row.is-dragging {
-		opacity: 0.7;
-		transform: none;
-	}
-
-	.nav-tree-rail {
+	.nav-tree-row[hidden] {
 		display: none;
 	}
 
-	.nav-tree-spine {
-		display: none;
+	.nav-tree-row-guides {
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: calc(var(--nav-indent) + 1rem);
+		pointer-events: none;
 	}
 
-	.nav-drag-handle {
-		width: 0.72rem;
-		height: 0.72rem;
-		cursor: grab;
-		border-radius: 0;
-		background:
-			radial-gradient(circle at center, rgba(15, 23, 42, 0.68) 0 1px, transparent 1.1px) center / 0.3rem 0.3rem,
-			radial-gradient(circle at center, rgba(15, 23, 42, 0.68) 0 1px, transparent 1.1px) 50% 0.25rem / 0.3rem 0.3rem,
-			radial-gradient(circle at center, rgba(15, 23, 42, 0.68) 0 1px, transparent 1.1px) 0.25rem 50% / 0.3rem 0.3rem,
-			radial-gradient(circle at center, rgba(15, 23, 42, 0.68) 0 1px, transparent 1.1px) 0.25rem calc(100% - 0.25rem) / 0.3rem 0.3rem;
-		background-repeat: no-repeat;
-		opacity: 0.72;
+	.nav-tree-guide {
+		position: absolute;
+		top: 0.15rem;
+		bottom: 0.15rem;
+		width: 1px;
+		background: linear-gradient(180deg, rgba(148, 163, 184, 0.2), rgba(148, 163, 184, 0.55), rgba(148, 163, 184, 0.2));
+		opacity: 0;
 	}
 
-	.nav-tree-body {
-		min-width: 0;
+	.nav-tree-guide[data-active="true"] {
+		opacity: 1;
+	}
+
+	.nav-tree-card {
+		position: relative;
 		display: grid;
-		gap: 0;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 0.85rem;
+		align-items: center;
+		padding: 0.9rem 1rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 1rem;
+		background: rgba(255, 255, 255, 0.92);
+		box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+		transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
 	}
 
-	.nav-tree-summary {
-		display: flex;
+	.nav-tree-card::before {
+		content: "";
+		position: absolute;
+		left: calc(-0.78rem - 1px);
+		top: 50%;
+		width: 0.78rem;
+		height: 1px;
+		background: rgba(148, 163, 184, 0.75);
+		opacity: var(--nav-depth, 0);
+	}
+
+	.nav-tree-row[data-depth="0"] .nav-tree-card::before {
+		opacity: 0;
+	}
+
+	.nav-tree-row:hover .nav-tree-card,
+	.nav-tree-row:focus-within .nav-tree-card {
+		transform: translateY(-1px);
+		border-color: rgba(59, 130, 246, 0.22);
+		box-shadow: 0 16px 34px rgba(59, 130, 246, 0.09);
+	}
+
+	.nav-tree-row[data-selected="true"] .nav-tree-card {
+		border-color: rgba(59, 130, 246, 0.55);
+		background: linear-gradient(180deg, rgba(239, 246, 255, 0.96), rgba(255, 255, 255, 0.95));
+		box-shadow: 0 18px 38px rgba(59, 130, 246, 0.14);
+	}
+
+	.nav-tree-row.is-dragging .nav-tree-card {
+		opacity: 0.82;
+		box-shadow: 0 20px 42px rgba(15, 23, 42, 0.14);
+	}
+
+	.nav-tree-row.is-drop-target .nav-tree-card {
+		border-color: rgba(59, 130, 246, 0.6);
+		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+	}
+
+	.nav-tree-main {
+		display: grid;
+		grid-template-columns: auto auto minmax(0, 1fr);
+		gap: 0.85rem;
 		align-items: center;
-		justify-content: space-between;
-		gap: 0.22rem;
 		min-width: 0;
-	}
-
-	.nav-tree-summary-copy {
-		min-width: 0;
-		display: flex;
-		align-items: center;
-		gap: 0.18rem;
-		flex-wrap: nowrap;
-		width: 100%;
-		overflow: hidden;
-	}
-
-	.nav-tree-summary-line {
-		display: flex;
-		flex-wrap: nowrap;
-		align-items: center;
-		gap: 0.16rem;
-		flex: 0 0 auto;
-		min-width: 0;
-	}
-
-	.nav-tree-leaf-pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.15rem;
+		border: 0;
 		padding: 0;
-		border-radius: 0;
-		font-size: 0.52rem;
-		font-weight: 600;
-		text-transform: none;
-		letter-spacing: 0.02em;
-		color: rgba(15, 23, 42, 0.42);
 		background: transparent;
+		color: inherit;
+		text-align: left;
+		cursor: pointer;
 	}
 
-	.nav-tree-row[data-depth="0"] .nav-tree-title {
-		font-size: 0.79rem;
-		font-weight: 650;
+	.nav-tree-main:focus-visible {
+		outline: 2px solid rgba(59, 130, 246, 0.45);
+		outline-offset: 4px;
+		border-radius: 0.9rem;
 	}
 
-	.nav-tree-row[data-editing="true"] .nav-tree-title,
-	.nav-tree-row[data-editing="true"] .nav-tree-path {
-		display: none;
+	.nav-tree-toggle,
+	.nav-action {
+		width: 2.15rem;
+		height: 2.15rem;
+		min-height: 2.15rem;
+		padding: 0;
+		border-radius: 0.75rem;
 	}
 
 	.nav-tree-toggle {
-		line-height: 1;
-		width: 1rem;
-		height: 1rem;
-		padding: 0;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		border-radius: 0.2rem;
-		background: transparent;
-		border-color: transparent;
-		color: rgba(15, 23, 42, 0.56);
 	}
 
 	.nav-tree-toggle-glyph {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 0.82rem;
-		font-weight: 700;
-		line-height: 1;
+		color: #475569;
 	}
 
-	.nav-tree-toggle-glyph svg,
-	.nav-tree-toggle > svg {
+	.nav-tree-toggle-glyph svg {
 		display: block;
 		width: 0.95rem;
 		height: 0.95rem;
-		flex: 0 0 auto;
+	}
+
+	.nav-drag-handle {
+		width: 2.15rem;
+		height: 2.15rem;
+		border-radius: 0.75rem;
+		border: 1px dashed rgba(148, 163, 184, 0.55);
+		background: rgba(248, 250, 252, 0.9);
+		color: #64748b;
+		cursor: grab;
+	}
+
+	.nav-tree-summary {
+		min-width: 0;
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.nav-tree-summary-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.45rem;
+	}
+
+	.nav-tree-level-badge,
+	.nav-inspector-tag {
+		background: rgba(15, 23, 42, 0.05);
+		color: #334155;
+	}
+
+	.nav-tree-children-badge {
+		background: rgba(59, 130, 246, 0.08);
+		color: #1d4ed8;
 	}
 
 	.nav-tree-title {
-		font-size: 0.78rem;
-		line-height: 1.2;
-		font-weight: 600;
-		min-width: 0;
+		font-size: 0.98rem;
+		line-height: 1.3;
+		font-weight: 700;
+		color: #0f172a;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		flex: 1 1 auto;
 	}
 
 	.nav-tree-path {
-		font-size: 0.62rem;
-		color: rgba(15, 23, 42, 0.36);
-		min-width: 0;
+		font-size: 0.84rem;
+		color: #64748b;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		flex: 0 1 auto;
 	}
 
-	.nav-tree-fields {
+	.nav-tree-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.45rem;
+		justify-content: flex-end;
+	}
+
+	.nav-action-danger {
+		color: #dc2626;
+	}
+
+	.nav-tree-field-bank-host[hidden] {
 		display: none;
-		grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
-		gap: 0.18rem;
-		padding-top: 0;
-		border-top: 0;
 	}
 
-	.nav-tree-row[data-editing="true"] .nav-tree-fields {
+	.nav-tree-fields,
+	.nav-inspector-fields {
 		display: grid;
+		grid-template-columns: 1fr;
+		gap: 0.95rem;
 	}
 
 	.nav-tree-field {
 		display: grid;
-		gap: 0.1rem;
-	}
-
-	.nav-tree-field-label {
-		font-size: 0.5rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.09em;
-		color: rgba(15, 23, 42, 0.38);
+		gap: 0.45rem;
 	}
 
 	.nav-tree-field-link {
 		grid-column: 1 / -1;
 	}
 
-	.nav-tree-actions {
+	.nav-tree-field-label {
+		font-size: 0.77rem;
+		font-weight: 700;
+		color: #475569;
+	}
+
+	.nav-inspector {
+		position: sticky;
+		top: 1rem;
+		display: grid;
+		gap: 1rem;
+		padding: 1.1rem;
+	}
+
+	.nav-inspector-header {
+		align-items: center;
+	}
+
+	.nav-inspector-tags {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: 0.45rem;
+	}
+
+	.nav-inspector-empty {
+		display: grid;
+		gap: 0.5rem;
+		place-items: center;
+		text-align: center;
+		padding: 2rem 1.25rem;
+		border: 1px dashed rgba(148, 163, 184, 0.45);
+		border-radius: 1rem;
+		background: rgba(248, 250, 252, 0.72);
+	}
+
+	.nav-inspector-empty-icon {
+		width: 3rem;
+		height: 3rem;
+		border-radius: 999px;
+		background: rgba(59, 130, 246, 0.08);
+		color: #2563eb;
+	}
+
+	.nav-inspector-body {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.nav-inspector-card {
+		display: grid;
+		gap: 1rem;
+		padding: 1rem;
+		border-radius: 1rem;
+		border: 1px solid rgba(15, 23, 42, 0.07);
+		background: rgba(255, 255, 255, 0.88);
+	}
+
+	.nav-builder-footer {
+		align-items: center;
+		padding: 1rem 1.1rem;
+	}
+
+	.nav-builder-footer-copy {
 		display: flex;
 		flex-wrap: wrap;
-		justify-content: flex-end;
-		gap: 0.12rem;
-		align-content: start;
 		align-items: center;
+		gap: 0.75rem;
+		color: #64748b;
 	}
 
-	.nav-action {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0;
-		width: 1.45rem;
-		height: 1.45rem;
-		min-height: 1.45rem;
-		padding: 0;
-		border-radius: 0.3rem;
-		font-size: 0.72rem;
-	}
-
-	.nav-item-remove {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 1.45rem;
-		height: 1.45rem;
-		min-height: 1.45rem;
-		padding: 0;
-		border-radius: 0.3rem;
-		font-size: 0.72rem;
-	}
-
-	.nav-action-icon {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 0.84rem;
-		line-height: 1;
-		font-weight: 700;
-	}
-
-	.nav-action-icon svg,
-	.nav-action > svg,
-	.nav-item-remove > svg,
-	.nav-tree-add-row > svg {
-		display: block;
-		width: 0.95rem;
-		height: 0.95rem;
-		flex: 0 0 auto;
-	}
-
-	.nav-tree-footer {
-		align-items: center;
-		padding-top: 0.1rem;
-	}
-
-	.nav-tree-add-row {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.28rem;
-		padding-inline: 0.55rem;
-		min-height: 1.55rem;
-	}
-
-	@media (max-width: 992px) {
-		.nav-tree-row {
-			grid-template-columns: 1fr;
-			padding-left: 0.5rem;
-		}
-
-		.nav-tree-rail {
-			display: none;
-		}
-
-		.nav-tree-summary {
-			flex-direction: row;
-		}
-
-		.nav-tree-fields {
+	@media (max-width: 1199px) {
+		.nav-builder-workspace {
 			grid-template-columns: 1fr;
 		}
 
-		.nav-tree-actions {
-			justify-content: flex-start;
+		.nav-inspector {
+			position: static;
 		}
 	}
 
-	@media (max-width: 576px) {
-		.nav-tree-editor-header,
-		.nav-tree-board-head,
-		.nav-tree-footer {
+	@media (max-width: 767px) {
+		.nav-builder-header,
+		.nav-tree-toolbar,
+		.nav-builder-footer,
+		.nav-inspector-header,
+		.nav-inspector-actions {
 			align-items: stretch;
 		}
 
-		.nav-tree-board {
-			padding: 0.35rem 0;
+		.nav-tree-card {
+			grid-template-columns: 1fr;
+		}
+
+		.nav-tree-main {
+			grid-template-columns: auto auto minmax(0, 1fr);
+			align-items: start;
+		}
+
+		.nav-tree-actions,
+		.nav-tree-toolbar-actions,
+		.nav-builder-footer-actions {
+			justify-content: flex-start;
+		}
+
+		.nav-builder-action,
+		.nav-builder-save {
+			width: 100%;
+			justify-content: center;
+		}
+	}
+
+	@media (max-width: 575px) {
+		.nav-tree-shell,
+		.nav-inspector,
+		.nav-builder-footer {
+			padding: 0.9rem;
 		}
 
 		.nav-tree-row {
-			padding: 0.24rem 0.14rem 0.24rem 0.5rem;
+			padding-left: calc(var(--nav-depth, 0) * 1rem);
 		}
 
-		.nav-tree-fields {
-			grid-template-columns: 1fr;
+		.nav-tree-main {
+			grid-template-columns: auto minmax(0, 1fr);
+		}
+
+		.nav-drag-handle {
+			grid-column: 1;
+			grid-row: 2;
+		}
+
+		.nav-tree-summary {
+			grid-column: 2;
+			grid-row: 1 / span 2;
 		}
 	}
 </style>
@@ -717,21 +925,44 @@ const navActionIcons = {
 	const editor = document.querySelector("[data-nav-items-editor]");
 	const rowsContainer = editor?.querySelector("[data-nav-items-rows]");
 	const payloadInput = document.getElementById("nav-items-payload");
-	const addButton = editor?.querySelector("[data-nav-add]");
+	const addRootButton = editor?.querySelector("[data-nav-add]");
+	const addEmptyButton = editor?.querySelector("[data-nav-empty-add]");
+	const addChildGlobalButton = editor?.querySelector("[data-nav-add-child-global]");
+	const addChildSelectedButton = editor?.querySelector("[data-nav-add-child-selected]");
+	const indentSelectedButton = editor?.querySelector("[data-nav-indent-selected]");
+	const outdentSelectedButton = editor?.querySelector("[data-nav-outdent-selected]");
+	const removeSelectedButton = editor?.querySelector("[data-nav-remove-selected]");
 	const emptyStateRow = editor?.querySelector("[data-nav-empty]");
+	const inspector = editor?.querySelector("[data-nav-inspector]");
+	const inspectorBody = editor?.querySelector("[data-nav-inspector-body]");
+	const inspectorEmpty = editor?.querySelector("[data-nav-inspector-empty]");
+	const inspectorFields = editor?.querySelector("[data-nav-inspector-fields]");
+	const inspectorTitle = editor?.querySelector("[data-nav-inspector-title]");
+	const inspectorCopy = editor?.querySelector("[data-nav-inspector-copy]");
+	const inspectorDepth = editor?.querySelector("[data-nav-inspector-depth]");
+	const inspectorRole = editor?.querySelector("[data-nav-inspector-role]");
+	const rootCount = document.querySelector("[data-nav-root-count]");
+	const totalCount = document.querySelector("[data-nav-total-count]");
 	const removeLabel = editor?.dataset.removeLabel ?? "Remove";
-	const addChildLabel = editor?.dataset.addChildLabel ?? "Add child";
+	const addChildLabel = editor?.dataset.addChildLabel ?? "Add item";
+	const addRowLabel = editor?.dataset.addRowLabel ?? "Add row";
 	const indentLabel = editor?.dataset.indentLabel ?? "Indent";
 	const outdentLabel = editor?.dataset.outdentLabel ?? "Outdent";
-	const parentLabel = editor?.dataset.parentLabel ?? "Parent";
-	const childLabel = editor?.dataset.childLabel ?? "Child";
-	const labelLabel = editor?.dataset.labelLabel ?? "Label";
-	const linkLabel = editor?.dataset.linkLabel ?? "Link";
 	const dragLabel = editor?.dataset.dragLabel ?? "Drag to reorder";
 	const collapseLabel = editor?.dataset.collapseLabel ?? "Collapse";
 	const expandLabel = editor?.dataset.expandLabel ?? "Expand";
-	const editLabel = editor?.dataset.editLabel ?? "Edit";
+	const noSelectionTitle = editor?.dataset.noSelectionTitle ?? "Select a navigation item";
+	const noSelectionCopy = editor?.dataset.noSelectionCopy ?? "Choose a row from the tree to edit its label and path here.";
+	const inspectorDefaultTitle = editor?.dataset.inspectorTitle ?? "Selected item";
+	const inspectorDefaultCopy = editor?.dataset.inspectorCopy ?? "Keep the tree on the left for structure and use this panel for editing the selected item.";
+	const rootLabel = editor?.dataset.rootLabel ?? "Root";
+	const levelLabel = editor?.dataset.levelLabel ?? "Level";
+	const parentRoleLabel = editor?.dataset.parentRoleLabel ?? "Parent";
+	const itemRoleLabel = editor?.dataset.itemRoleLabel ?? "Item";
+	const rootLevelLabel = editor?.dataset.rootLevelLabel ?? "Root level";
 	const isReadOnly = editor?.dataset.disabled === "true";
+	const maxNavDepth = Number(editor?.dataset.maxDepth ?? "4");
+	const defaultNavLabel = editor?.dataset.exampleLabel ?? "New item";
 	const navActionIcons = {
 		edit: `
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -767,25 +998,36 @@ const navActionIcons = {
 				<path d="M18 6L6 18" />
 			</svg>
 		`,
+		drag: `
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M9 5h.01" />
+				<path d="M9 12h.01" />
+				<path d="M9 19h.01" />
+				<path d="M15 5h.01" />
+				<path d="M15 12h.01" />
+				<path d="M15 19h.01" />
+			</svg>
+		`,
 	};
-	let draggedNavRow = null;
-	const MAX_NAV_DEPTH = 4;
-	const defaultNavLabel = editor?.dataset.exampleLabel ?? "New item";
+
+	let selectedRow = null;
+	let draggedRows = [];
 
 	const clampDepth = (value) => {
 		const depth = Number.isFinite(value) ? value : 0;
-		return Math.max(0, Math.min(MAX_NAV_DEPTH, Math.floor(depth)));
+		return Math.max(0, Math.min(maxNavDepth, Math.floor(depth)));
 	};
 
 	const setRowDepth = (row, depth) => {
 		const normalized = clampDepth(depth);
 		row.dataset.depth = String(normalized);
 		row.style.setProperty("--nav-depth", String(normalized));
+		renderDepthGuides(row);
 		return normalized;
 	};
 
 	const getNavRows = () => Array.from(rowsContainer?.querySelectorAll("[data-nav-row]") ?? []);
-
+	const getVisibleNavRows = () => getNavRows().filter((row) => !row.hidden);
 	const getRowDepth = (row) => clampDepth(Number(row.dataset.depth ?? "0"));
 
 	const getRowEditorInputs = (row) => ({
@@ -806,6 +1048,8 @@ const navActionIcons = {
 		return "";
 	};
 
+	const getRowRoleLabel = (row) => (row.dataset.hasChildren === "true" ? parentRoleLabel : itemRoleLabel);
+
 	const updateRowPreview = (row) => {
 		if (!(row instanceof HTMLElement)) {
 			return;
@@ -825,43 +1069,37 @@ const navActionIcons = {
 		}
 	};
 
-	let activeEditRow = null;
-
-	const setRowEditing = (row, editing) => {
-		if (!(row instanceof HTMLElement)) {
-			return;
+	const updateStats = () => {
+		const rows = getNavRows();
+		const rootItems = rows.filter((row) => getRowDepth(row) === 0).length;
+		if (rootCount instanceof HTMLElement) {
+			rootCount.textContent = String(rootItems);
 		}
-
-		const nextEditing = Boolean(editing);
-		const currentActive = activeEditRow;
-		if (nextEditing && currentActive && currentActive !== row) {
-			setRowEditing(currentActive, false);
+		if (totalCount instanceof HTMLElement) {
+			totalCount.textContent = String(rows.length);
 		}
-
-		row.dataset.editing = nextEditing ? "true" : "false";
-		activeEditRow = nextEditing ? row : activeEditRow === row ? null : activeEditRow;
-
-		const editButton = row.querySelector("[data-nav-edit]");
-		if (editButton instanceof HTMLButtonElement) {
-			editButton.setAttribute("aria-pressed", nextEditing ? "true" : "false");
-			editButton.setAttribute("aria-label", editLabel);
-		}
-
-		const firstInput = row.querySelector("[data-nav-label]");
-		if (nextEditing && firstInput instanceof HTMLInputElement) {
-			requestAnimationFrame(() => {
-				firstInput.focus();
-				firstInput.select();
-			});
-		}
-
-		updateRowPreview(row);
 	};
 
-	const exitActiveEditRow = () => {
-		if (activeEditRow) {
-			setRowEditing(activeEditRow, false);
-			syncPayload();
+	const renderDepthGuides = (row) => {
+		const depth = getRowDepth(row);
+		Array.from(row.querySelectorAll("[data-guide-index]")).forEach((guide) => {
+			if (!(guide instanceof HTMLElement)) {
+				return;
+			}
+			const index = Number(guide.dataset.guideIndex ?? "-1");
+			guide.dataset.active = index < depth ? "true" : "false";
+			guide.style.left = `${0.7 + index * 1.45}rem`;
+		});
+	};
+
+	const normalizeRowDepths = () => {
+		const rows = getNavRows();
+		let previousDepth = -1;
+		for (const row of rows) {
+			const allowedDepth = Math.min(maxNavDepth, previousDepth + 1);
+			const normalizedDepth = Math.min(getRowDepth(row), Math.max(0, allowedDepth));
+			setRowDepth(row, normalizedDepth);
+			previousDepth = normalizedDepth;
 		}
 	};
 
@@ -873,35 +1111,20 @@ const navActionIcons = {
 		}
 
 		toggle.hidden = !hasChildren;
-		if (!hasChildren) {
-			toggle.setAttribute("aria-expanded", "false");
-			toggle.setAttribute("aria-label", collapseLabel);
-			const glyph = toggle.querySelector(".nav-tree-toggle-glyph");
-			if (glyph instanceof HTMLElement) {
-				glyph.innerHTML = `
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M7 12h10" />
-					</svg>
-				`;
-			}
-			return;
-		}
-
-		const isCollapsed = row.dataset.collapsed === "true";
+		const glyph = toggle.querySelector(".nav-tree-toggle-glyph");
+		const isCollapsed = hasChildren && row.dataset.collapsed === "true";
 		toggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
 		toggle.setAttribute("aria-label", isCollapsed ? expandLabel : collapseLabel);
-		const glyph = toggle.querySelector(".nav-tree-toggle-glyph");
 		if (glyph instanceof HTMLElement) {
 			glyph.innerHTML = isCollapsed
 				? `
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M4 12h16" />
-						<path d="M12 4v16" />
+						<path d="M9 6l6 6-6 6" />
 					</svg>
 				`
 				: `
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M4 12h16" />
+						<path d="M6 9l6 6 6-6" />
 					</svg>
 				`;
 		}
@@ -922,16 +1145,31 @@ const navActionIcons = {
 			row.hidden = ancestorCollapsed;
 			row.setAttribute("aria-hidden", ancestorCollapsed ? "true" : "false");
 
-			const hasChildren = (getRowDepth(rows[index + 1] ?? row) > depth) && index + 1 < rows.length;
+			const hasChildren = index + 1 < rows.length && getRowDepth(rows[index + 1]) > depth;
 			row.dataset.hasChildren = hasChildren ? "true" : "false";
-			if (!hasChildren) {
-				row.dataset.collapsed = "false";
-			}
 			updateRowToggle(row);
+
+			const levelBadge = row.querySelector(".nav-tree-level-badge");
+			const childBadge = row.querySelector(".nav-tree-children-badge");
+			if (levelBadge instanceof HTMLElement) {
+				levelBadge.textContent = depth === 0 ? rootLabel : `${levelLabel} ${depth + 1}`;
+			}
+			if (childBadge instanceof HTMLElement) {
+				childBadge.hidden = !hasChildren;
+			}
 
 			const isCollapsed = hasChildren && row.dataset.collapsed === "true";
 			collapseStack[depth] = isCollapsed;
 		}
+
+		if (selectedRow instanceof HTMLElement && selectedRow.hidden) {
+			selectedRow.dataset.collapsed = "false";
+			refreshTreeState();
+			return;
+		}
+
+		updateStats();
+		updateSelectedRowUi();
 	};
 
 	const buildNodeFromRow = (row) => {
@@ -976,16 +1214,24 @@ const navActionIcons = {
 		};
 	};
 
+	const updateEmptyState = () => {
+		if (!emptyStateRow || !rowsContainer) {
+			return;
+		}
+		const hasRows = Boolean(rowsContainer.querySelector("[data-nav-row]"));
+		emptyStateRow.hidden = hasRows;
+	};
+
 	const syncPayload = () => {
 		if (!(rowsContainer instanceof HTMLElement) || !(payloadInput instanceof HTMLInputElement)) {
 			return;
 		}
 
+		normalizeRowDepths();
 		const tree = [];
 		const stack = [{ depth: -1, children: tree }];
 		for (const row of rowsContainer.querySelectorAll("[data-nav-row]")) {
-			const currentDepth = clampDepth(Number(row.dataset.depth ?? "0"));
-			setRowDepth(row, currentDepth);
+			const currentDepth = getRowDepth(row);
 			updateRowPreview(row);
 			const node = buildNodeFromRow(row);
 			if (!node) {
@@ -1005,150 +1251,205 @@ const navActionIcons = {
 		updateEmptyState();
 	};
 
+	const restoreFieldBank = (row) => {
+		if (!(row instanceof HTMLElement)) {
+			return;
+		}
+		const host = row.querySelector("[data-nav-field-host]");
+		const bank = inspectorFields?.querySelector("[data-nav-field-bank]");
+		if (host instanceof HTMLElement && bank instanceof HTMLElement) {
+			host.append(bank);
+		}
+	};
+
+	const updateSelectedRowUi = () => {
+		const rows = getNavRows();
+		for (const row of rows) {
+			row.dataset.selected = selectedRow === row ? "true" : "false";
+			const main = row.querySelector("[data-nav-select]");
+			if (main instanceof HTMLElement) {
+				main.setAttribute("aria-pressed", selectedRow === row ? "true" : "false");
+			}
+		}
+
+		const hasSelection = selectedRow instanceof HTMLElement;
+		const disableSelectionActions = isReadOnly || !hasSelection;
+		if (addChildGlobalButton instanceof HTMLButtonElement) {
+			addChildGlobalButton.disabled = disableSelectionActions;
+		}
+		if (addChildSelectedButton instanceof HTMLButtonElement) {
+			addChildSelectedButton.disabled = disableSelectionActions;
+		}
+		if (indentSelectedButton instanceof HTMLButtonElement) {
+			indentSelectedButton.disabled = disableSelectionActions;
+		}
+		if (outdentSelectedButton instanceof HTMLButtonElement) {
+			outdentSelectedButton.disabled = disableSelectionActions;
+		}
+		if (removeSelectedButton instanceof HTMLButtonElement) {
+			removeSelectedButton.disabled = disableSelectionActions;
+		}
+
+		if (!(selectedRow instanceof HTMLElement)) {
+			if (inspectorBody instanceof HTMLElement) {
+				inspectorBody.hidden = true;
+			}
+			if (inspectorEmpty instanceof HTMLElement) {
+				inspectorEmpty.hidden = false;
+			}
+			if (inspectorTitle instanceof HTMLElement) {
+				inspectorTitle.textContent = noSelectionTitle;
+			}
+			if (inspectorCopy instanceof HTMLElement) {
+				inspectorCopy.textContent = noSelectionCopy;
+			}
+			if (inspectorDepth instanceof HTMLElement) {
+				inspectorDepth.hidden = true;
+			}
+			if (inspectorRole instanceof HTMLElement) {
+				inspectorRole.hidden = true;
+			}
+			return;
+		}
+
+		const bankHost = selectedRow.querySelector("[data-nav-field-host]");
+		const bank = bankHost?.querySelector("[data-nav-field-bank]");
+		if (bank instanceof HTMLElement && inspectorFields instanceof HTMLElement) {
+			inspectorFields.replaceChildren(bank);
+		}
+
+		if (inspectorBody instanceof HTMLElement) {
+			inspectorBody.hidden = false;
+		}
+		if (inspectorEmpty instanceof HTMLElement) {
+			inspectorEmpty.hidden = true;
+		}
+		if (inspectorTitle instanceof HTMLElement) {
+			inspectorTitle.textContent = getRowLabel(selectedRow) || defaultNavLabel;
+		}
+		if (inspectorCopy instanceof HTMLElement) {
+			inspectorCopy.textContent = inspectorDefaultCopy;
+		}
+		if (inspectorDepth instanceof HTMLElement) {
+			inspectorDepth.hidden = false;
+			inspectorDepth.textContent = getRowDepth(selectedRow) === 0 ? rootLevelLabel : `${levelLabel} ${getRowDepth(selectedRow) + 1}`;
+		}
+		if (inspectorRole instanceof HTMLElement) {
+			inspectorRole.hidden = false;
+			inspectorRole.textContent = getRowRoleLabel(selectedRow);
+		}
+	};
+
+	const selectRow = (row, options = {}) => {
+		if (!(row instanceof HTMLElement)) {
+			selectedRow = null;
+			updateSelectedRowUi();
+			return;
+		}
+
+		if (selectedRow && selectedRow !== row) {
+			restoreFieldBank(selectedRow);
+		}
+
+		selectedRow = row;
+		updateSelectedRowUi();
+
+		if (options.focusInspector) {
+			const firstInput = inspectorFields?.querySelector("input");
+			if (firstInput instanceof HTMLInputElement) {
+				requestAnimationFrame(() => {
+					firstInput.focus();
+					firstInput.select();
+				});
+			}
+		}
+	};
+
+	const getSubtreeRows = (row) => {
+		if (!(row instanceof HTMLElement)) {
+			return [];
+		}
+		const rows = [row];
+		const parentDepth = getRowDepth(row);
+		let current = row.nextElementSibling;
+		while (current instanceof HTMLElement && current.matches("[data-nav-row]") && getRowDepth(current) > parentDepth) {
+			rows.push(current);
+			current = current.nextElementSibling;
+		}
+		return rows;
+	};
+
 	const attachNavRow = (row) => {
 		if (!(row instanceof HTMLElement) || row.dataset.navRowAttached === "true") {
 			return;
 		}
 		row.dataset.navRowAttached = "true";
 		row.dataset.collapsed = row.dataset.collapsed ?? "false";
-		row.dataset.editing = row.dataset.editing ?? "false";
+		row.dataset.selected = row.dataset.selected ?? "false";
 		setRowDepth(row, Number(row.dataset.depth ?? "0"));
 		row.draggable = !isReadOnly;
-		row.addEventListener("dragstart", onNavDragStart);
-		row.addEventListener("dragover", onNavDragOver);
-		row.addEventListener("drop", onNavDragDrop);
-		row.addEventListener("dragend", onNavDragEnd);
-		row.addEventListener("focusout", (event) => {
-			if (!(event.relatedTarget instanceof Node) || row.contains(event.relatedTarget)) {
+
+		row.addEventListener("dragstart", (event) => {
+			if (isReadOnly) {
 				return;
 			}
-			if (row.dataset.editing === "true") {
-				setRowEditing(row, false);
-				syncPayload();
+			const dragHandle = event.target instanceof Element ? event.target.closest("[data-drag-handle]") : null;
+			if (!dragHandle) {
+				event.preventDefault();
+				return;
 			}
+			draggedRows = getSubtreeRows(row);
+			row.classList.add("is-dragging");
+			event.dataTransfer?.setData("text/plain", "");
+		});
+
+		row.addEventListener("dragover", (event) => {
+			if (!draggedRows.length) {
+				return;
+			}
+			const targetRow = event.currentTarget;
+			if (!(targetRow instanceof HTMLElement) || draggedRows.includes(targetRow)) {
+				return;
+			}
+			event.preventDefault();
+			getNavRows().forEach((entry) => entry.classList.remove("is-drop-target"));
+			targetRow.classList.add("is-drop-target");
+			const bounds = targetRow.getBoundingClientRect();
+			const insertAfter = event.clientY > bounds.top + bounds.height / 2;
+			const fragment = document.createDocumentFragment();
+			for (const draggedRow of draggedRows) {
+				fragment.append(draggedRow);
+			}
+			if (insertAfter) {
+				const subtree = getSubtreeRows(targetRow);
+				subtree[subtree.length - 1].after(fragment);
+			} else {
+				targetRow.before(fragment);
+			}
+		});
+
+		row.addEventListener("drop", (event) => {
+			if (!draggedRows.length) {
+				return;
+			}
+			event.preventDefault();
+			getNavRows().forEach((entry) => entry.classList.remove("is-drop-target", "is-dragging"));
+			draggedRows = [];
+			syncPayload();
+		});
+
+		row.addEventListener("dragend", () => {
+			getNavRows().forEach((entry) => entry.classList.remove("is-drop-target", "is-dragging"));
+			draggedRows = [];
 		});
 	};
 
-	const findNavRow = (target) => (target instanceof Element ? target.closest("[data-nav-row]") : null);
-
-	const onNavDragStart = (event) => {
-		if (isReadOnly) {
-			return;
-		}
-		const row = event.currentTarget;
-		if (!(row instanceof HTMLElement)) {
-			return;
-		}
-		draggedNavRow = row;
-		row.classList.add("is-dragging");
-		event.dataTransfer?.setData("text/plain", "");
-		event.dataTransfer?.setDragImage(row, 0, 0);
-	};
-
-	const onNavDragOver = (event) => {
-		if (!draggedNavRow) {
-			return;
-		}
-		event.preventDefault();
-		const row = event.currentTarget;
-		if (!(row instanceof HTMLElement) || row === draggedNavRow) {
-			return;
-		}
-		const bounding = row.getBoundingClientRect();
-		const after = event.clientY > bounding.top + bounding.height / 2;
-		if (after) {
-			row.after(draggedNavRow);
-		} else {
-			row.before(draggedNavRow);
-		}
-	};
-
-	const onNavDragDrop = (event) => {
-		event.preventDefault();
-		if (!draggedNavRow) {
-			return;
-		}
-		draggedNavRow.classList.remove("is-dragging");
-		draggedNavRow = null;
-		syncPayload();
-	};
-
-	const onNavDragEnd = () => {
-		if (draggedNavRow) {
-			draggedNavRow.classList.remove("is-dragging");
-			draggedNavRow = null;
-		}
-	};
-
-	const createNavRow = (entry = {}, depth = 0) => {
-		const labelTranslations = entry.labelTranslations ?? {};
-		const fallbackLabel =
-			labelTranslations[editor?.dataset.defaultLanguage ?? ""] ??
-			Object.values(labelTranslations)[0] ??
-			entry.label ??
-			defaultNavLabel;
+	const createFieldBank = (entry = {}) => {
 		const languages = JSON.parse(editor?.dataset.languages ?? "[]");
-
-		const row = document.createElement("article");
-		row.className = "nav-tree-row";
-		row.setAttribute("role", "listitem");
-		row.dataset.navRow = "";
-		row.dataset.hasChildren = "false";
-		row.dataset.collapsed = "false";
-		setRowDepth(row, depth);
-		row.draggable = !isReadOnly;
-
-		const rail = document.createElement("div");
-		rail.className = "nav-tree-rail";
-		rail.setAttribute("aria-hidden", "true");
-		const handle = document.createElement("span");
-		handle.className = "nav-drag-handle";
-		handle.dataset.dragHandle = "";
-		handle.setAttribute("aria-label", dragLabel);
-		const spine = document.createElement("span");
-		spine.className = "nav-tree-spine";
-		rail.append(handle, spine);
-		row.append(rail);
-
-		const body = document.createElement("div");
-		body.className = "nav-tree-body";
-
-		const summary = document.createElement("div");
-		summary.className = "nav-tree-summary";
-		const summaryCopy = document.createElement("div");
-		summaryCopy.className = "nav-tree-summary-copy";
-		const summaryLine = document.createElement("div");
-		summaryLine.className = "nav-tree-summary-line";
-
-		const toggleButton = document.createElement("button");
-		toggleButton.type = "button";
-		toggleButton.className = "btn btn-sm btn-outline-secondary nav-tree-toggle";
-		toggleButton.dataset.navToggle = "";
-		toggleButton.hidden = true;
-		toggleButton.setAttribute("aria-expanded", "true");
-		toggleButton.setAttribute("aria-label", collapseLabel);
-		const toggleGlyph = document.createElement("span");
-		toggleGlyph.className = "nav-tree-toggle-glyph";
-		toggleGlyph.setAttribute("aria-hidden", "true");
-		toggleGlyph.textContent = "-";
-		toggleButton.append(toggleGlyph);
-		summaryLine.append(toggleButton);
-		summaryCopy.append(summaryLine);
-
-		const title = document.createElement("strong");
-		title.className = "nav-tree-title";
-		title.dataset.navPreviewTitle = "";
-		title.textContent = fallbackLabel;
-		const path = document.createElement("span");
-		path.className = "nav-tree-path";
-		path.dataset.navPreviewPath = "";
-		path.textContent = entry.href ?? "/";
-		summaryCopy.append(title, path);
-		summary.append(summaryCopy);
-		body.append(summary);
-
-		const fields = document.createElement("div");
-		fields.className = "nav-tree-fields";
+		const labelTranslations = entry.labelTranslations ?? {};
+		const fieldBank = document.createElement("div");
+		fieldBank.className = "nav-tree-fields";
+		fieldBank.dataset.navFieldBank = "";
 
 		const createField = (labelText, input) => {
 			const field = document.createElement("label");
@@ -1163,7 +1464,7 @@ const navActionIcons = {
 		for (const languageOption of languages) {
 			const input = document.createElement("input");
 			input.type = "text";
-			input.className = "form-control form-control-sm";
+			input.className = "form-control";
 			input.dataset.navLabel = "";
 			input.dataset.languageCode = languageOption.code;
 			input.placeholder = languageOption.label;
@@ -1171,72 +1472,149 @@ const navActionIcons = {
 			if (isReadOnly) {
 				input.disabled = true;
 			}
-			fields.append(createField(`${labelLabel} (${languageOption.label})`, input));
+			fieldBank.append(createField(`${editor?.dataset.labelLabel ?? "Label"} (${languageOption.label})`, input));
 		}
 
 		const hrefInput = document.createElement("input");
 		hrefInput.type = "text";
-		hrefInput.className = "form-control form-control-sm";
+		hrefInput.className = "form-control";
 		hrefInput.dataset.navHref = "";
 		hrefInput.placeholder = "/about or https://example.com";
 		hrefInput.value = entry.href ?? "/";
 		if (isReadOnly) {
 			hrefInput.disabled = true;
 		}
-		const linkField = createField(linkLabel, hrefInput);
+		const linkField = createField(editor?.dataset.linkLabel ?? "Link", hrefInput);
 		linkField.classList.add("nav-tree-field-link");
-		fields.append(linkField);
+		fieldBank.append(linkField);
+		return fieldBank;
+	};
 
-		body.append(fields);
-		row.append(body);
+	const createNavRow = (entry = {}, depth = 0) => {
+		const labelTranslations = entry.labelTranslations ?? {};
+		const fallbackLabel =
+			labelTranslations[editor?.dataset.defaultLanguage ?? ""] ??
+			Object.values(labelTranslations)[0] ??
+			entry.label ??
+			defaultNavLabel;
+
+		const row = document.createElement("article");
+		row.className = "nav-tree-row";
+		row.setAttribute("role", "listitem");
+		row.dataset.navRow = "";
+		row.dataset.hasChildren = "false";
+		row.dataset.collapsed = "false";
+		row.draggable = !isReadOnly;
+		setRowDepth(row, depth);
+
+		const guides = document.createElement("div");
+		guides.className = "nav-tree-row-guides";
+		guides.setAttribute("aria-hidden", "true");
+		for (let index = 0; index < maxNavDepth; index += 1) {
+			const guide = document.createElement("span");
+			guide.className = "nav-tree-guide";
+			guide.dataset.guideIndex = String(index);
+			guides.append(guide);
+		}
+		row.append(guides);
+
+		const card = document.createElement("div");
+		card.className = "nav-tree-card";
+
+		const main = document.createElement("div");
+		main.className = "nav-tree-main";
+		main.dataset.navSelect = "";
+		main.tabIndex = 0;
+		main.setAttribute("role", "button");
+		main.setAttribute("aria-pressed", "false");
+
+		const toggleButton = document.createElement("button");
+		toggleButton.type = "button";
+		toggleButton.className = "btn btn-sm btn-outline-secondary nav-tree-toggle";
+		toggleButton.dataset.navToggle = "";
+		toggleButton.hidden = true;
+		toggleButton.setAttribute("aria-expanded", "true");
+		toggleButton.setAttribute("aria-label", collapseLabel);
+		const toggleGlyph = document.createElement("span");
+		toggleGlyph.className = "nav-tree-toggle-glyph";
+		toggleGlyph.setAttribute("aria-hidden", "true");
+		toggleButton.append(toggleGlyph);
+
+		const dragHandle = document.createElement("span");
+		dragHandle.className = "nav-drag-handle";
+		dragHandle.dataset.dragHandle = "";
+		dragHandle.setAttribute("aria-label", dragLabel);
+		dragHandle.innerHTML = navActionIcons.drag;
+
+		const summary = document.createElement("div");
+		summary.className = "nav-tree-summary";
+		const summaryMeta = document.createElement("div");
+		summaryMeta.className = "nav-tree-summary-meta";
+		const levelBadge = document.createElement("span");
+		levelBadge.className = "nav-tree-level-badge";
+		levelBadge.textContent = depth === 0 ? rootLabel : `${levelLabel} ${depth + 1}`;
+		const childBadge = document.createElement("span");
+		childBadge.className = "nav-tree-children-badge";
+		childBadge.hidden = true;
+		childBadge.textContent = parentRoleLabel;
+		summaryMeta.append(levelBadge, childBadge);
+		const title = document.createElement("strong");
+		title.className = "nav-tree-title";
+		title.dataset.navPreviewTitle = "";
+		title.textContent = fallbackLabel;
+		const path = document.createElement("span");
+		path.className = "nav-tree-path";
+		path.dataset.navPreviewPath = "";
+		path.textContent = entry.href ?? "/";
+		summary.append(summaryMeta, title, path);
+		main.append(toggleButton, dragHandle, summary);
 
 		const actions = document.createElement("div");
 		actions.className = "nav-tree-actions";
 		const buttonConfigs = [
-			["navEdit", navActionIcons.edit, editLabel, "btn btn-sm btn-outline-secondary nav-action"],
-			["navAddChild", navActionIcons.addChild, addChildLabel, "btn btn-sm btn-outline-secondary nav-action"],
-			["navIndent", navActionIcons.indent, indentLabel, "btn btn-sm btn-outline-secondary nav-action"],
-			["navOutdent", navActionIcons.outdent, outdentLabel, "btn btn-sm btn-outline-secondary nav-action"],
+			["navEdit", navActionIcons.edit, "Edit"],
+			["navAddChild", navActionIcons.addChild, addChildLabel],
+			["navIndent", navActionIcons.indent, indentLabel],
+			["navOutdent", navActionIcons.outdent, outdentLabel],
+			["navRemove", navActionIcons.remove, removeLabel],
 		];
 
-		for (const [datasetKey, iconMarkup, label, className] of buttonConfigs) {
+		for (const [datasetKey, iconMarkup, label] of buttonConfigs) {
 			const button = document.createElement("button");
 			button.type = "button";
-			button.className = className;
+			button.className = datasetKey === "navRemove"
+				? "btn btn-sm btn-outline-danger nav-action nav-action-danger"
+				: "btn btn-sm btn-outline-secondary nav-action";
 			button.dataset[datasetKey] = "";
 			button.setAttribute("aria-label", label);
-			if (datasetKey === "navEdit") {
-				button.setAttribute("aria-pressed", "false");
-			}
-			button.innerHTML = `${iconMarkup}<span class="visually-hidden">${label}</span>`;
+			button.innerHTML = `<span class="nav-action-icon" aria-hidden="true">${iconMarkup}</span>`;
 			if (isReadOnly) {
 				button.disabled = true;
 			}
 			actions.append(button);
 		}
 
-		const removeButton = document.createElement("button");
-		removeButton.type = "button";
-		removeButton.className = "btn btn-sm btn-outline-danger nav-item-remove";
-		removeButton.dataset.navRemove = "";
-		removeButton.setAttribute("aria-label", removeLabel);
-		removeButton.innerHTML = `${navActionIcons.remove}<span class="visually-hidden">${removeLabel}</span>`;
-		if (isReadOnly) {
-			removeButton.disabled = true;
-		}
-		actions.append(removeButton);
+		card.append(main, actions);
+		row.append(card);
 
-		row.append(actions);
+		const fieldHost = document.createElement("div");
+		fieldHost.className = "nav-tree-field-bank-host";
+		fieldHost.dataset.navFieldHost = "";
+		fieldHost.hidden = true;
+		fieldHost.append(createFieldBank(entry));
+		row.append(fieldHost);
 
 		attachNavRow(row);
+		updateRowPreview(row);
+		refreshTreeState();
 		return row;
 	};
 
 	const findInsertPositionForChild = (row) => {
 		let reference = row;
-		const parentDepth = clampDepth(Number(row.dataset.depth ?? "0"));
+		const parentDepth = getRowDepth(row);
 		while (reference.nextElementSibling instanceof HTMLElement) {
-			const nextDepth = clampDepth(Number(reference.nextElementSibling.dataset.depth ?? "0"));
+			const nextDepth = getRowDepth(reference.nextElementSibling);
 			if (nextDepth <= parentDepth) {
 				break;
 			}
@@ -1246,102 +1624,198 @@ const navActionIcons = {
 	};
 
 	const changeDepth = (row, delta) => {
-		const current = Number(row.dataset.depth ?? "0");
-		setRowDepth(row, current + delta);
+		if (!(row instanceof HTMLElement)) {
+			return;
+		}
+		setRowDepth(row, getRowDepth(row) + delta);
+		selectRow(row);
 		syncPayload();
 	};
 
 	const addChildRow = (parentRow) => {
-		if (isReadOnly || !(rowsContainer instanceof HTMLElement)) {
+		if (isReadOnly || !(rowsContainer instanceof HTMLElement) || !(parentRow instanceof HTMLElement)) {
 			return;
 		}
-		const depth = clampDepth(Number(parentRow.dataset.depth ?? "0") + 1);
+		const depth = clampDepth(getRowDepth(parentRow) + 1);
 		const newRow = createNavRow({}, depth);
 		const insertAfter = findInsertPositionForChild(parentRow);
 		insertAfter.after(newRow);
+		selectRow(newRow, { focusInspector: true });
 		newRow.scrollIntoView({ block: "nearest" });
-		setRowEditing(newRow, true);
 		syncPayload();
 	};
 
-	Array.from(rowsContainer?.querySelectorAll("[data-nav-row]") ?? []).forEach((row) => attachNavRow(row));
-
-	rowsContainer?.addEventListener("input", syncPayload);
-	rowsContainer?.addEventListener("click", (event) => {
-		const target = event.target;
-		if (!(target instanceof HTMLElement)) {
-			return;
-		}
-		const row = findNavRow(target);
-		if (!row) {
-			return;
-		}
-		const actionButton = target.closest("button");
-
-		if (actionButton?.matches("[data-nav-edit]")) {
-			if (row.dataset.editing === "true") {
-				setRowEditing(row, false);
-				syncPayload();
-			} else {
-				setRowEditing(row, true);
-			}
-			return;
-		}
-
-		if (actionButton?.matches("[data-nav-remove]")) {
-			if (activeEditRow === row) {
-				activeEditRow = null;
-			}
-			row.remove();
-			syncPayload();
-			return;
-		}
-
-		if (actionButton?.matches("[data-nav-add-child]")) {
-			addChildRow(row);
-			return;
-		}
-
-		if (actionButton?.matches("[data-nav-toggle]")) {
-			row.dataset.collapsed = row.dataset.collapsed === "true" ? "false" : "true";
-			refreshTreeState();
-			return;
-		}
-
-		if (actionButton?.matches("[data-nav-indent]")) {
-			changeDepth(row, 1);
-			return;
-		}
-
-		if (actionButton?.matches("[data-nav-outdent]")) {
-			changeDepth(row, -1);
-			return;
-		}
-	});
-
-	addButton?.addEventListener("click", (event) => {
-		event.preventDefault();
+	const addRootRow = () => {
 		if (isReadOnly || !(rowsContainer instanceof HTMLElement)) {
 			return;
 		}
 		const newRow = createNavRow({ label: defaultNavLabel, href: "/" }, 0);
 		rowsContainer.append(newRow);
+		selectRow(newRow, { focusInspector: true });
 		newRow.scrollIntoView({ block: "nearest" });
-		setRowEditing(newRow, true);
+		syncPayload();
+	};
+
+	const removeRow = (row) => {
+		if (!(row instanceof HTMLElement)) {
+			return;
+		}
+		const subtree = getSubtreeRows(row);
+		const fallbackSelection = row.nextElementSibling instanceof HTMLElement
+			? row.nextElementSibling.matches("[data-nav-row]") ? row.nextElementSibling : row.previousElementSibling
+			: row.previousElementSibling;
+		if (selectedRow === row) {
+			restoreFieldBank(row);
+			selectedRow = null;
+		}
+		subtree.forEach((entry) => entry.remove());
+		selectRow(fallbackSelection instanceof HTMLElement && fallbackSelection.matches("[data-nav-row]") ? fallbackSelection : null);
+		syncPayload();
+	};
+
+	Array.from(rowsContainer?.querySelectorAll("[data-nav-row]") ?? []).forEach((row) => attachNavRow(row));
+
+	rowsContainer?.addEventListener("input", (event) => {
+		const row = event.target instanceof Element ? event.target.closest("[data-nav-row]") : null;
+		if (row instanceof HTMLElement) {
+			updateRowPreview(row);
+			if (selectedRow === row) {
+				updateSelectedRowUi();
+			}
+		}
 		syncPayload();
 	});
 
-	const updateEmptyState = () => {
-		if (!emptyStateRow || !rowsContainer) {
+	rowsContainer?.addEventListener("click", (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLElement)) {
 			return;
 		}
-		const hasRows = Boolean(rowsContainer.querySelector("[data-nav-row]"));
-		emptyStateRow.hidden = hasRows;
-	};
+		const row = target.closest("[data-nav-row]");
+		if (!(row instanceof HTMLElement)) {
+			return;
+		}
+
+		const actionButton = target.closest("button");
+		if (actionButton?.matches("[data-nav-toggle]")) {
+			row.dataset.collapsed = row.dataset.collapsed === "true" ? "false" : "true";
+			refreshTreeState();
+			return;
+		}
+		if (actionButton?.matches("[data-nav-edit]")) {
+			selectRow(row, { focusInspector: true });
+			return;
+		}
+		if (actionButton?.matches("[data-nav-add-child]")) {
+			selectRow(row);
+			addChildRow(row);
+			return;
+		}
+		if (actionButton?.matches("[data-nav-indent]")) {
+			changeDepth(row, 1);
+			return;
+		}
+		if (actionButton?.matches("[data-nav-outdent]")) {
+			changeDepth(row, -1);
+			return;
+		}
+		if (actionButton?.matches("[data-nav-remove]")) {
+			removeRow(row);
+			return;
+		}
+
+		if (target.closest("[data-nav-select]")) {
+			selectRow(row);
+		}
+	});
+
+	rowsContainer?.addEventListener("keydown", (event) => {
+		const target = event.target;
+		if (!(target instanceof HTMLElement) || !target.matches("[data-nav-select]")) {
+			return;
+		}
+		const row = target.closest("[data-nav-row]");
+		if (!(row instanceof HTMLElement)) {
+			return;
+		}
+
+		if (event.key === "Enter" || event.key === " ") {
+			event.preventDefault();
+			selectRow(row, { focusInspector: event.key === "Enter" });
+		}
+		if (event.key === "ArrowDown") {
+			event.preventDefault();
+			const rows = getVisibleNavRows();
+			const currentIndex = rows.indexOf(row);
+			const nextRow = rows[currentIndex + 1];
+			if (nextRow instanceof HTMLElement) {
+				selectRow(nextRow);
+				nextRow.querySelector("[data-nav-select]")?.focus();
+			}
+		}
+		if (event.key === "ArrowUp") {
+			event.preventDefault();
+			const rows = getVisibleNavRows();
+			const currentIndex = rows.indexOf(row);
+			const previousRow = rows[currentIndex - 1];
+			if (previousRow instanceof HTMLElement) {
+				selectRow(previousRow);
+				previousRow.querySelector("[data-nav-select]")?.focus();
+			}
+		}
+	});
+
+	addRootButton?.addEventListener("click", (event) => {
+		event.preventDefault();
+		addRootRow();
+	});
+
+	addEmptyButton?.addEventListener("click", (event) => {
+		event.preventDefault();
+		addRootRow();
+	});
+
+	addChildGlobalButton?.addEventListener("click", (event) => {
+		event.preventDefault();
+		if (selectedRow instanceof HTMLElement) {
+			addChildRow(selectedRow);
+		}
+	});
+
+	addChildSelectedButton?.addEventListener("click", (event) => {
+		event.preventDefault();
+		if (selectedRow instanceof HTMLElement) {
+			addChildRow(selectedRow);
+		}
+	});
+
+	indentSelectedButton?.addEventListener("click", (event) => {
+		event.preventDefault();
+		if (selectedRow instanceof HTMLElement) {
+			changeDepth(selectedRow, 1);
+		}
+	});
+
+	outdentSelectedButton?.addEventListener("click", (event) => {
+		event.preventDefault();
+		if (selectedRow instanceof HTMLElement) {
+			changeDepth(selectedRow, -1);
+		}
+	});
+
+	removeSelectedButton?.addEventListener("click", (event) => {
+		event.preventDefault();
+		if (selectedRow instanceof HTMLElement) {
+			removeRow(selectedRow);
+		}
+	});
 
 	updateEmptyState();
 	syncPayload();
+	const firstRow = rowsContainer?.querySelector("[data-nav-row]");
+	if (firstRow instanceof HTMLElement && !isReadOnly) {
+		selectRow(firstRow);
+	} else {
+		updateSelectedRowUi();
+	}
 </script>
-
-
-
