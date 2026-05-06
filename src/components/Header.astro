@@ -68,7 +68,7 @@ const languageSwitchHtml = buildLanguageSwitchHtml({
 const navigationTemplateSource = navbarTemplateHtml.trim() || DEFAULT_NAVIGATION_TEMPLATE_HTML;
 const navigationHtml = renderTemplateHtml(navigationTemplateSource, {
 	navItems: navItemsHtml,
-	languageSwitch: languageSwitchHtml,
+	languageSwitch: "",
 });
 const headerTemplateHtmlRendered = renderTemplateHtml(headerTemplateHtml.trim() ? headerTemplateHtml : DEFAULT_HEADER_TEMPLATE_HTML, {
 	brand: brandHtml,

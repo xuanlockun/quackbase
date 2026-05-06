@@ -10,6 +10,9 @@ export const DEFAULT_HEADER_TEMPLATE_HTML = `<header class="site-navbar-shell">
         </button>
         <div class="collapse navbar-collapse w-100 site-navbar-collapse" id="mainNavbar">
           {{navigation}}
+          <div class="site-nav-actions d-flex align-items-center justify-content-lg-end mt-3 mt-lg-0 flex-shrink-0">
+            {{languageSwitch}}
+          </div>
         </div>
       </div>
     </nav>
@@ -20,9 +23,6 @@ export const DEFAULT_NAVIGATION_TEMPLATE_HTML = `<div class="site-nav-layout d-f
   <ul class="navbar-nav site-nav-list flex-grow-1 justify-content-lg-center mb-3 mb-lg-0 gap-lg-1">
     {{navItems}}
   </ul>
-  <div class="site-nav-actions d-flex align-items-center justify-content-lg-end mt-3 mt-lg-0 flex-shrink-0">
-    {{languageSwitch}}
-  </div>
 </div>`;
 
 export const DEFAULT_BLOG_FEED_TEMPLATE_HTML = `<section class="blog-feed-section mb-5">

@@ -38,7 +38,7 @@ const templateMeta = {
 		label: t("nav.header"),
 		description: t(
 			"messages.templateHeaderHelp",
-			"Edit the full public top bar. Use {{brand}} and {{navigation}} for dynamic content. The shared navigation block is what renders menu items and the language switch.",
+			"Edit the full public top bar. Use {{brand}}, {{navigation}}, and {{languageSwitch}} for dynamic content.",
 		),
 		value: (config) => config.headerTemplateHtml,
 		defaultHtml: DEFAULT_HEADER_TEMPLATE_HTML,
@@ -92,7 +92,7 @@ const templateOrder = [
 	{ key: "footer", label: t("nav.footer"), href: "/admin/templates/footer" },
 ] as const;
 const templateTokenMap = {
-	header: ["{{brand}}", "{{navigation}}"],
+	header: ["{{brand}}", "{{navigation}}", "{{languageSwitch}}"],
 	page: ["{{content}}"],
 	posts: ["{{heading}}", "{{posts}}"],
 	footer: ["{{footerText}}", "{{year}}", "{{socialLinks}}"],
@@ -160,7 +160,7 @@ function buildNavigationHtml(
 	const navItemsHtml = buildNavItemsHtml(navItems);
 	return renderTemplateHtml(navigationTemplateHtml.trim() ? navigationTemplateHtml : DEFAULT_NAVIGATION_TEMPLATE_HTML, {
 		navItems: navItemsHtml,
-		languageSwitch: buildLanguageSwitchHtml(),
+		languageSwitch: "",
 	});
 }
 
@@ -308,7 +308,7 @@ function buildSocialLinksFragment(): string {
 							</div>
 							<p class="admin-editor-help mb-0">
 								{kind === "header"
-									? "Insert saved placeholders directly into the template. In the default header, {{navigation}} expands into the shared navigation layout, which is also where the language switch appears."
+									? "Insert saved placeholders directly into the template. The shared navigation block now renders only the menu layout, while {{languageSwitch}} is controlled explicitly from the header template."
 									: "Insert saved placeholders directly into the template. The preview on this page still uses the same stored HTML contract."}
 							</p>
 							<div class="template-editor-stack">
