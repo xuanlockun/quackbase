@@ -1363,6 +1363,7 @@ const navActionIcons = {
 			restoreFieldBank(selectedRow);
 		}
 
+		expandAncestorChain(row);
 		selectedRow = row;
 		updateSelectedRowUi();
 
@@ -1389,6 +1390,26 @@ const navActionIcons = {
 			current = current.nextElementSibling;
 		}
 		return rows;
+	};
+
+	const expandAncestorChain = (row) => {
+		if (!(row instanceof HTMLElement)) {
+			return;
+		}
+		const rowDepth = getRowDepth(row);
+		if (rowDepth <= 0) {
+			return;
+		}
+		let currentDepth = rowDepth;
+		let current = row.previousElementSibling;
+		while (current instanceof HTMLElement && current.matches("[data-nav-row]") && currentDepth > 0) {
+			const depth = getRowDepth(current);
+			if (depth < currentDepth) {
+				current.dataset.collapsed = "false";
+				currentDepth = depth;
+			}
+			current = current.previousElementSibling;
+		}
 	};
 
 	const attachNavRow = (row) => {
@@ -1656,6 +1677,7 @@ const navActionIcons = {
 		if (isReadOnly || !(rowsContainer instanceof HTMLElement) || !(parentRow instanceof HTMLElement)) {
 			return;
 		}
+		parentRow.dataset.collapsed = "false";
 		const depth = clampDepth(getRowDepth(parentRow) + 1);
 		const newRow = createNavRow({ label: defaultNavLabel, href: "/" }, depth);
 		const insertAfter = findInsertPositionForChild(parentRow);
