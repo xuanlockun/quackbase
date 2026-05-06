@@ -1,5 +1,5 @@
 <h1 style="display: flex; align-items: center; gap: 10px;">
-  <img src="docs/quackbase1.png" alt="V1t" height="40">
+  <img src="docs/quackbase.png" alt="V1t" height="40">
   <span>Quackbase</span>
 </h1>
 

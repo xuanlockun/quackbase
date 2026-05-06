@@ -324,9 +324,18 @@ const mediaActionCopy = {
 					<a class="small media-status-link" href="/admin/settings?tab=media">Storage settings</a>
 				</div>
 			</div>
+		</div>
 
-			<div class="media-library-actions" aria-label="Media library primary actions">
-				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="media-action-form media-action-form-upload">
+		<div class="media-library-actions" aria-label="Media library primary actions">
+			<section class="media-action-card media-action-card-primary admin-form-surface admin-stack-section">
+				<div class="media-action-card-header">
+					<div>
+						<h2 class="h6 mb-1">{t("actions.uploadFiles", "Upload files")}</h2>
+						<p class="admin-inline-muted mb-0">Add files to {folderTitle} and publish them to the media library.</p>
+					</div>
+					<span class="badge text-bg-light text-uppercase">Step 1</span>
+				</div>
+				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="media-action-form media-action-form-upload" data-media-upload-form>
 					<input type="hidden" name="folderPath" value={currentFolder} />
 					<label class="visually-hidden" for="mediaFiles">{t("actions.uploadFiles", "Upload files")}</label>
 					<input
@@ -336,40 +345,72 @@ const mediaActionCopy = {
 						name="files"
 						multiple
 						disabled={!storageStatus.isConfigured || !canManage}
+						data-media-upload-input
 					/>
-					<label class:list={["btn btn-primary media-action-button", (!storageStatus.isConfigured || !canManage) && "disabled"]} for="mediaFiles">
-						<span class="media-action-button-icon" aria-hidden="true" set:html={uploadIcon}></span>
-						<span>{t("actions.uploadFiles", "Upload files")}</span>
-					</label>
-				</form>
-
-				<form method="post" action="/api/admin/media/folders" class="media-action-form">
-					<input type="hidden" name="parentFolderPath" value={currentFolder} />
-					<label class="visually-hidden" for="folderName">{t("labels.folderName", "Folder name")}</label>
-					<div class="media-inline-action">
-						<input
-							id="folderName"
-							class="form-control media-action-input"
-							type="text"
-							name="folderName"
-							placeholder={currentFolder ? t("messages.newFolderName", "new-folder") : t("messages.imagesFolderName", "images")}
-							disabled={!storageStatus.isConfigured || !canManage}
-						/>
-						<button class="btn btn-outline-secondary media-action-button" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
-							<span class="media-action-button-icon" aria-hidden="true" set:html={folderIcon}></span>
-							<span>{t("actions.newFolder", "New folder")}</span>
-						</button>
+					<div class="media-upload-panel">
+						<label
+							class:list={["btn btn-primary media-action-button media-upload-picker", (!storageStatus.isConfigured || !canManage) && "disabled"]}
+							for="mediaFiles"
+						>
+							<span class="media-action-button-icon" aria-hidden="true" set:html={uploadIcon}></span>
+							<span>{t("actions.chooseFiles", "Choose files")}</span>
+						</label>
+						<div class="media-upload-status" aria-live="polite">
+							<strong data-media-upload-count>No files selected</strong>
+							<p class="mb-0 text-body-secondary small" data-media-upload-summary>
+								Select one or more files, then use the upload button to send them to this folder.
+							</p>
+						</div>
+						<div class="media-upload-actions">
+							<button class="btn btn-success media-action-button" type="submit" disabled data-media-upload-submit>
+								<span class="media-action-button-icon" aria-hidden="true" set:html={uploadIcon}></span>
+								<span>{t("actions.uploadFiles", "Upload files")}</span>
+							</button>
+							<button class="btn btn-outline-secondary media-action-button" type="button" hidden data-media-upload-clear>
+								<span>{t("actions.clear", "Clear")}</span>
+							</button>
+						</div>
 					</div>
 				</form>
+			</section>
 
-				<form method="post" action="/api/admin/media/sync" class="media-action-form">
-					<label class="visually-hidden" for="syncBucket">{t("actions.refreshMedia", "Refresh media")}</label>
-					<button id="syncBucket" class="btn btn-outline-secondary media-action-button" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
-						<span class="media-action-button-icon" aria-hidden="true" set:html={refreshIcon}></span>
-						<span>{t("actions.refresh", "Refresh")}</span>
-					</button>
-				</form>
-			</div>
+			<section class="media-action-card admin-form-surface admin-stack-section">
+				<div class="media-action-card-header">
+					<div>
+						<h2 class="h6 mb-1">Organize library</h2>
+						<p class="admin-inline-muted mb-0">Create folders for new sections or refresh the bucket before reviewing files below.</p>
+					</div>
+					<span class="badge text-bg-light text-uppercase">Step 2</span>
+				</div>
+				<div class="media-action-stack">
+					<form method="post" action="/api/admin/media/folders" class="media-action-form">
+						<input type="hidden" name="parentFolderPath" value={currentFolder} />
+						<label class="visually-hidden" for="folderName">{t("labels.folderName", "Folder name")}</label>
+						<div class="media-inline-action">
+							<input
+								id="folderName"
+								class="form-control media-action-input"
+								type="text"
+								name="folderName"
+								placeholder={currentFolder ? t("messages.newFolderName", "new-folder") : t("messages.imagesFolderName", "images")}
+								disabled={!storageStatus.isConfigured || !canManage}
+							/>
+							<button class="btn btn-outline-secondary media-action-button" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
+								<span class="media-action-button-icon" aria-hidden="true" set:html={folderIcon}></span>
+								<span>{t("actions.newFolder", "New folder")}</span>
+							</button>
+						</div>
+					</form>
+
+					<form method="post" action="/api/admin/media/sync" class="media-action-form">
+						<label class="visually-hidden" for="syncBucket">{t("actions.refreshMedia", "Refresh media")}</label>
+						<button id="syncBucket" class="btn btn-outline-secondary media-action-button" type="submit" disabled={!storageStatus.isConfigured || !canManage}>
+							<span class="media-action-button-icon" aria-hidden="true" set:html={refreshIcon}></span>
+							<span>{t("actions.refresh", "Refresh")}</span>
+						</button>
+					</form>
+				</div>
+			</section>
 		</div>
 
 		<div class="media-library-layout">
@@ -898,6 +939,54 @@ const mediaActionCopy = {
 	const selectedCountNodes = document.querySelectorAll("[data-media-selected-count]");
 	const clearSelectionButton = document.querySelector("[data-media-clear-selection]");
 	const selectionCheckboxes = [...document.querySelectorAll("[data-media-select]")];
+	const uploadForm = document.querySelector("[data-media-upload-form]");
+	const uploadInput = document.querySelector("[data-media-upload-input]");
+	const uploadSubmitButton = document.querySelector("[data-media-upload-submit]");
+	const uploadClearButton = document.querySelector("[data-media-upload-clear]");
+	const uploadCountNode = document.querySelector("[data-media-upload-count]");
+	const uploadSummaryNode = document.querySelector("[data-media-upload-summary]");
+
+	const formatUploadCount = (count) => `${count} file${count === 1 ? "" : "s"} selected`;
+
+	const formatUploadSummary = (files) => {
+		if (!files.length) {
+			return "Select one or more files, then use the upload button to send them to this folder.";
+		}
+
+		if (files.length === 1) {
+			return files[0].name;
+		}
+
+		const previewNames = files.slice(0, 2).map((file) => file.name);
+		const remaining = files.length - previewNames.length;
+		return remaining > 0 ? `${previewNames.join(", ")} and ${remaining} more.` : previewNames.join(", ");
+	};
+
+	const syncUploadState = () => {
+		if (!(uploadInput instanceof HTMLInputElement)) {
+			return;
+		}
+
+		const files = Array.from(uploadInput.files ?? []);
+		const hasFiles = files.length > 0;
+
+		if (uploadCountNode instanceof HTMLElement) {
+			uploadCountNode.textContent = hasFiles ? formatUploadCount(files.length) : "No files selected";
+		}
+
+		if (uploadSummaryNode instanceof HTMLElement) {
+			uploadSummaryNode.textContent = formatUploadSummary(files);
+		}
+
+		if (uploadSubmitButton instanceof HTMLButtonElement) {
+			uploadSubmitButton.disabled = !hasFiles || uploadInput.disabled;
+		}
+
+		if (uploadClearButton instanceof HTMLButtonElement) {
+			uploadClearButton.hidden = !hasFiles;
+			uploadClearButton.disabled = !hasFiles;
+		}
+	};
 
 	const syncCopyButton = (button) => {
 		if (!(button instanceof HTMLButtonElement)) {
@@ -928,6 +1017,21 @@ const mediaActionCopy = {
 	};
 
 	copyButtons.forEach(syncCopyButton);
+	uploadInput?.addEventListener("change", syncUploadState);
+	uploadClearButton?.addEventListener("click", () => {
+		if (!(uploadInput instanceof HTMLInputElement)) {
+			return;
+		}
+
+		uploadInput.value = "";
+		syncUploadState();
+	});
+	uploadForm?.addEventListener("submit", () => {
+		if (uploadSubmitButton instanceof HTMLButtonElement) {
+			uploadSubmitButton.disabled = true;
+		}
+	});
+	syncUploadState();
 
 	const updateSelectionState = () => {
 		const selectedIds = selectionCheckboxes
@@ -1173,11 +1277,6 @@ const mediaActionCopy = {
 		align-items: start;
 	}
 
-	.media-library-toolbar {
-		display: grid;
-		gap: 1rem;
-	}
-
 	.media-library-summary {
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
@@ -1187,12 +1286,7 @@ const mediaActionCopy = {
 
 	.media-library-actions {
 		display: grid;
-		grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto;
-		gap: 0.85rem;
-	}
-
-	.media-library-header {
-		display: grid;
+		grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.95fr);
 		gap: 1rem;
 	}
 
@@ -1245,8 +1339,62 @@ const mediaActionCopy = {
 		align-content: start;
 	}
 
+	.media-action-card {
+		display: grid;
+		gap: 1rem;
+		min-width: 0;
+	}
+
+	.media-action-card-primary {
+		background:
+			linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(255, 255, 255, 1)),
+			#fff;
+	}
+
+	.media-action-card-header {
+		display: flex;
+		align-items: start;
+		justify-content: space-between;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	.media-action-stack {
+		display: grid;
+		gap: 0.85rem;
+	}
+
 	.media-action-form-upload {
 		min-width: 0;
+	}
+
+	.media-upload-panel {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		gap: 0.85rem;
+		align-items: center;
+		padding: 1rem;
+		border: 1px dashed rgba(15, 23, 42, 0.16);
+		border-radius: 1rem;
+		background: rgba(248, 250, 252, 0.78);
+	}
+
+	.media-upload-picker {
+		min-width: 10.5rem;
+	}
+
+	.media-upload-status {
+		min-width: 0;
+		display: grid;
+		gap: 0.2rem;
+	}
+
+	.media-upload-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		justify-content: flex-end;
 	}
 
 	.media-inline-action {
@@ -1270,7 +1418,7 @@ const mediaActionCopy = {
 		min-height: 2.5rem;
 	}
 
-	.media-action-form-upload .media-action-button {
+	.media-action-form-upload .media-upload-picker {
 		justify-content: space-between;
 		padding-inline: 1rem;
 	}
@@ -1705,6 +1853,15 @@ const mediaActionCopy = {
 
 		.media-advanced-grid {
 			grid-template-columns: 1fr;
+		}
+
+		.media-upload-panel {
+			grid-template-columns: 1fr;
+			align-items: start;
+		}
+
+		.media-upload-actions {
+			justify-content: start;
 		}
 	}
 
