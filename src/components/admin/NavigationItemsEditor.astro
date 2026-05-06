@@ -1419,7 +1419,11 @@ const navActionIcons = {
 
 	const createFieldBank = (entry = {}) => {
 		const languages = JSON.parse(editor?.dataset.languages ?? "[]");
-		const labelTranslations = entry.labelTranslations ?? {};
+		const labelTranslations = { ...(entry.labelTranslations ?? {}) };
+		const defaultLanguage = editor?.dataset.defaultLanguage ?? "";
+		if (entry.label && defaultLanguage && !labelTranslations[defaultLanguage]) {
+			labelTranslations[defaultLanguage] = entry.label;
+		}
 		const fieldBank = document.createElement("div");
 		fieldBank.className = "nav-tree-fields";
 		fieldBank.dataset.navFieldBank = "";
@@ -1475,6 +1479,7 @@ const navActionIcons = {
 		row.className = "nav-tree-row";
 		row.setAttribute("role", "listitem");
 		row.dataset.navRow = "";
+		row.dataset.rowIndex = "-1";
 		row.dataset.hasChildren = "false";
 		row.dataset.collapsed = "false";
 		row.draggable = !isReadOnly;
@@ -1493,50 +1498,29 @@ const navActionIcons = {
 
 		const card = document.createElement("div");
 		card.className = "nav-tree-card";
-
-		const main = document.createElement("div");
-		main.className = "nav-tree-main";
-		main.dataset.navSelect = "";
-		main.tabIndex = 0;
-		main.setAttribute("role", "button");
-		main.setAttribute("aria-pressed", "false");
-
-		const toggleButton = document.createElement("button");
-		toggleButton.type = "button";
-		toggleButton.className = "btn btn-sm btn-outline-secondary nav-tree-toggle";
-		toggleButton.dataset.navToggle = "";
-		toggleButton.hidden = true;
-		toggleButton.setAttribute("aria-expanded", "true");
-		toggleButton.setAttribute("aria-label", collapseLabel);
-		const toggleGlyph = document.createElement("span");
-		toggleGlyph.className = "nav-tree-toggle-glyph";
-		toggleGlyph.setAttribute("aria-hidden", "true");
-		toggleGlyph.innerHTML = `
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M6 9l6 6 6-6" />
-			</svg>
+		card.innerHTML = `
+			<div class="nav-tree-main" data-nav-select tabindex="0" role="button" aria-pressed="false">
+				<button
+					class="btn btn-sm btn-outline-secondary nav-tree-toggle"
+					type="button"
+					data-nav-toggle
+					hidden
+					aria-expanded="true"
+					aria-label="${collapseLabel}"
+				>
+					<span class="nav-tree-toggle-glyph" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M6 9l6 6 6-6" />
+						</svg>
+					</span>
+				</button>
+				<span class="nav-drag-handle" data-drag-handle aria-label="${dragLabel}"></span>
+				<div class="nav-tree-summary">
+					<strong class="nav-tree-title" data-nav-preview-title>${fallbackLabel}</strong>
+					<span class="nav-tree-path" data-nav-preview-path hidden>${entry.href ?? "/"}</span>
+				</div>
+			</div>
 		`;
-		toggleButton.append(toggleGlyph);
-
-		const dragHandle = document.createElement("span");
-		dragHandle.className = "nav-drag-handle";
-		dragHandle.dataset.dragHandle = "";
-		dragHandle.setAttribute("aria-label", dragLabel);
-
-		const summary = document.createElement("div");
-		summary.className = "nav-tree-summary";
-		const title = document.createElement("strong");
-		title.className = "nav-tree-title";
-		title.dataset.navPreviewTitle = "";
-		title.textContent = fallbackLabel;
-		const path = document.createElement("span");
-		path.className = "nav-tree-path";
-		path.dataset.navPreviewPath = "";
-		path.textContent = entry.href ?? "/";
-		summary.append(title, path);
-		main.append(toggleButton, dragHandle, summary);
-
-		card.append(main);
 		row.append(card);
 
 		const fieldHost = document.createElement("div");
