@@ -57,7 +57,7 @@ const pageEditFeedback = [
 	pageDescription={t("messages.editPageDescription")}
 >
 	<div class="admin-content-stack">
-		<FeedbackModal id="page-edit-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
+		<FeedbackModal id="page-edit-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 		{
 			notFound ? (
 				<div class="admin-empty-state">

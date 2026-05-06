@@ -36,10 +36,10 @@ const totalForms = forms.length;
 const activeForms = forms.filter((form) => form.isActive).length;
 const totalSubmissions = Object.values(submissionCounts).reduce((sum, count) => sum + Number(count || 0), 0);
 const contactFormFeedback = [
-	["created", { title: "Form created", message: t("messages.contactFormCreated", "The contact form was created successfully."), tone: "success" }],
-	["saved", { title: "Form saved", message: t("messages.contactFormSaved", "The contact form was saved successfully."), tone: "success" }],
-	["deleted", { title: "Form deleted", message: t("messages.contactFormDeleted", "The contact form was deleted."), tone: "success" }],
-	["error", { title: "Action failed", message: t("messages.contactFormRequestFailed", "The contact form request failed."), tone: "error" }],
+	["created", { title: t("messages.formCreatedTitle", "Form created"), message: t("messages.contactFormCreated", "The contact form was created successfully."), tone: "success" }],
+	["saved", { title: t("messages.formSavedTitle", "Form saved"), message: t("messages.contactFormSaved", "The contact form was saved successfully."), tone: "success" }],
+	["deleted", { title: t("messages.formDeletedTitle", "Form deleted"), message: t("messages.contactFormDeleted", "The contact form was deleted."), tone: "success" }],
+	["error", { title: t("messages.actionFailedTitle", "Action failed"), message: t("messages.contactFormRequestFailed", "The contact form request failed."), tone: "error" }],
 ] as const;
 const statCards = [
 	{
@@ -95,7 +95,7 @@ const statCards = [
 		{canManage && <CreateAction href="/admin/contact-forms/new" label={t("actions.createContactForm")} />}
 	</div>
 
-	<FeedbackModal id="contact-forms-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
+	<FeedbackModal id="contact-forms-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
 		<div class="contact-forms-stats">
 			{statCards.map((card) => (

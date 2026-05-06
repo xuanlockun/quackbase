@@ -1,4 +1,6 @@
 ---
+import { getUiTranslations } from "../../lib/i18n";
+
 interface Props {
 	id: string;
 	title?: string;
@@ -6,7 +8,8 @@ interface Props {
 	tone?: "info" | "success" | "warning" | "error";
 }
 
-const { id, title = "Status update", closeLabel = "Close", tone = "info" } = Astro.props;
+const { t } = getUiTranslations(Astro);
+const { id, title = t("messages.statusUpdate", "Status update"), closeLabel = t("actions.close", "Close"), tone = "info" } = Astro.props;
 ---
 
 <div class="modal fade" id={id} tabindex="-1" aria-hidden="true" data-admin-feedback-modal data-feedback-tone={tone}>
@@ -19,7 +22,7 @@ const { id, title = "Status update", closeLabel = "Close", tone = "info" } = Ast
 						<span class="admin-feedback-modal-glyph" data-feedback-modal-glyph>i</span>
 					</span>
 					<div class="min-w-0">
-						<p class="admin-feedback-modal-kicker mb-1" data-feedback-modal-kicker>Info</p>
+							<p class="admin-feedback-modal-kicker mb-1 text-capitalize" data-feedback-modal-kicker>{tone}</p>
 						<h2 class="modal-title h5 mb-0 text-break" data-feedback-modal-title>{title}</h2>
 					</div>
 				</div>
@@ -72,7 +75,7 @@ const { id, title = "Status update", closeLabel = "Close", tone = "info" } = Ast
 			const primaryButton = modalEl.querySelector("[data-feedback-modal-primary]");
 
 			if (titleEl instanceof HTMLElement) {
-				titleEl.textContent = title || titleEl.textContent || "Status update";
+					titleEl.textContent = title || titleEl.textContent || "";
 			}
 			if (messageEl instanceof HTMLElement) {
 				messageEl.textContent = message || "";

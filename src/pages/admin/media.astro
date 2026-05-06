@@ -65,11 +65,15 @@ const mediaFolderChoices = folderOptions.map((folder) => ({
 	label: formatFolderLabel(folder.folderPath),
 }));
 const folderTitle = currentFolder ? formatFolderLabel(currentFolder) : t("messages.allMedia", "All media");
-const storageConnectedLabel = storageStatus.isConfigured ? "Storage connected" : "Storage not connected";
-const storageReadyLabel = storageStatus.isConfigured ? "Ready to upload" : "Connect storage to upload";
+const storageConnectedLabel = storageStatus.isConfigured
+	? t("messages.storageConnected", "Storage connected")
+	: t("messages.storageNotConnected", "Storage not connected");
+const storageReadyLabel = storageStatus.isConfigured
+	? t("messages.readyToUpload", "Ready to upload")
+	: t("messages.connectStorageToUpload", "Connect storage to upload");
 const storageSummaryText = storageStatus.isConfigured
-	? "Uploads are ready and the media library is available."
-	: "Connect storage in settings to enable uploads and syncing.";
+	? t("messages.mediaStorageReadySummary", "Uploads are ready and the media library is available.")
+	: t("messages.mediaStorageSetupSummary", "Connect storage in settings to enable uploads and syncing.");
 const uploadIcon = `
 	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
 		<path d="M12 16V4" />
@@ -272,11 +276,11 @@ function buildFolderHref(folderPath: string, view = currentView): string {
 }
 
 const mediaFeedback = [
-	["uploaded", { title: "Upload complete", message: t("messages.mediaUploadSuccess"), tone: "success" }],
-	["updated", { title: "Media updated", message: "The file was renamed or moved.", tone: "success" }],
-	["deleted", { title: "Asset deleted", message: t("messages.mediaDeleteSuccess"), tone: "success" }],
-	["folderCreated", { title: "Folder created", message: t("messages.folderCreated", "Folder created."), tone: "success" }],
-	["synced", { title: "Library refreshed", message: "Media library refreshed from bucket.", tone: "success" }],
+	["uploaded", { title: t("messages.uploadCompleteTitle", "Upload complete"), message: t("messages.mediaUploadSuccess"), tone: "success" }],
+	["updated", { title: t("messages.mediaUpdatedTitle", "Media updated"), message: t("messages.mediaUpdated", "The file was renamed or moved."), tone: "success" }],
+	["deleted", { title: t("messages.assetDeletedTitle", "Asset deleted"), message: t("messages.mediaDeleteSuccess"), tone: "success" }],
+	["folderCreated", { title: t("messages.folderCreatedTitle", "Folder created"), message: t("messages.folderCreated", "Folder created."), tone: "success" }],
+	["synced", { title: t("messages.libraryRefreshedTitle", "Library refreshed"), message: t("messages.mediaSynced", "Media library refreshed from bucket."), tone: "success" }],
 ] as const;
 const mediaActionCopy = {
 	renameTitle: t("actions.rename", "Rename file"),
@@ -299,7 +303,7 @@ const mediaActionCopy = {
 	pageDescription={t("messages.mediaLibraryHelp")}
 >
 	<div class="admin-content-stack media-library-shell">
-		<FeedbackModal id="media-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
+		<FeedbackModal id="media-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 
 		<div class="media-library-header admin-form-surface admin-stack-section">
 			<div class="media-library-summary">
@@ -312,8 +316,8 @@ const mediaActionCopy = {
 					</svg>
 				</span>
 				<div class="min-w-0">
-					<p class="media-status-kicker mb-1">Library status</p>
-					<h2 class="h5 mb-1">Manage uploads and folders</h2>
+					<p class="media-status-kicker mb-1">{t("messages.libraryStatus", "Library status")}</p>
+					<h2 class="h5 mb-1">{t("messages.manageUploadsAndFolders", "Manage uploads and folders")}</h2>
 					<p class="mb-0 text-body-secondary">{storageSummaryText}</p>
 				</div>
 				<div class="media-status-meta">
@@ -321,19 +325,19 @@ const mediaActionCopy = {
 						{storageConnectedLabel}
 					</span>
 					<span class="small text-body-secondary">{storageReadyLabel}</span>
-					<a class="small media-status-link" href="/admin/settings?tab=media">Storage settings</a>
+					<a class="small media-status-link" href="/admin/settings?tab=media">{t("messages.storageSettingsLink", "Storage settings")}</a>
 				</div>
 			</div>
 		</div>
 
-		<div class="media-library-actions" aria-label="Media library primary actions">
+		<div class="media-library-actions" aria-label={t("labels.mediaLibraryPrimaryActions", "Media library primary actions")}>
 			<section class="media-action-card media-action-card-primary admin-form-surface admin-stack-section">
 				<div class="media-action-card-header">
 					<div>
 						<h2 class="h6 mb-1">{t("actions.uploadFiles", "Upload files")}</h2>
-						<p class="admin-inline-muted mb-0">Add files to {folderTitle} and publish them to the media library.</p>
+						<p class="admin-inline-muted mb-0">{t("messages.mediaUploadToFolder", "Add files to {folder} and publish them to the media library.").replace("{folder}", folderTitle)}</p>
 					</div>
-					<span class="badge text-bg-light text-uppercase">Step 1</span>
+					<span class="badge text-bg-light text-uppercase">{t("messages.stepNumber", "Step {number}").replace("{number}", "1")}</span>
 				</div>
 				<form method="post" action="/api/admin/media" enctype="multipart/form-data" class="media-action-form media-action-form-upload" data-media-upload-form>
 					<input type="hidden" name="folderPath" value={currentFolder} />
@@ -356,9 +360,9 @@ const mediaActionCopy = {
 							<span>{t("actions.chooseFiles", "Choose files")}</span>
 						</label>
 						<div class="media-upload-status" aria-live="polite">
-							<strong data-media-upload-count>No files selected</strong>
+							<strong data-media-upload-count>{t("messages.noFilesSelected", "No files selected")}</strong>
 							<p class="mb-0 text-body-secondary small" data-media-upload-summary>
-								Select one or more files, then use the upload button to send them to this folder.
+								{t("messages.selectFilesBeforeUpload", "Select one or more files, then use the upload button to send them to this folder.")}
 							</p>
 						</div>
 						<div class="media-upload-actions">
@@ -377,10 +381,10 @@ const mediaActionCopy = {
 			<section class="media-action-card admin-form-surface admin-stack-section">
 				<div class="media-action-card-header">
 					<div>
-						<h2 class="h6 mb-1">Organize library</h2>
-						<p class="admin-inline-muted mb-0">Create folders for new sections or refresh the bucket before reviewing files below.</p>
+						<h2 class="h6 mb-1">{t("messages.organizeLibrary", "Organize library")}</h2>
+						<p class="admin-inline-muted mb-0">{t("messages.organizeLibraryHelp", "Create folders for new sections or refresh the bucket before reviewing files below.")}</p>
 					</div>
-					<span class="badge text-bg-light text-uppercase">Step 2</span>
+					<span class="badge text-bg-light text-uppercase">{t("messages.stepNumber", "Step {number}").replace("{number}", "2")}</span>
 				</div>
 				<div class="media-action-stack">
 					<form method="post" action="/api/admin/media/folders" class="media-action-form">
@@ -422,7 +426,7 @@ const mediaActionCopy = {
 					</div>
 					<span class="admin-quiet-badge">{folderEntries.length} {t("labels.folders", "folders")}</span>
 				</div>
-				<nav class="media-folder-list" aria-label="Media folders">
+				<nav class="media-folder-list" aria-label={t("labels.mediaFolders", "Media folders")}>
 					<a class:list={["media-folder-item", !currentFolder ? "is-active" : ""]} href={buildFolderHref("", currentView)}>
 						<span class="media-folder-item-icon" aria-hidden="true" set:html={folderIcon}></span>
 						<span class="media-folder-title">{t("messages.allMedia", "All media")}</span>
@@ -465,9 +469,7 @@ const mediaActionCopy = {
 				<div class="media-content-header">
 					<div class="min-w-0">
 						<h2 class="h5 mb-1 text-break">{folderTitle}</h2>
-						<p class="admin-inline-muted mb-0">
-							{visibleAssets.length} {t("labels.files", "files")}, {childFolderEntries.length} {t("labels.folders", "folders")}
-						</p>
+						<p class="admin-inline-muted mb-0">{t("messages.mediaFolderSummary", "{files} files, {folders} folders").replace("{files}", String(visibleAssets.length)).replace("{folders}", String(childFolderEntries.length))}</p>
 					</div>
 					<div class="d-flex flex-wrap gap-2 align-items-center">
 						<div class="btn-group btn-group-sm" role="group" aria-label={t("labels.viewMode", "View mode")}>
@@ -699,7 +701,7 @@ const mediaActionCopy = {
 																		>
 																			<input type="hidden" name="_action" value="delete" />
 																			<button type="submit" class="dropdown-item text-danger">
-																				Delete
+																				{t("actions.delete", "Delete")}
 																			</button>
 																		</form>
 																	</li>
@@ -726,7 +728,7 @@ const mediaActionCopy = {
 														type="checkbox"
 														data-media-select
 														data-asset-id={asset.id}
-														aria-label={`Select ${asset.fileName}`}
+															aria-label={t("messages.selectAsset", "Select {name}").replace("{name}", asset.fileName)}
 													/>
 												</label>
 												<div class="media-card-preview">
@@ -775,11 +777,11 @@ const mediaActionCopy = {
 																	<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
 																</svg>
 															</span>
-															<span class="visually-hidden">{canCopyPublicUrl ? t("actions.copyUrl", "Copy URL") : "No public URL configured"}</span>
+															<span class="visually-hidden">{canCopyPublicUrl ? t("actions.copyUrl", "Copy URL") : t("messages.noPublicUrlConfigured", "No public URL configured")}</span>
 														</button>
 														<div class="dropdown">
 															<button class="btn btn-sm btn-outline-secondary media-more-button dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-																<span class="visually-hidden">Media actions</span>
+																<span class="visually-hidden">{t("labels.mediaActions", "Media actions")}</span>
 																<span aria-hidden="true" class="media-more-icon" set:html={moreIcon}></span>
 															</button>
 															<ul class="dropdown-menu dropdown-menu-end">
@@ -792,7 +794,7 @@ const mediaActionCopy = {
 																		data-asset-name={asset.fileName}
 																		data-asset-folder={asset.folderPath}
 																	>
-																		Rename
+																		{t("actions.rename", "Rename")}
 																	</button>
 																</li>
 																<li>
@@ -804,7 +806,7 @@ const mediaActionCopy = {
 																		data-asset-name={asset.fileName}
 																		data-asset-folder={asset.folderPath}
 																	>
-																		Move
+																		{t("actions.move", "Move")}
 																	</button>
 																</li>
 																<li>
@@ -861,11 +863,11 @@ const mediaActionCopy = {
 							</span>
 						</span>
 						<div class="min-w-0">
-							<p class="admin-feedback-modal-kicker mb-1">Media action</p>
+							<p class="admin-feedback-modal-kicker mb-1">{t("messages.mediaAction", "Media action")}</p>
 							<h2 class="modal-title h5 mb-0 text-break" data-media-action-modal-title>{t("actions.rename", "Rename file")}</h2>
 						</div>
 					</div>
-					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label={t("actions.close", "Close")}></button>
 				</div>
 				<div class="modal-body px-3 px-sm-4 py-3">
 					<p class="mb-3 text-body-secondary" data-media-action-modal-message>{t("messages.mediaRenameHelp", "Update the file name without changing the asset contents.")}</p>
@@ -894,19 +896,33 @@ const mediaActionCopy = {
 	</div>
 </AdminLayout>
 
-<script type="module" define:vars={{ mediaFeedback, loadError, mediaActionCopy }}>
+<script
+	type="module"
+	define:vars={{
+		mediaFeedback,
+		loadError,
+		mediaActionCopy,
+		actionFailedTitle: t("messages.actionFailedTitle", "Action failed"),
+		mediaRequestFailedMessage: t("messages.mediaRequestFailed", "Media request failed."),
+		mediaLoadFailedTitle: t("messages.mediaLoadFailedTitle", "Media load failed"),
+		syncDetailTemplate: t("messages.mediaSyncDetail", "Imported {imported}, updated {updated}."),
+		uploadedDetailTemplate: t("messages.uploadedFilesDetail", "{count} file{suffix} uploaded."),
+		deletedDetailTemplate: t("messages.deletedFilesDetail", "{count} file{suffix} deleted."),
+		updatedDetailTemplate: t("messages.updatedItemsDetail", "{count} item{suffix} updated."),
+	}}
+>
 	const showFeedbackModal = window.showAdminFeedbackModal;
 	const search = new URLSearchParams(window.location.search);
 
 	const errorMessage = search.get("errorMessage");
 	if (errorMessage && typeof showFeedbackModal === "function") {
-		showFeedbackModal({ title: "Action failed", message: errorMessage, tone: "error" });
+		showFeedbackModal({ title: actionFailedTitle, message: errorMessage, tone: "error" });
 		window.history.replaceState({}, "", window.location.pathname + window.location.hash);
 	} else if (search.has("error") && typeof showFeedbackModal === "function") {
-		showFeedbackModal({ title: "Action failed", message: "Media request failed.", tone: "error" });
+		showFeedbackModal({ title: actionFailedTitle, message: mediaRequestFailedMessage, tone: "error" });
 		window.history.replaceState({}, "", window.location.pathname + window.location.hash);
 	} else if (loadError && typeof showFeedbackModal === "function") {
-		showFeedbackModal({ title: "Media load failed", message: loadError, tone: "error" });
+		showFeedbackModal({ title: mediaLoadFailedTitle, message: loadError, tone: "error" });
 	} else {
 		for (const [key, entry] of mediaFeedback) {
 			if (search.has(key)) {
@@ -914,14 +930,16 @@ const mediaActionCopy = {
 					const count = search.get(key);
 					const detail =
 						key === "synced" && (search.get("imported") || search.get("updated"))
-							? `Imported ${search.get("imported") ?? 0}, updated ${search.get("updated") ?? 0}.`
+							? syncDetailTemplate
+								.replace("{imported}", String(search.get("imported") ?? 0))
+								.replace("{updated}", String(search.get("updated") ?? 0))
 							: count
 								? key === "uploaded"
-									? `${count} file${count === "1" ? "" : "s"} uploaded.`
+									? uploadedDetailTemplate.replace("{count}", count).replace("{suffix}", count === "1" ? "" : "s")
 									: key === "deleted"
-										? `${count} file${count === "1" ? "" : "s"} deleted.`
+										? deletedDetailTemplate.replace("{count}", count).replace("{suffix}", count === "1" ? "" : "s")
 										: key === "updated"
-											? `${count} item${count === "1" ? "" : "s"} updated.`
+											? updatedDetailTemplate.replace("{count}", count).replace("{suffix}", count === "1" ? "" : "s")
 											: "";
 					showFeedbackModal({ title: entry.title, message: entry.message, detail, tone: entry.tone });
 				}
@@ -932,7 +950,17 @@ const mediaActionCopy = {
 	}
 </script>
 
-<script type="module">
+<script
+	type="module"
+	define:vars={{
+		noFilesSelectedLabel: t("messages.noFilesSelected", "No files selected"),
+		selectFilesBeforeUpload: t("messages.selectFilesBeforeUpload", "Select one or more files, then use the upload button to send them to this folder."),
+		selectedFilesTemplate: t("messages.selectedFilesDetail", "{count} file{suffix} selected"),
+		moreFilesTemplate: t("messages.additionalFilesDetail", "{names} and {remaining} more."),
+		copyUrlLabel: t("actions.copyUrl", "Copy URL"),
+		copiedLabel: t("messages.copied", "Copied"),
+	}}
+>
 	const copyButtons = document.querySelectorAll("[data-copy-media-url]");
 	const selectionBar = document.querySelector("[data-media-selection-bar]");
 	const selectedIdsInput = document.querySelector("[data-media-selected-ids]");
@@ -946,11 +974,11 @@ const mediaActionCopy = {
 	const uploadCountNode = document.querySelector("[data-media-upload-count]");
 	const uploadSummaryNode = document.querySelector("[data-media-upload-summary]");
 
-	const formatUploadCount = (count) => `${count} file${count === 1 ? "" : "s"} selected`;
+	const formatUploadCount = (count) => selectedFilesTemplate.replace("{count}", count).replace("{suffix}", count === 1 ? "" : "s");
 
 	const formatUploadSummary = (files) => {
 		if (!files.length) {
-			return "Select one or more files, then use the upload button to send them to this folder.";
+			return selectFilesBeforeUpload;
 		}
 
 		if (files.length === 1) {
@@ -959,7 +987,7 @@ const mediaActionCopy = {
 
 		const previewNames = files.slice(0, 2).map((file) => file.name);
 		const remaining = files.length - previewNames.length;
-		return remaining > 0 ? `${previewNames.join(", ")} and ${remaining} more.` : previewNames.join(", ");
+		return remaining > 0 ? moreFilesTemplate.replace("{names}", previewNames.join(", ")).replace("{remaining}", remaining) : previewNames.join(", ");
 	};
 
 	const syncUploadState = () => {
@@ -971,7 +999,7 @@ const mediaActionCopy = {
 		const hasFiles = files.length > 0;
 
 		if (uploadCountNode instanceof HTMLElement) {
-			uploadCountNode.textContent = hasFiles ? formatUploadCount(files.length) : "No files selected";
+			uploadCountNode.textContent = hasFiles ? formatUploadCount(files.length) : noFilesSelectedLabel;
 		}
 
 		if (uploadSummaryNode instanceof HTMLElement) {
@@ -1001,10 +1029,10 @@ const mediaActionCopy = {
 
 			try {
 				await navigator.clipboard.writeText(url);
-				const originalLabel = button.dataset.copyLabel || button.getAttribute("aria-label") || "Copy URL";
+				const originalLabel = button.dataset.copyLabel || button.getAttribute("aria-label") || copyUrlLabel;
 				button.classList.add("is-copied");
-				button.setAttribute("aria-label", "Copied");
-				button.title = "Copied";
+				button.setAttribute("aria-label", copiedLabel);
+				button.title = copiedLabel;
 				window.setTimeout(() => {
 					button.classList.remove("is-copied");
 					button.setAttribute("aria-label", originalLabel);

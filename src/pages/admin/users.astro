@@ -49,9 +49,9 @@ const filteredUsers = users.filter((user) => {
 
 const hasActiveFilters = Boolean(search || status !== "all" || role !== "all");
 const userFeedback = [
-	["created", { title: "User created", message: t("messages.userCreated"), tone: "success" }],
-	["saved", { title: "User saved", message: t("messages.userSaved"), tone: "success" }],
-	["error", { title: "Action failed", message: t("messages.userRequestFailed"), tone: "error" }],
+	["created", { title: t("messages.userCreatedTitle", "User created"), message: t("messages.userCreated"), tone: "success" }],
+	["saved", { title: t("messages.userSavedTitle", "User saved"), message: t("messages.userSaved"), tone: "success" }],
+	["error", { title: t("messages.actionFailedTitle", "Action failed"), message: t("messages.userRequestFailed"), tone: "error" }],
 ] as const;
 ---
 
@@ -66,42 +66,42 @@ const userFeedback = [
 		<CreateAction href="/admin/users/new" label={t("actions.createUser")} />
 	</div>
 
-	<FeedbackModal id="users-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
+	<FeedbackModal id="users-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
 		<FilterBar
 			title=""
 			description=""
 			searchName="q"
 			searchValue={search}
-			searchPlaceholder="Search"
+			searchPlaceholder={t("actions.search", "Search")}
 			resetHref={hasActiveFilters ? "/admin/users" : ""}
-			submitLabel="Filter"
+			submitLabel={t("actions.filter", "Filter")}
 			selects={[
 				{
 					name: "status",
-					label: "Status",
+					label: t("labels.status", "Status"),
 					value: status,
 					options: [
-						{ value: "all", label: "All statuses" },
+						{ value: "all", label: t("messages.allStatuses", "All statuses") },
 						{ value: "active", label: t("status.active") },
 						{ value: "inactive", label: t("status.inactive") },
 					],
 				},
 				{
 					name: "role",
-					label: "Role",
+					label: t("labels.role", "Role"),
 					value: role,
-					options: [{ value: "all", label: "All roles" }, ...roleOptions],
+					options: [{ value: "all", label: t("messages.allRoles", "All roles") }, ...roleOptions],
 				},
 			]}
 		/>
 		{hasActiveFilters && (
-			<p class="text-body-secondary small mb-0">{filteredUsers.length} of {users.length} users</p>
+			<p class="text-body-secondary small mb-0">{t("messages.filteredUsersSummary", "{shown} of {total} users").replace("{shown}", String(filteredUsers.length)).replace("{total}", String(users.length))}</p>
 		)}
 		<UserTable
 			users={filteredUsers}
-			emptyTitle={hasActiveFilters ? "No users match your filters" : undefined}
-			emptyDescription={hasActiveFilters ? "Clear filters or broaden the search." : undefined}
+			emptyTitle={hasActiveFilters ? t("messages.noUsersMatchFilters", "No users match your filters") : undefined}
+			emptyDescription={hasActiveFilters ? t("messages.adjustUserFilters", "Clear filters or broaden the search.") : undefined}
 		/>
 	</div>
 </AdminLayout>

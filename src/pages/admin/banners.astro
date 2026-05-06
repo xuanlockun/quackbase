@@ -31,10 +31,10 @@ try {
 }
 
 const bannerFeedback = [
-	["created", { title: "Banner created", message: t("messages.bannerCreated"), tone: "success" }],
-	["saved", { title: "Banner saved", message: t("messages.bannerSaved"), tone: "success" }],
-	["deleted", { title: "Banner deleted", message: t("messages.bannerDeleted"), tone: "success" }],
-	["error", { title: "Action failed", message: t("messages.bannerRequestFailed"), tone: "error" }],
+	["created", { title: t("messages.bannerCreatedTitle", "Banner created"), message: t("messages.bannerCreated"), tone: "success" }],
+	["saved", { title: t("messages.bannerSavedTitle", "Banner saved"), message: t("messages.bannerSaved"), tone: "success" }],
+	["deleted", { title: t("messages.bannerDeletedTitle", "Banner deleted"), message: t("messages.bannerDeleted"), tone: "success" }],
+	["error", { title: t("messages.actionFailedTitle", "Action failed"), message: t("messages.bannerRequestFailed"), tone: "error" }],
 ] as const;
 ---
 
@@ -49,7 +49,7 @@ const bannerFeedback = [
 		{canCreate && <CreateAction href="/admin/banners/new" label={t("actions.createBanner")} />}
 	</div>
 
-	<FeedbackModal id="banners-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
+	<FeedbackModal id="banners-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 

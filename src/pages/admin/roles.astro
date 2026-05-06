@@ -17,10 +17,10 @@ if (!session) {
 const roles = await listRolesWithPermissions(getDb(Astro.locals));
 const { t } = getUiTranslations(Astro);
 const roleFeedback = [
-	["created", { title: "Role created", message: t("messages.roleCreated"), tone: "success" }],
-	["saved", { title: "Role saved", message: t("messages.roleSaved"), tone: "success" }],
-	["deleted", { title: "Role deleted", message: t("messages.roleDeleted"), tone: "success" }],
-	["error", { title: "Action failed", message: t("messages.roleRequestFailed"), tone: "error" }],
+	["created", { title: t("messages.roleCreatedTitle", "Role created"), message: t("messages.roleCreated"), tone: "success" }],
+	["saved", { title: t("messages.roleSavedTitle", "Role saved"), message: t("messages.roleSaved"), tone: "success" }],
+	["deleted", { title: t("messages.roleDeletedTitle", "Role deleted"), message: t("messages.roleDeleted"), tone: "success" }],
+	["error", { title: t("messages.actionFailedTitle", "Action failed"), message: t("messages.roleRequestFailed"), tone: "error" }],
 ] as const;
 ---
 
@@ -35,7 +35,7 @@ const roleFeedback = [
 		<CreateAction href="/admin/roles/new" label={t("actions.createRole")} />
 	</div>
 
-	<FeedbackModal id="roles-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
+	<FeedbackModal id="roles-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
 		<RoleTable roles={roles} />
 	</div>

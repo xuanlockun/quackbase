@@ -1,4 +1,6 @@
 ---
+import { getUiTranslations } from "../../lib/i18n";
+
 interface Props {
 	id: string;
 	title?: string;
@@ -8,12 +10,13 @@ interface Props {
 	tone?: "danger" | "warning";
 }
 
+const { t } = getUiTranslations(Astro);
 const {
 	id,
-	title = "Confirm action",
-	message = "Are you sure you want to continue?",
-	confirmLabel = "Confirm",
-	cancelLabel = "Cancel",
+	title = t("messages.confirmActionTitle", "Confirm action"),
+	message = t("messages.confirmActionMessage", "Are you sure you want to continue?"),
+	confirmLabel = t("actions.confirm", "Confirm"),
+	cancelLabel = t("actions.cancel", "Cancel"),
 	tone = "danger",
 } = Astro.props;
 ---
@@ -28,7 +31,7 @@ const {
 						<span class="admin-feedback-modal-glyph" data-confirm-modal-glyph>!</span>
 					</span>
 					<div class="min-w-0">
-						<p class="admin-feedback-modal-kicker mb-1" data-confirm-modal-kicker>Danger</p>
+						<p class="admin-feedback-modal-kicker mb-1 text-capitalize" data-confirm-modal-kicker>{tone}</p>
 						<h2 class="modal-title h5 mb-0 text-break" data-confirm-modal-title>{title}</h2>
 					</div>
 				</div>
@@ -70,7 +73,7 @@ const {
 			const confirmButton = modalEl.querySelector("[data-confirm-modal-confirm]");
 
 			if (titleEl instanceof HTMLElement) {
-				titleEl.textContent = title || titleEl.textContent || "Confirm action";
+					titleEl.textContent = title || titleEl.textContent || "";
 			}
 			if (messageEl instanceof HTMLElement) {
 				messageEl.textContent = message || "";
@@ -94,7 +97,7 @@ const {
 				kickerEl.textContent = toneLabels[tone] || toneLabels.danger;
 			}
 			if (confirmButton instanceof HTMLButtonElement) {
-				confirmButton.textContent = confirmLabel || "Confirm";
+					confirmButton.textContent = confirmLabel || "";
 			}
 			modalEl.dataset.confirmTone = tone || "danger";
 		};
@@ -143,10 +146,10 @@ const {
 
 			const modalEl = getModalElement();
 			const payload = {
-				title: form.dataset.confirmTitle || "Delete item?",
-				message: form.dataset.confirmMessage || "This action cannot be undone.",
-				detail: form.dataset.confirmDetail || "",
-				confirmLabel: form.dataset.confirmConfirmLabel || "Delete",
+					title: form.dataset.confirmTitle || "",
+					message: form.dataset.confirmMessage || "",
+					detail: form.dataset.confirmDetail || "",
+					confirmLabel: form.dataset.confirmConfirmLabel || "",
 				tone: form.dataset.confirmTone || "danger",
 			};
 

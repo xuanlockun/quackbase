@@ -71,24 +71,30 @@ try {
 const formDisabled = Boolean(loadError);
 const mediaStorageConnected =
 	Boolean(siteConfig.mediaStorageSettings.s3Endpoint.trim()) && Boolean(siteConfig.mediaStorageSettings.s3Bucket.trim());
-const mediaStorageStatusPrimary = mediaStorageConnected ? "Storage connected" : "Storage not configured";
-const mediaStorageStatusSecondary = mediaStorageConnected ? "Ready to upload" : "Configure storage";
+const mediaStorageStatusPrimary = mediaStorageConnected
+	? t("messages.storageConnected", "Storage connected")
+	: t("messages.storageNotConfigured", "Storage not configured");
+const mediaStorageStatusSecondary = mediaStorageConnected
+	? t("messages.readyToUpload", "Ready to upload")
+	: t("messages.configureStorage", "Configure storage");
 const emailConfigured = Boolean(siteConfig.smtpSettings.fromEmail.trim()) && Boolean(siteConfig.smtpSettings.fromName.trim());
-const emailStatusPrimary = emailConfigured ? "Email service ready" : "Email service not configured";
-const emailStatusSecondary = resendApiKeyStored ? "API key stored" : "API key not stored";
+const emailStatusPrimary = emailConfigured
+	? t("messages.emailServiceReady", "Email service ready")
+	: t("messages.emailServiceNotConfigured", "Email service not configured");
+const emailStatusSecondary = resendApiKeyStored ? t("messages.apiKeyStored", "API key stored") : t("messages.apiKeyNotStored", "API key not stored");
 const settingsFeedback = [
-	["siteError", { title: "Settings failed", message: t("messages.siteSettingsFailed", "Site settings could not be saved."), tone: "error" }],
-	["siteSaved", { title: "Settings saved", message: t("messages.siteSettingsSaved", "Site settings were saved successfully."), tone: "success" }],
-	["secretError", { title: "Secret failed", message: t("messages.secretRequestFailed", "The secret request failed."), tone: "error" }],
-	["secretDeleted", { title: "Secret deleted", message: t("messages.secretDeleted", "The secret was removed."), tone: "success" }],
-	["secretSaved", { title: "Secret saved", message: t("messages.secretSaved", "The secret was stored successfully."), tone: "success" }],
-	["mediaError", { title: "Connection failed", message: "Media storage settings could not be saved.", tone: "error" }],
-	["mediaSaved", { title: "Settings saved", message: "Media storage settings were saved successfully.", tone: "success" }],
-	["smtpWarning", { title: "Email saved with warning", message: "Email settings were saved, but the API key could not be stored.", tone: "warning" }],
-	["smtpError", { title: "Email failed", message: "Email settings could not be saved.", tone: "error" }],
-	["smtpSaved", { title: "Email saved", message: "Email settings were saved successfully.", tone: "success" }],
-	["captchaError", { title: "Captcha failed", message: "Captcha settings could not be saved.", tone: "error" }],
-	["captchaSaved", { title: "Captcha saved", message: "Captcha settings were saved successfully.", tone: "success" }],
+	["siteError", { title: t("messages.settingsFailedTitle", "Settings failed"), message: t("messages.siteSettingsFailed", "Site settings could not be saved."), tone: "error" }],
+	["siteSaved", { title: t("messages.settingsSavedTitle", "Settings saved"), message: t("messages.siteSettingsSaved", "Site settings were saved successfully."), tone: "success" }],
+	["secretError", { title: t("messages.secretFailedTitle", "Secret failed"), message: t("messages.secretRequestFailed", "The secret request failed."), tone: "error" }],
+	["secretDeleted", { title: t("messages.secretDeletedTitle", "Secret deleted"), message: t("messages.secretDeleted", "The secret was removed."), tone: "success" }],
+	["secretSaved", { title: t("messages.secretSavedTitle", "Secret saved"), message: t("messages.secretSaved", "The secret was stored successfully."), tone: "success" }],
+	["mediaError", { title: t("messages.connectionFailedTitle", "Connection failed"), message: t("messages.mediaSettingsSaveFailed", "Media storage settings could not be saved."), tone: "error" }],
+	["mediaSaved", { title: t("messages.settingsSavedTitle", "Settings saved"), message: t("messages.mediaSettingsSaved", "Media storage settings were saved successfully."), tone: "success" }],
+	["smtpWarning", { title: t("messages.emailSavedWarningTitle", "Email saved with warning"), message: t("messages.emailSavedWarning", "Email settings were saved, but the API key could not be stored."), tone: "warning" }],
+	["smtpError", { title: t("messages.emailFailedTitle", "Email failed"), message: t("messages.emailSettingsSaveFailed", "Email settings could not be saved."), tone: "error" }],
+	["smtpSaved", { title: t("messages.emailSavedTitle", "Email saved"), message: t("messages.emailSettingsSaved", "Email settings were saved successfully."), tone: "success" }],
+	["captchaError", { title: t("messages.captchaFailedTitle", "Captcha failed"), message: t("messages.captchaSettingsSaveFailed", "Captcha settings could not be saved."), tone: "error" }],
+	["captchaSaved", { title: t("messages.captchaSavedTitle", "Captcha saved"), message: t("messages.captchaSettingsSaved", "Captcha settings were saved successfully."), tone: "success" }],
 ] as const;
 
 ---
@@ -109,7 +115,7 @@ const settingsFeedback = [
 				<h2 class="h5 mb-1">{t("messages.settingsFoundationHeading", "Site configuration")}</h2>
 				<p class="admin-inline-muted mb-0">{t("messages.settingsFoundationHelp", "Update site identity, storage, email, captcha, and secrets in place without leaving this screen.")}</p>
 			</div>
-			<ul class="nav nav-tabs flex-wrap gap-1 border-bottom px-3 pt-3" role="tablist" aria-label="Admin settings sections" data-settings-tablist>
+			<ul class="nav nav-tabs flex-wrap gap-1 border-bottom px-3 pt-3" role="tablist" aria-label={t("labels.adminSettingsSections", "Admin settings sections")} data-settings-tablist>
 				<li class="nav-item" role="presentation">
 					<button
 						type="button"
@@ -140,7 +146,7 @@ const settingsFeedback = [
 						aria-selected="false"
 						data-settings-tab="smtp"
 					>
-						Email
+						{t("labels.email", "Email")}
 					</button>
 				</li>
 				<li class="nav-item" role="presentation">
@@ -192,7 +198,7 @@ const settingsFeedback = [
 									<h2 class="h5 mb-1">{t("messages.mediaStorage", "Media storage")}</h2>
 									<p class="admin-inline-muted mb-0">{t("messages.mediaStorageHelp", "Keep storage simple for everyday admin work.")}</p>
 								</div>
-								<div class="media-status-badges" aria-label="Media storage status">
+								<div class="media-status-badges" aria-label={t("labels.mediaStorageStatus", "Media storage status")}>
 									<span class="media-status-badge">{mediaStorageStatusPrimary}</span>
 									<span class="media-status-badge">{mediaStorageStatusSecondary}</span>
 								</div>
@@ -336,44 +342,44 @@ const settingsFeedback = [
 						<div class="admin-form-surface smtp-settings-shell">
 							<div class="admin-surface-header smtp-settings-header">
 								<div>
-									<h2 class="h5 mb-1">Resend</h2>
-									<p class="admin-inline-muted mb-0">Configure the sender identity and API key used for contact form notifications.</p>
+									<h2 class="h5 mb-1">{t("messages.emailProviderName", "Resend")}</h2>
+									<p class="admin-inline-muted mb-0">{t("messages.emailSettingsHelp", "Configure the sender identity and API key used for contact form notifications.")}</p>
 								</div>
-								<div class="smtp-status-badges" aria-label="Resend email service">
+								<div class="smtp-status-badges" aria-label={t("labels.emailServiceStatus", "Resend email service")}>
 									<span class="media-status-badge">{emailStatusPrimary}</span>
 									<span class="media-status-badge">{emailStatusSecondary}</span>
 								</div>
 							</div>
 							<div class="smtp-settings-actions">
 								<button class="btn btn-outline-secondary" type="button" data-smtp-test-button disabled={formDisabled}>
-									Test email
+									{t("actions.testEmail", "Test email")}
 								</button>
 								<button class="btn btn-primary" type="submit" disabled={formDisabled}>
-									Save Resend settings
+									{t("actions.saveEmailSettings", "Save Resend settings")}
 								</button>
 							</div>
 							<div class="smtp-settings-grid admin-grid-two">
 								<label class="grid-span-2">
-									<span>Sender email</span>
+									<span>{t("labels.senderEmail", "Sender email")}</span>
 									<input class="form-control" name="smtpFromEmail" type="email" value={siteConfig.smtpSettings.fromEmail} placeholder="noreply@example.com" disabled={formDisabled} />
 								</label>
 								<label class="grid-span-2">
-									<span>Sender name</span>
+									<span>{t("labels.senderName", "Sender name")}</span>
 									<input class="form-control" name="smtpFromName" value={siteConfig.smtpSettings.fromName} placeholder={SITE_TITLE} disabled={formDisabled} />
 								</label>
 								<label class="grid-span-2">
-									<span>Resend API key</span>
+									<span>{t("labels.resendApiKey", "Resend API key")}</span>
 									<input
 										class="form-control"
 										name="resendApiKey"
 										type="password"
 										autocomplete="off"
-										placeholder={resendApiKeyStored ? "Leave blank to keep the saved key" : "re_..."}
+										placeholder={resendApiKeyStored ? t("messages.keepSavedApiKey", "Leave blank to keep the saved key") : "re_..."}
 										disabled={formDisabled}
 									/>
 								</label>
 							</div>
-							<p class="admin-muted mb-0">The API key is stored encrypted in the admin secrets table. Leave it blank to keep the existing key.</p>
+							<p class="admin-muted mb-0">{t("messages.emailApiKeyStoredHelp", "The API key is stored encrypted in the admin secrets table. Leave it blank to keep the existing key.")}</p>
 						</div>
 					</form>
 				</section>
@@ -432,8 +438,8 @@ const settingsFeedback = [
 												type="button"
 												data-media-secret-toggle
 												data-media-secret-target="#captchaSecretKey"
-												aria-label="Show captcha secret key"
-												title="Show captcha secret key"
+												aria-label={t("actions.showCaptchaSecretKey", "Show captcha secret key")}
+												title={t("actions.showCaptchaSecretKey", "Show captcha secret key")}
 												disabled={formDisabled}
 											>
 												<span aria-hidden="true">

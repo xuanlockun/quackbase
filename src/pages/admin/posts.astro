@@ -48,9 +48,9 @@ const filteredPosts = posts.filter((post) => {
 
 const hasActiveFilters = Boolean(search || status !== "all");
 const postFeedback = [
-	["saved", { title: "Post saved", message: t("messages.postSaved"), tone: "success" }],
-	["deleted", { title: "Post deleted", message: t("messages.postDeleted"), tone: "success" }],
-	["error", { title: "Action failed", message: t("messages.requestFailed"), tone: "error" }],
+	["saved", { title: t("messages.postSavedTitle", "Post saved"), message: t("messages.postSaved"), tone: "success" }],
+	["deleted", { title: t("messages.postDeletedTitle", "Post deleted"), message: t("messages.postDeleted"), tone: "success" }],
+	["error", { title: t("messages.actionFailedTitle", "Action failed"), message: t("messages.requestFailed"), tone: "error" }],
 ] as const;
 ---
 
@@ -65,23 +65,23 @@ const postFeedback = [
 		{canCreate && <CreateAction href="/admin/posts/new" label={t("actions.createPost")} />}
 	</div>
 
-	<FeedbackModal id="posts-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
+	<FeedbackModal id="posts-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
 		<FilterBar
-			title="Post Filters"
-			description="Refine the current list using one or more filters."
+			title={t("messages.postListFilters", "Post filters")}
+			description={t("messages.filterListHelp", "Refine the current list using one or more filters.")}
 			searchName="q"
 			searchValue={search}
-			searchPlaceholder="Search posts"
+			searchPlaceholder={t("messages.searchPosts", "Search posts")}
 			resetHref={hasActiveFilters ? "/admin/posts" : ""}
-			submitLabel="Apply filters"
+			submitLabel={t("actions.applyFilters", "Apply filters")}
 			selects={[
 				{
 					name: "status",
-					label: "Status",
+					label: t("labels.status", "Status"),
 					value: status,
 					options: [
-						{ value: "all", label: "All statuses" },
+						{ value: "all", label: t("messages.allStatuses", "All statuses") },
 						{ value: "published", label: t("status.published") },
 						{ value: "draft", label: t("status.draft") },
 					],
@@ -91,7 +91,7 @@ const postFeedback = [
 		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
 		{hasActiveFilters && (
 			<p class="text-body-secondary small mb-0">
-				Showing {filteredPosts.length} of {posts.length} posts.
+				{t("messages.filteredPostsSummary", "Showing {shown} of {total} posts.").replace("{shown}", String(filteredPosts.length)).replace("{total}", String(posts.length))}
 			</p>
 		)}
 
@@ -99,8 +99,8 @@ const postFeedback = [
 			posts={filteredPosts}
 			canUpdate={canUpdate}
 			canDelete={canDelete}
-			emptyTitle={hasActiveFilters ? "No posts match your filters" : undefined}
-			emptyDescription={hasActiveFilters ? "Try clearing the filters or broadening the search." : undefined}
+			emptyTitle={hasActiveFilters ? t("messages.noPostsMatchFilters", "No posts match your filters") : undefined}
+			emptyDescription={hasActiveFilters ? t("messages.adjustPostFilters", "Try clearing the filters or broadening the search.") : undefined}
 		/>
 	</div>
 </AdminLayout>

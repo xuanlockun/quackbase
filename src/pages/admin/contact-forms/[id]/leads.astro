@@ -48,8 +48,8 @@ if (Astro.url.searchParams.get("error")) {
 }
 
 const leadsFeedback = [
-	["deleted", { title: "Lead deleted", message: "The lead was removed successfully.", tone: "success" }],
-	["error", { title: "Action failed", message: "The lead action failed.", tone: "error" }],
+	["deleted", { title: t("messages.leadDeletedTitle", "Lead deleted"), message: t("messages.leadDeleted", "The lead was removed successfully."), tone: "success" }],
+	["error", { title: t("messages.actionFailedTitle", "Action failed"), message: t("messages.leadActionFailed", "The lead action failed."), tone: "error" }],
 ] as const;
 ---
 
@@ -61,7 +61,7 @@ const leadsFeedback = [
 	pageDescription={t("messages.contactFormLeadsHelp", "Review messages submitted through this form.")}
 >
 	<div class="admin-content-stack">
-		<FeedbackModal id="contact-form-leads-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
+		<FeedbackModal id="contact-form-leads-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 		{
 			notFound ? (
 				<div class="admin-empty-state">

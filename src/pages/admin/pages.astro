@@ -69,12 +69,12 @@ const filteredPages = pages.filter((page) => {
 
 const hasPageFilters = Boolean(pageSearch || pageStatus !== "all");
 const pageFeedback = [
-	["created", { title: "Page created", message: t("messages.pageCreated"), tone: "success" }],
-	["saved", { title: "Page saved", message: t("messages.pageSaved"), tone: "success" }],
-	["navSaved", { title: "Navigation saved", message: t("messages.navigationSaved", "Navigation saved."), tone: "success" }],
-	["navError", { title: "Navigation failed", message: t("messages.navigationFailed", "Navigation could not be saved."), tone: "error" }],
-	["deleted", { title: "Page deleted", message: t("messages.pageDeleted"), tone: "success" }],
-	["error", { title: "Action failed", message: t("messages.pageRequestFailed"), tone: "error" }],
+	["created", { title: t("messages.pageCreatedTitle", "Page created"), message: t("messages.pageCreated"), tone: "success" }],
+	["saved", { title: t("messages.pageSavedTitle", "Page saved"), message: t("messages.pageSaved"), tone: "success" }],
+	["navSaved", { title: t("messages.navigationSavedTitle", "Navigation saved"), message: t("messages.navigationSaved", "Navigation saved."), tone: "success" }],
+	["navError", { title: t("messages.navigationFailedTitle", "Navigation failed"), message: t("messages.navigationFailed", "Navigation could not be saved."), tone: "error" }],
+	["deleted", { title: t("messages.pageDeletedTitle", "Page deleted"), message: t("messages.pageDeleted"), tone: "success" }],
+	["error", { title: t("messages.actionFailedTitle", "Action failed"), message: t("messages.pageRequestFailed"), tone: "error" }],
 ] as const;
 ---
 
@@ -89,7 +89,7 @@ const pageFeedback = [
 		{canCreate && <CreateAction href="/admin/pages/new" label={t("actions.createPage")} />}
 	</div>
 
-	<FeedbackModal id="pages-feedback-modal" title="Status update" closeLabel={t("actions.close", "Close")} />
+	<FeedbackModal id="pages-feedback-modal" title={t("messages.statusUpdate", "Status update")} closeLabel={t("actions.close", "Close")} />
 	<div class="admin-content-stack">
 		<details class="admin-collapsible-surface admin-page-hub admin-utility-panel" open>
 			<summary class="admin-collapsible-summary">
@@ -110,7 +110,7 @@ const pageFeedback = [
 
 		<FilterBar
 			title={t("messages.pageListFilters")}
-			description="Refine the current list using one or more filters."
+			description={t("messages.filterListHelp", "Refine the current list using one or more filters.")}
 			searchName="q"
 			searchValue={pageSearch}
 			searchPlaceholder={t("messages.searchPages")}

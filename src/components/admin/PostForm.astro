@@ -190,12 +190,12 @@ const backIcon = `
 					<label>
 						<span>{t("labels.content")} ({language.label})</span>
 						<div class="admin-editor-shell">
-							<div class="admin-editor-toolbar" aria-label="Markdown shortcuts">
-								<button type="button" class="admin-editor-tool" data-editor-snippet="## Heading" disabled={isDisabled}>Heading</button>
-								<button type="button" class="admin-editor-tool" data-editor-snippet="**Bold text**" disabled={isDisabled}>Bold</button>
-								<button type="button" class="admin-editor-tool" data-editor-snippet="- List item" disabled={isDisabled}>List</button>
-								<button type="button" class="admin-editor-tool" data-editor-snippet="[Link text](/path)" disabled={isDisabled}>Link</button>
-								<button type="button" class="admin-editor-tool" data-editor-snippet="> Quote" disabled={isDisabled}>Quote</button>
+							<div class="admin-editor-toolbar" aria-label={t("labels.markdownShortcuts", "Markdown shortcuts")}>
+								<button type="button" class="admin-editor-tool" data-editor-snippet="## Heading" disabled={isDisabled}>{t("actions.markdownHeading", "Heading")}</button>
+								<button type="button" class="admin-editor-tool" data-editor-snippet="**Bold text**" disabled={isDisabled}>{t("actions.markdownBold", "Bold")}</button>
+								<button type="button" class="admin-editor-tool" data-editor-snippet="- List item" disabled={isDisabled}>{t("actions.markdownList", "List")}</button>
+								<button type="button" class="admin-editor-tool" data-editor-snippet="[Link text](/path)" disabled={isDisabled}>{t("actions.markdownLink", "Link")}</button>
+								<button type="button" class="admin-editor-tool" data-editor-snippet="> Quote" disabled={isDisabled}>{t("actions.markdownQuote", "Quote")}</button>
 							</div>
 							<p class="admin-editor-help mb-0">Markdown is stored as entered. Use the shortcuts for quick formatting without changing the saved format.</p>
 							<textarea class="form-control admin-editor-textarea" data-content-input={language.code} rows="14" disabled={isDisabled}

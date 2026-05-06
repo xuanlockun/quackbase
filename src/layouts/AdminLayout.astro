@@ -35,9 +35,9 @@ const profileInitials = profileName
 	.slice(0, 2)
 	.join("")
 	.toUpperCase() || "A";
-const toggleLabel = "Toggle sidebar navigation";
-const collapseLabel = "Collapse sidebar";
-const expandLabel = "Expand sidebar";
+const toggleLabel = t("labels.toggleSidebarNavigation", "Toggle sidebar navigation");
+const collapseLabel = t("actions.collapseSidebar", "Collapse sidebar");
+const expandLabel = t("actions.expandSidebar", "Expand sidebar");
 
 ---
 
@@ -106,7 +106,7 @@ const expandLabel = "Expand sidebar";
 										d="M14 3h7v7h-2V6.41l-8.29 8.3-1.42-1.42 8.3-8.29H14V3ZM5 5h6V3H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6h-2v6H5V5Z"
 									/>
 								</svg>
-								<span>View site</span>
+								<span>{t("actions.viewSite", "View site")}</span>
 							</a>
 							<div class="d-none d-lg-flex align-items-center">
 								<LanguageSwitch />
@@ -149,7 +149,7 @@ const expandLabel = "Expand sidebar";
 				>
 					<div class="offcanvas-header d-lg-none">
 						<h5 class="offcanvas-title" id="adminSidebarLabel">{t("app.admin")}</h5>
-						<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+						<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label={t("actions.close", "Close")}></button>
 					</div>
 					<div class="offcanvas-body p-0 d-flex flex-column">
 						<Sidebar session={session} />
@@ -179,10 +179,10 @@ const expandLabel = "Expand sidebar";
 		</div>
 		<ConfirmModal
 			id="admin-confirm-modal"
-			title="Confirm action"
-			message="Are you sure you want to continue?"
-			confirmLabel="Delete"
-			cancelLabel="Cancel"
+			title={t("messages.confirmActionTitle", "Confirm action")}
+			message={t("messages.confirmActionMessage", "Are you sure you want to continue?")}
+			confirmLabel={t("actions.delete", "Delete")}
+			cancelLabel={t("actions.cancel", "Cancel")}
 			tone="danger"
 		/>
 		<script is:inline define:vars={{ collapseLabel, expandLabel }}>
