@@ -222,6 +222,7 @@ const navActionIcons = {
 								class="nav-tree-row"
 								role="listitem"
 								data-nav-row
+								data-row-id={`nav-row-${index}`}
 								data-depth={depth}
 								data-has-children={hasChildren ? "true" : "false"}
 								data-row-index={index}
@@ -261,7 +262,7 @@ const navActionIcons = {
 								</div>
 
 								<div class="nav-tree-field-bank-host" data-nav-field-host hidden>
-									<div class="nav-tree-fields" data-nav-field-bank>
+									<div class="nav-tree-fields" data-nav-field-bank data-nav-owner={`nav-row-${index}`}>
 										{
 											languages.map((languageOption) => (
 												<label class="nav-tree-field">
@@ -997,6 +998,7 @@ const navActionIcons = {
 
 	let selectedRow = null;
 	let draggedRows = [];
+	let navRowIdCounter = 0;
 
 	const clampDepth = (value) => {
 		const depth = Number.isFinite(value) ? value : 0;
@@ -1011,16 +1013,44 @@ const navActionIcons = {
 		return normalized;
 	};
 
+	const ensureRowId = (row) => {
+		if (!(row instanceof HTMLElement)) {
+			return "";
+		}
+		const currentId = row.dataset.rowId?.trim();
+		if (currentId) {
+			return currentId;
+		}
+		navRowIdCounter += 1;
+		const nextId = `nav-row-runtime-${navRowIdCounter}`;
+		row.dataset.rowId = nextId;
+		return nextId;
+	};
+
+	const getFieldBankForRow = (row) => {
+		if (!(row instanceof HTMLElement)) {
+			return null;
+		}
+		const rowId = ensureRowId(row);
+		if (!rowId) {
+			return null;
+		}
+		return document.querySelector(`[data-nav-field-bank][data-nav-owner="${rowId}"]`);
+	};
+
 	const getNavRows = () => Array.from(rowsContainer?.querySelectorAll("[data-nav-row]") ?? []);
 	const getVisibleNavRows = () => getNavRows().filter((row) => !row.hidden);
 	const getRowDepth = (row) => clampDepth(Number(row.dataset.depth ?? "0"));
 
-	const getRowEditorInputs = (row) => ({
-		labels: Array.from(row.querySelectorAll("[data-nav-label]")).filter(
+	const getRowEditorInputs = (row) => {
+		const fieldBank = getFieldBankForRow(row);
+		return {
+			labels: Array.from(fieldBank?.querySelectorAll("[data-nav-label]") ?? []).filter(
 			(input) => input instanceof HTMLInputElement,
-		),
-		href: row.querySelector("[data-nav-href]"),
-	});
+			),
+			href: fieldBank?.querySelector("[data-nav-href]") ?? null,
+		};
+	};
 
 	const getRowLabel = (row) => {
 		const { labels } = getRowEditorInputs(row);
@@ -1043,7 +1073,7 @@ const navActionIcons = {
 		const title = row.querySelector("[data-nav-preview-title]");
 		const path = row.querySelector("[data-nav-preview-path]");
 		const label = getRowLabel(row);
-		const hrefInput = row.querySelector("[data-nav-href]");
+		const { href: hrefInput } = getRowEditorInputs(row);
 
 		if (title instanceof HTMLElement) {
 			title.textContent = label || defaultNavLabel;
@@ -1149,7 +1179,7 @@ const navActionIcons = {
 	};
 
 	const buildNodeFromRow = (row) => {
-		const href = row.querySelector("[data-nav-href]");
+		const { href, labels } = getRowEditorInputs(row);
 
 		if (!(href instanceof HTMLInputElement)) {
 			return null;
@@ -1161,10 +1191,7 @@ const navActionIcons = {
 		}
 
 		const labelTranslations = {};
-		for (const input of row.querySelectorAll("[data-nav-label]")) {
-			if (!(input instanceof HTMLInputElement)) {
-				continue;
-			}
+		for (const input of labels) {
 			const code = input.dataset.languageCode?.trim();
 			const value = input.value.trim();
 			if (code && value) {
@@ -1232,7 +1259,7 @@ const navActionIcons = {
 			return;
 		}
 		const host = row.querySelector("[data-nav-field-host]");
-		const bank = inspectorFields?.querySelector("[data-nav-field-bank]");
+		const bank = getFieldBankForRow(row);
 		if (host instanceof HTMLElement && bank instanceof HTMLElement) {
 			host.append(bank);
 		}
@@ -1285,8 +1312,7 @@ const navActionIcons = {
 			return;
 		}
 
-		const bankHost = selectedRow.querySelector("[data-nav-field-host]");
-		const bank = bankHost?.querySelector("[data-nav-field-bank]");
+		const bank = getFieldBankForRow(selectedRow);
 		if (bank instanceof HTMLElement && inspectorFields instanceof HTMLElement) {
 			inspectorFields.replaceChildren(bank);
 		}
@@ -1357,6 +1383,11 @@ const navActionIcons = {
 			return;
 		}
 		row.dataset.navRowAttached = "true";
+		const rowId = ensureRowId(row);
+		const bank = row.querySelector("[data-nav-field-bank]");
+		if (bank instanceof HTMLElement && !bank.dataset.navOwner) {
+			bank.dataset.navOwner = rowId;
+		}
 		row.dataset.collapsed = row.dataset.collapsed ?? "false";
 		row.dataset.selected = row.dataset.selected ?? "false";
 		setRowDepth(row, Number(row.dataset.depth ?? "0"));
@@ -1427,6 +1458,7 @@ const navActionIcons = {
 		const fieldBank = document.createElement("div");
 		fieldBank.className = "nav-tree-fields";
 		fieldBank.dataset.navFieldBank = "";
+		fieldBank.dataset.navOwner = entry.rowId ?? "";
 
 		const createField = (labelText, input) => {
 			const field = document.createElement("label");
@@ -1468,8 +1500,10 @@ const navActionIcons = {
 	};
 
 	const createNavRow = (entry = {}, depth = 0) => {
+		const rowId = entry.rowId?.trim() || `nav-row-runtime-${++navRowIdCounter}`;
 		const normalizedEntry = {
 			...entry,
+			rowId,
 			label: entry.label ?? defaultNavLabel,
 			href: entry.href ?? "/",
 		};
@@ -1485,6 +1519,7 @@ const navActionIcons = {
 		row.setAttribute("role", "listitem");
 		row.dataset.navRow = "";
 		row.dataset.rowIndex = "-1";
+		row.dataset.rowId = rowId;
 		row.dataset.hasChildren = "false";
 		row.dataset.collapsed = "false";
 		row.draggable = !isReadOnly;
