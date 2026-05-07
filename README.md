@@ -1,6 +1,6 @@
 <p>
   <a href="./README.md"><img src="https://img.shields.io/badge/Language-English-0f172a?style=for-the-badge" alt="English README"></a>
-  <a href="./README.vi.md"><img src="https://img.shields.io/badge/Ngon_ngu-Tieng_Viet-dc2626?style=for-the-badge" alt="Vietnamese README"></a>
+  <a href="./README.vi.md"><img src="https://img.shields.io/badge/Ngôn_ngữ-Tiếng_Việt-dc2626?style=for-the-badge" alt="Vietnamese README"></a>
 </p>
 
 <h1 style="display: flex; align-items: center; gap: 10px;">
@@ -18,13 +18,13 @@
 
 <img src="docs/d5677d11-feb4-4bcc-9a67-eb5525620533.png" alt="Demo" height="420">
 
-**Quackbase is a runtime CMS for Astro, powered by Cloudflare Workers and D1.**
+**Quackbase is a lightweight runtime CMS for Astro, powered by Cloudflare Workers and D1.**
 
-Build fast content-driven websites without spinning up a server, wiring a traditional backend, or paying for a database before your project even has users.
+Ship content-driven websites fast without managing servers, stitching together a separate backend, or paying for infrastructure before the project proves itself.
 
-Quackbase gives you a clean admin experience, runtime content editing, and a deploy-anywhere-on-Cloudflare setup that feels small, sharp, and ridiculously easy to ship.
+Quackbase gives you runtime content editing, a clean admin experience, and a Cloudflare-native deployment model that stays lean, fast, and easy to ship.
 
-## Why Quackbase?
+## ✨ Why Quackbase?
 
 Most CMS setups are either too heavy, too expensive, or too annoying to deploy.
 
@@ -32,47 +32,29 @@ Quackbase is built around a simpler idea:
 
 > Your Astro site should stay fast, your content should be editable at runtime, and your infrastructure should fit in your pocket.
 
-No credit card.  
-No server.  
-No vendor ceremony.  
-No bullshit.
+💳 No credit card.  
+🖥️ No server.  
+🧾 No vendor ceremony.  
+🦆 No bullsh*t.
 
 Just Astro, Cloudflare Workers, D1, and a tiny CMS layer that gets out of your way.
 
-## What you get
-
-- **Runtime content editing**  
-  Update pages, posts, and structured content without rebuilding the whole site every time.
-
-- **Cloudflare-native deployment**  
-  Runs on Cloudflare Workers with D1 as the database layer.
-
-- **Astro-first architecture**  
-  Designed for Astro projects, not retrofitted from a generic CMS.
-
-- **Clean admin UI**  
-  A simple editing experience for managing content without touching code.
-
-- **Fast by default**  
-  Built close to the edge, with a lightweight stack and minimal moving parts.
-
-- **Open source and hackable**  
-  TypeScript all the way down. Fork it, customize it, break it, make it yours.
-
-## Built for
+## 🎯 Built for
 
 Quackbase is a good fit for:
 
-- blogs
-- docs sites
-- landing pages
-- changelogs
-- portfolios
-- startup websites
-- small content-heavy products
-- indie projects that need a CMS without the baggage
+| Project type | Why it fits |
+| --- | --- |
+| Blogs | Publish and edit content at runtime without rebuild friction. |
+| Docs sites | Keep documentation lightweight, fast, and easy to update. |
+| Landing pages | Manage marketing content with a simple admin flow. |
+| Changelogs | Ship product updates quickly with structured publishing. |
+| Portfolios | Maintain a polished personal site without backend overhead. |
+| Startup websites | Move fast with a small stack and low hosting complexity. |
+| Small content-heavy products | Handle pages and posts cleanly without CMS bloat. |
+| Indie projects | Add a CMS layer without the baggage of a traditional platform. |
 
-## Not built for
+## 🚫 Not built for
 
 Quackbase is intentionally small.
 
@@ -85,19 +67,11 @@ It is probably not what you want if you need:
 
 This project is for people who want something lean, understandable, and easy to deploy.
 
-## Tech stack
-
-- **Astro 5**
-- **TypeScript**
-- **Cloudflare Workers**
-- **Cloudflare D1**
-- **Wrangler**
-
-## Installation
+## ⚙️ Installation
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/xuanlockun/astro-blog-starter-template)
 
-Deploy and setup admin credential at /admin
+Deploy and setup admin credential at /admin.
 
 ## 🚀 Features
 
@@ -122,51 +96,20 @@ Deploy and setup admin credential at /admin
 - **👁️ Secret Toggle**: Reveal saved access key fields when needed
 - **🧪 Test Connection**: Validate media credentials from settings
 
-## 📊 What It Includes
+## 🏗️ Architect
 
-| Area | Edge CMS |
-|--|--|
-| **Runtime content** | Yes |
-| **Cloudflare Workers** | Yes |
-| **Cloudflare D1** | Yes |
-| **Media uploads** | Yes |
-| **RBAC** | Yes |
-| **Multilingual UI** | Yes |
-| **Localized content** | Yes |
-| **Database-backed settings** | Yes |
+Quackbase follows a simple edge-first architecture:
 
+- **Astro** handles the frontend, routing, and page rendering.
+- **Cloudflare Workers** runs the application runtime close to users.
+- **Cloudflare D1** stores posts, pages, settings, and admin-managed content.
+- **Admin UI** lives inside the same project, so content editing and site delivery stay in one deployable codebase.
 
-## For application developers
-
-## Database And Migrations
-
-The repository now splits migrations into two folders:
-
-- `migrations/` - real bootstrap migrations for new installs
-- `migrations-dev/` - the old SQL history and local test migrations
-
-Wrangler points at `migrations/` by default, so fresh installs apply the bootstrap file first.
-
-
-## 📁 Project Structure
-
-```text
-.
-|-- locales/
-|-- migrations/
-|-- migrations-dev/
-|-- public/
-|-- src/
-|   |-- components/
-|   |-- layouts/
-|   |-- lib/
-|   `-- pages/
-|-- tests/
-`-- wrangler.json
-```
+This keeps the system small and practical: one Astro app, one edge runtime, one database, and no separate CMS server to maintain.
 
 ## 📚 Documentation
 
+- [Project docs](https://quackbase.v1t.site/)
 - [Astro](https://astro.build/)
 - [Cloudflare Workers](https://developers.cloudflare.com/workers/)
 - [Cloudflare D1](https://developers.cloudflare.com/d1/)
@@ -176,7 +119,7 @@ Wrangler points at `migrations/` by default, so fresh installs apply the bootstr
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## Credit
+## 🤝 Credit
 
 From V1t with love ❤️
 
