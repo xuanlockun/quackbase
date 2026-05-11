@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quackbase Docs - Email Settings</title>
+    <title>Quackbase Docs - Backup &amp; Restore</title>
     <script>
       const savedTheme = localStorage.getItem("docs-theme");
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
@@ -27,82 +27,69 @@
           <div class="topbar-actions"><a class="icon-button" href="https://github.com/xuanlockun/astro-blog-starter-template" target="_blank" rel="noreferrer" aria-label="GitHub repository"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.88-2.5.47-3.15-.63-3.35-1.22-.11-.31-.58-1.27-.99-1.53-.34-.19-.82-.67-.01-.69.76-.01 1.3.72 1.48 1.02.87 1.49 2.27 1.07 2.82.82.09-.65.34-1.07.61-1.31-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.05 1.03-2.77-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.25 9.25 0 0 1 12 6.95c.85 0 1.71.12 2.52.35 1.91-1.32 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.64 1.03 2.77 0 3.95-2.34 4.81-4.57 5.07.36.32.68.94.68 1.91 0 1.38-.01 2.49-.01 2.83 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"></path></svg></a><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme"></button></div>
         </header>
         <main class="content-wrap">
-          <div class="breadcrumb"><span>Settings</span><span class="breadcrumb-separator">→</span><span>Email</span></div>
+          <div class="breadcrumb"><span>Architecture</span><span class="breadcrumb-separator">→</span><span>Backup &amp; Restore</span></div>
           <section class="page-header">
-            <div class="page-header-top"><span class="badge">Email</span></div>
-            <h1>Email Settings</h1>
-            <p>Configure email delivery with Resend.</p>
+            <div class="page-header-top"><span class="badge">Operations</span></div>
+            <h1>Backup &amp; Restore</h1>
+            <p>Plan data recovery for Cloudflare-based deployments.</p>
           </section>
           <section class="section">
             <div class="callout info">
-              <h3>Current provider</h3>
-              <p>Resend is the current provider. Create an account and generate an API key.</p>
+              <h3>Status</h3>
+              <p>Backup and restore workflows require Cloudflare API access. Full setup instructions will be documented later.</p>
             </div>
           </section>
           <section class="section">
+            <h2>What can be backed up</h2>
             <div class="doc-grid two">
-              <article class="doc-card">
-                <div class="doc-card-header"><h3>Admin path</h3><span class="badge">UI Path</span></div>
-                <p><span class="code-inline">Settings Admin Sidebar</span> → <span class="code-inline">Email Tab Panel</span></p>
-              </article>
-              <article class="doc-card">
-                <div class="doc-card-header"><h3>Provider</h3><span class="badge">Resend</span></div>
-                <p>Website: <a class="external-link" href="https://resend.com" target="_blank" rel="noreferrer">https://resend.com</a><br />Required credential: <span class="code-inline">Resend API Key</span></p>
-              </article>
+              <article class="doc-card"><h3>D1 database exports</h3><p>Relational content and application records can be exported from Cloudflare D1.</p></article>
+              <article class="doc-card"><h3>R2 media and metadata</h3><p>Media objects or object metadata can be included depending on the storage workflow you implement.</p></article>
+              <article class="doc-card"><h3>Application configuration</h3><p>Configuration state can be captured separately from the live runtime when you design the backup workflow.</p></article>
+              <article class="doc-card"><h3>Environment settings</h3><p>Environment configuration should be tracked carefully, excluding secrets unless they are handled through a secure encrypted process.</p></article>
             </div>
           </section>
           <section class="section">
-            <h2>Setup steps</h2>
-            <ol class="steps">
-              <li class="step"><div class="step-number">1</div><div><p>Create or sign in to a Resend account.</p></div></li>
-              <li class="step"><div class="step-number">2</div><div><p>Verify your sending domain if required.</p></div></li>
-              <li class="step"><div class="step-number">3</div><div><p>Open API Keys in the Resend dashboard.</p></div></li>
-              <li class="step"><div class="step-number">4</div><div><p>Create a new API key.</p></div></li>
-              <li class="step"><div class="step-number">5</div><div><p>Copy the API key.</p></div></li>
-              <li class="step"><div class="step-number">6</div><div><p>Paste it into the Email settings in the admin dashboard.</p></div></li>
-              <li class="step"><div class="step-number">7</div><div><p>Save settings.</p></div></li>
-              <li class="step"><div class="step-number">8</div><div><p>Send a test email if the app provides a test action.</p></div></li>
-            </ol>
+            <h2>Required Cloudflare access</h2>
+            <div class="doc-grid two">
+              <article class="doc-card"><h3>Account ID</h3><p>Needed to target the correct Cloudflare account for automation.</p></article>
+              <article class="doc-card"><h3>API token</h3><p>Use a scoped token with the minimum required permissions for backup tasks.</p></article>
+              <article class="doc-card"><h3>Resource permissions</h3><p>Grant access only to the D1 databases, R2 buckets, and other resources involved in backup or restore.</p></article>
+              <article class="doc-card"><h3>Target resources</h3><p>Define the exact D1 database and R2 bucket boundaries used by the deployment.</p></article>
+            </div>
           </section>
           <section class="section">
-            <h2>Field reference</h2>
-            <div class="table-shell">
-              <div class="table-scroll">
-                <table class="field-table">
-                  <thead><tr><th>Field</th><th>Description</th><th>Required</th><th>Example / Notes</th></tr></thead>
-                  <tbody>
-                    <tr><td class="field-name">Resend API key</td><td>API key used to send transactional emails through Resend.</td><td><span class="required-pill">Yes</span></td><td>Keep private and rotate if leaked.</td></tr>
-                  </tbody>
-                </table>
-              </div>
+            <h2>Recommended backup flow</h2>
+            <div class="mermaid-card">
+              <pre class="mermaid">flowchart LR
+  A["Schedule / Manual Trigger"] --> B["Cloudflare API"]
+  B --> C["Export D1"]
+  B --> D["Export R2 Metadata / Objects"]
+  C --> E["Store Backup Artifact"]
+  D --> E
+  E --> F["Verify Backup"]</pre>
+            </div>
+          </section>
+          <section class="section">
+            <h2>Restore flow</h2>
+            <div class="mermaid-card">
+              <pre class="mermaid">flowchart LR
+  A["Select Backup"] --> B["Validate Artifact"]
+  B --> C["Restore D1"]
+  B --> D["Restore R2 Objects"]
+  C --> E["Verify App Health"]
+  D --> E</pre>
             </div>
           </section>
           <section class="section">
             <div class="callout warning">
-              <h3>Credential safety</h3>
-              <p>Do not expose the Resend API key in client-side code. Store it as a secure environment variable or encrypted setting.</p>
+              <h3>Security note</h3>
+              <p>Avoid storing API tokens or secrets in plain text. Use encrypted settings, secret stores, or environment secrets instead.</p>
             </div>
           </section>
           <section class="section">
-            <div class="mermaid-card">
-              <h3>Email delivery flow</h3>
-              <pre class="mermaid">flowchart LR
-  A["App event"] --> B["Email service"]
-  B --> C["Resend API"]
-  C --> D["Recipient inbox"]</pre>
-            </div>
-          </section>
-          <section class="section">
-            <h2>Examples</h2>
-            <div class="doc-grid two">
-              <div class="code-block">
-                <div class="code-block-header"><span>Example environment variable</span><button class="copy-button" type="button" data-copy-source="resend-env">Copy</button></div>
-                <pre id="resend-env">RESEND_API_KEY=re_xxxxxxxxx</pre>
-              </div>
-              <div class="code-block">
-                <div class="code-block-header"><span>Example sender</span><button class="copy-button" type="button" data-copy-source="resend-sender">Copy</button></div>
-                <pre id="resend-sender">noreply@example.com</pre>
-              </div>
+            <div class="coming-soon">
+              <h3>Detailed Cloudflare API setup</h3>
+              <p>Detailed Cloudflare API backup setup guide is coming soon.</p>
             </div>
           </section>
         </main>

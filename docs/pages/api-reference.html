@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quackbase Docs - Quickstart</title>
+    <title>Quackbase Docs - API Reference</title>
     <script>
       const savedTheme = localStorage.getItem("docs-theme");
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
@@ -27,42 +27,23 @@
           <div class="topbar-actions"><a class="icon-button" href="https://github.com/xuanlockun/astro-blog-starter-template" target="_blank" rel="noreferrer" aria-label="GitHub repository"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.88-2.5.47-3.15-.63-3.35-1.22-.11-.31-.58-1.27-.99-1.53-.34-.19-.82-.67-.01-.69.76-.01 1.3.72 1.48 1.02.87 1.49 2.27 1.07 2.82.82.09-.65.34-1.07.61-1.31-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.05 1.03-2.77-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.25 9.25 0 0 1 12 6.95c.85 0 1.71.12 2.52.35 1.91-1.32 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.64 1.03 2.77 0 3.95-2.34 4.81-4.57 5.07.36.32.68.94.68 1.91 0 1.38-.01 2.49-.01 2.83 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"></path></svg></a><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme"></button></div>
         </header>
         <main class="content-wrap">
-          <div class="breadcrumb"><span>Getting Started</span><span class="breadcrumb-separator">→</span><span>Quickstart</span></div>
-          <section class="page-header">
-            <div class="page-header-top"><span class="badge">Getting Started</span></div>
-            <h1>Quickstart</h1>
-            <p>Deploy first, then finish settings in the admin dashboard.</p>
-          </section>
-
+          <div class="breadcrumb"><span>Architecture</span><span class="breadcrumb-separator">→</span><span>API Reference</span></div>
+          <section class="page-header"><div class="page-header-top"><span class="badge">Reference</span></div><h1>API Reference</h1><p>High-level reference for the main public and admin endpoints.</p></section>
           <section class="section">
-            <h2>Fastest path</h2>
-            <ol class="steps">
-              <li class="step"><div class="step-number">1</div><div><h3>Deploy the project</h3><p>Use the repository deployment flow and provision the Cloudflare resources required by the app.</p></div></li>
-              <li class="step"><div class="step-number">2</div><div><h3>Wait for the first release</h3><p>Confirm that the Worker deployment and initial database setup complete successfully.</p></div></li>
-              <li class="step"><div class="step-number">3</div><div><h3>Open the admin dashboard</h3><p>Visit <span class="code-inline">/admin</span> on the deployed site and create the initial administrator account.</p></div></li>
-              <li class="step"><div class="step-number">4</div><div><h3>Configure runtime settings</h3><p>Set up media storage, captcha, and email only when your site actually needs those services.</p></div></li>
-            </ol>
-          </section>
-
-          <section class="section">
-            <div class="doc-grid two">
-              <article class="doc-card">
-                <h3>After first login</h3>
-                <p>Review branding, navigation, and publishing defaults before adding production content.</p>
-              </article>
-              <article class="doc-card">
-                <h3>Recommended next pages</h3>
-                <p>Next: <a class="external-link" href="architecture.html">Architecture</a>, <a class="external-link" href="media.html">Media</a>, <a class="external-link" href="captcha.html">Captcha</a>, and <a class="external-link" href="email.html">Email</a>.</p>
-              </article>
+            <div class="table-shell">
+              <div class="table-scroll">
+                <table class="field-table">
+                  <thead><tr><th>Route</th><th>Purpose</th><th>Notes</th></tr></thead>
+                  <tbody>
+                    <tr><td class="field-name"><span class="code-inline">/admin</span></td><td>Administrative dashboard entry point.</td><td>Protected by authentication and role-based access checks.</td></tr>
+                    <tr><td class="field-name"><span class="code-inline">/api/forms/contact</span></td><td>Public form submission endpoint.</td><td>Can be combined with captcha verification and email notifications.</td></tr>
+                    <tr><td class="field-name"><span class="code-inline">/api/admin/*</span></td><td>Administrative settings, operational, and content endpoints.</td><td>Keep these routes behind session validation and permission checks.</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
-
-          <section class="section">
-            <div class="callout info">
-              <h3>Local development is optional</h3>
-              <p>Local development still works, but these docs prioritize the Cloudflare path.</p>
-            </div>
-          </section>
+          <section class="section"><div class="callout info"><h3>Reference scope</h3><p>This page stays intentionally high-level for the static docs site. Extend it later with concrete request and response examples once the API surface is finalized.</p></div></section>
         </main>
       </div>
     </div>

@@ -18,22 +18,26 @@ docs/
 |-- index.html
 |-- pages/
 |   |-- quickstart.html
-|   |-- deployment.html
 |   |-- architecture.html
+|   |-- backup-restore.html
 |   |-- media.html
 |   |-- captcha.html
 |   |-- email.html
-|   |-- languages.html
-|   `-- backup.html
+|   |-- api-reference.html
+|   |-- database.html
+|   |-- authentication.html
+|   `-- deployment.html
 |-- assets/
 |   |-- css/
 |   |   `-- styles.css
 |   `-- js/
 |       `-- main.js
+`-- README.md
 ```
 
 ## Notes
 
 - The docs use only HTML, CSS, and plain JavaScript.
-- Dark mode is the default and the selected theme is stored in `localStorage`.
-- The introduction page uses the existing Quackbase assets already stored in `docs/`.
+- Mermaid is loaded from a CDN only on pages that need architecture or workflow diagrams.
+- Tabs, theme switching, copy actions, active navigation, and search filtering are handled in `assets/js/main.js`.
+- The layout stays GitHub Pages compatible and uses relative paths that work for both `index.html` and nested pages.

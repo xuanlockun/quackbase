@@ -4,10 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quackbase Docs - Introduction</title>
-    <meta
-      name="description"
-      content="Quackbase documentation for Astro + Cloudflare Workers runtime CMS."
-    />
+    <meta name="description" content="Modern documentation for Quackbase on Astro and Cloudflare." />
     <script>
       const savedTheme = localStorage.getItem("docs-theme");
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
@@ -24,72 +21,53 @@
             <span>Runtime CMS for Astro + Cloudflare</span>
           </span>
         </a>
-
         <label class="sidebar-search">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-            <circle cx="11" cy="11" r="7"></circle>
-            <path d="m20 20-3.5-3.5"></path>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
           <input type="search" placeholder="Find something..." data-nav-search />
         </label>
-
         <nav>
           <section class="nav-group">
             <h2 class="nav-group-title">Getting Started</h2>
             <ul class="nav-list">
               <li><a class="nav-link" href="index.html" data-nav-link>Introduction</a></li>
               <li><a class="nav-link" href="pages/quickstart.html" data-nav-link>Quickstart</a></li>
+              <li><a class="nav-link" href="pages/deployment.html" data-nav-link>Deployment</a></li>
             </ul>
           </section>
-
-          <section class="nav-group">
-            <h2 class="nav-group-title">Configuration</h2>
-            <ul class="nav-list">
-              <li><a class="nav-link" href="pages/media.html" data-nav-link>Media Settings</a></li>
-              <li><a class="nav-link" href="pages/captcha.html" data-nav-link>Captcha</a></li>
-              <li><a class="nav-link" href="pages/email.html" data-nav-link>Email</a></li>
-              <li><a class="nav-link" href="pages/languages.html" data-nav-link>Languages</a></li>
-            </ul>
-          </section>
-
           <section class="nav-group">
             <h2 class="nav-group-title">Architecture</h2>
             <ul class="nav-list">
-              <li><a class="nav-link" href="pages/architecture.html" data-nav-link>Edge Stack</a></li>
-              <li><a class="nav-link" href="pages/backup.html" data-nav-link>Backup</a></li>
+              <li><a class="nav-link" href="pages/architecture.html" data-nav-link>Architecture</a></li>
+              <li><a class="nav-link" href="pages/backup-restore.html" data-nav-link>Backup &amp; Restore</a></li>
+              <li><a class="nav-link" href="pages/database.html" data-nav-link>Database</a></li>
+              <li><a class="nav-link" href="pages/authentication.html" data-nav-link>Authentication</a></li>
+              <li><a class="nav-link" href="pages/api-reference.html" data-nav-link>API Reference</a></li>
+            </ul>
+          </section>
+          <section class="nav-group">
+            <h2 class="nav-group-title">Settings</h2>
+            <ul class="nav-list">
+              <li><a class="nav-link" href="pages/media.html" data-nav-link>Media</a></li>
+              <li><a class="nav-link" href="pages/captcha.html" data-nav-link>Captcha</a></li>
+              <li><a class="nav-link" href="pages/email.html" data-nav-link>Email</a></li>
             </ul>
           </section>
         </nav>
       </aside>
-
       <div class="layout-main">
         <header class="topbar">
           <div class="topbar-left">
-            <button class="mobile-nav-toggle" type="button" data-sidebar-toggle aria-label="Open navigation">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <path d="M4 7h16M4 12h16M4 17h16"></path>
-              </svg>
-            </button>
-
+            <button class="mobile-nav-toggle" type="button" data-sidebar-toggle aria-label="Open navigation"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
             <label class="topbar-search">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"></circle>
-                <path d="m20 20-3.5-3.5"></path>
-              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
               <input type="search" placeholder="Find something..." data-nav-search />
             </label>
           </div>
-
           <div class="topbar-actions">
-            <a class="icon-button" href="https://github.com/xuanlockun/astro-blog-starter-template" target="_blank" rel="noreferrer" aria-label="GitHub repository">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-                <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.88-2.5.47-3.15-.63-3.35-1.22-.11-.31-.58-1.27-.99-1.53-.34-.19-.82-.67-.01-.69.76-.01 1.3.72 1.48 1.02.87 1.49 2.27 1.07 2.82.82.09-.65.34-1.07.61-1.31-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.05 1.03-2.77-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.25 9.25 0 0 1 12 6.95c.85 0 1.71.12 2.52.35 1.91-1.32 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.64 1.03 2.77 0 3.95-2.34 4.81-4.57 5.07.36.32.68.94.68 1.91 0 1.38-.01 2.49-.01 2.83 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"></path>
-              </svg>
-            </a>
+            <a class="icon-button" href="https://github.com/xuanlockun/astro-blog-starter-template" target="_blank" rel="noreferrer" aria-label="GitHub repository"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.88-2.5.47-3.15-.63-3.35-1.22-.11-.31-.58-1.27-.99-1.53-.34-.19-.82-.67-.01-.69.76-.01 1.3.72 1.48 1.02.87 1.49 2.27 1.07 2.82.82.09-.65.34-1.07.61-1.31-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.05 1.03-2.77-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.25 9.25 0 0 1 12 6.95c.85 0 1.71.12 2.52.35 1.91-1.32 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.64 1.03 2.77 0 3.95-2.34 4.81-4.57 5.07.36.32.68.94.68 1.91 0 1.38-.01 2.49-.01 2.83 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"></path></svg></a>
             <button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme"></button>
           </div>
         </header>
-
         <main class="content-wrap">
           <section class="hero">
             <div class="hero-shell">
@@ -98,120 +76,93 @@
                   <img src="quackbase.png" alt="Quackbase mark" />
                   <div>
                     <strong>Quackbase</strong>
-                    <span>Runtime CMS for Astro + Cloudflare Workers</span>
+                    <span>Developer Docs</span>
                   </div>
                 </div>
-                <span class="eyebrow">Cloudflare-native, runtime-first, no server drama</span>
-                <h1 style="max-width: 15ch;">Ship content sites fast without dragging in a heavy CMS.</h1>
-                <p class="section-lead" style="max-width: 42rem;">
-                  Quackbase gives you runtime editing for posts and pages, media management, multilingual content,
-                  contact forms, RBAC, and admin settings on top of Astro + Cloudflare Workers + D1.
-                </p>
-
+                <h1>Quackbase Documentation</h1>
+                <p class="section-lead">Guides for running a runtime CMS on Astro and Cloudflare, from deployment to media, captcha, email, and backup workflows.</p>
                 <div class="pill-row">
-                  <span class="pill">One-click Cloudflare deploy</span>
-                  <span class="pill">No local setup required</span>
-                  <span class="pill">Runtime editing</span>
+                  <span class="pill">Astro + Workers</span>
+                  <span class="pill">D1 content storage</span>
                   <span class="pill">R2 / S3 media</span>
+                  <span class="pill">Admin settings</span>
                 </div>
-
                 <div class="hero-actions">
-                  <a class="button button-primary" href="pages/quickstart.html">Getting Started</a>
+                  <a class="button button-primary" href="pages/quickstart.html">Start with Quickstart</a>
+                  <a class="button button-secondary" href="pages/architecture.html">View Architecture</a>
                 </div>
               </div>
-
               <div class="hero-visual">
                 <img src="d5677d11-feb4-4bcc-9a67-eb5525620533.png" alt="Quackbase preview" />
               </div>
             </div>
-
-            <div class="subtle-divider"></div>
-
-            <div class="grid feature-grid">
-              <article class="card">
-                <div class="card-icon">01</div>
-                <h3>Fast setup</h3>
-                <p>Start from the Cloudflare deploy button, finish the admin setup, and get a working CMS online quickly.</p>
-              </article>
-              <article class="card">
-                <div class="card-icon">02</div>
-                <h3>No server</h3>
-                <p>Run Quackbase on Cloudflare Workers and D1 without managing a traditional backend server.</p>
-              </article>
-              <article class="card">
-                <div class="card-icon">03</div>
-                <h3>Runtime editing</h3>
-                <p>Edit posts, pages, navigation, banners, forms, and settings directly from the admin UI.</p>
-              </article>
-              <article class="card">
-                <div class="card-icon">04</div>
-                <h3>Cloudflare-native media</h3>
-                <p>Connect Cloudflare R2 or another S3-compatible bucket for uploads and media library management.</p>
-              </article>
-            </div>
-          </section>
-
-          <section class="section grid split-grid">
-            <article class="info-panel">
-              <h2>Why this exists</h2>
-              <p>
-                Quackbase is for teams who want something small, hackable, and easy to reason about. Instead of bolting a
-                generic CMS onto Astro, it keeps the stack close to the site: Astro on the frontend, Workers at the edge,
-                D1 for content, R2 for media, and admin tools focused on practical publishing.
-              </p>
-              <h3>What feels different</h3>
-              <p>
-                The project is built around direct deployment, runtime updates, and focused admin capabilities like media,
-                language management, backup through Cloudflare D1 APIs, captcha, Resend email, and content operations.
-              </p>
-            </article>
-
-            <aside class="notice">
-              <h3>Best fit</h3>
-              <p>Blogs, landing pages, docs sites, startup websites, changelogs, and small products that want CMS power without infrastructure overhead.</p>
-            </aside>
           </section>
 
           <section class="section">
-            <h2>What you get</h2>
-            <p class="section-lead">
-              The product stays focused on the workflow most small teams actually need: publish content, manage assets,
-              configure the site, and keep the whole thing easy to operate.
-            </p>
-            <div class="grid split-grid">
-              <article class="card">
-                <h3>Clean admin UI</h3>
-                <p>Manage posts, pages, users, roles, languages, banners, contact forms, theme sections, and site settings from one dashboard.</p>
+            <div class="doc-grid three">
+              <article class="doc-card">
+                <div class="doc-card-header">
+                  <h3>Getting Started</h3>
+                  <span class="badge">Core</span>
+                </div>
+                <p>Use the quickstart and deployment guides to move from repository to a working Cloudflare deployment with the admin dashboard online.</p>
               </article>
-              <article class="card">
-                <h3>Cloudflare-native deployment</h3>
-                <p>Built for Cloudflare Workers, D1, and R2, with a deployment path that stays simple from first launch to production.</p>
+              <article class="doc-card">
+                <div class="doc-card-header">
+                  <h3>Architecture</h3>
+                  <span class="badge">Platform</span>
+                </div>
+                <p>Cloudflare Worker, D1, R2, cache, and recovery notes in one place.</p>
               </article>
-              <article class="card">
-                <h3>Operational tooling</h3>
-                <p>Backup export/import, media sync, Resend email test flows, secret verification, and runtime configuration helpers are already in the repo.</p>
-              </article>
-              <article class="card">
-                <h3>Easy to extend</h3>
-                <p>The codebase stays understandable with Astro pages, TypeScript libraries, and focused modules for auth, media, forms, i18n, and edge integrations.</p>
+              <article class="doc-card">
+                <div class="doc-card-header">
+                  <h3>Settings</h3>
+                  <span class="badge">Admin</span>
+                </div>
+                <p>Media, captcha, and email settings are documented with step-by-step flows, field tables, and implementation notes.</p>
               </article>
             </div>
           </section>
 
           <section class="section">
-            <h2>Next steps</h2>
-            <p>
-              Deploy the project, create the first admin account, then move through media, email, captcha, language setup, and backup to make the instance production-ready.
-            </p>
-            <div class="button-row">
-              <a class="button button-primary" href="pages/media.html">Configure Media</a>
-              <a class="button button-secondary" href="pages/languages.html">Set Up Languages</a>
+            <div class="page-header">
+              <div class="page-header-top">
+                <span class="badge">Recommended Reading Path</span>
+              </div>
+              <h2>Move through the docs in three passes.</h2>
+              <p>Start with setup, then architecture, then admin configuration.</p>
+            </div>
+            <div class="doc-grid three" style="margin-top: 16px;">
+              <article class="doc-card">
+                <h3>1. Platform setup</h3>
+                <p>Read <a class="external-link" href="pages/quickstart.html">Quickstart</a> and <a class="external-link" href="pages/deployment.html">Deployment</a> to understand the minimum path to first launch.</p>
+              </article>
+              <article class="doc-card">
+                <h3>2. Runtime design</h3>
+                <p>Use <a class="external-link" href="pages/architecture.html">Architecture</a> and <a class="external-link" href="pages/database.html">Database</a> to understand the runtime model.</p>
+              </article>
+              <article class="doc-card">
+                <h3>3. Admin configuration</h3>
+                <p>Finish with the <a class="external-link" href="pages/media.html">Media</a>, <a class="external-link" href="pages/captcha.html">Captcha</a>, and <a class="external-link" href="pages/email.html">Email</a> settings guides.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="doc-grid two">
+              <article class="callout info">
+                <h3>Static hosting</h3>
+                <p>The documentation site remains static and GitHub Pages friendly. It uses plain HTML, CSS, and JavaScript only, with Mermaid loaded from a CDN where diagrams are needed.</p>
+              </article>
+              <article class="callout success">
+                <h3>Documentation style</h3>
+                <p>Each page now emphasizes reusable UI patterns such as field tables, structured steps, callout boxes, cards, tabs, and architecture flows instead of long raw text blocks.</p>
+              </article>
             </div>
           </section>
         </main>
       </div>
     </div>
-
     <script src="assets/js/main.js"></script>
   </body>
 </html>

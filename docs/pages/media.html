@@ -16,59 +16,93 @@
         <a class="brand" href="../index.html"><img class="brand-logo" src="../quackbase.png" alt="Quackbase logo" /><span class="brand-copy"><strong>Quackbase</strong><span>Runtime CMS for Astro + Cloudflare</span></span></a>
         <label class="sidebar-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" placeholder="Find something..." data-nav-search /></label>
         <nav>
-          <section class="nav-group"><h2 class="nav-group-title">Getting Started</h2><ul class="nav-list"><li><a class="nav-link" href="../index.html" data-nav-link>Introduction</a></li><li><a class="nav-link" href="quickstart.html" data-nav-link>Quickstart</a></li></ul></section>
-          <section class="nav-group"><h2 class="nav-group-title">Configuration</h2><ul class="nav-list"><li><a class="nav-link" href="media.html" data-nav-link>Media Settings</a></li><li><a class="nav-link" href="captcha.html" data-nav-link>Captcha</a></li><li><a class="nav-link" href="email.html" data-nav-link>Email</a></li><li><a class="nav-link" href="languages.html" data-nav-link>Languages</a></li></ul></section>
-          <section class="nav-group"><h2 class="nav-group-title">Architecture</h2><ul class="nav-list"><li><a class="nav-link" href="architecture.html" data-nav-link>Edge Stack</a></li><li><a class="nav-link" href="backup.html" data-nav-link>Backup</a></li></ul></section>
+          <section class="nav-group"><h2 class="nav-group-title">Getting Started</h2><ul class="nav-list"><li><a class="nav-link" href="../index.html" data-nav-link>Introduction</a></li><li><a class="nav-link" href="quickstart.html" data-nav-link>Quickstart</a></li><li><a class="nav-link" href="deployment.html" data-nav-link>Deployment</a></li></ul></section>
+          <section class="nav-group"><h2 class="nav-group-title">Architecture</h2><ul class="nav-list"><li><a class="nav-link" href="architecture.html" data-nav-link>Architecture</a></li><li><a class="nav-link" href="backup-restore.html" data-nav-link>Backup &amp; Restore</a></li><li><a class="nav-link" href="database.html" data-nav-link>Database</a></li><li><a class="nav-link" href="authentication.html" data-nav-link>Authentication</a></li><li><a class="nav-link" href="api-reference.html" data-nav-link>API Reference</a></li></ul></section>
+          <section class="nav-group"><h2 class="nav-group-title">Settings</h2><ul class="nav-list"><li><a class="nav-link" href="media.html" data-nav-link>Media</a></li><li><a class="nav-link" href="captcha.html" data-nav-link>Captcha</a></li><li><a class="nav-link" href="email.html" data-nav-link>Email</a></li></ul></section>
         </nav>
       </aside>
       <div class="layout-main">
         <header class="topbar">
-          <div class="topbar-left">
-            <button class="mobile-nav-toggle" type="button" data-sidebar-toggle aria-label="Open navigation"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
-            <label class="topbar-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" placeholder="Find something..." data-nav-search /></label>
-          </div>
-          <div class="topbar-actions">
-            <a class="icon-button" href="https://github.com/xuanlockun/astro-blog-starter-template" target="_blank" rel="noreferrer" aria-label="GitHub repository"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.88-2.5.47-3.15-.63-3.35-1.22-.11-.31-.58-1.27-.99-1.53-.34-.19-.82-.67-.01-.69.76-.01 1.3.72 1.48 1.02.87 1.49 2.27 1.07 2.82.82.09-.65.34-1.07.61-1.31-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.05 1.03-2.77-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.25 9.25 0 0 1 12 6.95c.85 0 1.71.12 2.52.35 1.91-1.32 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.64 1.03 2.77 0 3.95-2.34 4.81-4.57 5.07.36.32.68.94.68 1.91 0 1.38-.01 2.49-.01 2.83 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"></path></svg></a>
-            <button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme"></button>
-          </div>
+          <div class="topbar-left"><button class="mobile-nav-toggle" type="button" data-sidebar-toggle aria-label="Open navigation"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button><label class="topbar-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" placeholder="Find something..." data-nav-search /></label></div>
+          <div class="topbar-actions"><a class="icon-button" href="https://github.com/xuanlockun/astro-blog-starter-template" target="_blank" rel="noreferrer" aria-label="GitHub repository"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.88-2.5.47-3.15-.63-3.35-1.22-.11-.31-.58-1.27-.99-1.53-.34-.19-.82-.67-.01-.69.76-.01 1.3.72 1.48 1.02.87 1.49 2.27 1.07 2.82.82.09-.65.34-1.07.61-1.31-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.05 1.03-2.77-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.25 9.25 0 0 1 12 6.95c.85 0 1.71.12 2.52.35 1.91-1.32 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.64 1.03 2.77 0 3.95-2.34 4.81-4.57 5.07.36.32.68.94.68 1.91 0 1.38-.01 2.49-.01 2.83 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"></path></svg></a><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme"></button></div>
         </header>
         <main class="content-wrap">
-          <section class="section">
-            <span class="eyebrow">Configuration</span>
+          <div class="breadcrumb"><span>Settings</span><span class="breadcrumb-separator">→</span><span>Media</span></div>
+          <section class="page-header">
+            <div class="page-header-top"><span class="badge">Admin Settings</span></div>
             <h1>Media Settings</h1>
-            <p>Open <span class="code-inline">Settings</span> in the admin sidebar, switch to the <span class="code-inline">Media</span> tab panel, fill the storage values, test the connection, then save the media settings.</p>
-            <h2>Fill these fields</h2>
-            <div class="code-block">
-              <div class="code-block-header"><span>Media fields</span><button class="copy-button" type="button" data-copy-source="media-fields">Copy</button></div>
-              <pre id="media-fields">S3 upload endpoint
-Bucket name
-Public base URL
-S3 region
-
-Use path-style URLs
-S3 access key ID
-S3 secret access key</pre>
+            <p>Configure object storage for uploaded media assets.</p>
+          </section>
+          <section class="section">
+            <div class="callout info">
+              <h3>Storage overview</h3>
+              <p>Configured in admin. S3-compatible storage supported. Detailed setup guide coming soon.</p>
             </div>
-            <h2>Recommended flow</h2>
-            <ol>
-              <li>Go to <span class="code-inline">Settings</span> in the admin sidebar.</li>
-              <li>Open the <span class="code-inline">Media</span> tab panel.</li>
-              <li>Fill all media storage fields.</li>
-              <li>Click <span class="code-inline">Test connection</span>.</li>
-              <li>If the test succeeds, click <span class="code-inline">Save media settings</span>.</li>
-              <li>Upload one sample file and verify the public URL works.</li>
+          </section>
+          <section class="section">
+            <div class="doc-card">
+              <div class="doc-card-header"><h3>Admin path</h3><span class="badge">UI Path</span></div>
+              <p><span class="code-inline">Settings Admin Sidebar</span> → <span class="code-inline">Media Tab Panel</span></p>
+            </div>
+          </section>
+          <section class="section">
+            <h2>Storage fields</h2>
+            <div class="table-shell">
+              <div class="table-scroll">
+                <table class="field-table">
+                  <thead><tr><th>Field</th><th>Description</th><th>Required</th><th>Example / Notes</th></tr></thead>
+                  <tbody>
+                    <tr><td class="field-name">S3 upload endpoint</td><td>The S3-compatible API endpoint used for uploads.</td><td><span class="required-pill">Yes</span></td><td><span class="code-inline">https://s3.amazonaws.com</span> or your provider endpoint</td></tr>
+                    <tr><td class="field-name">Bucket name</td><td>The storage bucket where media files are saved.</td><td><span class="required-pill">Yes</span></td><td><span class="code-inline">my-app-media</span></td></tr>
+                    <tr><td class="field-name">Public base URL</td><td>Public URL used to serve uploaded files.</td><td><span class="required-pill">Yes</span></td><td><span class="code-inline">https://cdn.example.com</span> or the bucket public URL</td></tr>
+                    <tr><td class="field-name">S3 region</td><td>Region of the bucket.</td><td><span class="required-pill">Yes</span></td><td><span class="code-inline">us-east-1</span></td></tr>
+                    <tr><td class="field-name">Use path-style URLs</td><td>Enable this if your S3-compatible provider requires path-style access.</td><td><span class="optional-pill">Optional</span></td><td>Useful for some S3-compatible providers.</td></tr>
+                    <tr><td class="field-name">S3 access key ID</td><td>Access key used to authenticate uploads.</td><td><span class="required-pill">Yes</span></td><td>Store securely.</td></tr>
+                    <tr><td class="field-name">S3 secret access key</td><td>Secret key used to authenticate uploads.</td><td><span class="required-pill">Yes</span></td><td>Never expose publicly.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+          <section class="section">
+            <h2>Step-by-step configuration</h2>
+            <ol class="steps">
+              <li class="step"><div class="step-number">1</div><div><h3>Open the admin dashboard</h3><p>Sign in with an account that can manage site settings.</p></div></li>
+              <li class="step"><div class="step-number">2</div><div><h3>Open Settings</h3><p>Go to Settings from the admin sidebar.</p></div></li>
+              <li class="step"><div class="step-number">3</div><div><h3>Select Media</h3><p>Choose the Media tab panel.</p></div></li>
+              <li class="step"><div class="step-number">4</div><div><h3>Fill all storage fields</h3><p>Enter the endpoint, bucket, public base URL, region, path-style option, access key ID, and secret access key.</p></div></li>
+              <li class="step"><div class="step-number">5</div><div><h3>Test the connection</h3><p>Click <span class="code-inline">Test Connection</span> to validate the credentials and bucket configuration.</p></div></li>
+              <li class="step"><div class="step-number">6</div><div><h3>Save the settings</h3><p>If the connection succeeds, click <span class="code-inline">Save Media Settings</span>.</p></div></li>
             </ol>
-            <h2>Field notes</h2>
-            <div class="grid split-grid">
-              <article class="card"><h3>Cloudflare R2</h3><p>For R2, the <span class="code-inline">S3 region</span> is usually <span class="code-inline">auto</span>. Use your R2 S3 endpoint and a public bucket URL or custom domain.</p></article>
-              <article class="card"><h3>Path-style URLs</h3><p>Enable <span class="code-inline">Use path-style URLs</span> when your provider expects the bucket name in the request path instead of the hostname.</p></article>
+          </section>
+          <section class="section">
+            <div class="doc-grid two">
+              <article class="callout success"><h3>Successful validation</h3><p>If the test connection succeeds, the storage credentials and bucket configuration are valid.</p></article>
+              <article class="callout warning"><h3>Credential safety</h3><p>Keep access keys private. Do not commit them to GitHub or expose them in frontend code.</p></article>
             </div>
-            <h2>S3 setup guide</h2>
-            <p>Detailed S3 setup instructions are coming soon and will be updated later.</p>
+          </section>
+          <section class="section">
+            <div class="mermaid-card">
+              <h3>Media configuration flow</h3>
+              <pre class="mermaid">flowchart LR
+  A["Admin Dashboard"] --> B["Settings"]
+  B --> C["Media"]
+  C --> D["Fill S3 fields"]
+  D --> E["Test Connection"]
+  E --> F{"Success?"}
+  F -->|Yes| G["Save Media Settings"]</pre>
+            </div>
+          </section>
+          <section class="section">
+            <div class="coming-soon">
+              <h3>S3-compatible setup guide</h3>
+              <p>How to setup S3-compatible storage will be added later.</p>
+            </div>
           </section>
         </main>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="../assets/js/main.js"></script>
   </body>
 </html>

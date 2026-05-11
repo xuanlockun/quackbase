@@ -11,10 +11,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInputs = document.querySelectorAll("[data-nav-search]");
   const navLinks = [...document.querySelectorAll("[data-nav-link]")];
   const copyButtons = document.querySelectorAll("[data-copy-source]");
+  const tabGroups = document.querySelectorAll("[data-tabs]");
 
-  const setTheme = (theme) => {
-    root.dataset.theme = theme;
-    localStorage.setItem("docs-theme", theme);
+  const setThemeButtonState = (theme) => {
     themeButtons.forEach((button) => {
       button.setAttribute("aria-label", theme === "light" ? "Switch to dark mode" : "Switch to light mode");
       button.dataset.themeState = theme;
@@ -24,12 +23,75 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  setTheme(root.dataset.theme || "dark");
+  const captureMermaidSources = () => {
+    document.querySelectorAll(".mermaid").forEach((node) => {
+      if (!node.dataset.source) {
+        node.dataset.source = node.textContent.trim();
+      }
+    });
+  };
+
+  const renderMermaid = async () => {
+    if (!window.mermaid) return;
+
+    captureMermaidSources();
+
+    document.querySelectorAll(".mermaid").forEach((node) => {
+      if (node.dataset.source) {
+        node.removeAttribute("data-processed");
+        node.innerHTML = node.dataset.source;
+      }
+    });
+
+    window.mermaid.initialize({
+      startOnLoad: true,
+      theme: document.documentElement.dataset.theme === "light" ? "default" : "dark"
+    });
+
+    try {
+      await window.mermaid.run({
+        querySelector: ".mermaid"
+      });
+    } catch (error) {
+      console.error("Mermaid render failed", error);
+    }
+  };
+
+  const setTheme = async (theme) => {
+    root.dataset.theme = theme;
+    localStorage.setItem("docs-theme", theme);
+    setThemeButtonState(theme);
+    await renderMermaid();
+  };
+
+  const activateTab = (group, key) => {
+    const buttons = group.querySelectorAll("[data-tab-button]");
+    const panels = group.querySelectorAll("[data-tab-panel]");
+
+    buttons.forEach((button) => {
+      const isActive = button.dataset.tabButton === key;
+      button.setAttribute("aria-selected", isActive ? "true" : "false");
+      button.classList.toggle("active", isActive);
+      button.tabIndex = isActive ? 0 : -1;
+    });
+
+    panels.forEach((panel) => {
+      const isActive = panel.dataset.tabPanel === key;
+      panel.classList.toggle("active", isActive);
+      panel.hidden = !isActive;
+    });
+  };
+
+  if (!root.dataset.theme) {
+    root.dataset.theme = "light";
+  }
+
+  setThemeButtonState(root.dataset.theme || "light");
 
   themeButtons.forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
-      setTheme(nextTheme);
+      await setTheme(nextTheme);
     });
   });
 
@@ -101,4 +163,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+  tabGroups.forEach((group) => {
+    const buttons = group.querySelectorAll("[data-tab-button]");
+    const defaultButton = [...buttons].find((button) => button.getAttribute("aria-selected") === "true") || buttons[0];
+    if (defaultButton) {
+      activateTab(group, defaultButton.dataset.tabButton);
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        activateTab(group, button.dataset.tabButton);
+      });
+    });
+  });
+
+  renderMermaid();
 });

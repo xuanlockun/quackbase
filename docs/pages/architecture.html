@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quackbase Docs - Edge Stack</title>
+    <title>Quackbase Docs - Architecture</title>
     <script>
       const savedTheme = localStorage.getItem("docs-theme");
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
@@ -16,50 +16,57 @@
         <a class="brand" href="../index.html"><img class="brand-logo" src="../quackbase.png" alt="Quackbase logo" /><span class="brand-copy"><strong>Quackbase</strong><span>Runtime CMS for Astro + Cloudflare</span></span></a>
         <label class="sidebar-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" placeholder="Find something..." data-nav-search /></label>
         <nav>
-          <section class="nav-group"><h2 class="nav-group-title">Getting Started</h2><ul class="nav-list"><li><a class="nav-link" href="../index.html" data-nav-link>Introduction</a></li><li><a class="nav-link" href="quickstart.html" data-nav-link>Quickstart</a></li></ul></section>
-          <section class="nav-group"><h2 class="nav-group-title">Configuration</h2><ul class="nav-list"><li><a class="nav-link" href="media.html" data-nav-link>Media Settings</a></li><li><a class="nav-link" href="captcha.html" data-nav-link>Captcha</a></li><li><a class="nav-link" href="email.html" data-nav-link>Email</a></li><li><a class="nav-link" href="languages.html" data-nav-link>Languages</a></li></ul></section>
-          <section class="nav-group"><h2 class="nav-group-title">Architecture</h2><ul class="nav-list"><li><a class="nav-link" href="architecture.html" data-nav-link>Edge Stack</a></li><li><a class="nav-link" href="backup.html" data-nav-link>Backup</a></li></ul></section>
+          <section class="nav-group"><h2 class="nav-group-title">Getting Started</h2><ul class="nav-list"><li><a class="nav-link" href="../index.html" data-nav-link>Introduction</a></li><li><a class="nav-link" href="quickstart.html" data-nav-link>Quickstart</a></li><li><a class="nav-link" href="deployment.html" data-nav-link>Deployment</a></li></ul></section>
+          <section class="nav-group"><h2 class="nav-group-title">Architecture</h2><ul class="nav-list"><li><a class="nav-link" href="architecture.html" data-nav-link>Architecture</a></li><li><a class="nav-link" href="backup-restore.html" data-nav-link>Backup &amp; Restore</a></li><li><a class="nav-link" href="database.html" data-nav-link>Database</a></li><li><a class="nav-link" href="authentication.html" data-nav-link>Authentication</a></li><li><a class="nav-link" href="api-reference.html" data-nav-link>API Reference</a></li></ul></section>
+          <section class="nav-group"><h2 class="nav-group-title">Settings</h2><ul class="nav-list"><li><a class="nav-link" href="media.html" data-nav-link>Media</a></li><li><a class="nav-link" href="captcha.html" data-nav-link>Captcha</a></li><li><a class="nav-link" href="email.html" data-nav-link>Email</a></li></ul></section>
         </nav>
       </aside>
       <div class="layout-main">
         <header class="topbar">
-          <div class="topbar-left">
-            <button class="mobile-nav-toggle" type="button" data-sidebar-toggle aria-label="Open navigation"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
-            <label class="topbar-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" placeholder="Find something..." data-nav-search /></label>
-          </div>
-          <div class="topbar-actions">
-            <a class="icon-button" href="https://github.com/xuanlockun/astro-blog-starter-template" target="_blank" rel="noreferrer" aria-label="GitHub repository"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.88-2.5.47-3.15-.63-3.35-1.22-.11-.31-.58-1.27-.99-1.53-.34-.19-.82-.67-.01-.69.76-.01 1.3.72 1.48 1.02.87 1.49 2.27 1.07 2.82.82.09-.65.34-1.07.61-1.31-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.05 1.03-2.77-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.25 9.25 0 0 1 12 6.95c.85 0 1.71.12 2.52.35 1.91-1.32 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.64 1.03 2.77 0 3.95-2.34 4.81-4.57 5.07.36.32.68.94.68 1.91 0 1.38-.01 2.49-.01 2.83 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"></path></svg></a>
-            <button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme"></button>
-          </div>
+          <div class="topbar-left"><button class="mobile-nav-toggle" type="button" data-sidebar-toggle aria-label="Open navigation"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button><label class="topbar-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input type="search" placeholder="Find something..." data-nav-search /></label></div>
+          <div class="topbar-actions"><a class="icon-button" href="https://github.com/xuanlockun/astro-blog-starter-template" target="_blank" rel="noreferrer" aria-label="GitHub repository"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.88-2.5.47-3.15-.63-3.35-1.22-.11-.31-.58-1.27-.99-1.53-.34-.19-.82-.67-.01-.69.76-.01 1.3.72 1.48 1.02.87 1.49 2.27 1.07 2.82.82.09-.65.34-1.07.61-1.31-2.22-.26-4.55-1.14-4.55-5.08 0-1.12.39-2.05 1.03-2.77-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.25 9.25 0 0 1 12 6.95c.85 0 1.71.12 2.52.35 1.91-1.32 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.64 1.03 2.77 0 3.95-2.34 4.81-4.57 5.07.36.32.68.94.68 1.91 0 1.38-.01 2.49-.01 2.83 0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"></path></svg></a><button class="icon-button" type="button" data-theme-toggle aria-label="Toggle theme"></button></div>
         </header>
         <main class="content-wrap">
+          <div class="breadcrumb"><span>Architecture</span></div>
+          <section class="page-header">
+            <div class="page-header-top"><span class="badge">Architecture</span></div>
+            <h1>Architecture</h1>
+            <p>Cloudflare Worker, D1, R2, cache, and delivery in one view.</p>
+          </section>
           <section class="section">
-            <span class="eyebrow">Architecture</span>
-            <h1>Edge Stack</h1>
-            <p>Quackbase is built for a Cloudflare edge stack: Astro frontend, Cloudflare Workers runtime, D1 for content data, and R2 or another S3-compatible store for media.</p>
-            <h2>Main pieces</h2>
-            <div class="grid split-grid">
-              <article class="card"><h3>Cloudflare Workers</h3><p>Runs the Astro app and admin APIs at the edge.</p></article>
-              <article class="card"><h3>Cloudflare D1</h3><p>Stores posts, pages, languages, settings, sessions, forms, roles, and permissions.</p></article>
-              <article class="card"><h3>Cloudflare R2</h3><p>Recommended for uploads and media files, using the media settings in the admin.</p></article>
-              <article class="card"><h3>Turnstile and Resend</h3><p>Turnstile protects forms from spam and Resend handles email delivery.</p></article>
+            <div class="doc-grid three">
+              <article class="doc-card"><h3>Runtime</h3><p>Cloudflare Workers run app and admin requests at the edge.</p></article>
+              <article class="doc-card"><h3>Database</h3><p>D1 stores content, settings, sessions, forms, and access data.</p></article>
+              <article class="doc-card"><h3>Object storage</h3><p>R2 or S3-compatible storage handles uploaded media.</p></article>
+              <article class="doc-card"><h3>Cache</h3><p>Edge cache reduces repeated requests for public content.</p></article>
+              <article class="doc-card"><h3>Delivery</h3><p>Static assets and responses can be served close to users.</p></article>
+              <article class="doc-card"><h3>Security</h3><p>Admin APIs stay behind sessions and permission checks.</p></article>
             </div>
-            <h2>How it fits together</h2>
-            <div class="code-block">
-              <div class="code-block-header"><span>Stack overview</span><button class="copy-button" type="button" data-copy-source="architecture-flow">Copy</button></div>
-              <pre id="architecture-flow">Astro frontend
--> Cloudflare Workers runtime
--> D1 for content and settings
--> R2 or S3-compatible media storage
--> Turnstile for captcha
--> Resend for email delivery</pre>
+          </section>
+          <section class="section">
+            <div class="mermaid-card">
+              <h3>Request path</h3>
+              <pre class="mermaid">flowchart LR
+  A["Browser / Admin"] --> B["Cloudflare Worker"]
+  B --> C["D1 Database"]
+  B --> D["R2 / S3 Storage"]
+  B --> E["Edge Cache"]
+  E --> F["Response"]</pre>
             </div>
-            <h2>Why this setup</h2>
-            <p>No traditional server is required. The project stays close to Cloudflare-native infrastructure and avoids extra platform layers that do not help publishing.</p>
+          </section>
+          <section class="section">
+            <h2>Recommended setup</h2>
+            <div class="doc-grid two">
+              <article class="doc-card"><h3>App</h3><p>Worker for app and API.</p></article>
+              <article class="doc-card"><h3>Data</h3><p>D1 for structured records.</p></article>
+              <article class="doc-card"><h3>Media</h3><p>R2 or S3-compatible storage.</p></article>
+              <article class="doc-card"><h3>Secrets</h3><p>Store credentials in secrets or environment variables.</p></article>
+            </div>
           </section>
         </main>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="../assets/js/main.js"></script>
   </body>
 </html>
