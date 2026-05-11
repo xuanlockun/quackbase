@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quackbase Docs - Admin Overview</title>
+    <title>Quackbase Docs - Edge Stack</title>
     <script>
       const savedTheme = localStorage.getItem("docs-theme");
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
@@ -18,7 +18,7 @@
         <nav>
           <section class="nav-group"><h2 class="nav-group-title">Getting Started</h2><ul class="nav-list"><li><a class="nav-link" href="../index.html" data-nav-link>Introduction</a></li><li><a class="nav-link" href="quickstart.html" data-nav-link>Quickstart</a></li></ul></section>
           <section class="nav-group"><h2 class="nav-group-title">Configuration</h2><ul class="nav-list"><li><a class="nav-link" href="media.html" data-nav-link>Media Settings</a></li><li><a class="nav-link" href="captcha.html" data-nav-link>Captcha</a></li><li><a class="nav-link" href="email.html" data-nav-link>Email</a></li><li><a class="nav-link" href="languages.html" data-nav-link>Languages</a></li></ul></section>
-          <section class="nav-group"><h2 class="nav-group-title">Operations</h2><ul class="nav-list"><li><a class="nav-link" href="admin-overview.html" data-nav-link>Admin Overview</a></li><li><a class="nav-link" href="backup.html" data-nav-link>Backup &amp; Restore</a></li></ul></section>
+          <section class="nav-group"><h2 class="nav-group-title">Architecture</h2><ul class="nav-list"><li><a class="nav-link" href="architecture.html" data-nav-link>Edge Stack</a></li><li><a class="nav-link" href="backup.html" data-nav-link>Backup</a></li></ul></section>
         </nav>
       </aside>
       <div class="layout-main">
@@ -34,24 +34,28 @@
         </header>
         <main class="content-wrap">
           <section class="section">
-            <span class="eyebrow">Operations</span>
-            <h1>Admin Overview</h1>
-            <p>The admin area is where Quackbase becomes useful fast: content, settings, operations, and access control all live in one place.</p>
-            <div class="content-image"><img src="../d5677d11-feb4-4bcc-9a67-eb5525620533.png" alt="Quackbase overview" /></div>
-            <h2>Main areas</h2>
+            <span class="eyebrow">Architecture</span>
+            <h1>Edge Stack</h1>
+            <p>Quackbase is built for a Cloudflare edge stack: Astro frontend, Cloudflare Workers runtime, D1 for content data, and R2 or another S3-compatible store for media.</p>
+            <h2>Main pieces</h2>
             <div class="grid split-grid">
-              <article class="card"><h3>Content</h3><p>Posts, pages, banners, and contact forms are managed directly from the dashboard.</p></article>
-              <article class="card"><h3>Configuration</h3><p>Header, footer, media, themes, SMTP, captcha, and navigation settings stay close to the content workflow.</p></article>
-              <article class="card"><h3>Access</h3><p>Users, roles, permissions, and route-level restrictions are already wired into the admin architecture.</p></article>
-              <article class="card"><h3>Localization</h3><p>Languages and translation entries let you manage UI copy and localized content from a dedicated workspace.</p></article>
+              <article class="card"><h3>Cloudflare Workers</h3><p>Runs the Astro app and admin APIs at the edge.</p></article>
+              <article class="card"><h3>Cloudflare D1</h3><p>Stores posts, pages, languages, settings, sessions, forms, roles, and permissions.</p></article>
+              <article class="card"><h3>Cloudflare R2</h3><p>Recommended for uploads and media files, using the media settings in the admin.</p></article>
+              <article class="card"><h3>Turnstile and Resend</h3><p>Turnstile protects forms from spam and Resend handles email delivery.</p></article>
             </div>
-
-            <h2>What the repo already contains</h2>
-            <ul>
-              <li>Admin pages for media, backup, settings, languages, users, roles, posts, pages, contact forms, and templates.</li>
-              <li>API endpoints for auth, backup export/import, SMTP testing, media sync, captcha settings, and language translations.</li>
-              <li>Support libraries for auth, media, captcha, email, backup, forms, site settings, and i18n.</li>
-            </ul>
+            <h2>How it fits together</h2>
+            <div class="code-block">
+              <div class="code-block-header"><span>Stack overview</span><button class="copy-button" type="button" data-copy-source="architecture-flow">Copy</button></div>
+              <pre id="architecture-flow">Astro frontend
+-> Cloudflare Workers runtime
+-> D1 for content and settings
+-> R2 or S3-compatible media storage
+-> Turnstile for captcha
+-> Resend for email delivery</pre>
+            </div>
+            <h2>Why this setup</h2>
+            <p>No traditional server is required. The project stays close to Cloudflare-native infrastructure and avoids extra platform layers that do not help publishing.</p>
           </section>
         </main>
       </div>

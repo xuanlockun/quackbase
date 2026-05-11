@@ -18,7 +18,7 @@
         <nav>
           <section class="nav-group"><h2 class="nav-group-title">Getting Started</h2><ul class="nav-list"><li><a class="nav-link" href="../index.html" data-nav-link>Introduction</a></li><li><a class="nav-link" href="quickstart.html" data-nav-link>Quickstart</a></li></ul></section>
           <section class="nav-group"><h2 class="nav-group-title">Configuration</h2><ul class="nav-list"><li><a class="nav-link" href="media.html" data-nav-link>Media Settings</a></li><li><a class="nav-link" href="captcha.html" data-nav-link>Captcha</a></li><li><a class="nav-link" href="email.html" data-nav-link>Email</a></li><li><a class="nav-link" href="languages.html" data-nav-link>Languages</a></li></ul></section>
-          <section class="nav-group"><h2 class="nav-group-title">Operations</h2><ul class="nav-list"><li><a class="nav-link" href="admin-overview.html" data-nav-link>Admin Overview</a></li><li><a class="nav-link" href="backup.html" data-nav-link>Backup &amp; Restore</a></li></ul></section>
+          <section class="nav-group"><h2 class="nav-group-title">Architecture</h2><ul class="nav-list"><li><a class="nav-link" href="architecture.html" data-nav-link>Edge Stack</a></li><li><a class="nav-link" href="backup.html" data-nav-link>Backup</a></li></ul></section>
         </nav>
       </aside>
       <div class="layout-main">
@@ -36,39 +36,35 @@
           <section class="section">
             <span class="eyebrow">Configuration</span>
             <h1>Media Settings</h1>
-            <p>Quackbase supports Cloudflare R2 and S3-compatible storage so editors can upload media from the admin panel instead of handling files manually.</p>
-            <h2>What to configure</h2>
-            <ul>
-              <li>Endpoint</li>
-              <li>Bucket</li>
-              <li>Public base URL</li>
-              <li>Access key ID</li>
-              <li>Secret access key</li>
-              <li>Region and path-style behavior</li>
-            </ul>
+            <p>Open <span class="code-inline">Settings</span> in the admin sidebar, switch to the <span class="code-inline">Media</span> tab panel, fill the storage values, test the connection, then save the media settings.</p>
+            <h2>Fill these fields</h2>
             <div class="code-block">
-              <div class="code-block-header"><span>Settings fields</span><button class="copy-button" type="button" data-copy-source="media-fields">Copy</button></div>
-              <pre id="media-fields">media_s3_endpoint
-media_s3_bucket
-media_s3_public_base_url
-media_s3_access_key_id
-media_s3_secret_access_key
-media_s3_region
-media_s3_force_path_style</pre>
+              <div class="code-block-header"><span>Media fields</span><button class="copy-button" type="button" data-copy-source="media-fields">Copy</button></div>
+              <pre id="media-fields">S3 upload endpoint
+Bucket name
+Public base URL
+S3 region
+
+Use path-style URLs
+S3 access key ID
+S3 secret access key</pre>
             </div>
             <h2>Recommended flow</h2>
             <ol>
-              <li>Create an R2 bucket or prepare another S3-compatible bucket.</li>
-              <li>Paste the media credentials into the admin settings.</li>
-              <li>Use the built-in connection test if available.</li>
-              <li>Open the media library and upload a sample image.</li>
-              <li>Confirm the public URL resolves correctly on the frontend.</li>
+              <li>Go to <span class="code-inline">Settings</span> in the admin sidebar.</li>
+              <li>Open the <span class="code-inline">Media</span> tab panel.</li>
+              <li>Fill all media storage fields.</li>
+              <li>Click <span class="code-inline">Test connection</span>.</li>
+              <li>If the test succeeds, click <span class="code-inline">Save media settings</span>.</li>
+              <li>Upload one sample file and verify the public URL works.</li>
             </ol>
-            <h2>Notes</h2>
+            <h2>Field notes</h2>
             <div class="grid split-grid">
-              <article class="card"><h3>Cloudflare R2</h3><p>Use the R2 endpoint and public bucket URL if you want the closest fit with the rest of the stack.</p></article>
-              <article class="card"><h3>S3-compatible buckets</h3><p>Quackbase also works with other compatible object stores as long as endpoint, region, and public URL are valid.</p></article>
+              <article class="card"><h3>Cloudflare R2</h3><p>For R2, the <span class="code-inline">S3 region</span> is usually <span class="code-inline">auto</span>. Use your R2 S3 endpoint and a public bucket URL or custom domain.</p></article>
+              <article class="card"><h3>Path-style URLs</h3><p>Enable <span class="code-inline">Use path-style URLs</span> when your provider expects the bucket name in the request path instead of the hostname.</p></article>
             </div>
+            <h2>S3 setup guide</h2>
+            <p>Detailed S3 setup instructions are coming soon and will be updated later.</p>
           </section>
         </main>
       </div>

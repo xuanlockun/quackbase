@@ -15,21 +15,21 @@ This documentation site is fully static and can be hosted directly from the repo
 
 ```text
 docs/
-├── index.html
-├── pages/
-│   ├── quickstart.html
-│   ├── deployment.html
-│   ├── admin-overview.html
-│   ├── media.html
-│   ├── captcha.html
-│   ├── email.html
-│   ├── languages.html
-│   └── backup.html
-├── assets/
-│   ├── css/
-│   │   └── styles.css
-│   └── js/
-│       └── main.js
+|-- index.html
+|-- pages/
+|   |-- quickstart.html
+|   |-- deployment.html
+|   |-- architecture.html
+|   |-- media.html
+|   |-- captcha.html
+|   |-- email.html
+|   |-- languages.html
+|   `-- backup.html
+|-- assets/
+|   |-- css/
+|   |   `-- styles.css
+|   `-- js/
+|       `-- main.js
 ```
 
 ## Notes

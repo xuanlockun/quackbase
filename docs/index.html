@@ -53,10 +53,10 @@
           </section>
 
           <section class="nav-group">
-            <h2 class="nav-group-title">Operations</h2>
+            <h2 class="nav-group-title">Architecture</h2>
             <ul class="nav-list">
-              <li><a class="nav-link" href="pages/admin-overview.html" data-nav-link>Admin Overview</a></li>
-              <li><a class="nav-link" href="pages/backup.html" data-nav-link>Backup &amp; Restore</a></li>
+              <li><a class="nav-link" href="pages/architecture.html" data-nav-link>Edge Stack</a></li>
+              <li><a class="nav-link" href="pages/backup.html" data-nav-link>Backup</a></li>
             </ul>
           </section>
         </nav>
@@ -157,12 +157,12 @@
               <p>
                 Quackbase is for teams who want something small, hackable, and easy to reason about. Instead of bolting a
                 generic CMS onto Astro, it keeps the stack close to the site: Astro on the frontend, Workers at the edge,
-                D1 for content, and admin tools focused on practical publishing.
+                D1 for content, R2 for media, and admin tools focused on practical publishing.
               </p>
               <h3>What feels different</h3>
               <p>
                 The project is built around direct deployment, runtime updates, and focused admin capabilities like media,
-                language management, backup and restore, captcha, SMTP, and content operations.
+                language management, backup through Cloudflare D1 APIs, captcha, Resend email, and content operations.
               </p>
             </article>
 
@@ -185,15 +185,15 @@
               </article>
               <article class="card">
                 <h3>Cloudflare-native deployment</h3>
-                <p>Built for Cloudflare Workers and D1, with a deployment path that stays simple from first launch to production.</p>
+                <p>Built for Cloudflare Workers, D1, and R2, with a deployment path that stays simple from first launch to production.</p>
               </article>
               <article class="card">
                 <h3>Operational tooling</h3>
-                <p>Backup export/import, media sync, SMTP test flows, secret verification, and runtime configuration helpers are already in the repo.</p>
+                <p>Backup export/import, media sync, Resend email test flows, secret verification, and runtime configuration helpers are already in the repo.</p>
               </article>
               <article class="card">
                 <h3>Easy to extend</h3>
-                <p>The codebase stays understandable with Astro pages, TypeScript libraries, and focused modules for auth, media, forms, and i18n.</p>
+                <p>The codebase stays understandable with Astro pages, TypeScript libraries, and focused modules for auth, media, forms, i18n, and edge integrations.</p>
               </article>
             </div>
           </section>
