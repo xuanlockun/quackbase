@@ -396,16 +396,16 @@ VALUES (
 
 ::: columns
 ::: column
-![Quackbase preview](https://quackbase.v1t.site/d5677d11-feb4-4bcc-9a67-eb5525620533.png)
-:::
-::: column
-Quackbase is a lightweight CMS for Astro and Cloudflare.
+## Quackbase is a lightweight CMS for Astro and Cloudflare.
 
-Documentation: https://quackbase.v1t.site/
+📚Documentation: https://quackbase.v1t.site/
 
 - Edit this page from the admin dashboard
 - Publish your first post from the News page
 - Add more languages only when you need them
+:::
+::: column
+![Quackbase preview](https://quackbase.v1t.site/d5677d11-feb4-4bcc-9a67-eb5525620533crop.png)
 :::
 :::'),
 	0,
