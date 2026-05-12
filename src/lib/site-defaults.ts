@@ -1,7 +1,7 @@
 export const DEFAULT_SITE_TITLE = "Edge CMS";
 export const DEFAULT_HOME_PAGE_SLUG = "home";
 export const DEFAULT_FAVICON_URL = "/favicon.svg";
-export const DEFAULT_LOGO_URL = "/logo.svg";
+export const DEFAULT_LOGO_URL = "/favicon.svg";
 
 export const DEFAULT_TEMPLATE_THEME = {
 	headerBackground: "#ffffff",

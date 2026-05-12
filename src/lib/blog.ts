@@ -2488,7 +2488,7 @@ function normalizeFaviconUrl(value: string): string {
 
 function normalizeLogoUrl(value: string): string {
 	const trimmed = value.trim();
-	return trimmed || "/logo.svg";
+	return trimmed || "/favicon.svg";
 }
 
 function normalizeStorageUrl(value: string): string {
