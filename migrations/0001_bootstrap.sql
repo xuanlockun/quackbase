@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
 
 CREATE TABLE IF NOT EXISTS footer_settings (
 	id INTEGER PRIMARY KEY CHECK (id = 1),
-	footer_text TEXT NOT NULL DEFAULT 'Quackbase. Content updates go live straight from D1.',
+	footer_text TEXT NOT NULL DEFAULT 'From V1t with love ❤️',
 	footer_background TEXT NOT NULL DEFAULT '#eef2f7',
 	footer_text_color TEXT NOT NULL DEFAULT '#60739f',
 	footer_template_html TEXT NOT NULL DEFAULT '',
@@ -376,7 +376,7 @@ VALUES (
 ON CONFLICT(id) DO NOTHING;
 
 INSERT INTO footer_settings (id, footer_text, footer_background, footer_text_color, footer_template_html)
-VALUES (1, 'Quackbase. Content updates go live straight from D1.', '#eef2f7', '#60739f', '')
+VALUES (1, 'From V1t with love ❤️', '#eef2f7', '#60739f', '')
 ON CONFLICT(id) DO NOTHING;
 
 INSERT INTO navigation_items (label, href, sort_order, is_visible)
@@ -394,16 +394,21 @@ VALUES (
 	'Welcome page',
 	json_object('en', '# Welcome to Quackbase
 
+::: columns
+::: column
 ![Quackbase preview](https://quackbase.v1t.site/d5677d11-feb4-4bcc-9a67-eb5525620533.png)
-
-Quackbase is a lightweight CMS for Astro and Cloudflare, built so you can launch pages, posts, and localized content quickly.
+:::
+::: column
+Quackbase is a lightweight CMS for Astro and Cloudflare.
 
 Documentation: https://quackbase.v1t.site/
 
 - Edit this page from the admin dashboard
 - Publish your first post from the News page
-- Add more languages only when you need them'),
-	1,
+- Add more languages only when you need them
+:::
+:::'),
+	0,
 	0,
 	'published',
 	CURRENT_TIMESTAMP,

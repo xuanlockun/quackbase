@@ -2143,16 +2143,21 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				'Welcome page',
 				json_object('${defaultLanguageCode}', '# Welcome to Quackbase
 
+::: columns
+::: column
 ![Quackbase preview](https://quackbase.v1t.site/d5677d11-feb4-4bcc-9a67-eb5525620533.png)
-
-Quackbase is a lightweight CMS for Astro and Cloudflare, built so you can launch pages, posts, and localized content quickly.
+:::
+::: column
+Quackbase is a lightweight CMS for Astro and Cloudflare.
 
 Documentation: https://quackbase.v1t.site/
 
 - Edit this page from the admin dashboard
 - Publish your first post from the News page
-- Add more languages only when you need them'),
-				1,
+- Add more languages only when you need them
+:::
+:::'),
+				0,
 				0,
 				'published',
 				CURRENT_TIMESTAMP,

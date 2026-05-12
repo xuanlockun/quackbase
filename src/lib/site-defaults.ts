@@ -11,7 +11,7 @@ export const DEFAULT_TEMPLATE_THEME = {
 	footerTextColor: "#4b5563",
 } as const;
 
-export const DEFAULT_FOOTER_TEXT = "Quackbase. Content updates go live straight from D1.";
+export const DEFAULT_FOOTER_TEXT = "From V1t with love ❤️";
 
 export const DEFAULT_CONTACT_FORM_APPEARANCE = {
 	backgroundStyle: "solid",
