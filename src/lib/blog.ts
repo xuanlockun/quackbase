@@ -14,6 +14,7 @@ import {
 	DEFAULT_FAVICON_URL,
 	DEFAULT_FOOTER_TEXT,
 	DEFAULT_HOME_PAGE_SLUG,
+	DEFAULT_LOGO_URL,
 	DEFAULT_SITE_TITLE,
 	DEFAULT_TEMPLATE_THEME,
 } from "./site-defaults";
@@ -1890,10 +1891,10 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 		db.prepare(
 				`CREATE TABLE IF NOT EXISTS site_settings (
 				id INTEGER PRIMARY KEY CHECK (id = 1),
-				site_title TEXT NOT NULL DEFAULT 'Edge CMS',
+				site_title TEXT NOT NULL DEFAULT 'Quackbase',
 				home_page_slug TEXT NOT NULL DEFAULT 'home',
 				favicon_url TEXT NOT NULL DEFAULT '/favicon.svg',
-				logo_url TEXT NOT NULL DEFAULT '',
+				logo_url TEXT NOT NULL DEFAULT 'https://quackbase.v1t.site/quackbase.png',
 				theme_key TEXT NOT NULL DEFAULT '${DEFAULT_SITE_THEME_KEY}',
 				captcha_enabled TEXT NOT NULL DEFAULT '0',
 				captcha_site_key TEXT NOT NULL DEFAULT '',
@@ -1975,7 +1976,11 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 	}
 
 	if (!settingsColumnNames.has("logo_url")) {
-		await db.prepare(`ALTER TABLE site_settings ADD COLUMN logo_url TEXT NOT NULL DEFAULT ''`).run();
+		await db
+			.prepare(
+				`ALTER TABLE site_settings ADD COLUMN logo_url TEXT NOT NULL DEFAULT 'https://quackbase.v1t.site/quackbase.png'`,
+			)
+			.run();
 	}
 
 	if (!settingsColumnNames.has("theme_key")) {
@@ -2112,7 +2117,7 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 	await db.batch([
 		db.prepare(
 			`INSERT INTO site_settings (id, site_title, home_page_slug, favicon_url, logo_url, theme_key, captcha_enabled, captcha_site_key, captcha_secret_key, header_background, header_text_color, header_accent_color, header_template_html, navbar_template_html, page_template_html, blog_feed_template_html)
-			VALUES (1, '${DEFAULT_SITE_TITLE.replace(/'/g, "''")}', '${DEFAULT_HOME_PAGE_SLUG}', '${DEFAULT_FAVICON_URL}', '', '${DEFAULT_SITE_THEME_KEY}', '0', '', '', '${DEFAULT_TEMPLATE_THEME.headerBackground}', '${DEFAULT_TEMPLATE_THEME.headerTextColor}', '${DEFAULT_TEMPLATE_THEME.headerAccentColor}', '', '', '${DEFAULT_PAGE_TEMPLATE_HTML.replace(/'/g, "''")}', '${DEFAULT_BLOG_FEED_TEMPLATE_HTML.replace(/'/g, "''")}')
+			VALUES (1, '${DEFAULT_SITE_TITLE.replace(/'/g, "''")}', '${DEFAULT_HOME_PAGE_SLUG}', '${DEFAULT_FAVICON_URL}', '${DEFAULT_LOGO_URL.replace(/'/g, "''")}', '${DEFAULT_SITE_THEME_KEY}', '0', '', '', '${DEFAULT_TEMPLATE_THEME.headerBackground}', '${DEFAULT_TEMPLATE_THEME.headerTextColor}', '${DEFAULT_TEMPLATE_THEME.headerAccentColor}', '', '', '${DEFAULT_PAGE_TEMPLATE_HTML.replace(/'/g, "''")}', '${DEFAULT_BLOG_FEED_TEMPLATE_HTML.replace(/'/g, "''")}')
 			ON CONFLICT(id) DO NOTHING`,
 		),
 		db.prepare(
@@ -2136,9 +2141,13 @@ async function ensureSiteTables(db: D1Database): Promise<void> {
 				json_object('${defaultLanguageCode}', 'Home'),
 				'home',
 				'Welcome page',
-				json_object('${defaultLanguageCode}', '# Welcome to Edge CMS
+				json_object('${defaultLanguageCode}', '# Welcome to Quackbase
 
-This starter is ready to publish simple pages, posts, and localized content from day one.
+![Quackbase preview](https://quackbase.v1t.site/d5677d11-feb4-4bcc-9a67-eb5525620533.png)
+
+Quackbase is a lightweight CMS for Astro and Cloudflare, built so you can launch pages, posts, and localized content quickly.
+
+Documentation: https://quackbase.v1t.site/
 
 - Edit this page from the admin dashboard
 - Publish your first post from the News page

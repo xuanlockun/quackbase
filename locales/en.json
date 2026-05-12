@@ -1,7 +1,7 @@
 {
   "app": {
     "admin": "Admin",
-    "brand": "Edge CMS"
+    "brand": "Quackbase"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -9,6 +9,7 @@
     "cms": "CMS",
     "posts": "Posts",
     "pages": "Pages",
+    "media": "Media",
     "banners": "Banners",
     "contactForms": "Contact Forms",
     "contactForm": "Contact form",
