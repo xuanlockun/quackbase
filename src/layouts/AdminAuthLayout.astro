@@ -1,0 +1,59 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import LanguageSwitch from "../components/LanguageSwitch.astro";
+import { SITE_TITLE } from "../consts";
+import { getUiTranslations } from "../lib/i18n";
+
+interface Props {
+	title: string;
+	description: string;
+	eyebrow?: string;
+	heading: string;
+	intro?: string;
+}
+
+const { title, description, eyebrow, heading, intro } = Astro.props;
+const { t, localizeHref, language } = getUiTranslations(Astro);
+const viewSiteLabel = t("actions.viewSite", "View site");
+---
+
+<!doctype html>
+<html lang={language} data-theme="classic" data-mode="light">
+	<head>
+		<BaseHead title={`${title} | ${SITE_TITLE}`} description={description} />
+	</head>
+	<body class="admin-auth-app">
+		<main class="admin-auth-shell">
+			<section class="admin-auth-stage">
+				<div class="admin-auth-frame">
+					<div class="admin-auth-meta">
+						<a class="admin-auth-home-link" href={localizeHref("/")}>
+							<span class="admin-auth-home-icon" aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M14 3h7v7h-2V6.41l-8.29 8.3-1.42-1.42 8.3-8.29H14V3Z" />
+									<path d="M5 5h6V3H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6h-2v6H5V5Z" />
+								</svg>
+							</span>
+							<span>{viewSiteLabel}</span>
+						</a>
+						<div class="admin-auth-language">
+							<LanguageSwitch />
+						</div>
+					</div>
+					<div class="admin-auth-card">
+						<div class="admin-auth-card-inner">
+							<div class="admin-auth-brand">
+								{eyebrow && <p class="admin-auth-eyebrow">{eyebrow}</p>}
+								<h1 class="admin-auth-title">{heading}</h1>
+								{intro && <p class="admin-auth-intro">{intro}</p>}
+							</div>
+							<div class="admin-auth-content">
+								<slot />
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+	</body>
+</html>

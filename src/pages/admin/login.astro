@@ -1,10 +1,7 @@
 ---
 export const prerender = false;
 
-import BaseHead from "../../components/BaseHead.astro";
-import Footer from "../../components/Footer.astro";
-import Header from "../../components/Header.astro";
-import { SITE_TITLE } from "../../consts";
+import AdminAuthLayout from "../../layouts/AdminAuthLayout.astro";
 import { getDb } from "../../lib/blog";
 import { ensureAdminBootstrapSchema } from "../../lib/db/admin-bootstrap";
 import { getUiTranslations } from "../../lib/i18n";
@@ -12,7 +9,7 @@ import { countAdminUsers } from "../../lib/db/admin-users";
 
 const error = Astro.url.searchParams.get("error");
 const setupError = Astro.url.searchParams.get("setupError");
-const { language, t } = getUiTranslations(Astro);
+const { t } = getUiTranslations(Astro);
 let needsInitialSetup = false;
 let bootstrapError = "";
 
@@ -41,106 +38,51 @@ const displayNameLabel = t("labels.displayName", "Display name");
 const createAccountLabel = t("actions.createAdminAccount", "Create admin account");
 const loginTitle = t("headings.adminLogin", "Admin login");
 const signInIntro = t("messages.signInIntro", "Sign in to continue to the admin workspace.");
+const authEyebrow = t("app.admin");
+const authTitle = needsInitialSetup ? initialSetupTitle : loginTitle;
+const authIntro = needsInitialSetup ? initialSetupHelp : signInIntro;
 ---
 
-<!doctype html>
-<html lang={language}>
-	<head>
-		<BaseHead title={`${loginTitle} | ${SITE_TITLE}`} description={signInIntro} />
-		<style>
-			.login-shell {
-				min-height: calc(100vh - 140px);
-				display: grid;
-				place-items: center;
-				padding: 3rem 1rem;
-			}
-			.panel {
-				width: min(100%, 32rem);
-				padding: 2rem;
-				background: white;
-				border-radius: 1rem;
-				box-shadow: 0 1rem 2rem rgba(15, 23, 42, 0.12);
-				border: 1px solid rgba(15, 23, 42, 0.08);
-			}
-			form {
-				display: grid;
-				gap: 1rem;
-			}
-			label {
-				display: grid;
-				gap: 0.4rem;
-			}
-			.muted {
-				color: rgb(var(--gray));
-			}
-			.login-actions {
-				display: grid;
-				gap: 0.75rem;
-			}
-			.login-actions button {
-				width: 100%;
-			}
-			.error {
-				color: #a61b29;
-				margin: 0;
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main class="login-shell">
-			<section class="panel">
-				{bootstrapError ? (
-					<>
-						<h1>{loginTitle}</h1>
-						<p class="muted">{signInIntro}</p>
-						<p class="error">{bootstrapError}</p>
-					</>
-				) : needsInitialSetup ? (
-					<>
-						<h1>{initialSetupTitle}</h1>
-						<p class="muted">{initialSetupHelp}</p>
-						{setupErrorMessage && <p class="error">{setupErrorMessage}</p>}
-						<form method="post" action="/api/admin/auth/setup">
-							<label>
-								<span>{t("labels.email")}</span>
-								<input class="form-control" type="email" name="email" autocomplete="username" required />
-							</label>
-							<label>
-								<span>{displayNameLabel}</span>
-								<input class="form-control" type="text" name="displayName" autocomplete="name" required />
-							</label>
-							<label>
-								<span>{t("labels.password")}</span>
-								<input class="form-control" type="password" name="password" autocomplete="new-password" required />
-							</label>
-							<div class="login-actions">
-								<button class="btn btn-primary" type="submit">{createAccountLabel}</button>
-							</div>
-						</form>
-					</>
-				) : (
-					<>
-						<h1>{loginTitle}</h1>
-						<p class="muted">{signInIntro}</p>
-						{errorMessage && <p class="error">{errorMessage}</p>}
-						<form method="post" action="/api/admin/auth/login">
-							<label>
-								<span>{t("labels.email")}</span>
-								<input class="form-control" type="email" name="email" autocomplete="username" required />
-							</label>
-							<label>
-								<span>{t("labels.password")}</span>
-								<input class="form-control" type="password" name="password" autocomplete="current-password" required />
-							</label>
-							<div class="login-actions">
-								<button class="btn btn-primary" type="submit">{t("actions.signIn")}</button>
-							</div>
-						</form>
-					</>
-				)}
-			</section>
-		</main>
-		<Footer />
-	</body>
-</html>
+<AdminAuthLayout title={loginTitle} description={signInIntro} eyebrow={authEyebrow} heading={authTitle} intro={authIntro}>
+	{bootstrapError ? (
+		<p class="admin-auth-alert admin-auth-alert-error" role="alert">{bootstrapError}</p>
+	) : needsInitialSetup ? (
+		<>
+			{setupErrorMessage && <p class="admin-auth-alert admin-auth-alert-error" role="alert">{setupErrorMessage}</p>}
+			<form class="admin-auth-form" method="post" action="/api/admin/auth/setup">
+				<label class="admin-auth-field">
+					<span>{t("labels.email")}</span>
+					<input class="form-control" type="email" name="email" autocomplete="username" required />
+				</label>
+				<label class="admin-auth-field">
+					<span>{displayNameLabel}</span>
+					<input class="form-control" type="text" name="displayName" autocomplete="name" required />
+				</label>
+				<label class="admin-auth-field">
+					<span>{t("labels.password")}</span>
+					<input class="form-control" type="password" name="password" autocomplete="new-password" required />
+				</label>
+				<div class="admin-auth-actions">
+					<button class="btn btn-primary" type="submit">{createAccountLabel}</button>
+				</div>
+			</form>
+		</>
+	) : (
+		<>
+			{errorMessage && <p class="admin-auth-alert admin-auth-alert-error" role="alert">{errorMessage}</p>}
+			<form class="admin-auth-form" method="post" action="/api/admin/auth/login">
+				<label class="admin-auth-field">
+					<span>{t("labels.email")}</span>
+					<input class="form-control" type="email" name="email" autocomplete="username" required />
+				</label>
+				<label class="admin-auth-field">
+					<span>{t("labels.password")}</span>
+					<input class="form-control" type="password" name="password" autocomplete="current-password" required />
+				</label>
+				<div class="admin-auth-actions">
+					<button class="btn btn-primary" type="submit">{t("actions.signIn")}</button>
+				</div>
+			</form>
+		</>
+	)}
+</AdminAuthLayout>
