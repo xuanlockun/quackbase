@@ -394,6 +394,16 @@ function renderStructuredMarkdown(markdown: string): string {
 			}
 		}
 
+		if (!inFence && isHtmlBlockStart(trimmed)) {
+			const block = parseHtmlBlock(lines, index);
+			if (block) {
+				flushMarkdownBuffer();
+				segments.push(block.html);
+				index = block.nextIndex;
+				continue;
+			}
+		}
+
 		markdownBuffer.push(line);
 	}
 
@@ -407,7 +417,7 @@ function renderMarkdownChunk(markdown: string): string {
 	}
 
 	return micromark(markdown, {
-		allowDangerousHtml: true,
+		allowDangerousHtml: false,
 		extensions: [gfm()],
 		htmlExtensions: [gfmHtml()],
 	});
@@ -436,6 +446,10 @@ function isLogoGridBlockStart(trimmedLine: string): boolean {
 
 function isServiceGridBlockStart(trimmedLine: string): boolean {
 	return /^:::\s*service-grid(?:\s|$)/i.test(trimmedLine);
+}
+
+function isHtmlBlockStart(trimmedLine: string): boolean {
+	return /^:::\s*html(?:\s|$)/i.test(trimmedLine);
 }
 
 function isColumnBlockStart(trimmedLine: string): boolean {
@@ -622,6 +636,29 @@ function renderServiceGridMarkdownBlock(items: Array<{ title: string; imageUrl: 
 			<div class="service-grid-list">${itemsHtml}</div>
 		</div>
 	</section>`;
+}
+
+function parseHtmlBlock(
+	lines: string[],
+	startIndex: number,
+): { html: string; nextIndex: number } | null {
+	const htmlLines: string[] = [];
+
+	for (let index = startIndex + 1; index < lines.length; index += 1) {
+		const line = lines[index];
+		const trimmed = line.trim();
+
+		if (isBlockClose(trimmed)) {
+			return {
+				html: htmlLines.join("\n").trim(),
+				nextIndex: index,
+			};
+		}
+
+		htmlLines.push(line);
+	}
+
+	return null;
 }
 
 export { getDefaultLanguage, getSupportedLanguages, getLocalizedPagePath, getLocalizedPostPath } from "./i18n";

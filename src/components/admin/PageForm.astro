@@ -226,7 +226,7 @@ const initialContactFields = [];
 							</div>
 							<p class="admin-editor-help mb-0">{t("messages.markdownEditorHelp", "Markdown is stored as entered. Use quick shortcuts to format content while keeping the current content model unchanged.")}</p>
 							<p class="admin-editor-help mb-0">
-								{t("messages.customBlocksHelp", "Custom blocks:")} <code>::: logo-grid</code> {t("messages.customBlocksLogoGridHelp", "for a row/grid of logos and")} <code>::: service-grid</code> {t("messages.customBlocksServiceGridHelp", "for image cards with titles.")}
+								{t("messages.customBlocksHelp", "Custom blocks:")} <code>::: logo-grid</code> {t("messages.customBlocksLogoGridHelp", "for a row/grid of logos and")} <code>::: service-grid</code> {t("messages.customBlocksServiceGridHelp", "for image cards with titles.")} <code>::: html</code> {t("messages.customBlocksHtmlHelp", "for trusted raw HTML such as embedded maps.")}
 							</p>
 							<textarea class="form-control admin-editor-textarea" data-content-input={languageOption.code} rows="14" disabled={isDisabled}
 							>{contentTranslations[languageOption.code] ?? (languageOption.code === def ? "# New page" : "")}</textarea
