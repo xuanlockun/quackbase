@@ -81,7 +81,7 @@ export function buildNavItemsHtml({
 		(item.children ?? []).some((child) => isActivePath(child.href) || hasActiveDescendant(child));
 	const buildClass = (...classes: (string | false | undefined)[]) => classes.filter(Boolean).join(" ");
 
-	const renderNavItemHtml = (item: SiteNavItem): string => {
+	const renderNavItemHtml = (item: SiteNavItem, depth = 0): string => {
 		const hasChildren = Boolean(item.children?.length);
 		const linkHref = escapeHtml(resolveHref(item.href));
 		const label = escapeHtml(getNavLabel(item));
@@ -91,7 +91,12 @@ export function buildNavItemsHtml({
 			return `<li class="nav-item"><a class="${buildClass("nav-link", active && "active")}" href="${linkHref}">${label}</a></li>`;
 		}
 
-		return `<li class="${buildClass("nav-item", "dropdown", active && "active", "dropdown-submenu")}"><a class="nav-link dropdown-toggle" href="${linkHref}" data-bs-toggle="dropdown" aria-expanded="false">${label}</a><ul class="${buildClass("dropdown-menu", "dropdown-submenu-menu")}">${item.children!.map((child) => renderNavItemHtml(child)).join("")}</ul></li>`;
+		const itemClasses = buildClass("nav-item", "dropdown", depth > 0 && "dropdown-submenu", active && "active");
+		const linkClasses = buildClass("nav-link", "site-nav-parent-link", active && "active");
+		const toggleClasses = buildClass("nav-link", "dropdown-toggle", "site-nav-dropdown-toggle");
+		const menuClasses = buildClass("dropdown-menu", depth > 0 && "dropdown-submenu-menu");
+
+		return `<li class="${itemClasses}"><div class="site-nav-parent"><a class="${linkClasses}" href="${linkHref}">${label}</a><button class="${toggleClasses}" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="${label}"><span class="visually-hidden">${label}</span></button></div><ul class="${menuClasses}">${item.children!.map((child) => renderNavItemHtml(child, depth + 1)).join("")}</ul></li>`;
 	};
 
 	return items.map((item) => renderNavItemHtml(item)).join("");
