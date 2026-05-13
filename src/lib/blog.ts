@@ -407,7 +407,7 @@ function renderMarkdownChunk(markdown: string): string {
 	}
 
 	return micromark(markdown, {
-		allowDangerousHtml: false,
+		allowDangerousHtml: true,
 		extensions: [gfm()],
 		htmlExtensions: [gfmHtml()],
 	});
