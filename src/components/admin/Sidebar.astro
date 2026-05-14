@@ -55,6 +55,15 @@ const navIconMap: Record<string, string> = {
 			<circle cx="9" cy="9" r="1.25" />
 		</svg>
 	`,
+	"nav.wordpress": `
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+			<circle cx="12" cy="12" r="8" />
+			<path d="M8.5 8.5c1 2.5 2.3 5.8 3.5 8.9" />
+			<path d="M15.8 8.4c-.7 1.7-1.8 4.6-3 7.6" />
+			<path d="M6.8 10.2c.4 0 .8 0 1.1-.1" />
+			<path d="M14.8 10.2c.4 0 .8 0 1.1-.1" />
+		</svg>
+	`,
 	"nav.backup": `
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 			<path d="M12 3v10" />
@@ -122,9 +131,10 @@ const navIconMap: Record<string, string> = {
 const navIconHtml = (key: string) => navIconMap[key] ?? navIconMap["default"];
 const navLabelFallbacks: Record<string, string> = {
 		"nav.themes": "Themes",
+		"nav.wordpress": "WordPress",
 };
 const sectionConfig = [
-	{ title: null, labelKeys: ["nav.dashboard", "nav.posts", "nav.pages", "nav.media", "nav.banners", "nav.contactForms"] },
+	{ title: null, labelKeys: ["nav.dashboard", "nav.posts", "nav.pages", "nav.media", "nav.wordpress", "nav.banners", "nav.contactForms"] },
 		{ title: t("headings.design", "Design"), labelKeys: ["nav.themes", "nav.template"] },
 		{ title: t("headings.management", "Management"), labelKeys: ["nav.users", "nav.roles"] },
 		{ title: t("nav.settings", "Settings"), labelKeys: ["nav.backup", "nav.settings", "nav.languages"] },

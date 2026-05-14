@@ -11,6 +11,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 	{ href: "/admin/posts", labelKey: "nav.posts", permissions: ["posts.read"] },
 	{ href: "/admin/pages", labelKey: "nav.pages", permissions: ["pages.read"] },
 	{ href: "/admin/media", labelKey: "nav.media", permissions: ["site.manage"] },
+	{ href: "/admin/wordpress", labelKey: "nav.wordpress", permissions: ["site.manage"] },
 	{ href: "/admin/banners", labelKey: "nav.banners", permissions: ["banners.read"] },
 	{ href: "/admin/contact-forms", labelKey: "nav.contactForms", permissions: ["contactForms.read"] },
 	{ href: "/admin/backup", labelKey: "nav.backup", permissions: ["site.manage"] },
@@ -28,6 +29,7 @@ const ADMIN_PAGE_POLICIES = new Map<string, string[]>([
 	["/admin/posts", ["posts.read"]],
 	["/admin/pages", ["pages.read"]],
 	["/admin/media", ["site.manage"]],
+	["/admin/wordpress", ["site.manage"]],
 	["/admin/banners", ["banners.read"]],
 	["/admin/contact-forms", ["contactForms.read"]],
 	["/admin/backup", ["site.manage"]],
@@ -62,6 +64,10 @@ export function getRequiredAdminPagePermissions(pathname: string): string[] | nu
 	}
 
 	if (pathname === "/admin/media") {
+		return ["site.manage"];
+	}
+
+	if (pathname === "/admin/wordpress") {
 		return ["site.manage"];
 	}
 

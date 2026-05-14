@@ -1,0 +1,207 @@
+---
+export const prerender = false;
+
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { getUiTranslations, localizeAdminHref } from "../../lib/i18n";
+import {
+	inspectWordPressSite,
+	type WordPressInspectionResult,
+} from "../../lib/wordpress";
+
+const session = Astro.locals.adminSession;
+if (!session) {
+	return Astro.redirect("/admin/login");
+}
+
+const { t } = getUiTranslations(Astro);
+const siteInput = (Astro.url.searchParams.get("site") ?? "").trim();
+let inspection: WordPressInspectionResult | null = null;
+let loadError = "";
+
+if (siteInput) {
+	try {
+		inspection = await inspectWordPressSite(siteInput);
+	} catch (error) {
+		loadError = error instanceof Error ? error.message : t("messages.wordpressLookupFailed", "The WordPress lookup failed.");
+	}
+}
+
+const resultCards = inspection?.items ?? [];
+const successCount = resultCards.filter((item) => item.count !== null).length;
+---
+
+<AdminLayout
+	title={t("nav.wordpress", "WordPress")}
+	description={t("messages.wordpressInspectorHelp", "Enter a WordPress site URL and check public REST API totals before building migration tools.")}
+	session={session}
+	pageEyebrow={t("app.admin")}
+	pageTitle={t("nav.wordpress", "WordPress")}
+	pageDescription={t("messages.wordpressInspectorHelp", "Enter a WordPress site URL and check public REST API totals before building migration tools.")}
+>
+	<div class="admin-content-stack wordpress-shell">
+		<section class="admin-form-surface admin-stack-section wordpress-hero">
+			<div class="wordpress-hero-copy">
+				<p class="wordpress-kicker mb-1">{t("messages.wordpressInspectorKicker", "WordPress inspector")}</p>
+				<h2 class="h4 mb-2">{t("messages.wordpressInspectorTitle", "Count public WordPress content before migration")}</h2>
+				<p class="mb-0 text-body-secondary">
+					{t("messages.wordpressInspectorBody", "This step only checks totals for users, content types, media, pages, and posts. Migration can be added later.")}
+				</p>
+			</div>
+			<form method="get" action={localizeAdminHref("/admin/wordpress")} class="wordpress-form">
+				<label class="form-label fw-semibold" for="wordpress-site">
+					{t("labels.wordpressSiteUrl", "Enter URL WordPress site")}
+				</label>
+				<div class="wordpress-form-row">
+					<input
+						id="wordpress-site"
+						name="site"
+						type="url"
+						inputmode="url"
+						class="form-control"
+						placeholder="https://example.com"
+						value={siteInput}
+						required
+					/>
+					<button type="submit" class="btn btn-primary">
+						{t("actions.checkWordpressCounts", "Check counts")}
+					</button>
+				</div>
+				<p class="admin-inline-muted mb-0">
+					{t("messages.wordpressInspectorInputHelp", "Example: https://your-wordpress-site.com")}
+				</p>
+			</form>
+		</section>
+
+		{loadError && <p class="alert alert-danger mb-0">{loadError}</p>}
+
+		{inspection && (
+			<>
+				<section class="admin-form-surface admin-stack-section wordpress-summary">
+					<div>
+						<p class="wordpress-summary-label mb-1">{t("messages.wordpressSourceLabel", "Source site")}</p>
+						<h3 class="h5 mb-1 text-break">{inspection.siteUrl}</h3>
+						<p class="mb-0 text-body-secondary text-break">
+							{t("messages.wordpressApiLabel", "REST API")}: {inspection.baseApiUrl}
+						</p>
+					</div>
+					<div class="wordpress-summary-badge">
+						<strong>{successCount}/{resultCards.length}</strong>
+						<span>{t("messages.wordpressChecksCompleted", "endpoints counted")}</span>
+					</div>
+				</section>
+
+				<section class="admin-form-surface admin-stack-section">
+					<div class="wordpress-table-wrap table-responsive">
+						<table class="table align-middle mb-0">
+							<thead>
+								<tr>
+									<th>{t("labels.resource", "Resource")}</th>
+									<th>{t("labels.endpoint", "Endpoint")}</th>
+									<th class="text-end">{t("labels.count", "Count")}</th>
+									<th>{t("labels.status", "Status")}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{resultCards.map((item) => (
+									<tr>
+										<td class="fw-semibold">{item.label}</td>
+										<td class="text-break">
+											<code>{item.endpoint}</code>
+										</td>
+										<td class="text-end fw-semibold">{item.count ?? "-"}</td>
+										<td>
+											{item.error ? (
+												<span class="badge text-bg-warning">{item.error}</span>
+											) : (
+												<span class="badge text-bg-success">{t("messages.wordpressCountAvailable", "Available")}</span>
+											)}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</section>
+			</>
+		)}
+	</div>
+</AdminLayout>
+
+<style>
+	.wordpress-shell {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.wordpress-hero,
+	.wordpress-summary {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.wordpress-kicker,
+	.wordpress-summary-label {
+		font-size: 0.74rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: rgba(15, 23, 42, 0.58);
+	}
+
+	.wordpress-form {
+		display: grid;
+		gap: 0.65rem;
+	}
+
+	.wordpress-form-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 0.65rem;
+		align-items: center;
+	}
+
+	.wordpress-summary {
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+	}
+
+	.wordpress-summary-badge {
+		display: grid;
+		justify-items: center;
+		padding: 0.9rem 1rem;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 1rem;
+		background: rgba(248, 250, 252, 0.92);
+		min-width: 8rem;
+	}
+
+	.wordpress-summary-badge strong {
+		font-size: 1.2rem;
+		line-height: 1.1;
+	}
+
+	.wordpress-summary-badge span {
+		font-size: 0.85rem;
+		color: rgba(15, 23, 42, 0.64);
+	}
+
+	.wordpress-table-wrap code {
+		white-space: normal;
+		word-break: break-word;
+	}
+
+	@media (max-width: 767.98px) {
+		.wordpress-form-row,
+		.wordpress-summary {
+			grid-template-columns: 1fr;
+		}
+
+		.wordpress-form-row .btn {
+			width: 100%;
+		}
+
+		.wordpress-summary-badge {
+			justify-items: start;
+		}
+	}
+</style>
