@@ -1,6 +1,5 @@
 export interface WordPressCollectionSummary {
 	label: string;
-	endpoint: string;
 	count: number | null;
 	error: string | null;
 }
@@ -52,11 +51,12 @@ async function getCollectionCount(
 	label: string,
 ): Promise<WordPressCollectionSummary> {
 	const endpoint = new URL(resource, baseApiUrl);
-	endpoint.searchParams.set("per_page", "1");
-	endpoint.searchParams.set("_fields", "id");
+	const probeUrl = new URL(endpoint);
+	probeUrl.searchParams.set("per_page", "1");
+	probeUrl.searchParams.set("_fields", "id");
 
 	try {
-		const response = await fetch(endpoint, {
+		const response = await fetch(probeUrl, {
 			headers: {
 				Accept: "application/json",
 				"User-Agent": USER_AGENT,
@@ -66,7 +66,6 @@ async function getCollectionCount(
 		if (!response.ok) {
 			return {
 				label,
-				endpoint: endpoint.toString(),
 				count: null,
 				error: await summarizeWordPressError(response),
 			};
@@ -76,7 +75,6 @@ async function getCollectionCount(
 		if (totalHeader && Number.isFinite(Number(totalHeader))) {
 			return {
 				label,
-				endpoint: endpoint.toString(),
 				count: Number(totalHeader),
 				error: null,
 			};
@@ -86,14 +84,12 @@ async function getCollectionCount(
 		const count = Array.isArray(body) ? body.length : null;
 		return {
 			label,
-			endpoint: endpoint.toString(),
 			count,
 			error: count === null ? "The endpoint did not return a total count." : null,
 		};
 	} catch (error) {
 		return {
 			label,
-			endpoint: endpoint.toString(),
 			count: null,
 			error: error instanceof Error ? error.message : "Request failed.",
 		};
@@ -114,7 +110,6 @@ async function getTypesCount(baseApiUrl: string): Promise<WordPressCollectionSum
 		if (!response.ok) {
 			return {
 				label: "Types",
-				endpoint: endpoint.toString(),
 				count: null,
 				error: await summarizeWordPressError(response),
 			};
@@ -124,14 +119,12 @@ async function getTypesCount(baseApiUrl: string): Promise<WordPressCollectionSum
 		const count = body && typeof body === "object" && !Array.isArray(body) ? Object.keys(body).length : null;
 		return {
 			label: "Types",
-			endpoint: endpoint.toString(),
 			count,
 			error: count === null ? "The endpoint returned an unexpected payload." : null,
 		};
 	} catch (error) {
 		return {
 			label: "Types",
-			endpoint: endpoint.toString(),
 			count: null,
 			error: error instanceof Error ? error.message : "Request failed.",
 		};
